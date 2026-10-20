@@ -1,0 +1,88 @@
+{
+  "baseline": {
+    "database": {
+      "advisory-count": 1345,
+      "last-commit": "b19b2c83c2493961ccb12f9fc4699a00fb2c6c44",
+      "last-updated": "2026-10-20T13:02:37+02:00"
+    },
+    "vulnerabilities": [
+      {
+        "id": "RUSTSEC-2026-0258",
+        "package": "h2",
+        "version": "0.4.14"
+      },
+      {
+        "id": "RUSTSEC-2026-0189",
+        "package": "rmcp",
+        "version": "0.16.0"
+      },
+      {
+        "id": "RUSTSEC-2026-0285",
+        "package": "rustls",
+        "version": "0.23.40"
+      },
+      {
+        "id": "RUSTSEC-2026-0346",
+        "package": "rustls",
+        "version": "0.23.40"
+      },
+      {
+        "id": "RUSTSEC-2026-0348",
+        "package": "rustls",
+        "version": "0.23.40"
+      },
+      {
+        "id": "RUSTSEC-2026-0349",
+        "package": "rustls",
+        "version": "0.23.40"
+      }
+    ],
+    "warnings": [
+      {
+        "id": "RUSTSEC-2024-0436",
+        "package": "paste",
+        "kind": "unmaintained"
+      },
+      {
+        "id": "RUSTSEC-2026-0190",
+        "package": "anyhow",
+        "kind": "unsound"
+      },
+      {
+        "id": "RUSTSEC-2026-0002",
+        "package": "lru",
+        "kind": "unsound"
+      },
+      {
+        "id": "RUSTSEC-2026-0253",
+        "package": "lru",
+        "kind": "unsound"
+      }
+    ]
+  },
+  "final": {
+    "database": {
+      "advisory-count": 1345,
+      "last-commit": "b19b2c83c2493961ccb12f9fc4699a00fb2c6c44",
+      "last-updated": "2026-10-20T13:02:37+02:00"
+    },
+    "vulnerabilities": [],
+    "warnings": [
+      {
+        "id": "RUSTSEC-2024-0436",
+        "package": "paste",
+        "kind": "unmaintained"
+      },
+      {
+        "id": "RUSTSEC-2026-0002",
+        "package": "lru",
+        "kind": "unsound"
+      },
+      {
+        "id": "RUSTSEC-2026-0253",
+        "package": "lru",
+        "kind": "unsound"
+      }
+    ]
+  }
+}

@@ -15,7 +15,12 @@
 //!   - `agents/heartbeat`  — register/refresh an agent's presence
 //!   - `agents/list`       — list known agents
 
-use axum::{extract::State, routing::post, Json, Router};
+use axum::{
+    extract::{DefaultBodyLimit, State},
+    http::HeaderMap,
+    routing::post,
+    Json, Router,
+};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::sync::Arc;
@@ -60,6 +65,9 @@ impl Default for ChangeBus {
 pub struct AppState {
     pub store: Arc<Store>,
     pub bus: ChangeBus,
+    pub requests: Arc<tokio::sync::Semaphore>,
+    #[cfg(test)]
+    after_query: Option<Arc<dyn Fn() + Send + Sync>>,
 }
 
 pub fn router(store: Arc<Store>) -> Router {
@@ -67,10 +75,17 @@ pub fn router(store: Arc<Store>) -> Router {
 }
 
 pub fn router_with_bus(store: Arc<Store>, bus: ChangeBus) -> Router {
-    let state = AppState { store, bus };
+    let state = AppState {
+        store,
+        bus,
+        requests: Arc::new(tokio::sync::Semaphore::new(128)),
+        #[cfg(test)]
+        after_query: None,
+    };
     Router::new()
         .route("/", post(handle_rpc))
         .route("/.well-known/agent.json", axum::routing::get(agent_card))
+        .layer(DefaultBodyLimit::max(1024 * 1024))
         .with_state(state)
 }
 
@@ -102,10 +117,25 @@ struct RpcError {
 
 async fn handle_rpc(
     State(state): State<AppState>,
+    headers: HeaderMap,
     Json(req): Json<RpcRequest>,
 ) -> Json<RpcResponse> {
     let id = req.id.clone();
-    let result = dispatch(&state, &req.method, req.params).await;
+    let permit = state.requests.try_acquire();
+    let result = if headers.contains_key("origin") {
+        Err(MethodError::conflict(
+            "browser-origin requests are not supported",
+        ))
+    } else if permit.is_err() {
+        Err(MethodError {
+            code: -32002,
+            message: "server busy; retry with backoff".into(),
+        })
+    } else if req.jsonrpc.as_deref() != Some("2.0") {
+        Err(MethodError::bad_params("jsonrpc must be 2.0"))
+    } else {
+        dispatch(&state, &req.method, req.params).await
+    };
     Json(match result {
         Ok(value) => RpcResponse {
             jsonrpc: "2.0",
@@ -177,12 +207,12 @@ async fn dispatch(state: &AppState, method: &str, params: Value) -> Result<Value
                 )),
             }
         }
-        "tasks/extend" => {
+        "tasks/extend" | "scheduler/extend" => {
             let p: ExtendParams =
                 serde_json::from_value(params).map_err(MethodError::bad_params)?;
             match state
                 .store
-                .extend_lease(p.id, &p.agent_id, p.lease_seconds)
+                .extend_lease(p.id, &p.agent_id, &p.lease_token, p.lease_seconds)
                 .map_err(MethodError::internal)?
             {
                 Some(until) => Ok(json!({ "ok": true, "lease_until": until.to_rfc3339() })),
@@ -202,7 +232,7 @@ async fn dispatch(state: &AppState, method: &str, params: Value) -> Result<Value
             }
             Ok(serde_json::to_value(&reclaimed).unwrap())
         }
-        "tasks/complete" => {
+        "tasks/complete" | "scheduler/submit" => {
             let p: CompleteParams =
                 serde_json::from_value(params).map_err(MethodError::bad_params)?;
             // post_ack is opt-in: agents that already follow a custom
@@ -225,9 +255,19 @@ async fn dispatch(state: &AppState, method: &str, params: Value) -> Result<Value
             };
             let outcome = state
                 .store
-                .complete_task(p.id, p.result.unwrap_or(Value::Null), ack)
+                .complete_task(
+                    p.id,
+                    &p.agent_id,
+                    &p.lease_token,
+                    p.result.unwrap_or(Value::Null),
+                    ack,
+                )
                 .map_err(MethodError::internal)?;
             match outcome {
+                CompleteOutcome::Submitted { submission_id } => {
+                    state.bus.notify();
+                    Ok(json!({"ok":true,"state":"submitted","submission_id":submission_id}))
+                }
                 CompleteOutcome::Completed { ack } => {
                     state.bus.notify();
                     Ok(json!({
@@ -240,6 +280,107 @@ async fn dispatch(state: &AppState, method: &str, params: Value) -> Result<Value
                      or reclaimed after its lease expired?",
                 )),
             }
+        }
+        "batches/create" => {
+            #[derive(Deserialize)]
+            #[serde(deny_unknown_fields)]
+            struct P {
+                name: String,
+                #[serde(default)]
+                description: String,
+                #[serde(default)]
+                config: crate::core::types::BatchConfig,
+            }
+            let p: P = serde_json::from_value(params).map_err(MethodError::bad_params)?;
+            state
+                .store
+                .create_batch(&p.name, &p.description, p.config)
+                .map_err(MethodError::internal)
+        }
+        "batches/add_tasks" => {
+            #[derive(Deserialize)]
+            #[serde(deny_unknown_fields)]
+            struct P {
+                batch_id: Uuid,
+                tasks: Vec<crate::core::types::TaskInput>,
+            }
+            let p: P = serde_json::from_value(params).map_err(MethodError::bad_params)?;
+            let tasks = state
+                .store
+                .add_tasks(p.batch_id, p.tasks)
+                .map_err(MethodError::internal)?;
+            state.bus.notify();
+            Ok(json!({"tasks":tasks}))
+        }
+        "batches/status" | "batches/retry_failed" | "batches/cancel" => {
+            #[derive(Deserialize)]
+            #[serde(deny_unknown_fields)]
+            struct P {
+                batch_id: Uuid,
+            }
+            let p: P = serde_json::from_value(params).map_err(MethodError::bad_params)?;
+            match method {
+                "batches/status" => state
+                    .store
+                    .get_batch_status(p.batch_id)
+                    .map_err(MethodError::internal),
+                "batches/retry_failed" => {
+                    let n = state
+                        .store
+                        .retry_failed_tasks(p.batch_id)
+                        .map_err(MethodError::internal)?;
+                    state.bus.notify();
+                    Ok(json!({"retried":n}))
+                }
+                _ => {
+                    state
+                        .store
+                        .cancel_batch(p.batch_id)
+                        .map_err(MethodError::internal)?;
+                    state.bus.notify();
+                    Ok(json!({"ok":true}))
+                }
+            }
+        }
+        "scheduler/claim" => {
+            #[derive(Deserialize)]
+            #[serde(deny_unknown_fields)]
+            struct P {
+                agent_id: String,
+                #[serde(default)]
+                batch_id: Option<Uuid>,
+                #[serde(default)]
+                lease_seconds: Option<u64>,
+            }
+            let p: P = serde_json::from_value(params).map_err(MethodError::bad_params)?;
+            let task = state
+                .store
+                .claim_next(&p.agent_id, p.batch_id, p.lease_seconds)
+                .map_err(MethodError::internal)?;
+            state.bus.notify();
+            Ok(json!({"empty":task.is_none(),"task":task}))
+        }
+        "scheduler/failure" => {
+            #[derive(Deserialize)]
+            #[serde(deny_unknown_fields)]
+            struct P {
+                id: Uuid,
+                agent_id: String,
+                lease_token: String,
+                error: Value,
+            }
+            let p: P = serde_json::from_value(params).map_err(MethodError::bad_params)?;
+            if !state
+                .store
+                .report_failure(p.id, &p.agent_id, &p.lease_token, p.error)
+                .map_err(MethodError::internal)?
+            {
+                return Err(MethodError::conflict(
+                    "failure rejected: lost lease or conflicting request",
+                ));
+            }
+            state.bus.notify();
+            Ok(json!({"ok":true}))
         }
         "agents/heartbeat" => {
             let p: HeartbeatParams =
@@ -267,7 +408,11 @@ async fn dispatch(state: &AppState, method: &str, params: Value) -> Result<Value
 /// reclaim sweep runs first so a freshly-expired claim shows up as
 /// pending without callers having to poke `tasks/reclaim` manually.
 async fn tasks_list(state: &AppState, params: Value) -> Result<Value, MethodError> {
-    let limit = params.get("limit").and_then(|v| v.as_u64()).unwrap_or(50) as usize;
+    let limit = params
+        .get("limit")
+        .and_then(|v| v.as_u64())
+        .unwrap_or(50)
+        .clamp(1, 10_000) as usize;
     let filter = TaskFilter {
         kind: params
             .get("kind")
@@ -287,7 +432,17 @@ async fn tasks_list(state: &AppState, params: Value) -> Result<Value, MethodErro
     // Lazy self-heal: expired claims surface as `pending` without a
     // separate operator action. Cheap (indexed range scan) and bounded
     // by the bus capacity above.
-    let _ = state.store.reclaim_expired_leases();
+    // Subscribe BEFORE observing the database: any later write is either
+    // visible to the query or queued on this receiver.
+    let mut rx = state.bus.subscribe();
+    if !state
+        .store
+        .reclaim_expired_leases()
+        .map_err(MethodError::internal)?
+        .is_empty()
+    {
+        state.bus.notify();
+    }
 
     let tasks = state
         .store
@@ -303,7 +458,10 @@ async fn tasks_list(state: &AppState, params: Value) -> Result<Value, MethodErro
     // request handler forever and so the heartbeat ceiling stays
     // predictable.
     let wait = Duration::from_millis(wait_ms.min(60_000));
-    let mut rx = state.bus.subscribe();
+    #[cfg(test)]
+    if let Some(hook) = &state.after_query {
+        hook();
+    }
     let deadline = tokio::time::Instant::now() + wait;
     loop {
         let remaining = deadline.saturating_duration_since(tokio::time::Instant::now());
@@ -316,7 +474,14 @@ async fn tasks_list(state: &AppState, params: Value) -> Result<Value, MethodErro
             // lagged. Both cases want a fresh query — if there's still
             // nothing, fall back to waiting again until the deadline.
             Ok(Ok(())) | Ok(Err(broadcast::error::RecvError::Lagged(_))) => {
-                let _ = state.store.reclaim_expired_leases();
+                if !state
+                    .store
+                    .reclaim_expired_leases()
+                    .map_err(MethodError::internal)?
+                    .is_empty()
+                {
+                    state.bus.notify();
+                }
                 let tasks = state
                     .store
                     .list_tasks_filtered(limit, &filter)
@@ -399,6 +564,8 @@ struct ClaimParams {
 #[derive(Debug, Deserialize)]
 struct ExtendParams {
     id: Uuid,
+    #[serde(rename = "leaseToken", alias = "lease_token")]
+    lease_token: String,
     #[serde(rename = "agentId")]
     agent_id: String,
     #[serde(default, rename = "leaseSeconds")]
@@ -407,7 +574,11 @@ struct ExtendParams {
 
 #[derive(Debug, Deserialize)]
 struct CompleteParams {
+    #[serde(rename = "agentId", alias = "agent_id")]
+    agent_id: String,
     id: Uuid,
+    #[serde(rename = "leaseToken", alias = "lease_token")]
+    lease_token: String,
     #[serde(default)]
     result: Option<Value>,
     /// Optional one-call ack pattern. When `true`, the daemon writes a
@@ -455,7 +626,13 @@ impl MethodError {
             message: format!("method not found: {method}"),
         }
     }
-    fn internal<E: std::fmt::Display>(e: E) -> Self {
+    fn internal(e: anyhow::Error) -> Self {
+        if let Some(s) = e.downcast_ref::<crate::core::store::SchedulerError>() {
+            return Self {
+                code: s.code,
+                message: s.message.clone(),
+            };
+        }
         Self {
             code: -32000,
             message: format!("internal error: {e}"),
@@ -466,5 +643,28 @@ impl MethodError {
             code: -32001,
             message: msg.into(),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[tokio::test]
+    async fn write_between_empty_query_and_wait_is_not_lost() {
+        let store = Arc::new(Store::open(std::path::Path::new(":memory:")).unwrap());
+        let bus = ChangeBus::new();
+        let writer = store.clone();
+        let notify = bus.clone();
+        let state = AppState {
+            store,
+            bus,
+            requests: Arc::new(tokio::sync::Semaphore::new(128)),
+            after_query: Some(Arc::new(move || {
+                writer.create_task("window", Value::Null).unwrap();
+                notify.notify();
+            })),
+        };
+        let result = tasks_list(&state, json!({"wait_ms": 100})).await.unwrap();
+        assert_eq!(result.as_array().unwrap().len(), 1);
     }
 }

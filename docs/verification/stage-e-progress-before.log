@@ -1,0 +1,22 @@
+   Compiling coord v0.4.1 (<workspace>)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.79s
+     Running tests\quality.rs (target\debug\deps\quality-c4f8d2bd1fc31b46.exe)
+
+running 1 test
+test batch_status_rejects_corrupt_state_instead_of_reporting_terminal ... FAILED
+
+failures:
+
+---- batch_status_rejects_corrupt_state_instead_of_reporting_terminal stdout ----
+
+thread 'batch_status_rejects_corrupt_state_instead_of_reporting_terminal' (13968) panicked at tests\quality.rs:82:5:
+corruption must never become an apparently terminal batch
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    batch_status_rejects_corrupt_state_instead_of_reporting_terminal
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 4 filtered out; finished in 0.04s
+
+error: test failed, to rerun pass `--test quality`

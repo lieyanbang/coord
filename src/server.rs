@@ -18,6 +18,9 @@ use coord::mcp::Bridge;
 const RECLAIM_TICK: Duration = Duration::from_secs(30);
 
 pub async fn serve(addr: SocketAddr, db: Option<PathBuf>, vault: Option<PathBuf>) -> Result<()> {
+    if !addr.ip().is_loopback() {
+        tracing::warn!(%addr, "unauthenticated RPC exposed beyond loopback; only use a trusted proxy/tunnel");
+    }
     let db_path = db.unwrap_or_else(default_db_path);
     if let Some(parent) = db_path.parent() {
         std::fs::create_dir_all(parent)?;
@@ -27,6 +30,40 @@ pub async fn serve(addr: SocketAddr, db: Option<PathBuf>, vault: Option<PathBuf>
     let store = Arc::new(Store::open_with_vault(&db_path, vault)?);
     let bus = a2a::ChangeBus::new();
     let app = a2a::router_with_bus(store.clone(), bus.clone());
+    // Bounded independent validation queue. The stored job fence prevents a
+    // cancelled/retried task or a restarted consumer accepting stale verdicts.
+    let validation_store = store.clone();
+    let validation_bus = bus.clone();
+    tokio::spawn(async move {
+        let capacity = Arc::new(tokio::sync::Semaphore::new(4));
+        let mut tick = tokio::time::interval(Duration::from_millis(50));
+        loop {
+            tick.tick().await;
+            while let Ok(permit) = capacity.clone().try_acquire_owned() {
+                let job = match validation_store.begin_validation() {
+                    Ok(Some(job)) => job,
+                    Ok(None) => break,
+                    Err(e) => {
+                        tracing::warn!(error=%e,"validation queue failed");
+                        break;
+                    }
+                };
+                let store = validation_store.clone();
+                let bus = validation_bus.clone();
+                tokio::spawn(async move {
+                    let outcome = coord::core::validator::validate(&job).await;
+                    match store.finish_validation(&job, outcome) {
+                        Ok(true) => {
+                            bus.notify();
+                        }
+                        Ok(false) => {}
+                        Err(e) => tracing::warn!(error=%e,"validation result failed"),
+                    }
+                    drop(permit);
+                });
+            }
+        }
+    });
 
     // Background reclaim sweep. Lazy reclaim on `tasks/list` keeps the
     // bulletin self-healing for active readers, but the ticker covers

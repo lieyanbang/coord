@@ -1,0 +1,28 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.58s
+     Running tests\faults.rs (target\debug\deps\faults-3cbd7cee9dbad9ed.exe)
+
+running 4 tests
+test mcp_error_response_keeps_stdout_json_and_next_request_works ... ok
+test dropped_response_then_daemon_restart_replays_receipt_without_duplicate_ack ... ok
+cancel races: accepted-before-cancel=10, refused=10
+test twenty_cancel_vs_async_submission_races_keep_one_terminal_state ... ok
+test seeded_process_kills_recover_without_task_loss_or_stale_result_acceptance ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.56s
+
+     Running tests\validation.rs (target\debug\deps\validation-194126baa00f378f.exe)
+
+running 4 tests
+test validator_error_budget_is_separate_from_execution_budget ... ok
+test validator_fail_exhausts_execution_budget_and_old_job_token_cannot_commit ... ok
+test async_pass_fail_retry_does_not_block_next_claim_and_ack_waits_for_pass ... ok
+test validation_pending_recovers_after_restart_and_cancel_verdict_is_stale ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.63s
+
+     Running tests\worker.rs (target\debug\deps\worker-7626b7e6e7829f8d.exe)
+
+running 1 test
+test real_worker_identity_external_timeout_output_limit_and_kill_recovery ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 8.65s

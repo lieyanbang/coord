@@ -74,6 +74,8 @@ pub enum Cmd {
     /// reclaimed underneath you.
     Extend {
         id: Uuid,
+        #[arg(long = "token")]
+        lease_token: String,
         #[arg(long = "as")]
         agent_id: String,
         #[arg(long = "lease", default_value_t = 300)]
@@ -89,6 +91,10 @@ pub enum Cmd {
     /// the recommended flow when finishing meaningful work.
     Complete {
         id: Uuid,
+        #[arg(long = "as")]
+        agent_id: String,
+        #[arg(long = "token")]
+        lease_token: String,
         #[arg(long)]
         result: Option<String>,
         /// Grep-friendly ack summary line (e.g. "v1.1 stable: bug X
@@ -208,6 +214,7 @@ fn run_client(url: String, cmd: Cmd) -> Result<()> {
         }
         Cmd::Extend {
             id,
+            lease_token,
             agent_id,
             lease_seconds,
         } => {
@@ -215,6 +222,7 @@ fn run_client(url: String, cmd: Cmd) -> Result<()> {
                 "tasks/extend",
                 json!({
                     "id": id,
+                    "leaseToken": lease_token,
                     "agentId": agent_id,
                     "leaseSeconds": lease_seconds,
                 }),
@@ -229,6 +237,8 @@ fn run_client(url: String, cmd: Cmd) -> Result<()> {
         }
         Cmd::Complete {
             id,
+            agent_id,
+            lease_token,
             result,
             ack_name,
             ack_priority,
@@ -242,6 +252,8 @@ fn run_client(url: String, cmd: Cmd) -> Result<()> {
                 "tasks/complete",
                 json!({
                     "id": id,
+                    "agentId": agent_id,
+                    "leaseToken": lease_token,
                     "result": result,
                     "postAck": post_ack,
                     "ackName": ack_name,

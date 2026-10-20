@@ -71,6 +71,10 @@ impl Vault {
     /// Initialize an agent note on first heartbeat. Idempotent.
     pub fn touch_agent(&self, id: &str, name: &str) -> Result<()> {
         let _guard = self.lock_agent(id);
+        self.touch_agent_locked(id, name)
+    }
+
+    fn touch_agent_locked(&self, id: &str, name: &str) -> Result<()> {
         let path = self.agent_path(id);
         if path.exists() {
             return Ok(());
@@ -90,7 +94,7 @@ impl Vault {
         let path = self.agent_path(id);
         if !path.exists() {
             // Initialize a stub if we somehow append before heartbeat.
-            self.touch_agent(id, id)?;
+            self.touch_agent_locked(id, id)?;
         }
         let line = format!(
             "- `{ts}` {event}\n",
@@ -115,7 +119,9 @@ impl Vault {
     }
 
     fn agent_path(&self, id: &str) -> PathBuf {
-        self.root.join("agents").join(format!("{}.md", slugify(id)))
+        self.root
+            .join("agents")
+            .join(format!("{}.md", agent_slug(id)))
     }
 
     fn write_readme(&self) -> Result<()> {
@@ -150,7 +156,7 @@ fn atomic_write(path: &Path, contents: &[u8]) -> Result<()> {
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent)?;
     }
-    let tmp = path.with_extension("md.tmp");
+    let tmp = path.with_extension(format!("{}.tmp", uuid::Uuid::new_v4()));
     fs::write(&tmp, contents).with_context(|| format!("write {tmp:?}"))?;
     fs::rename(&tmp, path).with_context(|| format!("rename {tmp:?} -> {path:?}"))?;
     Ok(())
@@ -200,7 +206,7 @@ fn render_task_md(task: &Task, relations: &[(String, String)]) -> String {
         s.push_str("\n```\n\n");
     }
     if let Some(by) = &task.claimed_by {
-        s.push_str(&format!("## Claimed by\n[[{}]]\n\n", slugify(by)));
+        s.push_str(&format!("## Claimed by\n[[{}]]\n\n", agent_slug(by)));
     }
     if let Some(result) = &task.result {
         s.push_str("## Result\n\n```json\n");
@@ -208,4 +214,13 @@ fn render_task_md(task: &Task, relations: &[(String, String)]) -> String {
         s.push_str("\n```\n");
     }
     s
+}
+
+fn agent_slug(id: &str) -> String {
+    let name = slugify(id);
+    format!(
+        "{}-{}",
+        &name[..name.len().min(32)],
+        uuid::Uuid::new_v5(&uuid::Uuid::NAMESPACE_OID, id.as_bytes())
+    )
 }

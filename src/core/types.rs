@@ -9,6 +9,7 @@ use uuid::Uuid;
 pub enum TaskState {
     Pending,
     Claimed,
+    Submitted,
     Completed,
     Failed,
     Cancelled,
@@ -19,6 +20,7 @@ impl TaskState {
         match self {
             Self::Pending => "pending",
             Self::Claimed => "claimed",
+            Self::Submitted => "submitted",
             Self::Completed => "completed",
             Self::Failed => "failed",
             Self::Cancelled => "cancelled",
@@ -29,6 +31,7 @@ impl TaskState {
         Some(match s {
             "pending" => Self::Pending,
             "claimed" => Self::Claimed,
+            "submitted" => Self::Submitted,
             "completed" => Self::Completed,
             "failed" => Self::Failed,
             "cancelled" => Self::Cancelled,
@@ -81,6 +84,62 @@ pub struct Task {
     /// the lease migration ran.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub lease_until: Option<DateTime<Utc>>,
+    #[serde(default)]
+    pub lease_token: Option<String>,
+    #[serde(default)]
+    pub attempt_no: u64,
+    #[serde(default)]
+    pub attempt_count: u32,
+    #[serde(default = "default_max_attempts")]
+    pub max_attempts: u32,
+    #[serde(default)]
+    pub available_at: Option<DateTime<Utc>>,
+    #[serde(default)]
+    pub batch_id: Option<Uuid>,
+    #[serde(default)]
+    pub task_key: Option<String>,
+    #[serde(default)]
+    pub error: Option<serde_json::Value>,
+    #[serde(default)]
+    pub completed_at: Option<DateTime<Utc>>,
+    #[serde(default)]
+    pub submission_id: Option<String>,
+    #[serde(default)]
+    pub validation_attempts: u32,
+    #[serde(default)]
+    pub validation_error_count: u32,
+}
+
+pub fn default_max_attempts() -> u32 {
+    3
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, schemars::JsonSchema)]
+#[serde(default, deny_unknown_fields)]
+pub struct BatchConfig {
+    pub max_attempts: u32,
+    pub retry_backoff_ms: u64,
+    pub max_backoff_ms: u64,
+    pub validator: Option<super::validator::ValidatorConfig>,
+}
+impl Default for BatchConfig {
+    fn default() -> Self {
+        Self {
+            max_attempts: 3,
+            retry_backoff_ms: 100,
+            max_backoff_ms: 30_000,
+            validator: None,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, schemars::JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct TaskInput {
+    pub key: String,
+    pub name: String,
+    #[serde(default)]
+    pub payload: serde_json::Value,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

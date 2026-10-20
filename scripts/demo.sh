@@ -30,14 +30,15 @@ for i in $(seq 1 "$NUM_AGENTS"); do
             "$COORD" --url "$URL" heartbeat "$AGENT" --name "demo worker" \
                 >/dev/null 2>&1 || true
 
-            TASK_ID=$("$COORD" --url "$URL" tasks --limit 50 2>/dev/null \
-                | awk '$2=="pending" {print $1; exit}')
-
+            # Optional POSIX demo: python3 parses full IDs and the claim fence.
+            TASK_ID=$(curl -fsS -H 'Content-Type: application/json' "$URL" \
+                -d '{"jsonrpc":"2.0","id":1,"method":"tasks/list","params":{"state":"pending","limit":1}}' \
+                | python3 -c 'import json,sys; r=json.load(sys.stdin).get("result",[]); print(r[0]["id"] if r else "")')
             if [[ -n "${TASK_ID:-}" ]]; then
-                if "$COORD" --url "$URL" claim "$TASK_ID" --as "$AGENT" \
-                    >/dev/null 2>&1; then
+                if CLAIM=$("$COORD" --url "$URL" claim "$TASK_ID" --as "$AGENT" 2>/dev/null); then
+                    TOKEN=$(printf '%s' "$CLAIM" | python3 -c 'import json,sys; print(json.load(sys.stdin)["lease_token"])')
                     sleep "0.$((RANDOM % 9 + 2))"
-                    "$COORD" --url "$URL" complete "$TASK_ID" \
+                    "$COORD" --url "$URL" complete "$TASK_ID" --as "$AGENT" --token "$TOKEN" \
                         --result "{\"by\":\"$AGENT\"}" >/dev/null 2>&1 || true
                 fi
             fi

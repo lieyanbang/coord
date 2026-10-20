@@ -1,0 +1,16 @@
+   Compiling windows_x86_64_msvc v0.52.6
+   Compiling h2 v0.4.20
+   Compiling anyhow v1.0.104
+   Compiling sha1_smol v1.0.1
+   Compiling uuid v1.23.1
+   Compiling windows-targets v0.52.6
+   Compiling windows-sys v0.59.0
+   Compiling nu-ansi-term v0.50.3
+   Compiling tracing-subscriber v0.3.23
+   Compiling hyper v1.9.0
+   Compiling hyper-util v0.1.20
+   Compiling hyper-tls v0.6.0
+   Compiling axum v0.7.9
+   Compiling reqwest v0.12.28
+   Compiling coord v0.4.1 (<workspace>)
+    Finished `release` profile [optimized] target(s) in 1m 29s

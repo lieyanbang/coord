@@ -1,0 +1,10 @@
+   Compiling coord v0.4.1 (<workspace>)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3.06s
+     Running tests\batches.rs (target\debug\deps\batches-72a83e97caf1fedb.exe)
+
+running 2 tests
+test retry_budget_backoff_receipts_idempotent_keys_and_cancel ... ok
+test hundred_tasks_over_dynamic_independent_mcp_workers_and_recovery ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.64s
+

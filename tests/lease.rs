@@ -46,7 +46,7 @@ fn extend_succeeds_only_for_current_claimer() {
     let dir = tempdir("extend");
     let store = Arc::new(Store::open(&dir.join("db")).unwrap());
     let task = store.create_task("work", serde_json::json!({})).unwrap();
-    let _ = store
+    let claimed = store
         .claim_task(task.id, "agent-a", Some(30))
         .unwrap()
         .unwrap();
@@ -64,7 +64,12 @@ fn extend_succeeds_only_for_current_claimer() {
     thread::sleep(Duration::from_millis(10));
 
     let extended = store
-        .extend_lease(task.id, "agent-a", Some(120))
+        .extend_lease(
+            task.id,
+            "agent-a",
+            claimed.lease_token.as_deref().unwrap(),
+            Some(120),
+        )
         .expect("extend ok")
         .expect("returned new lease");
     assert!(
@@ -74,7 +79,12 @@ fn extend_succeeds_only_for_current_claimer() {
 
     // A different agent cannot extend.
     let other = store
-        .extend_lease(task.id, "intruder", Some(120))
+        .extend_lease(
+            task.id,
+            "intruder",
+            claimed.lease_token.as_deref().unwrap(),
+            Some(120),
+        )
         .expect("extend ok");
     assert!(
         other.is_none(),
@@ -113,7 +123,8 @@ fn expired_lease_reclaims_and_lets_a_new_agent_win() {
     assert!(after.claimed_by.is_none(), "claimed_by must be cleared");
     assert!(after.lease_until.is_none(), "lease_until must be cleared");
 
-    // A different agent now claims the same task.
+    thread::sleep(Duration::from_millis(120));
+    // A different agent now claims the same task after retry backoff.
     let new_claim = store
         .claim_task(task.id, "agent-b", Some(60))
         .unwrap()
@@ -124,24 +135,21 @@ fn expired_lease_reclaims_and_lets_a_new_agent_win() {
     // to `pending` and then to `claimed by agent-b`, never back to
     // `claimed by agent-a`).
     let outcome = store
-        .complete_task(task.id, serde_json::json!({"by": "a"}), None)
+        .complete_task(
+            task.id,
+            "agent-a",
+            claimed.lease_token.as_deref().unwrap(),
+            serde_json::json!({"by": "a"}),
+            None,
+        )
         .expect("rpc ok");
     let final_state = store.get_task(task.id).unwrap().unwrap();
-    // (`complete_task` does not check the claimer, only the state.
-    // After agent-b's claim the state is `claimed`, so a stale
-    // complete from agent-a would in fact succeed. Document the
-    // observed behavior rather than the desired one — fixing that is
-    // a separate, claimer-checked complete in a follow-up.)
-    match outcome {
-        CompleteOutcome::Completed { .. } => {
-            assert_eq!(final_state.state, TaskState::Completed);
-            assert_eq!(final_state.claimed_by.as_deref(), Some("agent-b"));
-        }
-        CompleteOutcome::NotInClaimedState => {
-            assert_eq!(final_state.state, TaskState::Claimed);
-            assert_eq!(final_state.claimed_by.as_deref(), Some("agent-b"));
-        }
-    }
+    assert!(
+        matches!(outcome, CompleteOutcome::NotInClaimedState),
+        "stale completion must be rejected"
+    );
+    assert_eq!(final_state.state, TaskState::Claimed);
+    assert_eq!(final_state.claimed_by.as_deref(), Some("agent-b"));
 }
 
 #[test]
@@ -149,12 +157,18 @@ fn completed_task_does_not_get_reclaimed() {
     let dir = tempdir("complete");
     let store = Arc::new(Store::open(&dir.join("db")).unwrap());
     let task = store.create_task("work", serde_json::json!({})).unwrap();
-    store
+    let claimed = store
         .claim_task(task.id, "agent-a", Some(1))
         .unwrap()
         .unwrap();
     store
-        .complete_task(task.id, serde_json::json!({"by": "a"}), None)
+        .complete_task(
+            task.id,
+            "agent-a",
+            claimed.lease_token.as_deref().unwrap(),
+            serde_json::json!({"by": "a"}),
+            None,
+        )
         .unwrap();
 
     thread::sleep(Duration::from_millis(1_200));

@@ -1,0 +1,96 @@
+{
+  "run_id": 39436136707,
+  "head_sha": "d4f41043c75a811ab756e2bc65a816eefef823a8",
+  "url": "https://github.com/lieyanbang/coord/actions/runs/39436136707",
+  "status": "completed",
+  "conclusion": "success",
+  "jobs": [
+    {
+      "name": "test (windows-2022)",
+      "status": "completed",
+      "conclusion": "success",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run dtolnay/rust-toolchain@stable",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run Swatinem/rust-cache@v2",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "fmt",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "clippy",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "test",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "release build",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run Swatinem/rust-cache@v2",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ]
+    }
+  ],
+  "artifact": {
+    "archive_sha256": "31582c4e5d8cfc85658808ad3d9222f581d31cc3eb92904b5c01bd448457f675",
+    "id": 12272506068,
+    "size_bytes": 4199540,
+    "exe_sha256": "6884df79dff810546db84cace765991b9ebec168701136ce0fa15fe51c43d3f6",
+    "version_exit": 0,
+    "name": "coord-windows-2022",
+    "version": "coord 0.4.1\r\na2a   subset (tasks/send, tasks/get, tasks/cancel)\r\next   tasks/claim, tasks/extend, tasks/reclaim, tasks/complete, tasks/list (long-poll)\r\nmcp   bridge   (use `coord mcp` for stdio)\r\nvault markdown (use `coord serve --vault PATH` to enable)\r\nkinds task | bug | feature | decision | ack | knowledge | build\r\nprio  low | normal | high | urgent\r\nlease 300s default · 3600s max · auto-reclaim every 30s",
+    "expired": false
+  }
+}

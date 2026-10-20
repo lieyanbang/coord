@@ -26,7 +26,13 @@ fn cancel_is_sticky_against_late_complete() {
 
     // Worker finishes obliviously and tries to mark complete.
     let outcome = store
-        .complete_task(task.id, serde_json::json!({"result": 42}), None)
+        .complete_task(
+            task.id,
+            "worker-1",
+            claimed.as_ref().unwrap().lease_token.as_deref().unwrap(),
+            serde_json::json!({"result": 42}),
+            None,
+        )
         .unwrap();
     assert!(
         matches!(outcome, CompleteOutcome::NotInClaimedState),
