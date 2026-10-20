@@ -1,0 +1,22 @@
+   Compiling coord v0.4.1 (<workspace>)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 10.78s
+     Running tests\lease.rs (target\debug\deps\lease-a261352f60e6c563.exe)
+
+running 1 test
+test expired_lease_reclaims_and_lets_a_new_agent_win ... FAILED
+
+failures:
+
+---- expired_lease_reclaims_and_lets_a_new_agent_win stdout ----
+
+thread 'expired_lease_reclaims_and_lets_a_new_agent_win' (3896) panicked at tests\lease.rs:130:5:
+stale completion must be rejected
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    expired_lease_reclaims_and_lets_a_new_agent_win
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 3 filtered out; finished in 1.24s
+
+error: test failed, to rerun pass `--test lease`

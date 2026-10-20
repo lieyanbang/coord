@@ -1,0 +1,58 @@
+   Compiling coord v0.4.1 (<workspace>)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.02s
+     Running tests\quality.rs (target\debug\deps\quality-340922be4ded5921.exe)
+
+running 4 tests
+test pre_lease_schema_migrates_before_indexes ... FAILED
+test corrupt_rows_never_silently_become_pending_or_null ... FAILED
+test vault_same_name_and_agent_slug_collisions_are_distinct ... FAILED
+test vault_event_before_heartbeat_does_not_deadlock ... FAILED
+
+failures:
+
+---- pre_lease_schema_migrates_before_indexes stdout ----
+
+thread 'pre_lease_schema_migrates_before_indexes' (23672) panicked at tests\quality.rs:18:36:
+upgrade original schema: no such column: kind in 
+CREATE INDEX IF NOT EXISTS idx_tasks_kind_priority ON tasks(kind, priority);
+CREATE INDEX IF NOT EXISTS idx_tasks_lease_until ON tasks(lease_until);
+
+CREATE TABLE IF NOT EXISTS agents (
+    id         TEXT PRIMARY KEY,
+    name       TEXT NOT NULL,
+    last_seen  TEXT NOT NULL,
+    first_seen TEXT NOT NULL DEFAULT '1970-01-01T00:00:00Z'
+);
+ at offset 61
+
+Caused by:
+    Error code 1: SQL error or missing database
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- corrupt_rows_never_silently_become_pending_or_null stdout ----
+
+thread 'corrupt_rows_never_silently_become_pending_or_null' (32036) panicked at tests\quality.rs:32:9:
+corrupt state must surface
+
+---- vault_same_name_and_agent_slug_collisions_are_distinct stdout ----
+
+thread 'vault_same_name_and_agent_slug_collisions_are_distinct' (25156) panicked at tests\quality.rs:45:5:
+assertion `left == right` failed
+  left: 1
+ right: 2
+
+---- vault_event_before_heartbeat_does_not_deadlock stdout ----
+
+thread 'vault_event_before_heartbeat_does_not_deadlock' (2772) panicked at tests\quality.rs:54:53:
+event writer deadlocked: Timeout
+
+
+failures:
+    corrupt_rows_never_silently_become_pending_or_null
+    pre_lease_schema_migrates_before_indexes
+    vault_event_before_heartbeat_does_not_deadlock
+    vault_same_name_and_agent_slug_collisions_are_distinct
+
+test result: FAILED. 0 passed; 4 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.01s
+
+error: test failed, to rerun pass `--test quality`

@@ -58,4 +58,16 @@ fmt, locked clippy/test/release build, Rust cache, per-platform artifacts
 Release remains exclusively `v*` tag triggered, builds locked dependencies,
 and no longer writes to any Homebrew repository. MIT copyright unchanged.
 
-Cloud run evidence will be appended after pushing this stage commit.
+## Gate 0: PASS
+
+Commit `572771a76a61851a2a11d32fea2a0a95441bf584`.
+[Actions run 39428331459](https://github.com/lieyanbang/coord/actions/runs/39428331459)
+completed **success**: fmt, clippy, tests, release build and upload all succeeded.
+Artifact `coord-windows-2022`, ID `12266528775`, ZIP size 4,028,425 bytes,
+was downloaded and extracted; its `coord.exe version` executed successfully
+(exit 0, version 0.4.1). Executable SHA-256:
+`2e92e9aaa42fb09f4950d74212642723f4616501fc84950ac79e3f711c40cd1c`.
+
+An unchanged baseline executable created the isolated legacy database: completed
+work, linked ack, pending work, one agent and Vault notes. A SQLite backup is
+retained locally under ignored `target/verification/` for later migration tests.

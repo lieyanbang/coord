@@ -1,0 +1,5 @@
+[advisories]
+# rmcp's affected Streamable HTTP server transport is not enabled or used.
+# Our bridge is stdio -> reqwest -> axum; see STAGE_A.md for the separate
+# axum browser-Origin boundary. Remove this exception if adding rmcp HTTP.
+ignore = ["RUSTSEC-2026-0189"]

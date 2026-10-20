@@ -67,26 +67,28 @@ impl Store {
     }
 
     pub fn open_with_vault(path: &Path, vault_dir: Option<PathBuf>) -> Result<Self> {
-        let conn = Connection::open(path).context("open sqlite")?;
-        conn.execute_batch(SCHEMA)?;
+        let mut conn = Connection::open(path).context("open sqlite")?;
+        conn.busy_timeout(std::time::Duration::from_secs(5))?;
         // WAL keeps short writes from blocking concurrent readers, which
         // matters when N agents poll for tasks in tight loops.
         conn.pragma_update(None, "journal_mode", "WAL")?;
         conn.pragma_update(None, "synchronous", "NORMAL")?;
+        let tx = conn.transaction_with_behavior(rusqlite::TransactionBehavior::Immediate)?;
+        tx.execute_batch(SCHEMA)?;
         // Forward-compatible additive migrations. SQLite errors with
         // "duplicate column name" if these have already run; we swallow
         // those specifically and let real errors surface.
-        try_add_column(&conn, "tasks", "kind", "TEXT NOT NULL DEFAULT 'task'")?;
-        try_add_column(&conn, "tasks", "priority", "TEXT NOT NULL DEFAULT 'normal'")?;
+        try_add_column(&tx, "tasks", "kind", "TEXT NOT NULL DEFAULT 'task'")?;
+        try_add_column(&tx, "tasks", "priority", "TEXT NOT NULL DEFAULT 'normal'")?;
         // Lease columns are nullable: unclaimed tasks have no lease, and
         // legacy rows from before the migration keep NULLs (the
         // reclaim sweep treats NULL as "no lease, don't touch").
-        try_add_column(&conn, "tasks", "claimed_at", "TEXT")?;
-        try_add_column(&conn, "tasks", "lease_until", "TEXT")?;
+        try_add_column(&tx, "tasks", "claimed_at", "TEXT")?;
+        try_add_column(&tx, "tasks", "lease_until", "TEXT")?;
         // `first_seen` defaults to epoch on existing rows; the next heartbeat
         // for that agent will not overwrite it (see UPSERT in `heartbeat`).
         try_add_column(
-            &conn,
+            &tx,
             "agents",
             "first_seen",
             "TEXT NOT NULL DEFAULT '1970-01-01T00:00:00Z'",
@@ -94,10 +96,14 @@ impl Store {
         // Index just `lease_until` so the periodic reclaim sweep is a
         // cheap range scan even when the bulletin has thousands of
         // completed/cancelled rows that don't carry a lease.
-        conn.execute(
+        tx.execute_batch(
+            "CREATE INDEX IF NOT EXISTS idx_tasks_kind_priority ON tasks(kind, priority);",
+        )?;
+        tx.execute(
             "CREATE INDEX IF NOT EXISTS idx_tasks_lease_until ON tasks(lease_until)",
             [],
         )?;
+        tx.commit()?;
 
         let vault = vault_dir
             .map(|p| -> Result<Arc<Vault>> { Ok(Arc::new(Vault::open(p)?)) })
@@ -667,7 +673,7 @@ fn clamp_lease(secs: u64) -> u64 {
 pub(crate) fn task_slug(task: &Task) -> String {
     let stamp = task.created_at.format("%Y-%m-%d-%H%M");
     let name = slugify(&task.name);
-    format!("{stamp}-{name}")
+    format!("{stamp}-{}-{}", &name[..name.len().min(48)], task.id)
 }
 
 pub(crate) fn slugify(s: &str) -> String {
@@ -699,16 +705,36 @@ fn row_to_task(row: &rusqlite::Row<'_>) -> rusqlite::Result<Task> {
     let kind: String = row.get(2)?;
     let priority: String = row.get(3)?;
     let state: String = row.get(4)?;
-    let state = TaskState::parse(&state).unwrap_or(TaskState::Pending);
+    let state = TaskState::parse(&state).ok_or_else(|| {
+        rusqlite::Error::FromSqlConversionFailure(
+            4,
+            rusqlite::types::Type::Text,
+            Box::new(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                format!("unknown task state: {state}"),
+            )),
+        )
+    })?;
     let payload: String = row.get(6)?;
-    let payload: serde_json::Value =
-        serde_json::from_str(&payload).unwrap_or(serde_json::Value::Null);
+    let payload: serde_json::Value = serde_json::from_str(&payload).map_err(|e| {
+        rusqlite::Error::FromSqlConversionFailure(6, rusqlite::types::Type::Text, Box::new(e))
+    })?;
     let result: Option<String> = row.get(7)?;
-    let result = result.and_then(|s| serde_json::from_str(&s).ok());
+    let result = result
+        .map(|s| {
+            serde_json::from_str(&s).map_err(|e| {
+                rusqlite::Error::FromSqlConversionFailure(
+                    7,
+                    rusqlite::types::Type::Text,
+                    Box::new(e),
+                )
+            })
+        })
+        .transpose()?;
     let created_at: String = row.get(8)?;
     let updated_at: String = row.get(9)?;
-    let claimed_at: Option<String> = row.get(10).ok();
-    let lease_until: Option<String> = row.get(11).ok();
+    let claimed_at: Option<String> = row.get(10)?;
+    let lease_until: Option<String> = row.get(11)?;
     let parse_ts = |s: &str| -> rusqlite::Result<chrono::DateTime<Utc>> {
         chrono::DateTime::parse_from_rfc3339(s)
             .map(|dt| dt.with_timezone(&Utc))
@@ -722,8 +748,8 @@ fn row_to_task(row: &rusqlite::Row<'_>) -> rusqlite::Result<Task> {
     };
     let parse_opt_ts = |s: Option<String>| -> rusqlite::Result<Option<DateTime<Utc>>> {
         match s {
-            Some(s) if !s.is_empty() => parse_ts(&s).map(Some),
-            _ => Ok(None),
+            Some(s) => parse_ts(&s).map(Some),
+            None => Ok(None),
         }
     };
     Ok(Task {
@@ -743,16 +769,16 @@ fn row_to_task(row: &rusqlite::Row<'_>) -> rusqlite::Result<Task> {
 }
 
 fn try_add_column(conn: &Connection, table: &str, column: &str, def: &str) -> Result<()> {
-    let sql = format!("ALTER TABLE {table} ADD COLUMN {column} {def}");
-    match conn.execute(&sql, []) {
-        Ok(_) => Ok(()),
-        Err(rusqlite::Error::SqliteFailure(_, Some(msg)))
-            if msg.contains("duplicate column name") =>
-        {
-            Ok(())
-        }
-        Err(e) => Err(e.into()),
+    let mut stmt = conn.prepare(&format!("PRAGMA table_info({table})"))?;
+    let columns = stmt
+        .query_map([], |row| row.get::<_, String>(1))?
+        .collect::<rusqlite::Result<Vec<_>>>()?;
+    if columns.iter().any(|c| c == column) {
+        return Ok(());
     }
+    let sql = format!("ALTER TABLE {table} ADD COLUMN {column} {def}");
+    conn.execute(&sql, [])?;
+    Ok(())
 }
 
 const SCHEMA: &str = r#"
@@ -772,8 +798,6 @@ CREATE TABLE IF NOT EXISTS tasks (
 );
 CREATE INDEX IF NOT EXISTS idx_tasks_state ON tasks(state);
 CREATE INDEX IF NOT EXISTS idx_tasks_claimed_by ON tasks(claimed_by);
-CREATE INDEX IF NOT EXISTS idx_tasks_kind_priority ON tasks(kind, priority);
-CREATE INDEX IF NOT EXISTS idx_tasks_lease_until ON tasks(lease_until);
 
 CREATE TABLE IF NOT EXISTS agents (
     id         TEXT PRIMARY KEY,

@@ -18,6 +18,9 @@ use coord::mcp::Bridge;
 const RECLAIM_TICK: Duration = Duration::from_secs(30);
 
 pub async fn serve(addr: SocketAddr, db: Option<PathBuf>, vault: Option<PathBuf>) -> Result<()> {
+    if !addr.ip().is_loopback() {
+        tracing::warn!(%addr, "unauthenticated RPC exposed beyond loopback; only use a trusted proxy/tunnel");
+    }
     let db_path = db.unwrap_or_else(default_db_path);
     if let Some(parent) = db_path.parent() {
         std::fs::create_dir_all(parent)?;

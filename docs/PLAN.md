@@ -88,8 +88,8 @@ Windows 本机及 Windows Actions 的真实测试、构建与产物为准。
 
 | Stage | 状态 | 证据 / 依赖 |
 | --- | --- | --- |
-| 0 | IN_PROGRESS | 本机 fmt/clippy/tests/build PASS；修复 Windows 测试静默跳过；Windows CI/产物已配置，等待实际 Actions |
-| A | TODO | 依赖 Gate 0 |
+| 0 | PASS | `572771a`；Windows Actions 39428331459 success；产物已下载并运行 |
+| A | PASS | 本机四项 Gate PASS；4 个缺陷先红后绿；质量/服务边界/长轮询测试；Stage B 租约缺陷明确待修复 |
 | B | TODO | 依赖 Gate A；旧结果提交缺陷已确认 |
 | C | TODO | 依赖 Gate B |
 | D | TODO | 依赖 Gate C |

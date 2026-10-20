@@ -15,7 +15,12 @@
 //!   - `agents/heartbeat`  — register/refresh an agent's presence
 //!   - `agents/list`       — list known agents
 
-use axum::{extract::State, routing::post, Json, Router};
+use axum::{
+    extract::{DefaultBodyLimit, State},
+    http::HeaderMap,
+    routing::post,
+    Json, Router,
+};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::sync::Arc;
@@ -60,6 +65,9 @@ impl Default for ChangeBus {
 pub struct AppState {
     pub store: Arc<Store>,
     pub bus: ChangeBus,
+    pub requests: Arc<tokio::sync::Semaphore>,
+    #[cfg(test)]
+    after_query: Option<Arc<dyn Fn() + Send + Sync>>,
 }
 
 pub fn router(store: Arc<Store>) -> Router {
@@ -67,10 +75,17 @@ pub fn router(store: Arc<Store>) -> Router {
 }
 
 pub fn router_with_bus(store: Arc<Store>, bus: ChangeBus) -> Router {
-    let state = AppState { store, bus };
+    let state = AppState {
+        store,
+        bus,
+        requests: Arc::new(tokio::sync::Semaphore::new(128)),
+        #[cfg(test)]
+        after_query: None,
+    };
     Router::new()
         .route("/", post(handle_rpc))
         .route("/.well-known/agent.json", axum::routing::get(agent_card))
+        .layer(DefaultBodyLimit::max(1024 * 1024))
         .with_state(state)
 }
 
@@ -102,10 +117,25 @@ struct RpcError {
 
 async fn handle_rpc(
     State(state): State<AppState>,
+    headers: HeaderMap,
     Json(req): Json<RpcRequest>,
 ) -> Json<RpcResponse> {
     let id = req.id.clone();
-    let result = dispatch(&state, &req.method, req.params).await;
+    let permit = state.requests.try_acquire();
+    let result = if headers.contains_key("origin") {
+        Err(MethodError::conflict(
+            "browser-origin requests are not supported",
+        ))
+    } else if permit.is_err() {
+        Err(MethodError {
+            code: -32002,
+            message: "server busy; retry with backoff".into(),
+        })
+    } else if req.jsonrpc.as_deref() != Some("2.0") {
+        Err(MethodError::bad_params("jsonrpc must be 2.0"))
+    } else {
+        dispatch(&state, &req.method, req.params).await
+    };
     Json(match result {
         Ok(value) => RpcResponse {
             jsonrpc: "2.0",
@@ -267,7 +297,11 @@ async fn dispatch(state: &AppState, method: &str, params: Value) -> Result<Value
 /// reclaim sweep runs first so a freshly-expired claim shows up as
 /// pending without callers having to poke `tasks/reclaim` manually.
 async fn tasks_list(state: &AppState, params: Value) -> Result<Value, MethodError> {
-    let limit = params.get("limit").and_then(|v| v.as_u64()).unwrap_or(50) as usize;
+    let limit = params
+        .get("limit")
+        .and_then(|v| v.as_u64())
+        .unwrap_or(50)
+        .clamp(1, 10_000) as usize;
     let filter = TaskFilter {
         kind: params
             .get("kind")
@@ -287,7 +321,17 @@ async fn tasks_list(state: &AppState, params: Value) -> Result<Value, MethodErro
     // Lazy self-heal: expired claims surface as `pending` without a
     // separate operator action. Cheap (indexed range scan) and bounded
     // by the bus capacity above.
-    let _ = state.store.reclaim_expired_leases();
+    // Subscribe BEFORE observing the database: any later write is either
+    // visible to the query or queued on this receiver.
+    let mut rx = state.bus.subscribe();
+    if !state
+        .store
+        .reclaim_expired_leases()
+        .map_err(MethodError::internal)?
+        .is_empty()
+    {
+        state.bus.notify();
+    }
 
     let tasks = state
         .store
@@ -303,7 +347,10 @@ async fn tasks_list(state: &AppState, params: Value) -> Result<Value, MethodErro
     // request handler forever and so the heartbeat ceiling stays
     // predictable.
     let wait = Duration::from_millis(wait_ms.min(60_000));
-    let mut rx = state.bus.subscribe();
+    #[cfg(test)]
+    if let Some(hook) = &state.after_query {
+        hook();
+    }
     let deadline = tokio::time::Instant::now() + wait;
     loop {
         let remaining = deadline.saturating_duration_since(tokio::time::Instant::now());
@@ -316,7 +363,14 @@ async fn tasks_list(state: &AppState, params: Value) -> Result<Value, MethodErro
             // lagged. Both cases want a fresh query — if there's still
             // nothing, fall back to waiting again until the deadline.
             Ok(Ok(())) | Ok(Err(broadcast::error::RecvError::Lagged(_))) => {
-                let _ = state.store.reclaim_expired_leases();
+                if !state
+                    .store
+                    .reclaim_expired_leases()
+                    .map_err(MethodError::internal)?
+                    .is_empty()
+                {
+                    state.bus.notify();
+                }
                 let tasks = state
                     .store
                     .list_tasks_filtered(limit, &filter)
@@ -466,5 +520,28 @@ impl MethodError {
             code: -32001,
             message: msg.into(),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[tokio::test]
+    async fn write_between_empty_query_and_wait_is_not_lost() {
+        let store = Arc::new(Store::open(std::path::Path::new(":memory:")).unwrap());
+        let bus = ChangeBus::new();
+        let writer = store.clone();
+        let notify = bus.clone();
+        let state = AppState {
+            store,
+            bus,
+            requests: Arc::new(tokio::sync::Semaphore::new(128)),
+            after_query: Some(Arc::new(move || {
+                writer.create_task("window", Value::Null).unwrap();
+                notify.notify();
+            })),
+        };
+        let result = tasks_list(&state, json!({"wait_ms": 100})).await.unwrap();
+        assert_eq!(result.as_array().unwrap().len(), 1);
     }
 }

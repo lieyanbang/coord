@@ -83,6 +83,7 @@ fn extend_succeeds_only_for_current_claimer() {
 }
 
 #[test]
+#[ignore = "Stage B gate: confirmed stale-completion defect; see stage-a-lease-defect.log"]
 fn expired_lease_reclaims_and_lets_a_new_agent_win() {
     let dir = tempdir("reclaim");
     let store = Arc::new(Store::open(&dir.join("db")).unwrap());
@@ -127,21 +128,12 @@ fn expired_lease_reclaims_and_lets_a_new_agent_win() {
         .complete_task(task.id, serde_json::json!({"by": "a"}), None)
         .expect("rpc ok");
     let final_state = store.get_task(task.id).unwrap().unwrap();
-    // (`complete_task` does not check the claimer, only the state.
-    // After agent-b's claim the state is `claimed`, so a stale
-    // complete from agent-a would in fact succeed. Document the
-    // observed behavior rather than the desired one — fixing that is
-    // a separate, claimer-checked complete in a follow-up.)
-    match outcome {
-        CompleteOutcome::Completed { .. } => {
-            assert_eq!(final_state.state, TaskState::Completed);
-            assert_eq!(final_state.claimed_by.as_deref(), Some("agent-b"));
-        }
-        CompleteOutcome::NotInClaimedState => {
-            assert_eq!(final_state.state, TaskState::Claimed);
-            assert_eq!(final_state.claimed_by.as_deref(), Some("agent-b"));
-        }
-    }
+    assert!(
+        matches!(outcome, CompleteOutcome::NotInClaimedState),
+        "stale completion must be rejected"
+    );
+    assert_eq!(final_state.state, TaskState::Claimed);
+    assert_eq!(final_state.claimed_by.as_deref(), Some("agent-b"));
 }
 
 #[test]

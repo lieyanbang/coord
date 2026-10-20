@@ -37,6 +37,18 @@ Backing it are three things that make the watch safe:
 
 ## Status
 
+This Fork targets **Windows x86_64 MSVC** as its primary and only default
+supported platform. Linux/macOS source ports are optional and unverified;
+they are excluded from default CI and Release builds. Each push/PR runs
+fmt, strict clippy, tests and a locked release build on Windows 2022, and
+uploads `coord-windows-2022` as a downloadable Actions artifact. A Release
+requires an explicit `v*` tag; no Homebrew repository is updated automatically.
+See [implementation progress](docs/PLAN.md) and [verification](docs/verification/).
+
+This is derived from DmarshalTU/coord at `44fe390`; original MIT copyright and
+license are preserved. Fork work adds quality and lease safeguards, scheduling
+and optional validation in stages; progress documents identify what is verified.
+
 `0.4.1`. Eleven end-to-end tests gate every change, including a long-poll
 test that proves the watch primitive unblocks server-side (not via client
 polling), a 16-process atomic-claim race, a lease/auto-reclaim cycle, and
@@ -374,6 +386,14 @@ Every client subcommand obeys `--url` / `COORD_URL` (default
 `http://127.0.0.1:7777/`).
 
 ## Configuration
+
+RPC has no authentication. The default is loopback; use only trusted local
+clients. An explicit non-loopback bind requires a trusted proxy/tunnel and is
+logged as a warning. Browser Origin requests are rejected, JSON bodies are
+limited to 1 MiB and active RPC handlers to 128 (busy error `-32002`). Keep the
+database and Vault in operator-controlled directories; Vault is an audit mirror,
+not the transactional source of truth. Legacy notes remain after filename
+migration; new notes use task UUIDs and agent identity hashes to avoid collisions.
 
 | Flag / env var          | Default                                     |
 |-------------------------|---------------------------------------------|
