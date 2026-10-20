@@ -373,9 +373,9 @@ coord tasks          list recent tasks
 coord agents         list known agents
 coord send <name>    create a task (--kind, --priority, --payload)
 coord claim <id>     atomic claim with a lease (--as <agent>, --lease <secs>)
-coord extend <id>    push the lease forward (--as <agent>, --lease <secs>)
+coord extend <id>    push the lease forward (--as <agent>, --token <token>, --lease <secs>)
 coord reclaim        force-sweep expired claims back to pending
-coord complete <id>  mark a claimed task complete (--result <json>)
+coord complete <id>  mark complete (--as <agent>, --token <token>, --result <json>)
 coord cancel <id>    cancel a task
 coord heartbeat <id> refresh agent presence
 coord wait           long-poll for a matching task (server-pushed, no polling)
@@ -384,6 +384,11 @@ coord version        version + protocol info
 
 Every client subcommand obeys `--url` / `COORD_URL` (default
 `http://127.0.0.1:7777/`).
+
+Claims now return `lease_token` and monotonic `attempt_no`. Complete and renew
+must carry that claim's agent ID and token before expiry; old clients fail
+explicitly. Exact duplicate completion returns its original ack without creating
+another one; conflicting results fail. See [API and migration](docs/API.md).
 
 ## Configuration
 

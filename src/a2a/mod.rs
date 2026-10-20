@@ -212,7 +212,7 @@ async fn dispatch(state: &AppState, method: &str, params: Value) -> Result<Value
                 serde_json::from_value(params).map_err(MethodError::bad_params)?;
             match state
                 .store
-                .extend_lease(p.id, &p.agent_id, p.lease_seconds)
+                .extend_lease(p.id, &p.agent_id, &p.lease_token, p.lease_seconds)
                 .map_err(MethodError::internal)?
             {
                 Some(until) => Ok(json!({ "ok": true, "lease_until": until.to_rfc3339() })),
@@ -255,7 +255,13 @@ async fn dispatch(state: &AppState, method: &str, params: Value) -> Result<Value
             };
             let outcome = state
                 .store
-                .complete_task(p.id, p.result.unwrap_or(Value::Null), ack)
+                .complete_task(
+                    p.id,
+                    &p.agent_id,
+                    &p.lease_token,
+                    p.result.unwrap_or(Value::Null),
+                    ack,
+                )
                 .map_err(MethodError::internal)?;
             match outcome {
                 CompleteOutcome::Completed { ack } => {
@@ -453,6 +459,8 @@ struct ClaimParams {
 #[derive(Debug, Deserialize)]
 struct ExtendParams {
     id: Uuid,
+    #[serde(rename = "leaseToken", alias = "lease_token")]
+    lease_token: String,
     #[serde(rename = "agentId")]
     agent_id: String,
     #[serde(default, rename = "leaseSeconds")]
@@ -461,7 +469,11 @@ struct ExtendParams {
 
 #[derive(Debug, Deserialize)]
 struct CompleteParams {
+    #[serde(rename = "agentId", alias = "agent_id")]
+    agent_id: String,
     id: Uuid,
+    #[serde(rename = "leaseToken", alias = "lease_token")]
+    lease_token: String,
     #[serde(default)]
     result: Option<Value>,
     /// Optional one-call ack pattern. When `true`, the daemon writes a

@@ -125,6 +125,8 @@ fn two_tabs_can_coordinate_through_complete_with_ack() {
         "tasks/complete",
         serde_json::json!({
             "id": source_id,
+            "agentId": "tab-alpha",
+            "leaseToken": claim["result"]["lease_token"],
             "result": {"sha": "e56f5fa", "files": ["src/lib.rs"]},
             "postAck": true,
             "ackName": "v1.1 prod stable: discount math regression fixed",

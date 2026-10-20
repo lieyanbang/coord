@@ -46,7 +46,7 @@ fn extend_succeeds_only_for_current_claimer() {
     let dir = tempdir("extend");
     let store = Arc::new(Store::open(&dir.join("db")).unwrap());
     let task = store.create_task("work", serde_json::json!({})).unwrap();
-    let _ = store
+    let claimed = store
         .claim_task(task.id, "agent-a", Some(30))
         .unwrap()
         .unwrap();
@@ -64,7 +64,12 @@ fn extend_succeeds_only_for_current_claimer() {
     thread::sleep(Duration::from_millis(10));
 
     let extended = store
-        .extend_lease(task.id, "agent-a", Some(120))
+        .extend_lease(
+            task.id,
+            "agent-a",
+            claimed.lease_token.as_deref().unwrap(),
+            Some(120),
+        )
         .expect("extend ok")
         .expect("returned new lease");
     assert!(
@@ -74,7 +79,12 @@ fn extend_succeeds_only_for_current_claimer() {
 
     // A different agent cannot extend.
     let other = store
-        .extend_lease(task.id, "intruder", Some(120))
+        .extend_lease(
+            task.id,
+            "intruder",
+            claimed.lease_token.as_deref().unwrap(),
+            Some(120),
+        )
         .expect("extend ok");
     assert!(
         other.is_none(),
@@ -83,7 +93,6 @@ fn extend_succeeds_only_for_current_claimer() {
 }
 
 #[test]
-#[ignore = "Stage B gate: confirmed stale-completion defect; see stage-a-lease-defect.log"]
 fn expired_lease_reclaims_and_lets_a_new_agent_win() {
     let dir = tempdir("reclaim");
     let store = Arc::new(Store::open(&dir.join("db")).unwrap());
@@ -125,7 +134,13 @@ fn expired_lease_reclaims_and_lets_a_new_agent_win() {
     // to `pending` and then to `claimed by agent-b`, never back to
     // `claimed by agent-a`).
     let outcome = store
-        .complete_task(task.id, serde_json::json!({"by": "a"}), None)
+        .complete_task(
+            task.id,
+            "agent-a",
+            claimed.lease_token.as_deref().unwrap(),
+            serde_json::json!({"by": "a"}),
+            None,
+        )
         .expect("rpc ok");
     let final_state = store.get_task(task.id).unwrap().unwrap();
     assert!(
@@ -141,12 +156,18 @@ fn completed_task_does_not_get_reclaimed() {
     let dir = tempdir("complete");
     let store = Arc::new(Store::open(&dir.join("db")).unwrap());
     let task = store.create_task("work", serde_json::json!({})).unwrap();
-    store
+    let claimed = store
         .claim_task(task.id, "agent-a", Some(1))
         .unwrap()
         .unwrap();
     store
-        .complete_task(task.id, serde_json::json!({"by": "a"}), None)
+        .complete_task(
+            task.id,
+            "agent-a",
+            claimed.lease_token.as_deref().unwrap(),
+            serde_json::json!({"by": "a"}),
+            None,
+        )
         .unwrap();
 
     thread::sleep(Duration::from_millis(1_200));

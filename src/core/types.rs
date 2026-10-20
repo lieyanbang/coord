@@ -81,6 +81,20 @@ pub struct Task {
     /// the lease migration ran.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub lease_until: Option<DateTime<Utc>>,
+    #[serde(default)]
+    pub lease_token: Option<String>,
+    #[serde(default)]
+    pub attempt_no: u64,
+    #[serde(default)]
+    pub attempt_count: u32,
+    #[serde(default = "default_max_attempts")]
+    pub max_attempts: u32,
+    #[serde(default)]
+    pub available_at: Option<DateTime<Utc>>,
+}
+
+pub fn default_max_attempts() -> u32 {
+    3
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

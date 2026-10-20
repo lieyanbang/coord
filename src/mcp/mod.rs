@@ -119,6 +119,8 @@ pub struct ClaimArgs {
 pub struct ExtendArgs {
     /// UUID of the task to extend.
     pub id: String,
+    /// Current claim token returned by tasks_claim. Required; never reuse an expired claim.
+    pub lease_token: String,
     /// Agent ID currently holding the claim. Only the current claimer
     /// can extend.
     pub agent_id: String,
@@ -131,6 +133,9 @@ pub struct ExtendArgs {
 pub struct CompleteArgs {
     /// UUID of the task to complete.
     pub id: String,
+    /// Current claim token returned by tasks_claim. Required; never reuse an expired claim.
+    pub lease_token: String,
+    pub agent_id: String,
     /// JSON result to record on the task.
     #[serde(default)]
     pub result: Option<Value>,
@@ -288,6 +293,7 @@ impl Bridge {
             "tasks/extend",
             json!({
                 "id": a.id,
+                "leaseToken": a.lease_token,
                 "agentId": a.agent_id,
                 "leaseSeconds": a.lease_seconds,
             }),
@@ -324,6 +330,8 @@ impl Bridge {
             "tasks/complete",
             json!({
                 "id": a.id,
+                "agentId": a.agent_id,
+                "leaseToken": a.lease_token,
                 "result": a.result,
                 "postAck": a.post_ack,
                 "ackName": a.ack_name,

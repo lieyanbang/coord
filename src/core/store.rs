@@ -36,7 +36,7 @@ pub struct TaskFilter {
 /// `AGENTS.md`). `payload` is merged with a daemon-injected
 /// `fixed_bug_id` pointing at the source task so the markdown vault
 /// renders the wikilink without the caller having to know the UUID.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub struct AckSpec {
     pub name: String,
     pub priority: Option<String>,
@@ -93,6 +93,18 @@ impl Store {
             "first_seen",
             "TEXT NOT NULL DEFAULT '1970-01-01T00:00:00Z'",
         )?;
+        for (column, definition) in [
+            ("lease_token", "TEXT"),
+            ("attempt_no", "INTEGER NOT NULL DEFAULT 0"),
+            ("attempt_count", "INTEGER NOT NULL DEFAULT 0"),
+            ("max_attempts", "INTEGER NOT NULL DEFAULT 3"),
+            ("available_at", "TEXT"),
+        ] {
+            try_add_column(&tx, "tasks", column, definition)?;
+        }
+        // Legacy claims lack a fence: invalidate them rather than allow a bypass.
+        tx.execute("UPDATE tasks SET state='pending',claimed_by=NULL,claimed_at=NULL,lease_until=NULL WHERE state='claimed' AND lease_token IS NULL", [])?;
+        tx.execute_batch("CREATE TABLE IF NOT EXISTS task_receipts(task_id TEXT NOT NULL,lease_token TEXT NOT NULL,operation TEXT NOT NULL,agent_id TEXT NOT NULL,request TEXT NOT NULL,response TEXT NOT NULL,PRIMARY KEY(task_id,lease_token,operation));")?;
         // Index just `lease_until` so the periodic reclaim sweep is a
         // cheap range scan even when the bulletin has thousands of
         // completed/cancelled rows that don't carry a lease.
@@ -162,6 +174,11 @@ impl Store {
             updated_at: now,
             claimed_at: None,
             lease_until: None,
+            lease_token: None,
+            attempt_no: 0,
+            attempt_count: 0,
+            max_attempts: 3,
+            available_at: None,
         };
         self.vault_write(&task);
         Ok(task)
@@ -172,7 +189,7 @@ impl Store {
         let row = conn
             .query_row(
                 "SELECT id, name, kind, priority, state, claimed_by, payload, result, \
-                 created_at, updated_at, claimed_at, lease_until \
+                 created_at, updated_at, claimed_at, lease_until, lease_token, attempt_no, attempt_count, max_attempts, available_at \
                  FROM tasks WHERE id = ?1",
                 params![id.to_string()],
                 row_to_task,
@@ -193,7 +210,7 @@ impl Store {
         let conn = self.conn.lock();
         let mut sql = String::from(
             "SELECT id, name, kind, priority, state, claimed_by, payload, result, \
-             created_at, updated_at, claimed_at, lease_until \
+             created_at, updated_at, claimed_at, lease_until, lease_token, attempt_no, attempt_count, max_attempts, available_at \
              FROM tasks",
         );
         let mut clauses: Vec<&'static str> = Vec::new();
@@ -236,33 +253,27 @@ impl Store {
         agent_id: &str,
         lease_seconds: Option<u64>,
     ) -> Result<Option<Task>> {
-        let now = Utc::now();
         let lease = clamp_lease(lease_seconds.unwrap_or(DEFAULT_LEASE_SECONDS));
-        let lease_until = now + Duration::seconds(lease as i64);
         let task_opt = {
-            let conn = self.conn.lock();
-            let updated = conn.execute(
-                "UPDATE tasks SET state = 'claimed', claimed_by = ?1, claimed_at = ?2,
-                                  lease_until = ?3, updated_at = ?2
-                 WHERE id = ?4 AND state = 'pending'",
-                params![
-                    agent_id,
-                    now.to_rfc3339(),
-                    lease_until.to_rfc3339(),
-                    id.to_string(),
-                ],
-            )?;
-            if updated == 0 {
+            let mut connection = self.conn.lock();
+            let tx =
+                connection.transaction_with_behavior(rusqlite::TransactionBehavior::Immediate)?;
+            let now = Utc::now();
+            let until = now + Duration::seconds(lease as i64);
+            let token = Uuid::new_v4().to_string();
+            let updated = tx.execute(
+                "UPDATE tasks SET state='claimed',claimed_by=?1,claimed_at=?2,lease_until=?3,updated_at=?2,lease_token=?5,attempt_no=attempt_no+1,attempt_count=attempt_count+1
+                 WHERE id=?4 AND state='pending' AND attempt_count<max_attempts AND (available_at IS NULL OR julianday(available_at)<=julianday('now'))",
+                params![agent_id,now.to_rfc3339(),until.to_rfc3339(),id.to_string(),token])?;
+            let task = if updated == 0 {
                 None
             } else {
-                Some(conn.query_row(
-                    "SELECT id, name, kind, priority, state, claimed_by, payload, result, \
-                     created_at, updated_at, claimed_at, lease_until \
-                     FROM tasks WHERE id = ?1",
-                    params![id.to_string()],
-                    row_to_task,
-                )?)
-            }
+                Some(tx.query_row(
+                "SELECT id,name,kind,priority,state,claimed_by,payload,result,created_at,updated_at,claimed_at,lease_until,lease_token,attempt_no,attempt_count,max_attempts,available_at FROM tasks WHERE id=?1",
+                params![id.to_string()], row_to_task)?)
+            };
+            tx.commit()?;
+            task
         };
         if let Some(t) = &task_opt {
             self.vault_write(t);
@@ -281,31 +292,28 @@ impl Store {
         &self,
         id: Uuid,
         agent_id: &str,
+        lease_token: &str,
         lease_seconds: Option<u64>,
     ) -> Result<Option<DateTime<Utc>>> {
+        let conn = self.conn.lock();
         let now = Utc::now();
-        let lease = clamp_lease(lease_seconds.unwrap_or(DEFAULT_LEASE_SECONDS));
-        let lease_until = now + Duration::seconds(lease as i64);
-        let updated = {
-            let conn = self.conn.lock();
-            conn.execute(
-                "UPDATE tasks SET lease_until = ?1, updated_at = ?2
-                 WHERE id = ?3 AND state = 'claimed' AND claimed_by = ?4",
-                params![
-                    lease_until.to_rfc3339(),
-                    now.to_rfc3339(),
-                    id.to_string(),
-                    agent_id,
-                ],
-            )?
-        };
-        if updated == 0 {
-            return Ok(None);
-        }
+        let until = now
+            + Duration::seconds(clamp_lease(lease_seconds.unwrap_or(DEFAULT_LEASE_SECONDS)) as i64);
+        let value: Option<String> = conn.query_row(
+            "UPDATE tasks SET lease_until=CASE WHEN julianday(lease_until)>julianday(?1) THEN lease_until ELSE ?1 END,updated_at=?2
+             WHERE id=?3 AND state='claimed' AND claimed_by=?4 AND lease_token=?5 AND julianday(lease_until)>julianday('now') RETURNING lease_until",
+            params![until.to_rfc3339(),now.to_rfc3339(),id.to_string(),agent_id,lease_token], |r| r.get(0)).optional()?;
+        drop(conn);
         if let Some(t) = self.get_task(id)? {
             self.vault_write(&t);
         }
-        Ok(Some(lease_until))
+        value
+            .map(|s| {
+                DateTime::parse_from_rfc3339(&s)
+                    .map(|d| d.with_timezone(&Utc))
+                    .map_err(Into::into)
+            })
+            .transpose()
     }
 
     /// Sweep claimed tasks whose lease has expired back to `pending`,
@@ -317,27 +325,30 @@ impl Store {
     pub fn reclaim_expired_leases(&self) -> Result<Vec<Task>> {
         let now = Utc::now();
         let reclaimed = {
-            let conn = self.conn.lock();
+            let mut connection = self.conn.lock();
+            let tx =
+                connection.transaction_with_behavior(rusqlite::TransactionBehavior::Immediate)?;
+            let conn = &tx;
             // Snapshot the to-be-reclaimed rows first so we can write
             // vault notes that record who abandoned what. The actual
             // state transition is a single UPDATE for atomicity.
             let mut stmt = conn.prepare(
                 "SELECT id, name, kind, priority, state, claimed_by, payload, result, \
-                 created_at, updated_at, claimed_at, lease_until \
+                 created_at, updated_at, claimed_at, lease_until, lease_token, attempt_no, attempt_count, max_attempts, available_at \
                  FROM tasks \
-                 WHERE state = 'claimed' AND lease_until IS NOT NULL AND lease_until < ?1",
+                 WHERE state = 'claimed' AND lease_until IS NOT NULL AND julianday(lease_until) <= julianday(?1)",
             )?;
             let snapshot: Vec<Task> = stmt
                 .query_map(params![now.to_rfc3339()], row_to_task)?
                 .collect::<rusqlite::Result<Vec<_>>>()?;
-            if snapshot.is_empty() {
+            let out = if snapshot.is_empty() {
                 Vec::new()
             } else {
                 conn.execute(
-                    "UPDATE tasks SET state = 'pending', claimed_by = NULL, \
+                    "UPDATE tasks SET state = CASE WHEN attempt_count>=max_attempts THEN 'failed' ELSE 'pending' END, claimed_by = NULL, lease_token = NULL, \
                                        claimed_at = NULL, lease_until = NULL, \
                                        updated_at = ?1 \
-                     WHERE state = 'claimed' AND lease_until IS NOT NULL AND lease_until < ?1",
+                     WHERE state = 'claimed' AND lease_until IS NOT NULL AND julianday(lease_until) <= julianday(?1)",
                     params![now.to_rfc3339()],
                 )?;
                 // Re-fetch the post-reclaim shape (state='pending',
@@ -348,7 +359,7 @@ impl Store {
                 for id in &ids {
                     let t = conn.query_row(
                         "SELECT id, name, kind, priority, state, claimed_by, payload, result, \
-                         created_at, updated_at, claimed_at, lease_until \
+                         created_at, updated_at, claimed_at, lease_until, lease_token, attempt_no, attempt_count, max_attempts, available_at \
                          FROM tasks WHERE id = ?1",
                         params![id],
                         row_to_task,
@@ -359,7 +370,10 @@ impl Store {
                     ));
                 }
                 out
-            }
+            };
+            drop(stmt);
+            tx.commit()?;
+            out
         };
         let mut returned = Vec::with_capacity(reclaimed.len());
         for (before, after) in reclaimed {
@@ -400,11 +414,14 @@ impl Store {
     pub fn complete_task(
         &self,
         id: Uuid,
+        agent_id: &str,
+        lease_token: &str,
         result: serde_json::Value,
         ack: Option<AckSpec>,
     ) -> Result<CompleteOutcome> {
         let now = Utc::now();
         let result_s = serde_json::to_string(&result)?;
+        let request = serde_json::to_string(&serde_json::json!({"result":result,"ack":ack}))?;
 
         // Whole flow runs under a single tx so callers can't observe a
         // half-completed state: either both the UPDATE and the ack
@@ -412,12 +429,15 @@ impl Store {
         // claim of `post_ack` — agents reliably leave acks behind.
         let outcome = {
             let mut conn = self.conn.lock();
-            let tx = conn.transaction()?;
+            let tx = conn.transaction_with_behavior(rusqlite::TransactionBehavior::Immediate)?;
+            if let Some((owner,prior,response)) = tx.query_row("SELECT agent_id,request,response FROM task_receipts WHERE task_id=?1 AND lease_token=?2 AND operation='complete'",params![id.to_string(),lease_token],|r| Ok((r.get::<_,String>(0)?,r.get::<_,String>(1)?,r.get::<_,String>(2)?))).optional()? {
+                return if owner==agent_id && prior==request { Ok(CompleteOutcome::Completed { ack: Box::new(serde_json::from_str(&response)?) }) } else { Ok(CompleteOutcome::NotInClaimedState) };
+            }
             let updated = tx.execute(
                 "UPDATE tasks SET state = 'completed', result = ?1, lease_until = NULL,
                                   updated_at = ?2
-                 WHERE id = ?3 AND state = 'claimed'",
-                params![result_s, now.to_rfc3339(), id.to_string()],
+                 WHERE id = ?3 AND state = 'claimed' AND claimed_by=?4 AND lease_token=?5 AND julianday(lease_until)>julianday('now')",
+                params![result_s, now.to_rfc3339(), id.to_string(), agent_id, lease_token],
             )?;
             if updated == 0 {
                 tx.rollback()?;
@@ -474,10 +494,25 @@ impl Store {
                     updated_at: now,
                     claimed_at: None,
                     lease_until: None,
+                    lease_token: None,
+                    attempt_no: 0,
+                    attempt_count: 0,
+                    max_attempts: 3,
+                    available_at: None,
                 })
             } else {
                 None
             };
+            tx.execute(
+                "INSERT INTO task_receipts VALUES(?1,?2,'complete',?3,?4,?5)",
+                params![
+                    id.to_string(),
+                    lease_token,
+                    agent_id,
+                    request,
+                    serde_json::to_string(&ack_task)?
+                ],
+            )?;
             tx.commit()?;
             ack_task
         };
@@ -513,8 +548,8 @@ impl Store {
         {
             let conn = self.conn.lock();
             conn.execute(
-                "UPDATE tasks SET state = 'cancelled', lease_until = NULL, updated_at = ?1
-                 WHERE id = ?2",
+                "UPDATE tasks SET state = 'cancelled', lease_until = NULL, lease_token=NULL, updated_at = ?1
+                 WHERE id = ?2 AND state IN ('pending','claimed')",
                 params![now.to_rfc3339(), id.to_string()],
             )?;
         }
@@ -765,6 +800,11 @@ fn row_to_task(row: &rusqlite::Row<'_>) -> rusqlite::Result<Task> {
         updated_at: parse_ts(&updated_at)?,
         claimed_at: parse_opt_ts(claimed_at)?,
         lease_until: parse_opt_ts(lease_until)?,
+        lease_token: row.get(12)?,
+        attempt_no: row.get(13)?,
+        attempt_count: row.get(14)?,
+        max_attempts: row.get(15)?,
+        available_at: parse_opt_ts(row.get(16)?)?,
     })
 }
 

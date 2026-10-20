@@ -90,7 +90,7 @@ Windows 本机及 Windows Actions 的真实测试、构建与产物为准。
 | --- | --- | --- |
 | 0 | PASS | `572771a`；Windows Actions 39428331459 success；产物已下载并运行 |
 | A | PASS | 本机四项 Gate PASS；4 个缺陷先红后绿；质量/服务边界/长轮询测试；Stage B 租约缺陷明确待修复 |
-| B | TODO | 依赖 Gate A；旧结果提交缺陷已确认 |
+| B | PASS | token/attempt、不可复活/不可缩短、原子 receipt+ack；多连接取消竞态和真实重启/旧客户端拒绝通过 |
 | C | TODO | 依赖 Gate B |
 | D | TODO | 依赖 Gate C |
 | E | TODO | 依赖 Gate D；要求真实 Windows Actions 与容量证据 |

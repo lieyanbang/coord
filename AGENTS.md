@@ -37,11 +37,11 @@ project. Codex configures MCP through its own supported configuration.
 2. Before meaningful work: `tasks_send` (kind task/bug/feature), then
    `tasks_claim {id,agent_id,lease_seconds:600}`. If contested, pick other work.
 3. Keep the returned ownership metadata. Renew before expiry, never after it.
-   Stage B replaces unsafe legacy completion/renewal with fenced writes; follow
-   `docs/API.md` once that migration is present. Never fetch a newer claim's
+   Completion and renewal require `agent_id` and `lease_token` from the claim;
+   see `docs/API.md`. Never fetch a newer claim's
    token to submit work performed under an older claim.
 4. Finish via `tasks_complete` with `post_ack:true`, `ack_name` and evidence.
-   This transaction auto-injects `fixed_bug_id`; do not post a separate ack for
+   Include `agent_id` and `lease_token`. The transaction auto-injects `fixed_bug_id`; do not post a separate ack for
    work you performed. If blocked, explain the remaining work in the ledger.
 5. Verification queries: `tasks_list {kind:"ack",limit:50}` and
    `tasks_list {state:"completed",limit:50}`, then `tasks_get` using the ack's
