@@ -89,3 +89,53 @@ more work to an active, drained batch is permitted. Cancellation is sticky,
 blocks enqueue/claim/retry and invalidates active task fences. Terminal outcomes
 remain counted; repeated cancel/retry is state-idempotent. Missing batch is
 `-32004`. Legacy individual tasks have batch_id=null and still work.
+
+## Optional asynchronous validation (Stage D)
+
+Add `config.validator` when creating a batch to enable the built-in JSON
+Validator. Supported rules: `required` (top-level keys), optional `equals`
+(whole JSON equality). Omitting/null validator keeps direct completion.
+The `Validator` trait is independent of MCP; this implementation does not run
+external validator commands or LLM judges. Unknown config keys are rejected.
+
+Config defaults: delay_ms=0, timeout_ms=1000, max_error_attempts=3. Timeout must
+be 1..10000ms, delay <=10000ms, error budget 1..10, required keys <=128.
+Delay is an optional bounded pacing/fault-test setting. Rule mismatch is FAIL;
+timeout/interrupted validator lease is ERROR. No implicit command execution.
+
+Submission atomically writes result + receipt and returns
+`{ok:true,state:"submitted",submission_id}` quickly. It releases the execution
+lease; agents can immediately claim more work. Four independent background
+slots consume the durable submitted queue. Each job has its own expiring fence;
+stale job tokens/submission IDs cannot update cancelled or newer work.
+
+PASS completes and writes an optional requested ack in the same transaction.
+FAIL backs off execution or fails on exhausted execution attempts. ERROR retries
+validation with a separate bounded counter, then fails with validation_error;
+it does not consume execution attempts. Abandoned validation leases count as
+validation errors when recovered. Restart recovery waits for that old bounded
+job lease to expire (timeout + 5 seconds), then safely reclaims it.
+`validation_attempts`/`validation_error_count` describe the current submission;
+`attempt_no`/`attempt_count` describe execution. Submission receipt replay always
+returns the original acceptance response, even after its eventual verdict;
+use get_task/get_progress for current state. Completion alone implies result
+submission; business correctness is asserted only by configured checks.
+
+## Reference Worker
+
+`scripts/worker.py` (Python 3.10+, standard library) is an optional runner:
+
+```powershell
+python scripts/worker.py --batch BATCH_UUID --agent worker-one
+python scripts/worker.py --batch BATCH_UUID --agent worker-two --workdir C:\isolated-work --timeout 60 --adapter python C:\adapters\execute.py
+```
+
+Default adapter echoes payload. Explicit external adapters read the full JSON
+task from stdin and return one JSON result on stdout. They require a trusted
+configuration and explicit workdir; no shell expansion. Both output streams
+are bounded at 1 MiB, execution has a timeout, and Windows Job Objects contain
+the process tree on worker crash. Lease renewal failure aborts the adapter and
+suppresses stale submission. Empty/reconnect loops back off; receipt retries
+reuse the same request. Ctrl+C stops the worker and its adapter. Workers exit
+when the batch has no active tasks; start/join more workers when adding work.
+The example does not imply every IDE MCP client supports unattended execution.

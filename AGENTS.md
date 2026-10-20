@@ -2,6 +2,9 @@
 
 ## Repository development (Codex)
 
+Only this section applies when developing coord itself. A client project
+scaffolded by `coord init` follows the deployed product section below.
+
 - Read `TASK.md` as the read-only execution contract and `docs/PLAN.md` for
   scope, gates and current decisions. The latest user instructions take priority.
 - Windows is the primary and only default supported platform. Linux/macOS are
@@ -62,3 +65,6 @@ For generic batches, use `claim_task` to atomically receive the next task,
 `submit_result` or `report_failure` with the returned fence, and `get_progress`
 for a consistent snapshot. Empty does not mean terminal: tasks may be leased or
 waiting for backoff. Only the manager's progress snapshot establishes completion.
+With a configured validator, submission acceptance is `submitted`; wait for the
+actual verdict/progress before announcing acceptance. See `scripts/worker.py`
+for a Windows runner with bounded adapters and lease-loss handling.

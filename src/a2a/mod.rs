@@ -264,6 +264,10 @@ async fn dispatch(state: &AppState, method: &str, params: Value) -> Result<Value
                 )
                 .map_err(MethodError::internal)?;
             match outcome {
+                CompleteOutcome::Submitted { submission_id } => {
+                    state.bus.notify();
+                    Ok(json!({"ok":true,"state":"submitted","submission_id":submission_id}))
+                }
                 CompleteOutcome::Completed { ack } => {
                     state.bus.notify();
                     Ok(json!({

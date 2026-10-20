@@ -49,15 +49,10 @@ This is derived from DmarshalTU/coord at `44fe390`; original MIT copyright and
 license are preserved. Fork work adds quality and lease safeguards, scheduling
 and optional validation in stages; progress documents identify what is verified.
 
-`0.4.1`. Eleven end-to-end tests gate every change, including a long-poll
-test that proves the watch primitive unblocks server-side (not via client
-polling), a 16-process atomic-claim race, a lease/auto-reclaim cycle, and
-a **protocol-layer two-tab dogfood test** that walks the AGENTS.md
-workflow from completing-with-ack to a second tab verifying the work
-without prior UUID knowledge. `0.4.1` adds atomic `tasks/complete +
-postAck` so finishing a task and announcing it land in the same
-transaction; see [`AGENTS.md`](AGENTS.md). `0.x` until it gets meaningful
-production use.
+The Fork keeps the upstream `0.4.1` version while implementing staged hardening.
+Current gates cover fencing, multi-process scheduling, migration, long-poll,
+Vault, asynchronous validation and the optional Windows Worker. Exact results
+and remaining limitations are in [verification](docs/verification/).
 
 ## Why another one of these?
 
@@ -119,30 +114,18 @@ claim-and-watch with leased work and a tiny surface area.
 
 ## Install
 
-### Homebrew
+### Windows
 
-```bash
-brew tap dmarshaltu/coord
-brew install coord
+Build locally with Rust MSVC, or download `coord-windows-2022` from a successful
+Fork Actions run (no tag or Release required).
+
+```powershell
+cargo build --release --locked
+.\target\release\coord.exe version
 ```
 
-### From source
-
-```bash
-cargo install --git https://github.com/DmarshalTU/coord
-```
-
-### Pre-built binaries
-
-Tagged releases attach binaries for macOS (Apple Silicon), Linux
-(x86\_64), and Windows (x86\_64). On Intel Macs and ARM Linux, build from
-source with `cargo install --git ...` instead.
-
-```bash
-# example: macOS Apple Silicon
-curl -L https://github.com/DmarshalTU/coord/releases/latest/download/coord-aarch64-apple-darwin -o /usr/local/bin/coord
-chmod +x /usr/local/bin/coord
-```
+Linux/macOS are optional source ports and are not built or tested by default.
+Historical upstream packages remain documented by [DmarshalTU/coord](https://github.com/DmarshalTU/coord).
 
 ## Quickstart
 
@@ -360,6 +343,19 @@ task subset" rather than full A2A.
 The same operations are exposed as MCP tools (see
 [`src/mcp/mod.rs`](src/mcp/mod.rs)) so any MCP-aware client can drive `coord`
 without a custom integration.
+
+## Optional Worker and validation
+
+Set `config.validator` at batch creation for background JSON-rule validation:
+submission returns immediately, PASS completes, FAIL consumes execution retry
+budget, and ERROR consumes a separate validation budget. Without a validator,
+completion records submitted execution results directly.
+
+`python scripts/worker.py --batch BATCH_UUID --agent worker-one` runs a reference
+payload echo adapter. A trusted external adapter can be supplied with explicit
+workdir/timeout; Windows Job Objects contain its process tree. See [Worker
+contract](docs/API.md). This runner is optional and does not assume IDE clients
+can execute unattended loops.
 
 ## CLI
 

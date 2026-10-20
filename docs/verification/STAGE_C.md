@@ -32,3 +32,6 @@ four checks exit 0. All four exited 0: **Gate C PASS**. Cloud results are tied t
 Previously verified cloud runs:
 - Stage A `f846279`: [39430165894](https://github.com/lieyanbang/coord/actions/runs/39430165894), success.
 - Stage B `15f360a`: [39431056581](https://github.com/lieyanbang/coord/actions/runs/39431056581), success.
+
+Stage C cloud: `a83d50482f66cae2dcc5c05b1fb680d025deb128`,
+[39432577257](https://github.com/lieyanbang/coord/actions/runs/39432577257), success.

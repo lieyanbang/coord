@@ -36,7 +36,7 @@ pub struct TaskFilter {
 /// `AGENTS.md`). `payload` is merged with a daemon-injected
 /// `fixed_bug_id` pointing at the source task so the markdown vault
 /// renders the wikilink without the caller having to know the UUID.
-#[derive(Debug, Clone, serde::Serialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct AckSpec {
     pub name: String,
     pub priority: Option<String>,
@@ -54,6 +54,7 @@ pub struct AckSpec {
 pub enum CompleteOutcome {
     Completed { ack: Box<Option<Task>> },
     NotInClaimedState,
+    Submitted { submission_id: String },
 }
 
 pub struct Store {
@@ -103,6 +104,12 @@ impl Store {
             ("task_key", "TEXT"),
             ("error", "TEXT"),
             ("completed_at", "TEXT"),
+            ("submission_id", "TEXT"),
+            ("validation_attempts", "INTEGER NOT NULL DEFAULT 0"),
+            ("validation_error_count", "INTEGER NOT NULL DEFAULT 0"),
+            ("validation_token", "TEXT"),
+            ("validation_until", "TEXT"),
+            ("pending_ack", "TEXT"),
         ] {
             try_add_column(&tx, "tasks", column, definition)?;
         }
@@ -185,6 +192,9 @@ impl Store {
             attempt_no: 0,
             attempt_count: 0,
             max_attempts: 3,
+            submission_id: None,
+            validation_attempts: 0,
+            validation_error_count: 0,
             available_at: None,
             batch_id: None,
             task_key: None,
@@ -204,7 +214,7 @@ impl Store {
         let row = conn
             .query_row(
                 "SELECT id, name, kind, priority, state, claimed_by, payload, result, \
-                 created_at, updated_at, claimed_at, lease_until, lease_token, attempt_no, attempt_count, max_attempts, available_at, batch_id, task_key, error, completed_at \
+                 created_at, updated_at, claimed_at, lease_until, lease_token, attempt_no, attempt_count, max_attempts, available_at, batch_id, task_key, error, completed_at, submission_id, validation_attempts, validation_error_count \
                  FROM tasks WHERE id = ?1",
                 params![id.to_string()],
                 row_to_task,
@@ -225,7 +235,7 @@ impl Store {
         let conn = self.conn.lock();
         let mut sql = String::from(
             "SELECT id, name, kind, priority, state, claimed_by, payload, result, \
-             created_at, updated_at, claimed_at, lease_until, lease_token, attempt_no, attempt_count, max_attempts, available_at, batch_id, task_key, error, completed_at \
+             created_at, updated_at, claimed_at, lease_until, lease_token, attempt_no, attempt_count, max_attempts, available_at, batch_id, task_key, error, completed_at, submission_id, validation_attempts, validation_error_count \
              FROM tasks",
         );
         let mut clauses: Vec<&'static str> = Vec::new();
@@ -284,7 +294,7 @@ impl Store {
                 None
             } else {
                 Some(tx.query_row(
-                "SELECT id,name,kind,priority,state,claimed_by,payload,result,created_at,updated_at,claimed_at,lease_until,lease_token,attempt_no,attempt_count,max_attempts,available_at,batch_id,task_key,error,completed_at FROM tasks WHERE id=?1",
+                "SELECT id,name,kind,priority,state,claimed_by,payload,result,created_at,updated_at,claimed_at,lease_until,lease_token,attempt_no,attempt_count,max_attempts,available_at,batch_id,task_key,error,completed_at,submission_id,validation_attempts,validation_error_count FROM tasks WHERE id=?1",
                 params![id.to_string()], row_to_task)?)
             };
             tx.commit()?;
@@ -349,7 +359,7 @@ impl Store {
             // state transition is a single UPDATE for atomicity.
             let mut stmt = conn.prepare(
                 "SELECT id, name, kind, priority, state, claimed_by, payload, result, \
-                 created_at, updated_at, claimed_at, lease_until, lease_token, attempt_no, attempt_count, max_attempts, available_at, batch_id, task_key, error, completed_at \
+                 created_at, updated_at, claimed_at, lease_until, lease_token, attempt_no, attempt_count, max_attempts, available_at, batch_id, task_key, error, completed_at, submission_id, validation_attempts, validation_error_count \
                  FROM tasks \
                  WHERE state = 'claimed' AND lease_until IS NOT NULL AND julianday(lease_until) <= julianday(?1)",
             )?;
@@ -434,7 +444,45 @@ impl Store {
             let mut conn = self.conn.lock();
             let tx = conn.transaction_with_behavior(rusqlite::TransactionBehavior::Immediate)?;
             if let Some((owner,prior,response)) = tx.query_row("SELECT agent_id,request,response FROM task_receipts WHERE task_id=?1 AND lease_token=?2 AND operation='complete'",params![id.to_string(),lease_token],|r| Ok((r.get::<_,String>(0)?,r.get::<_,String>(1)?,r.get::<_,String>(2)?))).optional()? {
-                return if owner==agent_id && prior==request { Ok(CompleteOutcome::Completed { ack: Box::new(serde_json::from_str(&response)?) }) } else { Ok(CompleteOutcome::NotInClaimedState) };
+                return if owner==agent_id && prior==request { { let value:serde_json::Value=serde_json::from_str(&response)?; if let Some(id)=value.get("submitted").and_then(|v|v.as_str()){Ok(CompleteOutcome::Submitted{submission_id:id.into()})}else{Ok(CompleteOutcome::Completed { ack: Box::new(serde_json::from_value(value)?) })} } } else { Ok(CompleteOutcome::NotInClaimedState) };
+            }
+            let batch: Option<String> = tx
+                .query_row(
+                    "SELECT batch_id FROM tasks WHERE id=?1",
+                    params![id.to_string()],
+                    |r| r.get::<_, Option<String>>(0),
+                )
+                .optional()?
+                .flatten();
+            let validate = if let Some(batch) = batch {
+                batch_config(&tx, Uuid::parse_str(&batch)?, false)?
+                    .validator
+                    .is_some()
+            } else {
+                false
+            };
+            if validate {
+                let submission_id = Uuid::new_v4().to_string();
+                let changed=tx.execute("UPDATE tasks SET state='submitted',result=?1,submission_id=?6,lease_until=NULL,lease_token=NULL,available_at=NULL,pending_ack=?7,validation_token=NULL,validation_until=NULL,validation_attempts=0,validation_error_count=0,updated_at=?2 WHERE id=?3 AND state='claimed' AND claimed_by=?4 AND lease_token=?5 AND julianday(lease_until)>julianday('now')",params![result_s,now.to_rfc3339(),id.to_string(),agent_id,lease_token,submission_id,serde_json::to_string(&ack)?])?;
+                if changed == 0 {
+                    return Ok(CompleteOutcome::NotInClaimedState);
+                }
+                tx.execute(
+                    "INSERT INTO task_receipts VALUES(?1,?2,'complete',?3,?4,?5)",
+                    params![
+                        id.to_string(),
+                        lease_token,
+                        agent_id,
+                        request,
+                        serde_json::json!({"submitted":submission_id}).to_string()
+                    ],
+                )?;
+                tx.commit()?;
+                drop(conn);
+                if let Some(t) = self.get_task(id)? {
+                    self.vault_write(&t);
+                }
+                return Ok(CompleteOutcome::Submitted { submission_id });
             }
             let updated = tx.execute(
                 "UPDATE tasks SET state = 'completed', result = ?1, lease_until = NULL,
@@ -447,69 +495,7 @@ impl Store {
                 return Ok(CompleteOutcome::NotInClaimedState);
             }
 
-            let ack_task = if let Some(spec) = ack {
-                // Daemon stitches the wikilink (`fixed_bug_id` → source
-                // task) into the ack's payload so the vault graph
-                // renders the chain. Caller-supplied payload wins on
-                // key collision so an agent that already knows the
-                // wikilink it wants can override.
-                let mut payload = match spec.payload {
-                    Some(serde_json::Value::Object(m)) => m,
-                    Some(other) => {
-                        // Non-object payload (e.g. caller passed a
-                        // string or array): preserve it under `value`
-                        // and inject the wikilink alongside.
-                        let mut m = serde_json::Map::new();
-                        m.insert("value".into(), other);
-                        m
-                    }
-                    None => serde_json::Map::new(),
-                };
-                payload
-                    .entry("fixed_bug_id".to_string())
-                    .or_insert_with(|| serde_json::Value::String(id.to_string()));
-                let payload_v = serde_json::Value::Object(payload);
-                let payload_s = serde_json::to_string(&payload_v)?;
-                let ack_id = Uuid::new_v4();
-                let priority = spec.priority.as_deref().unwrap_or("high");
-                tx.execute(
-                    "INSERT INTO tasks
-                       (id, name, kind, priority, state, payload, created_at, updated_at, completed_at)
-                     VALUES (?1, ?2, 'ack', ?3, 'completed', ?4, ?5, ?5, ?5)",
-                    params![
-                        ack_id.to_string(),
-                        spec.name,
-                        priority,
-                        payload_s,
-                        now.to_rfc3339(),
-                    ],
-                )?;
-                Some(Task {
-                    id: ack_id,
-                    name: spec.name,
-                    kind: "ack".into(),
-                    priority: priority.into(),
-                    state: TaskState::Completed,
-                    claimed_by: None,
-                    payload: payload_v,
-                    result: None,
-                    created_at: now,
-                    updated_at: now,
-                    claimed_at: None,
-                    lease_until: None,
-                    lease_token: None,
-                    attempt_no: 0,
-                    attempt_count: 0,
-                    max_attempts: 3,
-                    available_at: None,
-                    batch_id: None,
-                    task_key: None,
-                    error: None,
-                    completed_at: Some(now),
-                })
-            } else {
-                None
-            };
+            let ack_task = write_ack(&tx, id, ack, now)?;
             tx.execute(
                 "INSERT INTO task_receipts VALUES(?1,?2,'complete',?3,?4,?5)",
                 params![
@@ -556,7 +542,7 @@ impl Store {
             let conn = self.conn.lock();
             conn.execute(
                 "UPDATE tasks SET state = 'cancelled', lease_until = NULL, lease_token=NULL, updated_at = ?1, completed_at=?1
-                 WHERE id = ?2 AND state IN ('pending','claimed')",
+                 WHERE id = ?2 AND state IN ('pending','claimed','submitted')",
                 params![now.to_rfc3339(), id.to_string()],
             )?;
         }
@@ -690,7 +676,7 @@ impl Store {
     }
 }
 
-pub const TASK_COLUMNS: &str = "id,name,kind,priority,state,claimed_by,payload,result,created_at,updated_at,claimed_at,lease_until,lease_token,attempt_no,attempt_count,max_attempts,available_at,batch_id,task_key,error,completed_at";
+pub const TASK_COLUMNS: &str = "id,name,kind,priority,state,claimed_by,payload,result,created_at,updated_at,claimed_at,lease_until,lease_token,attempt_no,attempt_count,max_attempts,available_at,batch_id,task_key,error,completed_at,submission_id,validation_attempts,validation_error_count";
 
 #[derive(Debug)]
 pub struct SchedulerError {
@@ -724,6 +710,20 @@ impl Store {
             || config.retry_backoff_ms > config.max_backoff_ms
         {
             return Err(scheduler_error(-32602, "invalid retry configuration"));
+        }
+        if let Some(v) = &config.validator {
+            if v.timeout_ms == 0
+                || v.timeout_ms > 10_000
+                || v.delay_ms > 10_000
+                || v.max_error_attempts == 0
+                || v.max_error_attempts > 10
+                || v.required.len() > 128
+            {
+                return Err(scheduler_error(
+                    -32602,
+                    "invalid bounded validator configuration",
+                ));
+            }
         }
         let id = Uuid::new_v4();
         let now = Utc::now().to_rfc3339();
@@ -883,7 +883,7 @@ impl Store {
         let tx = conn.transaction_with_behavior(rusqlite::TransactionBehavior::Immediate)?;
         batch_config(&tx, id, true)?;
         let changed = {
-            let mut stmt=tx.prepare(&format!("UPDATE tasks SET state='pending',attempt_count=0,available_at=NULL,error=NULL,result=NULL,completed_at=NULL,lease_token=NULL,updated_at=?2 WHERE batch_id=?1 AND state='failed' RETURNING {TASK_COLUMNS}"))?;
+            let mut stmt=tx.prepare(&format!("UPDATE tasks SET state='pending',attempt_count=0,validation_attempts=0,validation_error_count=0,validation_token=NULL,validation_until=NULL,pending_ack=NULL,submission_id=NULL,available_at=NULL,error=NULL,result=NULL,completed_at=NULL,lease_token=NULL,updated_at=?2 WHERE batch_id=?1 AND state='failed' RETURNING {TASK_COLUMNS}"))?;
             let rows = stmt
                 .query_map(
                     params![id.to_string(), Utc::now().to_rfc3339()],
@@ -909,7 +909,7 @@ impl Store {
             params![id.to_string()],
         )?;
         let changed = {
-            let mut stmt=tx.prepare(&format!("UPDATE tasks SET state='cancelled',lease_token=NULL,lease_until=NULL,completed_at=?2,updated_at=?2 WHERE batch_id=?1 AND state IN ('pending','claimed') RETURNING {TASK_COLUMNS}"))?;
+            let mut stmt=tx.prepare(&format!("UPDATE tasks SET state='cancelled',lease_token=NULL,lease_until=NULL,completed_at=?2,updated_at=?2 WHERE batch_id=?1 AND state IN ('pending','claimed','submitted') RETURNING {TASK_COLUMNS}"))?;
             let rows = stmt
                 .query_map(
                     params![id.to_string(), Utc::now().to_rfc3339()],
@@ -924,6 +924,116 @@ impl Store {
             self.vault_write(task);
         }
         Ok(())
+    }
+}
+
+impl Store {
+    pub fn begin_validation(&self) -> Result<Option<super::validator::ValidationJob>> {
+        let mut conn = self.conn.lock();
+        let tx = conn.transaction_with_behavior(rusqlite::TransactionBehavior::Immediate)?;
+        let candidate=tx.query_row(&format!("SELECT {TASK_COLUMNS} FROM tasks WHERE state='submitted' AND (available_at IS NULL OR julianday(available_at)<=julianday('now')) AND (validation_token IS NULL OR julianday(validation_until)<=julianday('now')) ORDER BY updated_at,id LIMIT 1"),[],row_to_task).optional()?;
+        let Some(mut task) = candidate else {
+            return Ok(None);
+        };
+        let config = batch_config(
+            &tx,
+            task.batch_id.context("submitted task requires batch")?,
+            true,
+        )?
+        .validator
+        .context("submitted task requires validator")?;
+        let recovering: bool = tx.query_row(
+            "SELECT validation_token IS NOT NULL FROM tasks WHERE id=?1",
+            params![task.id.to_string()],
+            |r| r.get(0),
+        )?;
+        if recovering {
+            task.validation_error_count = task
+                .validation_error_count
+                .saturating_add(1)
+                .min(config.max_error_attempts);
+        }
+        let token = Uuid::new_v4().to_string();
+        let until = Utc::now() + Duration::milliseconds(config.timeout_ms as i64 + 5000);
+        tx.execute("UPDATE tasks SET validation_token=?2,validation_until=?3,validation_attempts=validation_attempts+1,validation_error_count=?4 WHERE id=?1 AND state='submitted'",params![task.id.to_string(),token,until.to_rfc3339(),task.validation_error_count])?;
+        task.validation_attempts += 1;
+        tx.commit()?;
+        Ok(Some(super::validator::ValidationJob {
+            task,
+            token,
+            config,
+        }))
+    }
+
+    pub fn finish_validation(
+        &self,
+        job: &super::validator::ValidationJob,
+        outcome: super::validator::Validation,
+    ) -> Result<bool> {
+        use super::validator::Validation;
+        let mut conn = self.conn.lock();
+        let tx = conn.transaction_with_behavior(rusqlite::TransactionBehavior::Immediate)?;
+        let current=tx.query_row(&format!("SELECT {TASK_COLUMNS} FROM tasks WHERE id=?1 AND state='submitted' AND submission_id=?2 AND validation_token=?3 AND julianday(validation_until)>julianday('now')"),params![job.task.id.to_string(),job.task.submission_id,job.token],row_to_task).optional()?;
+        let Some(task) = current else {
+            return Ok(false);
+        };
+        let now = Utc::now();
+        let mut ack = None;
+        let (state, error, ready, errors) = match outcome {
+            Validation::Pass => ("completed", None, None, task.validation_error_count),
+            Validation::Fail(reason) => {
+                let c = batch_config(&tx, task.batch_id.unwrap(), false)?;
+                let delay = c
+                    .retry_backoff_ms
+                    .saturating_mul(1u64 << task.attempt_count.saturating_sub(1).min(20))
+                    .min(c.max_backoff_ms);
+                (
+                    if task.attempt_count >= task.max_attempts {
+                        "failed"
+                    } else {
+                        "pending"
+                    },
+                    Some(serde_json::json!({"kind":"validation_fail","message":reason})),
+                    Some(now + Duration::milliseconds(delay as i64)),
+                    task.validation_error_count,
+                )
+            }
+            Validation::Error(reason) => {
+                let errors = (task.validation_error_count + 1).min(job.config.max_error_attempts);
+                (
+                    if errors >= job.config.max_error_attempts {
+                        "failed"
+                    } else {
+                        "submitted"
+                    },
+                    Some(serde_json::json!({"kind":"validation_error","message":reason})),
+                    Some(now + Duration::milliseconds(100)),
+                    errors,
+                )
+            }
+        };
+        let terminal = state == "completed" || state == "failed";
+        let changed=tx.execute("UPDATE tasks SET state=?4,error=?5,available_at=?6,validation_error_count=?7,validation_token=NULL,validation_until=NULL,completed_at=?8,updated_at=?9 WHERE id=?1 AND state='submitted' AND submission_id=?2 AND validation_token=?3 AND julianday(validation_until)>julianday('now')",params![task.id.to_string(),task.submission_id,job.token,state,error.map(|v|v.to_string()),ready.map(|t|t.to_rfc3339()),errors,if terminal{Some(now.to_rfc3339())}else{None},now.to_rfc3339()])?;
+        if changed == 0 {
+            return Ok(false);
+        }
+        if state == "completed" {
+            let spec: String = tx.query_row(
+                "SELECT pending_ack FROM tasks WHERE id=?1",
+                params![task.id.to_string()],
+                |r| r.get(0),
+            )?;
+            ack = write_ack(&tx, task.id, serde_json::from_str(&spec)?, now)?;
+        }
+        tx.commit()?;
+        drop(conn);
+        if let Some(t) = self.get_task(task.id)? {
+            self.vault_write(&t);
+        }
+        if let Some(t) = ack {
+            self.vault_write(&t);
+        }
+        Ok(true)
     }
 }
 
@@ -1116,6 +1226,9 @@ fn row_to_task(row: &rusqlite::Row<'_>) -> rusqlite::Result<Task> {
             })
             .transpose()?,
         completed_at: parse_opt_ts(row.get(20)?)?,
+        submission_id: row.get(21)?,
+        validation_attempts: row.get(22)?,
+        validation_error_count: row.get(23)?,
     })
 }
 
@@ -1157,3 +1270,78 @@ CREATE TABLE IF NOT EXISTS agents (
     first_seen TEXT NOT NULL DEFAULT '1970-01-01T00:00:00Z'
 );
 "#;
+
+fn write_ack(
+    tx: &Connection,
+    id: Uuid,
+    ack: Option<AckSpec>,
+    now: DateTime<Utc>,
+) -> Result<Option<Task>> {
+    let ack_task = if let Some(spec) = ack {
+        // Daemon stitches the wikilink (`fixed_bug_id` → source
+        // task) into the ack's payload so the vault graph
+        // renders the chain. Caller-supplied payload wins on
+        // key collision so an agent that already knows the
+        // wikilink it wants can override.
+        let mut payload = match spec.payload {
+            Some(serde_json::Value::Object(m)) => m,
+            Some(other) => {
+                // Non-object payload (e.g. caller passed a
+                // string or array): preserve it under `value`
+                // and inject the wikilink alongside.
+                let mut m = serde_json::Map::new();
+                m.insert("value".into(), other);
+                m
+            }
+            None => serde_json::Map::new(),
+        };
+        payload
+            .entry("fixed_bug_id".to_string())
+            .or_insert_with(|| serde_json::Value::String(id.to_string()));
+        let payload_v = serde_json::Value::Object(payload);
+        let payload_s = serde_json::to_string(&payload_v)?;
+        let ack_id = Uuid::new_v4();
+        let priority = spec.priority.as_deref().unwrap_or("high");
+        tx.execute(
+                    "INSERT INTO tasks
+                       (id, name, kind, priority, state, payload, created_at, updated_at, completed_at)
+                     VALUES (?1, ?2, 'ack', ?3, 'completed', ?4, ?5, ?5, ?5)",
+                    params![
+                        ack_id.to_string(),
+                        spec.name,
+                        priority,
+                        payload_s,
+                        now.to_rfc3339(),
+                    ],
+                )?;
+        Some(Task {
+            id: ack_id,
+            name: spec.name,
+            kind: "ack".into(),
+            priority: priority.into(),
+            state: TaskState::Completed,
+            claimed_by: None,
+            payload: payload_v,
+            result: None,
+            created_at: now,
+            updated_at: now,
+            claimed_at: None,
+            lease_until: None,
+            lease_token: None,
+            attempt_no: 0,
+            attempt_count: 0,
+            max_attempts: 3,
+            submission_id: None,
+            validation_attempts: 0,
+            validation_error_count: 0,
+            available_at: None,
+            batch_id: None,
+            task_key: None,
+            error: None,
+            completed_at: Some(now),
+        })
+    } else {
+        None
+    };
+    Ok(ack_task)
+}
