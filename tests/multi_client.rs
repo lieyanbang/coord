@@ -20,18 +20,8 @@ const NUM_CLIENTS: usize = 16;
 
 #[test]
 fn many_concurrent_clients_share_one_daemon_safely() {
-    let bin_dir = match find_target_bin_dir() {
-        Some(p) => p,
-        None => {
-            eprintln!("skipping: target/debug binaries not found — run `cargo build` first");
-            return;
-        }
-    };
-    let coord = bin_dir.join("coord");
-    if !coord.exists() {
-        eprintln!("skipping: built binary missing");
-        return;
-    }
+    let coord = std::path::PathBuf::from(env!("CARGO_BIN_EXE_coord"));
+    assert!(coord.is_file(), "Cargo must build the test binary");
 
     let port = free_port();
     let url = format!("http://127.0.0.1:{port}");
@@ -85,43 +75,29 @@ fn many_concurrent_clients_share_one_daemon_safely() {
         );
     }
 
-    // Spawn N independent client processes that race to claim every
-    // task. Each writes its successful claim IDs to stdout, one per
-    // line.
-    let mut children = Vec::with_capacity(NUM_CLIENTS);
-    for c in 0..NUM_CLIENTS {
-        let agent = format!("multi-agent-{c}");
-        // Heartbeat first so the agent shows up in agents/list.
-        let _ = Command::new(&coord)
-            .args(["--url", &url, "heartbeat", &agent, "--name", "multi"])
-            .output();
-        let mut script = String::new();
-        for tid in &task_ids {
-            script.push_str(&format!(
-                "{coord} --url {url} claim {tid} --as {agent} >/dev/null 2>&1 && echo {tid}\n",
-                coord = coord.display(),
-                url = url,
-                tid = tid,
-                agent = agent,
-            ));
-        }
-        let child = Command::new("sh")
-            .arg("-c")
-            .arg(&script)
-            .stdout(Stdio::piped())
-            .stderr(Stdio::null())
-            .spawn()
-            .expect("spawn client");
-        children.push(child);
-    }
-
+    // Race independent executable processes, without a POSIX shell dependency.
     let mut all_wins: Vec<(usize, String)> = Vec::new();
-    for (idx, child) in children.into_iter().enumerate() {
-        let out = child.wait_with_output().expect("client output");
-        for line in String::from_utf8_lossy(&out.stdout).lines() {
-            let id = line.trim();
-            if !id.is_empty() {
-                all_wins.push((idx, id.to_string()));
+    for tid in &task_ids {
+        let mut children = Vec::new();
+        for c in 0..NUM_CLIENTS {
+            let child = Command::new(&coord)
+                .args([
+                    "--url",
+                    &url,
+                    "claim",
+                    tid,
+                    "--as",
+                    &format!("multi-agent-{c}"),
+                ])
+                .stdout(Stdio::null())
+                .stderr(Stdio::null())
+                .spawn()
+                .expect("spawn client");
+            children.push((c, child));
+        }
+        for (c, mut child) in children {
+            if child.wait().expect("client exit").success() {
+                all_wins.push((c, tid.clone()));
             }
         }
     }
@@ -151,21 +127,6 @@ fn many_concurrent_clients_share_one_daemon_safely() {
             n = winners.len(),
             winners = winners
         );
-    }
-}
-
-fn find_target_bin_dir() -> Option<std::path::PathBuf> {
-    if let Ok(p) = std::env::var("CARGO_TARGET_DIR") {
-        let dir = std::path::PathBuf::from(p).join("debug");
-        if dir.exists() {
-            return Some(dir);
-        }
-    }
-    let local = std::env::current_dir().ok()?.join("target").join("debug");
-    if local.exists() {
-        Some(local)
-    } else {
-        None
     }
 }
 

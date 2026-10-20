@@ -1,0 +1,80 @@
+   Compiling coord v0.4.1 (<workspace>)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.20s
+     Running unittests src\lib.rs (target\debug\deps\coord-ce564d2e711acc01.exe)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src\main.rs (target\debug\deps\coord-66897b23d2bf6d9a.exe)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests\cancel_race.rs (target\debug\deps\cancel_race-72311bb31621aa08.exe)
+
+running 1 test
+test cancel_is_sticky_against_late_complete ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.09s
+
+     Running tests\lease.rs (target\debug\deps\lease-b67cbff7b32cf304.exe)
+
+running 4 tests
+test claim_writes_lease_metadata ... ok
+test extend_succeeds_only_for_current_claimer ... ok
+test expired_lease_reclaims_and_lets_a_new_agent_win ... ok
+test completed_task_does_not_get_reclaimed ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.35s
+
+     Running tests\list_filter.rs (target\debug\deps\list_filter-1a0cfadb768413fe.exe)
+
+running 1 test
+test filter_pushdown_finds_match_beyond_naive_limit ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.10s
+
+     Running tests\multi_client.rs (target\debug\deps\multi_client-6bd8af430dd5e6f4.exe)
+
+running 1 test
+test many_concurrent_clients_share_one_daemon_safely ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.10s
+
+     Running tests\protocol_two_tabs.rs (target\debug\deps\protocol_two_tabs-25f25473c49b6338.exe)
+
+running 2 tests
+test standalone_ack_is_allowed_but_unwalkable ... ok
+test two_tabs_can_coordinate_through_complete_with_ack ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.89s
+
+     Running tests\race.rs (target\debug\deps\race-1bebacd8f83e1a07.exe)
+
+running 1 test
+test one_claimer_per_task_under_concurrent_load ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.30s
+
+     Running tests\tui_render.rs (target\debug\deps\tui_render-3c78d49a7b36fff0.exe)
+
+running 1 test
+test top_once_renders_priorities_and_kinds ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.35s
+
+     Running tests\wait_longpoll.rs (target\debug\deps\wait_longpoll-fb50caa65859ecab.exe)
+
+running 1 test
+test list_long_poll_unblocks_quickly_after_matching_send ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.95s
+
+   Doc-tests coord
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

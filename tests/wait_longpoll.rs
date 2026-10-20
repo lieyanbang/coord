@@ -15,18 +15,8 @@ const WAIT_MS: u64 = 10_000;
 
 #[test]
 fn list_long_poll_unblocks_quickly_after_matching_send() {
-    let bin_dir = match find_target_bin_dir() {
-        Some(p) => p,
-        None => {
-            eprintln!("skipping: target/debug binaries not found — run `cargo build` first");
-            return;
-        }
-    };
-    let coord = bin_dir.join("coord");
-    if !coord.exists() {
-        eprintln!("skipping: built binary missing");
-        return;
-    }
+    let coord = std::path::PathBuf::from(env!("CARGO_BIN_EXE_coord"));
+    assert!(coord.is_file(), "Cargo must build the test binary");
 
     let port = free_port();
     let url = format!("http://127.0.0.1:{port}");
@@ -143,21 +133,6 @@ fn list_long_poll_unblocks_quickly_after_matching_send() {
         elapsed < Duration::from_secs(3),
         "long-poll took {elapsed:?}; should unblock within ~300ms of the matching send"
     );
-}
-
-fn find_target_bin_dir() -> Option<std::path::PathBuf> {
-    if let Ok(p) = std::env::var("CARGO_TARGET_DIR") {
-        let dir = std::path::PathBuf::from(p).join("debug");
-        if dir.exists() {
-            return Some(dir);
-        }
-    }
-    let local = std::env::current_dir().ok()?.join("target").join("debug");
-    if local.exists() {
-        Some(local)
-    } else {
-        None
-    }
 }
 
 fn free_port() -> u16 {
