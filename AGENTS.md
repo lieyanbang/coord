@@ -28,6 +28,11 @@ scaffolded by `coord init` follows the deployed product section below.
   history rewrites, release tags, Releases or upstream/tap writes.
 - `TASK.md` stays unchanged. Platform change authorized on 2026-10-20 is recorded
   in PLAN section 9. Never lower a remaining gate to claim completion.
+- Final acceptance and remaining boundaries live in
+  `docs/verification/FINAL_ACCEPTANCE.md`. Run the opt-in capacity suite explicitly
+  with `COORD_TEST_BIN` pointing to a release executable; an ignored capacity
+  test in the ordinary regression suite is not capacity evidence. Keep all
+  diagnostics on stderr so the MCP stdout stream remains valid JSON.
 
 ## Deployed product collaboration protocol
 

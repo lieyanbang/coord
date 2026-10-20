@@ -44,3 +44,8 @@ Gate D is PASS only after every required local check exits 0.
 **Gate D: PASS.** All four full checks exited 0; four validation tests plus the
 expanded real Worker acceptance passed, including adapter process disappearance
 and a replacement worker completing the recovered task.
+
+Cloud: commit `0f4727f790916fc5cc42bd6be25bf64fbdc83157`,
+[Windows run 39434225476](https://github.com/lieyanbang/coord/actions/runs/39434225476)
+completed success. Final-stage downloadable artifact execution is recorded in
+`FINAL_ACCEPTANCE.md`.

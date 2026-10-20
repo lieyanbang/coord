@@ -1,0 +1,23 @@
+   Compiling coord v0.4.1 (<workspace>)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.59s
+     Running tests\faults.rs (target\debug\deps\faults-3cbd7cee9dbad9ed.exe)
+
+running 1 test
+
+thread '<unnamed>' (41032) panicked at tests\common\mod.rs:152:75:
+MCP stdout must be JSON only: trailing characters at line 1 column 5: 2026-10-20T13:56:52.817223Z  WARN rmcp::service: response error id=2 error=ErrorData { code: ErrorCode(-32603), message: "task is not in 'claimed' state — was it cancelled, already completed, or reclaimed after its lease expired?", data: Some(Object {"error": Object {"code": Number(-32001), "message": String("task is not in 'claimed' state — was it cancelled, already completed, or reclaimed after its lease expired?")}, "id": Number(1), "jsonrpc": String("2.0")}) }
+
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+thread 'twenty_cancel_vs_async_submission_races_keep_one_terminal_state' (13876) panicked at tests\faults.rs:127:26:
+called `Result::unwrap()` on an `Err` value: Any { .. }
+test twenty_cancel_vs_async_submission_races_keep_one_terminal_state ... FAILED
+
+failures:
+
+failures:
+    twenty_cancel_vs_async_submission_races_keep_one_terminal_state
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.58s
+
+error: test failed, to rerun pass `--test faults`

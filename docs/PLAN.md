@@ -93,4 +93,12 @@ Windows 本机及 Windows Actions 的真实测试、构建与产物为准。
 | B | PASS | token/attempt、不可复活/不可缩短、原子 receipt+ack；多连接取消竞态和真实重启/旧客户端拒绝通过 |
 | C | PASS | 通用批次与六个 Agent MCP 接口；100 任务真实多进程闭环、失败重试和本机四项检查全部通过 |
 | D | PASS | 异步 PASS/FAIL/ERROR、独立验收预算/恢复/旧 job 拒绝、Windows Worker 进程树清理及完整本机 Gate 均通过 |
-| E | TODO | 依赖 Gate D；要求真实 Windows Actions 与容量证据 |
+| E | IN_PROGRESS | 真实 release daemon + 6 个 MCP 进程完成 100/1000/10000；故障注入、旧版数据库迁移/备份回退通过；最终本地 Gate 与当前 SHA 的 Windows Actions 待收口 |
+
+### Stage E 实测与修正
+
+- 负向 MCP 请求暴露日志污染 stdout，改为 stderr；保留先红后绿日志。
+- 损坏状态曾被进度统计误作终态，现显式报错；迁移失败回滚测试通过。
+- 种子 `0xC00D` 杀死 4 个独立 MCP 进程、重启 daemon、恢复 20 个任务，旧令牌拒绝；断链后 receipt 重放不重复 ack。
+- 容量与兼容性原始数据见 `verification/stage-e-capacity.json`、`verification/stage-e-migration.json`；容量为本机测量，无虚构吞吐门槛。
+- Stage D Windows [Actions 39434225476](https://github.com/lieyanbang/coord/actions/runs/39434225476) 已实测 success。

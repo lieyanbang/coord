@@ -1,0 +1,24 @@
+   Compiling coord v0.4.1 (<workspace>)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.59s
+     Running tests\faults.rs (target\debug\deps\faults-3cbd7cee9dbad9ed.exe)
+
+running 3 tests
+
+thread '<unnamed>' (2944) panicked at tests\common\mod.rs:152:56:
+MCP stdout must be JSON only: Error("trailing characters", line: 1, column: 5)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+thread 'twenty_cancel_vs_async_submission_races_keep_one_terminal_state' (16424) panicked at tests\faults.rs:127:26:
+called `Result::unwrap()` on an `Err` value: Any { .. }
+test twenty_cancel_vs_async_submission_races_keep_one_terminal_state ... FAILED
+test dropped_response_then_daemon_restart_replays_receipt_without_duplicate_ack ... ok
+test seeded_process_kills_recover_without_task_loss_or_stale_result_acceptance ... ok
+
+failures:
+
+failures:
+    twenty_cancel_vs_async_submission_races_keep_one_terminal_state
+
+test result: FAILED. 2 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.62s
+
+error: test failed, to rerun pass `--test faults`

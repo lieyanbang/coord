@@ -3,6 +3,12 @@ use serde_json::{json, Value};
 use std::process::{Child, Command, Stdio};
 use std::time::Duration;
 
+pub fn binary() -> std::path::PathBuf {
+    std::env::var_os("COORD_TEST_BIN")
+        .map(Into::into)
+        .unwrap_or_else(|| env!("CARGO_BIN_EXE_coord").into())
+}
+
 pub struct Daemon {
     pub root: std::path::PathBuf,
     pub url: String,
@@ -32,11 +38,16 @@ impl Daemon {
         d
     }
     fn spawn(port: u16, root: &std::path::Path) -> Child {
-        Command::new(env!("CARGO_BIN_EXE_coord"))
+        let log = std::fs::OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(root.join("daemon.log"))
+            .unwrap();
+        Command::new(binary())
             .args(["serve", "--addr", &format!("127.0.0.1:{port}"), "--db"])
             .arg(root.join("state.db"))
-            .stdout(Stdio::null())
-            .stderr(Stdio::null())
+            .stdout(Stdio::from(log.try_clone().unwrap()))
+            .stderr(Stdio::from(log))
             .spawn()
             .unwrap()
     }
@@ -75,7 +86,7 @@ impl Daemon {
         v["result"].clone()
     }
     pub fn cli(&self, args: &[&str]) -> Value {
-        let out = Command::new(env!("CARGO_BIN_EXE_coord"))
+        let out = Command::new(binary())
             .args(["--url", &self.url])
             .args(args)
             .output()
@@ -102,8 +113,11 @@ pub struct Mcp {
     next: u64,
 }
 impl Mcp {
+    pub fn pid(&self) -> u32 {
+        self.child.id()
+    }
     pub fn new(url: &str) -> Self {
-        let mut child = Command::new(env!("CARGO_BIN_EXE_coord"))
+        let mut child = Command::new(binary())
             .args(["mcp", "--url", url])
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
@@ -127,7 +141,7 @@ impl Mcp {
         writeln!(self.input, "{v}").unwrap();
         self.input.flush().unwrap();
     }
-    pub fn request(&mut self, method: &str, params: Value) -> Value {
+    pub fn request_raw(&mut self, method: &str, params: Value) -> Value {
         use std::io::BufRead;
         let id = self.next;
         self.next += 1;
@@ -135,12 +149,17 @@ impl Mcp {
         loop {
             let mut line = String::new();
             assert!(self.output.read_line(&mut line).unwrap() > 0, "MCP EOF");
-            let v: Value = serde_json::from_str(&line).expect("MCP stdout must be JSON only");
+            let v: Value = serde_json::from_str(&line)
+                .unwrap_or_else(|e| panic!("MCP stdout must be JSON only: {e}: {line}"));
             if v["id"] == id {
-                assert!(v.get("error").is_none(), "{v}");
-                return v["result"].clone();
+                return v;
             }
         }
+    }
+    pub fn request(&mut self, method: &str, params: Value) -> Value {
+        let v = self.request_raw(method, params);
+        assert!(v.get("error").is_none(), "{v}");
+        v["result"].clone()
     }
     pub fn tool_raw(&mut self, name: &str, arguments: Value) -> Value {
         self.request("tools/call", json!({"name":name,"arguments":arguments}))

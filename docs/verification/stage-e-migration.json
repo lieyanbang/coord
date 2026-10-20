@@ -1,0 +1,18 @@
+{
+  "status": "PASS",
+  "tasks": 4,
+  "agents": 1,
+  "legacy_vault_files_preserved": 6,
+  "old_binary_sha256": "471776cff491e97dbc95fb02aad66127c78f6493fc12532fb60c7916507ad49a",
+  "new_binary_sha256": "8e3fff69c4e764f16bfc6e29a42bea875e968ef71b4e0f92f6deecea9fb44869",
+  "preupgrade_backup_sha256": "1f390182de4b0382e5d4d2e316ed354f42b93478eec8707fd3fb2d92ed7a2e8d",
+  "checks": [
+    "baseline binary generated real SQLite sample",
+    "tasks/results/agents/ack preserved",
+    "legacy active claim invalidated",
+    "tokenless writes refused",
+    "new fenced claim survives repeated migration/restart",
+    "old binary reads restored backup identically",
+    "backup unchanged"
+  ]
+}

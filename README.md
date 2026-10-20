@@ -53,6 +53,9 @@ The Fork keeps the upstream `0.4.1` version while implementing staged hardening.
 Current gates cover fencing, multi-process scheduling, migration, long-poll,
 Vault, asynchronous validation and the optional Windows Worker. Exact results
 and remaining limitations are in [verification](docs/verification/).
+The [final acceptance report](docs/verification/FINAL_ACCEPTANCE.md) records
+Windows capacity measurements, failure injection, migration/backup recovery,
+Actions evidence and the boundaries of the tested support.
 
 ## Why another one of these?
 

@@ -193,4 +193,52 @@ fn validator_fail_exhausts_execution_budget_and_old_job_token_cannot_commit() {
             .validation_error_count,
         1
     );
+
+    // Repeated abandoned validator jobs must exhaust their own finite budget.
+    let next = store
+        .add_tasks(
+            id,
+            vec![TaskInput {
+                key: "interrupted".into(),
+                name: "interrupted".into(),
+                payload: json!({}),
+            }],
+        )
+        .unwrap()
+        .remove(0);
+    let claim = store.claim_task(next.id, "a", None).unwrap().unwrap();
+    store
+        .complete_task(
+            next.id,
+            "a",
+            claim.lease_token.as_deref().unwrap(),
+            json!({}),
+            None,
+        )
+        .unwrap();
+    let mut abandoned = store.begin_validation().unwrap().unwrap();
+    for errors in 1..=3 {
+        rusqlite::Connection::open(&path)
+            .unwrap()
+            .execute(
+                "UPDATE tasks SET validation_until='2000-01-01T00:00:00Z' WHERE id=?1",
+                [next.id.to_string()],
+            )
+            .unwrap();
+        let recovered = store.begin_validation().unwrap().unwrap();
+        assert_eq!(recovered.task.validation_error_count, errors);
+        assert!(!store
+            .finish_validation(&abandoned, Validation::Pass)
+            .unwrap());
+        abandoned = recovered;
+    }
+    let runtime = tokio::runtime::Runtime::new().unwrap();
+    let verdict = runtime.block_on(coord::core::validator::validate(&abandoned));
+    assert!(matches!(verdict, Validation::Error(_)));
+    assert!(store.finish_validation(&abandoned, verdict).unwrap());
+    let failed = store.get_task(next.id).unwrap().unwrap();
+    assert_eq!(failed.state.as_str(), "failed");
+    assert_eq!(failed.validation_error_count, 3);
+    assert_eq!(failed.attempt_count, 1);
+    assert!(store.begin_validation().unwrap().is_none());
 }

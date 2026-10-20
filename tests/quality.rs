@@ -72,3 +72,52 @@ fn vault_event_before_heartbeat_does_not_deadlock() {
         .recv_timeout(Duration::from_secs(2))
         .expect("event writer deadlocked"));
 }
+
+#[test]
+fn batch_status_rejects_corrupt_state_instead_of_reporting_terminal() {
+    use coord::core::types::{BatchConfig, TaskInput};
+    let path = dir().join("corrupt-progress.db");
+    let store = Store::open(&path).unwrap();
+    let batch = store
+        .create_batch("bad status", "", BatchConfig::default())
+        .unwrap();
+    let id = uuid::Uuid::parse_str(batch["id"].as_str().unwrap()).unwrap();
+    store
+        .add_tasks(
+            id,
+            vec![TaskInput {
+                key: "one".into(),
+                name: "bad".into(),
+                payload: json!({}),
+            }],
+        )
+        .unwrap();
+    Connection::open(&path)
+        .unwrap()
+        .execute("UPDATE tasks SET state='garbled'", [])
+        .unwrap();
+    assert!(
+        store.get_batch_status(id).is_err(),
+        "corruption must never become an apparently terminal batch"
+    );
+}
+
+#[test]
+fn failed_migration_rolls_back_columns_added_before_failure() {
+    let path = dir().join("rollback.db");
+    let conn = Connection::open(&path).unwrap();
+    conn.execute_batch("CREATE TABLE tasks(id TEXT PRIMARY KEY,name TEXT NOT NULL,state TEXT NOT NULL,claimed_by TEXT,payload TEXT NOT NULL,result TEXT,created_at TEXT NOT NULL,updated_at TEXT NOT NULL); CREATE VIEW agents AS SELECT 'agent' AS id;").unwrap();
+    drop(conn);
+    assert!(Store::open(&path).is_err());
+    let conn = Connection::open(path).unwrap();
+    let mut stmt = conn.prepare("PRAGMA table_info(tasks)").unwrap();
+    let columns = stmt
+        .query_map([], |r| r.get::<_, String>(1))
+        .unwrap()
+        .collect::<rusqlite::Result<Vec<_>>>()
+        .unwrap();
+    assert!(
+        !columns.iter().any(|c| c == "kind"),
+        "failed migration must not leave added task columns"
+    );
+}

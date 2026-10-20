@@ -866,6 +866,12 @@ impl Store {
         let mut states = serde_json::json!({"pending":0,"claimed":0,"submitted":0,"completed":0,"failed":0,"cancelled":0});
         let mut total = 0;
         for (state, count) in counts {
+            if TaskState::parse(&state).is_none() {
+                return Err(scheduler_error(
+                    -32000,
+                    "corrupt task state in batch progress",
+                ));
+            }
             states[&state] = count.into();
             total += count;
         }
