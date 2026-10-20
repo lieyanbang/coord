@@ -94,3 +94,66 @@ impl Drop for Daemon {
         let _ = self.child.wait();
     }
 }
+
+pub struct Mcp {
+    child: Child,
+    input: std::process::ChildStdin,
+    output: std::io::BufReader<std::process::ChildStdout>,
+    next: u64,
+}
+impl Mcp {
+    pub fn new(url: &str) -> Self {
+        let mut child = Command::new(env!("CARGO_BIN_EXE_coord"))
+            .args(["mcp", "--url", url])
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::null())
+            .spawn()
+            .unwrap();
+        let input = child.stdin.take().unwrap();
+        let output = std::io::BufReader::new(child.stdout.take().unwrap());
+        let mut m = Self {
+            child,
+            input,
+            output,
+            next: 1,
+        };
+        m.request("initialize",json!({"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"coord-tests","version":"1"}}));
+        m.send(json!({"jsonrpc":"2.0","method":"notifications/initialized"}));
+        m
+    }
+    fn send(&mut self, v: Value) {
+        use std::io::Write;
+        writeln!(self.input, "{v}").unwrap();
+        self.input.flush().unwrap();
+    }
+    pub fn request(&mut self, method: &str, params: Value) -> Value {
+        use std::io::BufRead;
+        let id = self.next;
+        self.next += 1;
+        self.send(json!({"jsonrpc":"2.0","id":id,"method":method,"params":params}));
+        loop {
+            let mut line = String::new();
+            assert!(self.output.read_line(&mut line).unwrap() > 0, "MCP EOF");
+            let v: Value = serde_json::from_str(&line).expect("MCP stdout must be JSON only");
+            if v["id"] == id {
+                assert!(v.get("error").is_none(), "{v}");
+                return v["result"].clone();
+            }
+        }
+    }
+    pub fn tool_raw(&mut self, name: &str, arguments: Value) -> Value {
+        self.request("tools/call", json!({"name":name,"arguments":arguments}))
+    }
+    pub fn tool(&mut self, name: &str, arguments: Value) -> Value {
+        let r = self.tool_raw(name, arguments);
+        assert_ne!(r["isError"], true, "{r}");
+        serde_json::from_str(r["content"][0]["text"].as_str().unwrap()).unwrap()
+    }
+}
+impl Drop for Mcp {
+    fn drop(&mut self) {
+        let _ = self.child.kill();
+        let _ = self.child.wait();
+    }
+}

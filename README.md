@@ -363,6 +363,13 @@ without a custom integration.
 
 ## CLI
 
+Generic batches are managed through `batches/create`, `batches/add_tasks`,
+`batches/status`, `batches/retry_failed` and `batches/cancel` over JSON-RPC.
+Agents use the MCP tools `claim_task`, `submit_result`, `report_failure`,
+`extend_lease`, `get_task` and `get_progress`. Task payload/result are arbitrary
+JSON. Claim-next is atomic; bounded execution retries use exponential backoff.
+See [batch contracts and errors](docs/API.md).
+
 ```
 coord serve          run the daemon (HTTP JSON-RPC surface)
 coord mcp            stdio MCP bridge for IDE clients

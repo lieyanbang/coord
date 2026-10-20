@@ -23,6 +23,7 @@ fn real_process_fencing_survives_restart_and_rejects_legacy_writes() {
     );
     d.restart();
     d.cli(&["reclaim"]);
+    std::thread::sleep(std::time::Duration::from_millis(120));
     let second = d.cli(&["claim", id, "--as", "same"]);
     let token = second["lease_token"].as_str().unwrap();
     assert_ne!(old, token);

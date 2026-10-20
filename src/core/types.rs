@@ -91,10 +91,44 @@ pub struct Task {
     pub max_attempts: u32,
     #[serde(default)]
     pub available_at: Option<DateTime<Utc>>,
+    #[serde(default)]
+    pub batch_id: Option<Uuid>,
+    #[serde(default)]
+    pub task_key: Option<String>,
+    #[serde(default)]
+    pub error: Option<serde_json::Value>,
+    #[serde(default)]
+    pub completed_at: Option<DateTime<Utc>>,
 }
 
 pub fn default_max_attempts() -> u32 {
     3
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, schemars::JsonSchema)]
+#[serde(default, deny_unknown_fields)]
+pub struct BatchConfig {
+    pub max_attempts: u32,
+    pub retry_backoff_ms: u64,
+    pub max_backoff_ms: u64,
+}
+impl Default for BatchConfig {
+    fn default() -> Self {
+        Self {
+            max_attempts: 3,
+            retry_backoff_ms: 100,
+            max_backoff_ms: 30_000,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, schemars::JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct TaskInput {
+    pub key: String,
+    pub name: String,
+    #[serde(default)]
+    pub payload: serde_json::Value,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

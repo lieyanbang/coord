@@ -29,6 +29,7 @@ fn expiry_cannot_revive_and_same_agent_reclaim_has_new_fence() {
         a.complete_task(t.id, "same", &old, json!(1), None).unwrap()
     ));
     b.reclaim_expired_leases().unwrap();
+    std::thread::sleep(std::time::Duration::from_millis(120));
     let second = b.claim_task(t.id, "same", Some(60)).unwrap().unwrap();
     let token = second.lease_token.unwrap();
     assert_ne!(old, token);

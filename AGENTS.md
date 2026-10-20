@@ -57,3 +57,8 @@ Standalone ack publication is reserved for external events you did not perform;
 include URLs/SHAs/context rather than inventing a source ID. HTTP RPC has no
 identity authentication: use loopback and trusted local clients; lease ownership
 is concurrency protection, not a security boundary between hostile tenants.
+
+For generic batches, use `claim_task` to atomically receive the next task,
+`submit_result` or `report_failure` with the returned fence, and `get_progress`
+for a consistent snapshot. Empty does not mean terminal: tasks may be leased or
+waiting for backoff. Only the manager's progress snapshot establishes completion.

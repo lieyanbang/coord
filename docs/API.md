@@ -53,3 +53,39 @@ Rollback means stop the upgraded daemon, restore the pre-upgrade backup and run
 the preserved old binary. Do not open the only upgraded database with an older
 binary, and do not assume additive columns make old unsafe writers compatible.
 Vault files are best-effort; new UUID-based filenames leave old notes intact.
+
+## Batches and scheduling (Stage C)
+
+All new management/claim/failure methods use snake_case JSON parameters.
+
+| HTTP method | Parameters | Response |
+| --- | --- | --- |
+| batches/create | name, optional description/config | batch object including id |
+| batches/add_tasks | batch_id, tasks:[{key,name,payload}] | tasks array in request order |
+| batches/status | batch_id | total, active, terminal, per-state counts and status |
+| batches/retry_failed | batch_id | retried count |
+| batches/cancel | batch_id | ok |
+| scheduler/claim | agent_id, optional batch_id/lease_seconds | {empty,task}; empty queue has task:null |
+| scheduler/failure | id, agent_id, lease_token, error | ok; exact accepted duplicates replay |
+| scheduler/submit | same as tasks/complete | same as tasks/complete |
+| scheduler/extend | same as tasks/extend | same as tasks/extend |
+
+Agent MCP tools: `claim_task`, `submit_result`, `report_failure`, `extend_lease`,
+`get_task`, `get_progress`. The original `tasks_*` tools remain. Management is
+available via HTTP; an IDE runtime does not need to implement manager tools.
+
+Batch config defaults: max_attempts=3, retry_backoff_ms=100, max_backoff_ms=30000.
+Budgets are 1..100 attempts and delay capped at one hour. On execution failure
+or lease expiry, attempt n backs off by min(base*2^(n-1),cap); once exhausted,
+the task fails. `attempt_no` is lifetime-monotonic even after explicit manager
+retry; `attempt_count` is the current budget. Expired attempts cannot submit.
+Failure replays cannot consume the retry budget twice; conflicting errors fail.
+
+Enqueue is atomic, at most 1000 entries/request, keys 1..256 UTF-8 bytes. Reusing
+the same key and input returns its existing task; changed input conflicts and
+rolls back the entire request. Keys are unique within a batch. Batch progress
+is a transaction-consistent snapshot. A drained batch reports completed; adding
+more work to an active, drained batch is permitted. Cancellation is sticky,
+blocks enqueue/claim/retry and invalidates active task fences. Terminal outcomes
+remain counted; repeated cancel/retry is state-idempotent. Missing batch is
+`-32004`. Legacy individual tasks have batch_id=null and still work.

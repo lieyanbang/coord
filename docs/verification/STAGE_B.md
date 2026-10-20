@@ -34,3 +34,7 @@ will be added with the same fenced predicate and receipts in Stage C. No unsafe
 failure write endpoint remains available. API compatibility/backup/rollback
 instructions are in `docs/API.md`. Optional POSIX demo examples now carry the
 claim token but are NOT_RUN on the default Windows platform.
+
+Cloud: commit `15f360a30957eaa5c4607d2bb11ebdcd43646846`,
+[run 39431056581](https://github.com/lieyanbang/coord/actions/runs/39431056581)
+completed success (Windows).

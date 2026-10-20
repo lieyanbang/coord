@@ -1,0 +1,122 @@
+   Compiling coord v0.4.1 (<workspace>)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.80s
+     Running unittests src\lib.rs (target\debug\deps\coord-f61eb6d9044a408a.exe)
+
+running 1 test
+test a2a::tests::write_between_empty_query_and_wait_is_not_lost ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src\main.rs (target\debug\deps\coord-9178990bdd58b0b2.exe)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests\batches.rs (target\debug\deps\batches-72a83e97caf1fedb.exe)
+
+running 2 tests
+test retry_budget_backoff_receipts_idempotent_keys_and_cancel ... ok
+test hundred_tasks_over_dynamic_independent_mcp_workers_and_recovery ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.60s
+
+     Running tests\cancel_race.rs (target\debug\deps\cancel_race-b4ae55bd887c28b1.exe)
+
+running 1 test
+test cancel_is_sticky_against_late_complete ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+     Running tests\fencing.rs (target\debug\deps\fencing-5d2f17191dde4b92.exe)
+
+running 3 tests
+test duplicate_completion_is_exact_and_ack_is_written_once ... ok
+test cancellation_and_completion_from_independent_connections_have_one_terminal_winner ... ok
+test expiry_cannot_revive_and_same_agent_reclaim_has_new_fence ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.28s
+
+     Running tests\fencing_protocol.rs (target\debug\deps\fencing_protocol-267c5d2e5ac8517b.exe)
+
+running 1 test
+test real_process_fencing_survives_restart_and_rejects_legacy_writes ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.46s
+
+     Running tests\lease.rs (target\debug\deps\lease-a261352f60e6c563.exe)
+
+running 4 tests
+test claim_writes_lease_metadata ... ok
+test extend_succeeds_only_for_current_claimer ... ok
+test completed_task_does_not_get_reclaimed ... ok
+test expired_lease_reclaims_and_lets_a_new_agent_win ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.37s
+
+     Running tests\list_filter.rs (target\debug\deps\list_filter-9e88fc298ae4df2c.exe)
+
+running 1 test
+test filter_pushdown_finds_match_beyond_naive_limit ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+
+     Running tests\multi_client.rs (target\debug\deps\multi_client-72b3f3f190f12a67.exe)
+
+running 1 test
+test many_concurrent_clients_share_one_daemon_safely ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.03s
+
+     Running tests\protocol_two_tabs.rs (target\debug\deps\protocol_two_tabs-ae4cf9cc885285f4.exe)
+
+running 2 tests
+test standalone_ack_is_allowed_but_unwalkable ... ok
+test two_tabs_can_coordinate_through_complete_with_ack ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.38s
+
+     Running tests\quality.rs (target\debug\deps\quality-c4f8d2bd1fc31b46.exe)
+
+running 4 tests
+test vault_event_before_heartbeat_does_not_deadlock ... ok
+test vault_same_name_and_agent_slug_collisions_are_distinct ... ok
+test pre_lease_schema_migrates_before_indexes ... ok
+test corrupt_rows_never_silently_become_pending_or_null ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.15s
+
+     Running tests\race.rs (target\debug\deps\race-edd0095da8bc79c8.exe)
+
+running 1 test
+test one_claimer_per_task_under_concurrent_load ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.28s
+
+     Running tests\service_boundaries.rs (target\debug\deps\service_boundaries-711a3e7344defae8.exe)
+
+running 1 test
+test browser_and_oversize_requests_cannot_write_tasks ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.54s
+
+     Running tests\tui_render.rs (target\debug\deps\tui_render-e93636d00694fa2e.exe)
+
+running 1 test
+test top_once_renders_priorities_and_kinds ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.86s
+
+     Running tests\wait_longpoll.rs (target\debug\deps\wait_longpoll-a3879f0b9863e1b0.exe)
+
+running 1 test
+test list_long_poll_unblocks_quickly_after_matching_send ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.46s
+
+   Doc-tests coord
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

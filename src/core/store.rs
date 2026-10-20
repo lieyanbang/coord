@@ -99,9 +99,16 @@ impl Store {
             ("attempt_count", "INTEGER NOT NULL DEFAULT 0"),
             ("max_attempts", "INTEGER NOT NULL DEFAULT 3"),
             ("available_at", "TEXT"),
+            ("batch_id", "TEXT"),
+            ("task_key", "TEXT"),
+            ("error", "TEXT"),
+            ("completed_at", "TEXT"),
         ] {
             try_add_column(&tx, "tasks", column, definition)?;
         }
+        tx.execute_batch("CREATE TABLE IF NOT EXISTS batches(id TEXT PRIMARY KEY,name TEXT NOT NULL,description TEXT NOT NULL,config TEXT NOT NULL,created_at TEXT NOT NULL,status TEXT NOT NULL DEFAULT 'active');
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_task_key ON tasks(batch_id,task_key);
+            CREATE INDEX IF NOT EXISTS idx_tasks_ready ON tasks(state,available_at,batch_id);")?;
         // Legacy claims lack a fence: invalidate them rather than allow a bypass.
         tx.execute("UPDATE tasks SET state='pending',claimed_by=NULL,claimed_at=NULL,lease_until=NULL WHERE state='claimed' AND lease_token IS NULL", [])?;
         tx.execute_batch("CREATE TABLE IF NOT EXISTS task_receipts(task_id TEXT NOT NULL,lease_token TEXT NOT NULL,operation TEXT NOT NULL,agent_id TEXT NOT NULL,request TEXT NOT NULL,response TEXT NOT NULL,PRIMARY KEY(task_id,lease_token,operation));")?;
@@ -148,8 +155,8 @@ impl Store {
         {
             let conn = self.conn.lock();
             conn.execute(
-                "INSERT INTO tasks (id, name, kind, priority, state, payload, created_at, updated_at)
-                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?7)",
+                "INSERT INTO tasks (id, name, kind, priority, state, payload, created_at, updated_at, completed_at)
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?7, CASE WHEN ?5='completed' THEN ?7 ELSE NULL END)",
                 params![
                     id.to_string(),
                     name,
@@ -179,6 +186,14 @@ impl Store {
             attempt_count: 0,
             max_attempts: 3,
             available_at: None,
+            batch_id: None,
+            task_key: None,
+            error: None,
+            completed_at: if initial_state == TaskState::Completed {
+                Some(now)
+            } else {
+                None
+            },
         };
         self.vault_write(&task);
         Ok(task)
@@ -189,7 +204,7 @@ impl Store {
         let row = conn
             .query_row(
                 "SELECT id, name, kind, priority, state, claimed_by, payload, result, \
-                 created_at, updated_at, claimed_at, lease_until, lease_token, attempt_no, attempt_count, max_attempts, available_at \
+                 created_at, updated_at, claimed_at, lease_until, lease_token, attempt_no, attempt_count, max_attempts, available_at, batch_id, task_key, error, completed_at \
                  FROM tasks WHERE id = ?1",
                 params![id.to_string()],
                 row_to_task,
@@ -210,7 +225,7 @@ impl Store {
         let conn = self.conn.lock();
         let mut sql = String::from(
             "SELECT id, name, kind, priority, state, claimed_by, payload, result, \
-             created_at, updated_at, claimed_at, lease_until, lease_token, attempt_no, attempt_count, max_attempts, available_at \
+             created_at, updated_at, claimed_at, lease_until, lease_token, attempt_no, attempt_count, max_attempts, available_at, batch_id, task_key, error, completed_at \
              FROM tasks",
         );
         let mut clauses: Vec<&'static str> = Vec::new();
@@ -269,7 +284,7 @@ impl Store {
                 None
             } else {
                 Some(tx.query_row(
-                "SELECT id,name,kind,priority,state,claimed_by,payload,result,created_at,updated_at,claimed_at,lease_until,lease_token,attempt_no,attempt_count,max_attempts,available_at FROM tasks WHERE id=?1",
+                "SELECT id,name,kind,priority,state,claimed_by,payload,result,created_at,updated_at,claimed_at,lease_until,lease_token,attempt_no,attempt_count,max_attempts,available_at,batch_id,task_key,error,completed_at FROM tasks WHERE id=?1",
                 params![id.to_string()], row_to_task)?)
             };
             tx.commit()?;
@@ -334,43 +349,31 @@ impl Store {
             // state transition is a single UPDATE for atomicity.
             let mut stmt = conn.prepare(
                 "SELECT id, name, kind, priority, state, claimed_by, payload, result, \
-                 created_at, updated_at, claimed_at, lease_until, lease_token, attempt_no, attempt_count, max_attempts, available_at \
+                 created_at, updated_at, claimed_at, lease_until, lease_token, attempt_no, attempt_count, max_attempts, available_at, batch_id, task_key, error, completed_at \
                  FROM tasks \
                  WHERE state = 'claimed' AND lease_until IS NOT NULL AND julianday(lease_until) <= julianday(?1)",
             )?;
             let snapshot: Vec<Task> = stmt
                 .query_map(params![now.to_rfc3339()], row_to_task)?
                 .collect::<rusqlite::Result<Vec<_>>>()?;
-            let out = if snapshot.is_empty() {
-                Vec::new()
-            } else {
-                conn.execute(
-                    "UPDATE tasks SET state = CASE WHEN attempt_count>=max_attempts THEN 'failed' ELSE 'pending' END, claimed_by = NULL, lease_token = NULL, \
-                                       claimed_at = NULL, lease_until = NULL, \
-                                       updated_at = ?1 \
-                     WHERE state = 'claimed' AND lease_until IS NOT NULL AND julianday(lease_until) <= julianday(?1)",
-                    params![now.to_rfc3339()],
-                )?;
-                // Re-fetch the post-reclaim shape (state='pending',
-                // claimed_by=NULL) so the returned vec matches what
-                // any subsequent `tasks/list` would show.
-                let ids: Vec<String> = snapshot.iter().map(|t| t.id.to_string()).collect();
-                let mut out = Vec::with_capacity(ids.len());
-                for id in &ids {
-                    let t = conn.query_row(
-                        "SELECT id, name, kind, priority, state, claimed_by, payload, result, \
-                         created_at, updated_at, claimed_at, lease_until, lease_token, attempt_no, attempt_count, max_attempts, available_at \
-                         FROM tasks WHERE id = ?1",
-                        params![id],
-                        row_to_task,
-                    )?;
-                    out.push((
-                        snapshot.iter().find(|s| &s.id.to_string() == id).cloned(),
-                        t,
-                    ));
+            let mut out = Vec::with_capacity(snapshot.len());
+            for before in snapshot {
+                if retry_task(
+                    &tx,
+                    &before,
+                    serde_json::json!({"kind":"lease_expired"}),
+                    true,
+                )? == 0
+                {
+                    continue;
                 }
-                out
-            };
+                let after = tx.query_row(
+                    &format!("SELECT {TASK_COLUMNS} FROM tasks WHERE id=?1"),
+                    params![before.id.to_string()],
+                    row_to_task,
+                )?;
+                out.push((Some(before), after));
+            }
             drop(stmt);
             tx.commit()?;
             out
@@ -435,7 +438,7 @@ impl Store {
             }
             let updated = tx.execute(
                 "UPDATE tasks SET state = 'completed', result = ?1, lease_until = NULL,
-                                  updated_at = ?2
+                                  updated_at = ?2, completed_at=?2
                  WHERE id = ?3 AND state = 'claimed' AND claimed_by=?4 AND lease_token=?5 AND julianday(lease_until)>julianday('now')",
                 params![result_s, now.to_rfc3339(), id.to_string(), agent_id, lease_token],
             )?;
@@ -471,8 +474,8 @@ impl Store {
                 let priority = spec.priority.as_deref().unwrap_or("high");
                 tx.execute(
                     "INSERT INTO tasks
-                       (id, name, kind, priority, state, payload, created_at, updated_at)
-                     VALUES (?1, ?2, 'ack', ?3, 'completed', ?4, ?5, ?5)",
+                       (id, name, kind, priority, state, payload, created_at, updated_at, completed_at)
+                     VALUES (?1, ?2, 'ack', ?3, 'completed', ?4, ?5, ?5, ?5)",
                     params![
                         ack_id.to_string(),
                         spec.name,
@@ -499,6 +502,10 @@ impl Store {
                     attempt_count: 0,
                     max_attempts: 3,
                     available_at: None,
+                    batch_id: None,
+                    task_key: None,
+                    error: None,
+                    completed_at: Some(now),
                 })
             } else {
                 None
@@ -548,7 +555,7 @@ impl Store {
         {
             let conn = self.conn.lock();
             conn.execute(
-                "UPDATE tasks SET state = 'cancelled', lease_until = NULL, lease_token=NULL, updated_at = ?1
+                "UPDATE tasks SET state = 'cancelled', lease_until = NULL, lease_token=NULL, updated_at = ?1, completed_at=?1
                  WHERE id = ?2 AND state IN ('pending','claimed')",
                 params![now.to_rfc3339(), id.to_string()],
             )?;
@@ -683,6 +690,284 @@ impl Store {
     }
 }
 
+pub const TASK_COLUMNS: &str = "id,name,kind,priority,state,claimed_by,payload,result,created_at,updated_at,claimed_at,lease_until,lease_token,attempt_no,attempt_count,max_attempts,available_at,batch_id,task_key,error,completed_at";
+
+#[derive(Debug)]
+pub struct SchedulerError {
+    pub code: i32,
+    pub message: String,
+}
+impl std::fmt::Display for SchedulerError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.message)
+    }
+}
+impl std::error::Error for SchedulerError {}
+fn scheduler_error(code: i32, message: &str) -> anyhow::Error {
+    SchedulerError {
+        code,
+        message: message.into(),
+    }
+    .into()
+}
+
+impl Store {
+    pub fn create_batch(
+        &self,
+        name: &str,
+        description: &str,
+        config: super::types::BatchConfig,
+    ) -> Result<serde_json::Value> {
+        if config.max_attempts == 0
+            || config.max_attempts > 100
+            || config.max_backoff_ms > 3_600_000
+            || config.retry_backoff_ms > config.max_backoff_ms
+        {
+            return Err(scheduler_error(-32602, "invalid retry configuration"));
+        }
+        let id = Uuid::new_v4();
+        let now = Utc::now().to_rfc3339();
+        self.conn.lock().execute(
+            "INSERT INTO batches(id,name,description,config,created_at) VALUES(?1,?2,?3,?4,?5)",
+            params![
+                id.to_string(),
+                name,
+                description,
+                serde_json::to_string(&config)?,
+                now
+            ],
+        )?;
+        Ok(
+            serde_json::json!({"id":id,"name":name,"description":description,"config":config,"created_at":now,"status":"active"}),
+        )
+    }
+
+    pub fn add_tasks(
+        &self,
+        batch_id: Uuid,
+        tasks: Vec<super::types::TaskInput>,
+    ) -> Result<Vec<Task>> {
+        if tasks.len() > 1000 || tasks.iter().any(|t| t.key.is_empty() || t.key.len() > 256) {
+            return Err(scheduler_error(
+                -32602,
+                "1..256 byte keys and at most 1000 tasks per request required",
+            ));
+        }
+        let mut conn = self.conn.lock();
+        let tx = conn.transaction_with_behavior(rusqlite::TransactionBehavior::Immediate)?;
+        let config = batch_config(&tx, batch_id, true)?;
+        let now = Utc::now().to_rfc3339();
+        let mut out = Vec::new();
+        for input in tasks {
+            let previous = tx
+                .query_row(
+                    &format!("SELECT {TASK_COLUMNS} FROM tasks WHERE batch_id=?1 AND task_key=?2"),
+                    params![batch_id.to_string(), input.key],
+                    row_to_task,
+                )
+                .optional()?;
+            if let Some(t) = previous {
+                if t.name != input.name || t.payload != input.payload {
+                    return Err(scheduler_error(
+                        -32001,
+                        "task key already exists with different input",
+                    ));
+                }
+                out.push(t);
+                continue;
+            }
+            let id = Uuid::new_v4();
+            tx.execute("INSERT INTO tasks(id,name,state,payload,created_at,updated_at,batch_id,task_key,max_attempts) VALUES(?1,?2,'pending',?3,?4,?4,?5,?6,?7)",params![id.to_string(),input.name,serde_json::to_string(&input.payload)?,now,batch_id.to_string(),input.key,config.max_attempts])?;
+            out.push(tx.query_row(
+                &format!("SELECT {TASK_COLUMNS} FROM tasks WHERE id=?1"),
+                params![id.to_string()],
+                row_to_task,
+            )?);
+        }
+        tx.commit()?;
+        drop(conn);
+        for t in &out {
+            self.vault_write(t);
+        }
+        Ok(out)
+    }
+
+    pub fn claim_next(
+        &self,
+        agent_id: &str,
+        batch_id: Option<Uuid>,
+        lease_seconds: Option<u64>,
+    ) -> Result<Option<Task>> {
+        self.reclaim_expired_leases()?;
+        let mut conn = self.conn.lock();
+        let tx = conn.transaction_with_behavior(rusqlite::TransactionBehavior::Immediate)?;
+        if let Some(id) = batch_id {
+            batch_config(&tx, id, true)?;
+        }
+        let now = Utc::now();
+        let until = now
+            + Duration::seconds(clamp_lease(lease_seconds.unwrap_or(DEFAULT_LEASE_SECONDS)) as i64);
+        let t=tx.query_row(&format!("UPDATE tasks SET state='claimed',claimed_by=?1,claimed_at=?2,updated_at=?2,lease_until=?3,lease_token=?4,attempt_no=attempt_no+1,attempt_count=attempt_count+1
+            WHERE id=(SELECT id FROM tasks WHERE state='pending' AND attempt_count<max_attempts AND (?5 IS NULL OR batch_id=?5) AND (batch_id IS NULL OR EXISTS(SELECT 1 FROM batches b WHERE b.id=tasks.batch_id AND b.status='active')) AND (available_at IS NULL OR julianday(available_at)<=julianday('now')) ORDER BY CASE priority WHEN 'urgent' THEN 0 WHEN 'high' THEN 1 ELSE 2 END,created_at,id LIMIT 1) RETURNING {TASK_COLUMNS}"),params![agent_id,now.to_rfc3339(),until.to_rfc3339(),Uuid::new_v4().to_string(),batch_id.map(|id|id.to_string())],row_to_task).optional()?;
+        tx.commit()?;
+        drop(conn);
+        if let Some(t) = &t {
+            self.vault_write(t);
+        }
+        Ok(t)
+    }
+
+    pub fn report_failure(
+        &self,
+        id: Uuid,
+        agent_id: &str,
+        token: &str,
+        error: serde_json::Value,
+    ) -> Result<bool> {
+        let mut conn = self.conn.lock();
+        let tx = conn.transaction_with_behavior(rusqlite::TransactionBehavior::Immediate)?;
+        let request = serde_json::to_string(&error)?;
+        if let Some((owner,prior))=tx.query_row("SELECT agent_id,request FROM task_receipts WHERE task_id=?1 AND lease_token=?2 AND operation='failure'",params![id.to_string(),token],|r|Ok((r.get::<_,String>(0)?,r.get::<_,String>(1)?))).optional()? {return Ok(owner==agent_id && prior==request);}
+        let task=tx.query_row(&format!("SELECT {TASK_COLUMNS} FROM tasks WHERE id=?1 AND state='claimed' AND claimed_by=?2 AND lease_token=?3 AND julianday(lease_until)>julianday('now')"),params![id.to_string(),agent_id,token],row_to_task).optional()?;
+        let Some(task) = task else { return Ok(false) };
+        if retry_task(&tx, &task, error, false)? == 0 {
+            return Ok(false);
+        };
+        tx.execute(
+            "INSERT INTO task_receipts VALUES(?1,?2,'failure',?3,?4,'true')",
+            params![id.to_string(), token, agent_id, request],
+        )?;
+        tx.commit()?;
+        drop(conn);
+        if let Some(t) = self.get_task(id)? {
+            self.vault_write(&t);
+        }
+        Ok(true)
+    }
+
+    pub fn get_batch_status(&self, id: Uuid) -> Result<serde_json::Value> {
+        // Read batch metadata and counts in the same read transaction.
+        let mut conn = self.conn.lock();
+        let tx = conn.transaction()?;
+        batch_config(&tx, id, false)?;
+        let cancelled: bool = tx.query_row(
+            "SELECT status='cancelled' FROM batches WHERE id=?1",
+            params![id.to_string()],
+            |r| r.get(0),
+        )?;
+        let mut stmt =
+            tx.prepare("SELECT state,count(*) FROM tasks WHERE batch_id=?1 GROUP BY state")?;
+        let counts = stmt
+            .query_map(params![id.to_string()], |r| {
+                Ok((r.get::<_, String>(0)?, r.get::<_, u64>(1)?))
+            })?
+            .collect::<rusqlite::Result<Vec<_>>>()?;
+        drop(stmt);
+        let mut states = serde_json::json!({"pending":0,"claimed":0,"submitted":0,"completed":0,"failed":0,"cancelled":0});
+        let mut total = 0;
+        for (state, count) in counts {
+            states[&state] = count.into();
+            total += count;
+        }
+        let active = states["pending"].as_u64().unwrap()
+            + states["claimed"].as_u64().unwrap()
+            + states["submitted"].as_u64().unwrap();
+        tx.commit()?;
+        Ok(
+            serde_json::json!({"id":id,"status":if cancelled{"cancelled"}else if total>0 && active==0{"completed"}else{"active"},"total":total,"terminal":total-active,"active":active,"states":states}),
+        )
+    }
+
+    pub fn retry_failed_tasks(&self, id: Uuid) -> Result<usize> {
+        let mut conn = self.conn.lock();
+        let tx = conn.transaction_with_behavior(rusqlite::TransactionBehavior::Immediate)?;
+        batch_config(&tx, id, true)?;
+        let changed = {
+            let mut stmt=tx.prepare(&format!("UPDATE tasks SET state='pending',attempt_count=0,available_at=NULL,error=NULL,result=NULL,completed_at=NULL,lease_token=NULL,updated_at=?2 WHERE batch_id=?1 AND state='failed' RETURNING {TASK_COLUMNS}"))?;
+            let rows = stmt
+                .query_map(
+                    params![id.to_string(), Utc::now().to_rfc3339()],
+                    row_to_task,
+                )?
+                .collect::<rusqlite::Result<Vec<_>>>()?;
+            rows
+        };
+        tx.commit()?;
+        drop(conn);
+        for task in &changed {
+            self.vault_write(task);
+        }
+        Ok(changed.len())
+    }
+
+    pub fn cancel_batch(&self, id: Uuid) -> Result<()> {
+        let mut conn = self.conn.lock();
+        let tx = conn.transaction_with_behavior(rusqlite::TransactionBehavior::Immediate)?;
+        batch_config(&tx, id, false)?;
+        tx.execute(
+            "UPDATE batches SET status='cancelled' WHERE id=?1",
+            params![id.to_string()],
+        )?;
+        let changed = {
+            let mut stmt=tx.prepare(&format!("UPDATE tasks SET state='cancelled',lease_token=NULL,lease_until=NULL,completed_at=?2,updated_at=?2 WHERE batch_id=?1 AND state IN ('pending','claimed') RETURNING {TASK_COLUMNS}"))?;
+            let rows = stmt
+                .query_map(
+                    params![id.to_string(), Utc::now().to_rfc3339()],
+                    row_to_task,
+                )?
+                .collect::<rusqlite::Result<Vec<_>>>()?;
+            rows
+        };
+        tx.commit()?;
+        drop(conn);
+        for task in &changed {
+            self.vault_write(task);
+        }
+        Ok(())
+    }
+}
+
+fn batch_config(
+    conn: &Connection,
+    id: Uuid,
+    require_active: bool,
+) -> Result<super::types::BatchConfig> {
+    let row = conn
+        .query_row(
+            "SELECT config,status FROM batches WHERE id=?1",
+            params![id.to_string()],
+            |r| Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?)),
+        )
+        .optional()?
+        .ok_or_else(|| scheduler_error(-32004, "batch not found"))?;
+    if require_active && row.1 == "cancelled" {
+        return Err(scheduler_error(-32001, "batch cancelled"));
+    }
+    Ok(serde_json::from_str(&row.0)?)
+}
+
+fn retry_task(
+    conn: &Connection,
+    task: &Task,
+    error: serde_json::Value,
+    expired: bool,
+) -> Result<usize> {
+    let config = task
+        .batch_id
+        .map(|id| batch_config(conn, id, false))
+        .transpose()?
+        .unwrap_or_default();
+    let delay = config
+        .retry_backoff_ms
+        .saturating_mul(1u64 << task.attempt_count.saturating_sub(1).min(20))
+        .min(config.max_backoff_ms);
+    let now = Utc::now();
+    let ready = now + Duration::milliseconds(delay as i64);
+    let failed = task.attempt_count >= task.max_attempts;
+    let changed=conn.execute("UPDATE tasks SET state=?2,error=?3,available_at=?4,lease_token=NULL,claimed_by=NULL,claimed_at=NULL,lease_until=NULL,result=NULL,completed_at=?5,updated_at=?6 WHERE id=?1 AND state='claimed' AND lease_token=?7 AND (CASE WHEN ?8 THEN julianday(lease_until)<=julianday('now') ELSE julianday(lease_until)>julianday('now') END)",params![task.id.to_string(),if failed{"failed"}else{"pending"},serde_json::to_string(&error)?,ready.to_rfc3339(),if failed{Some(now.to_rfc3339())}else{None},now.to_rfc3339(),task.lease_token,expired])?;
+    Ok(changed)
+}
+
 /// Map a task `kind` to its initial state on creation. Announcement
 /// kinds are completed-on-create — they're publications, not work to
 /// be picked up. Work kinds (bug, feature, task) start pending so an
@@ -805,6 +1090,32 @@ fn row_to_task(row: &rusqlite::Row<'_>) -> rusqlite::Result<Task> {
         attempt_count: row.get(14)?,
         max_attempts: row.get(15)?,
         available_at: parse_opt_ts(row.get(16)?)?,
+        batch_id: row
+            .get::<_, Option<String>>(17)?
+            .map(|s| {
+                Uuid::parse_str(&s).map_err(|e| {
+                    rusqlite::Error::FromSqlConversionFailure(
+                        17,
+                        rusqlite::types::Type::Text,
+                        Box::new(e),
+                    )
+                })
+            })
+            .transpose()?,
+        task_key: row.get(18)?,
+        error: row
+            .get::<_, Option<String>>(19)?
+            .map(|s| {
+                serde_json::from_str(&s).map_err(|e| {
+                    rusqlite::Error::FromSqlConversionFailure(
+                        19,
+                        rusqlite::types::Type::Text,
+                        Box::new(e),
+                    )
+                })
+            })
+            .transpose()?,
+        completed_at: parse_opt_ts(row.get(20)?)?,
     })
 }
 

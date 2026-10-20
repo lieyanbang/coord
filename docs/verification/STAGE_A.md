@@ -71,3 +71,7 @@ Per-command exit codes, UTC times,
 durations and logs are recorded in `stage-a-checks.json`. Required local checks
 must all exit 0 before committing. The known lease skip is explicitly above.
 Stage A cloud evidence is recorded by its actual pushed SHA/run separately.
+
+Cloud: commit `f846279be435f96a032715c86593e66f7f17ab04`,
+[run 39430165894](https://github.com/lieyanbang/coord/actions/runs/39430165894)
+completed success (Windows).

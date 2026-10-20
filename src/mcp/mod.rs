@@ -196,6 +196,58 @@ pub struct ListArgs {
 #[tool_router]
 impl Bridge {
     #[tool(
+        description = "Atomically claim the next ready generic task. Empty queue returns empty=true and task=null."
+    )]
+    async fn claim_task(
+        &self,
+        Parameters(a): Parameters<NextClaimArgs>,
+    ) -> Result<CallToolResult, McpError> {
+        self.call(
+            "scheduler/claim",
+            json!({"agent_id":a.agent_id,"batch_id":a.batch_id,"lease_seconds":a.lease_seconds}),
+        )
+        .await
+    }
+    #[tool(
+        description = "Submit a result using the current agent and lease token. Exact duplicates replay the accepted response."
+    )]
+    async fn submit_result(&self, a: Parameters<CompleteArgs>) -> Result<CallToolResult, McpError> {
+        self.tasks_complete(a).await
+    }
+    #[tool(
+        description = "Report execution failure with a live claim fence; retry/backoff is bounded by the batch configuration."
+    )]
+    async fn report_failure(
+        &self,
+        Parameters(a): Parameters<FailureArgs>,
+    ) -> Result<CallToolResult, McpError> {
+        self.call(
+            "scheduler/failure",
+            json!({"id":a.id,"agent_id":a.agent_id,"lease_token":a.lease_token,"error":a.error}),
+        )
+        .await
+    }
+    #[tool(
+        description = "Renew a live claim without shortening its deadline. Expired tokens cannot revive."
+    )]
+    async fn extend_lease(&self, a: Parameters<ExtendArgs>) -> Result<CallToolResult, McpError> {
+        self.tasks_extend(a).await
+    }
+    #[tool(description = "Get a generic task by UUID.")]
+    async fn get_task(&self, a: Parameters<IdArgs>) -> Result<CallToolResult, McpError> {
+        self.tasks_get(a).await
+    }
+    #[tool(
+        description = "Get a consistent batch progress snapshot, including all terminal states."
+    )]
+    async fn get_progress(
+        &self,
+        Parameters(a): Parameters<BatchArgs>,
+    ) -> Result<CallToolResult, McpError> {
+        self.call("batches/status", json!({"batch_id":a.batch_id}))
+            .await
+    }
+    #[tool(
         description = "Create a new task. Set kind to one of: task (default), bug, feature, \
             decision, ack, knowledge, build. Set priority to: low, normal (default), high, urgent. \
             Other agents can filter on these fields. Returns the task object including its UUID. \
@@ -365,6 +417,26 @@ impl Bridge {
     async fn agents_list(&self) -> Result<CallToolResult, McpError> {
         self.call("agents/list", json!({})).await
     }
+}
+
+#[derive(Debug, Deserialize, JsonSchema)]
+pub struct NextClaimArgs {
+    pub agent_id: String,
+    #[serde(default)]
+    pub batch_id: Option<String>,
+    #[serde(default)]
+    pub lease_seconds: Option<u64>,
+}
+#[derive(Debug, Deserialize, JsonSchema)]
+pub struct FailureArgs {
+    pub id: String,
+    pub agent_id: String,
+    pub lease_token: String,
+    pub error: Value,
+}
+#[derive(Debug, Deserialize, JsonSchema)]
+pub struct BatchArgs {
+    pub batch_id: String,
 }
 
 #[tool_handler]

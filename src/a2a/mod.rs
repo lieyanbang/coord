@@ -207,7 +207,7 @@ async fn dispatch(state: &AppState, method: &str, params: Value) -> Result<Value
                 )),
             }
         }
-        "tasks/extend" => {
+        "tasks/extend" | "scheduler/extend" => {
             let p: ExtendParams =
                 serde_json::from_value(params).map_err(MethodError::bad_params)?;
             match state
@@ -232,7 +232,7 @@ async fn dispatch(state: &AppState, method: &str, params: Value) -> Result<Value
             }
             Ok(serde_json::to_value(&reclaimed).unwrap())
         }
-        "tasks/complete" => {
+        "tasks/complete" | "scheduler/submit" => {
             let p: CompleteParams =
                 serde_json::from_value(params).map_err(MethodError::bad_params)?;
             // post_ack is opt-in: agents that already follow a custom
@@ -276,6 +276,107 @@ async fn dispatch(state: &AppState, method: &str, params: Value) -> Result<Value
                      or reclaimed after its lease expired?",
                 )),
             }
+        }
+        "batches/create" => {
+            #[derive(Deserialize)]
+            #[serde(deny_unknown_fields)]
+            struct P {
+                name: String,
+                #[serde(default)]
+                description: String,
+                #[serde(default)]
+                config: crate::core::types::BatchConfig,
+            }
+            let p: P = serde_json::from_value(params).map_err(MethodError::bad_params)?;
+            state
+                .store
+                .create_batch(&p.name, &p.description, p.config)
+                .map_err(MethodError::internal)
+        }
+        "batches/add_tasks" => {
+            #[derive(Deserialize)]
+            #[serde(deny_unknown_fields)]
+            struct P {
+                batch_id: Uuid,
+                tasks: Vec<crate::core::types::TaskInput>,
+            }
+            let p: P = serde_json::from_value(params).map_err(MethodError::bad_params)?;
+            let tasks = state
+                .store
+                .add_tasks(p.batch_id, p.tasks)
+                .map_err(MethodError::internal)?;
+            state.bus.notify();
+            Ok(json!({"tasks":tasks}))
+        }
+        "batches/status" | "batches/retry_failed" | "batches/cancel" => {
+            #[derive(Deserialize)]
+            #[serde(deny_unknown_fields)]
+            struct P {
+                batch_id: Uuid,
+            }
+            let p: P = serde_json::from_value(params).map_err(MethodError::bad_params)?;
+            match method {
+                "batches/status" => state
+                    .store
+                    .get_batch_status(p.batch_id)
+                    .map_err(MethodError::internal),
+                "batches/retry_failed" => {
+                    let n = state
+                        .store
+                        .retry_failed_tasks(p.batch_id)
+                        .map_err(MethodError::internal)?;
+                    state.bus.notify();
+                    Ok(json!({"retried":n}))
+                }
+                _ => {
+                    state
+                        .store
+                        .cancel_batch(p.batch_id)
+                        .map_err(MethodError::internal)?;
+                    state.bus.notify();
+                    Ok(json!({"ok":true}))
+                }
+            }
+        }
+        "scheduler/claim" => {
+            #[derive(Deserialize)]
+            #[serde(deny_unknown_fields)]
+            struct P {
+                agent_id: String,
+                #[serde(default)]
+                batch_id: Option<Uuid>,
+                #[serde(default)]
+                lease_seconds: Option<u64>,
+            }
+            let p: P = serde_json::from_value(params).map_err(MethodError::bad_params)?;
+            let task = state
+                .store
+                .claim_next(&p.agent_id, p.batch_id, p.lease_seconds)
+                .map_err(MethodError::internal)?;
+            state.bus.notify();
+            Ok(json!({"empty":task.is_none(),"task":task}))
+        }
+        "scheduler/failure" => {
+            #[derive(Deserialize)]
+            #[serde(deny_unknown_fields)]
+            struct P {
+                id: Uuid,
+                agent_id: String,
+                lease_token: String,
+                error: Value,
+            }
+            let p: P = serde_json::from_value(params).map_err(MethodError::bad_params)?;
+            if !state
+                .store
+                .report_failure(p.id, &p.agent_id, &p.lease_token, p.error)
+                .map_err(MethodError::internal)?
+            {
+                return Err(MethodError::conflict(
+                    "failure rejected: lost lease or conflicting request",
+                ));
+            }
+            state.bus.notify();
+            Ok(json!({"ok":true}))
         }
         "agents/heartbeat" => {
             let p: HeartbeatParams =
@@ -521,7 +622,13 @@ impl MethodError {
             message: format!("method not found: {method}"),
         }
     }
-    fn internal<E: std::fmt::Display>(e: E) -> Self {
+    fn internal(e: anyhow::Error) -> Self {
+        if let Some(s) = e.downcast_ref::<crate::core::store::SchedulerError>() {
+            return Self {
+                code: s.code,
+                message: s.message.clone(),
+            };
+        }
         Self {
             code: -32000,
             message: format!("internal error: {e}"),
