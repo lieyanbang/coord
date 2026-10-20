@@ -97,6 +97,29 @@ and was explicitly executed above. Final audit exits 0 with the same documented
 rmcp transport exception and three retained warnings (`stage-e-audit.log`,
 STAGE_A.md); warnings are not claimed fixed. `git diff --check` is required.
 
-Gate E is PARTIAL while the current implementation's Windows Actions run and
-downloaded artifact are pending. Final cloud SHA/run/artifact evidence and
-the resulting gate decision are recorded in `FINAL_ACCEPTANCE.md`.
+**Gate E: PASS.** Commit `d4f41043c75a811ab756e2bc65a816eefef823a8`,
+[Windows run 39436136707](https://github.com/lieyanbang/coord/actions/runs/39436136707)
+completed success including release build and upload. `stage-e-actions.json`
+records real step conclusions and downloaded artifact `12272506068` hashes.
+The downloaded exe also passed migration/rollback, all 9 faults/validation/Worker
+cases, and the three capacity sizes. See `stage-e-artifact-*.json/log` and
+`FINAL_ACCEPTANCE.md`. The ordinary local gate passed 35 cases with one explicit
+capacity test run separately, not silently omitted.
+
+Artifact functional repeat commands:
+
+```powershell
+$env:COORD_TEST_BIN=(Resolve-Path target/verification/stage-e-ci/coord.exe).Path
+cargo test --test faults --test validation --test worker --locked -- --nocapture
+python scripts/verify_migration.py --old-bin target/verification/coord-baseline.exe --new-bin target/verification/stage-e-ci/coord.exe --report docs/verification/stage-e-artifact-migration.json
+```
+
+Both exit 0. For capacity, execute the already-built
+`target/debug/deps/capacity-<hash>.exe --ignored --nocapture` from a disposable
+directory containing `docs/verification/`, with the same absolute
+`COORD_TEST_BIN`. Copy its JSON to `stage-e-artifact-capacity.json`; harness exit
+0. Using a separate directory preserves the original local measurement.
+The repeat measured 46.1853s for 10,000 tasks, P95 37.74ms, all receipts/terminal
+counts consistent. It ran concurrently with the fault repeat, so compare
+throughput only as observational capacity data. No physical/production or
+Linux/macOS acceptance is implied.

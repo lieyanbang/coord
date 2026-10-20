@@ -1,8 +1,8 @@
 # Final acceptance — Windows coord MVP
 
-Result: **PARTIAL** pending the final Stage E Windows Actions run and executable
-artifact verification. Local measurements and fault evidence are real; this
-report will be closed only after those cloud checks complete.
+Result: **PASS** for the scoped Windows MVP (2026-10-21). Stages 0/A/B/C/D/E
+passed their local gates and real Windows Actions runs. The final Stage E
+artifact was downloaded, executed and used for additional functional acceptance.
 
 Scope: Windows x86_64 MSVC, trusted local clients, built-in JSON validators and
 the optional Python Worker. Linux/macOS are NOT_RUN, excluded from both build
@@ -23,7 +23,7 @@ MIT attribution is unchanged; no Release/tag or upstream write was performed.
 | Process kills, daemon restart, dropped response, stale/cancelled submissions | STAGE_E.md; stage-e-faults.log | PASS |
 | Actual baseline DB upgrade plus restored-backup old-binary read | stage-e-migration.json; STAGE_E.md | PASS |
 | Final local fmt/clippy/tests/release build | stage-e-checks.json; all four exits 0 | PASS |
-| Final pushed implementation Windows Actions/artifact | closure evidence below | Pending |
+| Final pushed implementation Windows Actions/artifact | stage-e-actions.json; downloaded exe functional acceptance below | PASS |
 | Linux/macOS build/runtime | intentionally excluded by latest instruction | NOT_RUN |
 
 At 10,000 tasks the measured throughput is 215.01 tasks/s, claim P95 39.68ms,
@@ -43,7 +43,26 @@ upstream origin `DmarshalTU/coord` was not modified. No Git history rewriting.
 | B | `15f360a30957eaa5c4607d2bb11ebdcd43646846` | [39431056581](https://github.com/lieyanbang/coord/actions/runs/39431056581) success |
 | C | `a83d50482f66cae2dcc5c05b1fb680d025deb128` | [39432577257](https://github.com/lieyanbang/coord/actions/runs/39432577257) success |
 | D | `0f4727f790916fc5cc42bd6be25bf64fbdc83157` | [39434225476](https://github.com/lieyanbang/coord/actions/runs/39434225476) success |
-| E | pending local gates | pending |
+| E | `d4f41043c75a811ab756e2bc65a816eefef823a8` | [39436136707](https://github.com/lieyanbang/coord/actions/runs/39436136707) success |
+
+Final implementation run: fmt, strict locked clippy, locked all-feature tests,
+locked release build and artifact upload all completed success. The separate
+closure commit only records the observed evidence; it does not rewrite a stage.
+Artifact `coord-windows-2022`, ID `12272506068`, archive 4,199,540 bytes;
+metadata and every job/step conclusion are preserved in `stage-e-actions.json`.
+
+- ZIP SHA256: `31582c4e5d8cfc85658808ad3d9222f581d31cc3eb92904b5c01bd448457f675`.
+- EXE SHA256: `6884df79dff810546db84cace765991b9ebec168701136ce0fa15fe51c43d3f6`.
+- Downloaded exe `version` exited 0. With `COORD_TEST_BIN` set to that exe,
+  faults/validation/Worker acceptance passed all 9 cases (exit 0,
+  `stage-e-artifact-faults.log`). Actual baseline migration/backup rollback
+  passed again (`stage-e-artifact-migration.json`, exit 0).
+- The compiled capacity harness was rerun with the downloaded exe from a
+  separate report directory: all three sizes passed, 100/1,000/10,000 unique
+  completions and equal receipt counts (`stage-e-artifact-capacity.json/log`,
+  exit 0). Its 10,000 tasks took 46.1853s (216.52 tasks/s), claim P95 37.74ms,
+  daemon peak WS 23,060,480 bytes, zero busy/locked log lines. This independent
+  repeat overlapped the artifact fault tests and is not a controlled benchmark.
 
 ## Compatibility and operating boundaries
 

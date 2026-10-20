@@ -1,5 +1,5 @@
 # coord 最小改造计划：通用 MCP 多 Agent 并行任务调度框架
-> 状态：实施中；基线日期：2026-10-20；逐阶段证据见 `verification/`
+> 状态：Windows MVP 验收 PASS（2026-10-21）；基线日期：2026-10-20；逐阶段证据见 `verification/`
 > 本地仓库：`D:\project\coord`；Fork：`https://github.com/lieyanbang/coord`
 > 上游：`https://github.com/DmarshalTU/coord`；基线 HEAD：`44fe390fac64ed4828d479896d7079da272c0152`
 > 原则：**保留 coord 架构、以最小必要变更完成通用任务闭环、逐阶段真实验收**。
@@ -93,7 +93,7 @@ Windows 本机及 Windows Actions 的真实测试、构建与产物为准。
 | B | PASS | token/attempt、不可复活/不可缩短、原子 receipt+ack；多连接取消竞态和真实重启/旧客户端拒绝通过 |
 | C | PASS | 通用批次与六个 Agent MCP 接口；100 任务真实多进程闭环、失败重试和本机四项检查全部通过 |
 | D | PASS | 异步 PASS/FAIL/ERROR、独立验收预算/恢复/旧 job 拒绝、Windows Worker 进程树清理及完整本机 Gate 均通过 |
-| E | IN_PROGRESS | 真实 release daemon + 6 个 MCP 进程完成 100/1000/10000；故障注入、旧版数据库迁移/备份回退通过；最终本地 Gate 与当前 SHA 的 Windows Actions 待收口 |
+| E | PASS | `d4f4104`；本地四项 Gate/容量/故障注入/迁移回退 PASS；Windows Actions 39436136707 success，下载产物再跑容量、故障、Worker 和迁移均通过 |
 
 ### Stage E 实测与修正
 
@@ -102,3 +102,4 @@ Windows 本机及 Windows Actions 的真实测试、构建与产物为准。
 - 种子 `0xC00D` 杀死 4 个独立 MCP 进程、重启 daemon、恢复 20 个任务，旧令牌拒绝；断链后 receipt 重放不重复 ack。
 - 容量与兼容性原始数据见 `verification/stage-e-capacity.json`、`verification/stage-e-migration.json`；容量为本机测量，无虚构吞吐门槛。
 - Stage D Windows [Actions 39434225476](https://github.com/lieyanbang/coord/actions/runs/39434225476) 已实测 success。
+- Stage E Windows [Actions 39436136707](https://github.com/lieyanbang/coord/actions/runs/39436136707) 全步骤 success；artifact `12272506068` 下载并执行成功。最终覆盖及边界见 `verification/FINAL_ACCEPTANCE.md`。
