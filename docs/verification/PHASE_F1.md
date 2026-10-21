@@ -1,12 +1,11 @@
 # Phase F1: Arasaka Service and Health
 
 Date: 2026-10-21 (Australia/Brisbane)
-Result: **PARTIAL (technical acceptance complete; candidate Windows Actions pending)**.
+Result: **PASS**.
 Servy-host and Windows restart recovery, live service health, coord WAL integrity,
-coord backup checks, and the Servy configuration DB integrity gate have passed.
-The only remaining F1 closure condition is successful Fork Windows Actions for
-the commit containing this evidence and the collation-aware checker. Keep F2
-TODO until that run succeeds.
+coord backup checks, the Servy configuration DB integrity gate, local F1 checks,
+and Fork Windows Actions all passed. The collation-aware checker and its evidence
+are included in commit `c388bb72fb4d1958aadb28dd5aa12e998641f671`.
 
 ## Local Implementation and Gate
 
@@ -23,10 +22,11 @@ TODO until that run succeeds.
 - `scripts/windows/test-coord-health-monitor.ps1` verifies the three-failure
   threshold and targeted `start` branch using a random temp directory and fake
   Servy CLI. The harness removes only its own temp directory.
-- Latest `pwsh -NoProfile -File scripts/verify.ps1 -Stage f1`: fmt 0, locked
-  clippy 0, locked all-feature tests 0, locked release build 0, monitor harness
-  0. Evidence: `stage-f1-checks.json`, `stage-f1-*.log`, and
-  `stage-f1-health-monitor.log`.
+- Latest `pwsh.exe -NoProfile -File scripts/verify.ps1 -Stage f1` ran from
+  `2026-10-21T12:44:30Z` to `12:45:16Z`: fmt exit 0, locked clippy exit 0,
+  locked all-feature tests exit 0, locked release build exit 0, and the Windows
+  PowerShell health-monitor harness exit 0. Evidence: `stage-f1-checks.json`,
+  `stage-f1-*.log`, and `stage-f1-health-monitor.log`.
 - Fork Windows Actions run `39542595503` for commit `76f9e85` completed with
   the Windows job and fmt/clippy/test/release-build/artifact-upload steps all
   successful. Artifact `coord-windows-2022` (`12319759491`, 4,226,357 bytes)
@@ -37,6 +37,15 @@ TODO until that run succeeds.
   `39568595098`: job `test (windows-2022)` and fmt, clippy, test, release build,
   and artifact upload all concluded success. Run metadata and step results
   were read directly from the GitHub Actions REST API.
+- The final Servy collation gate commit `c388bb72fb4d1958aadb28dd5aa12e998641f671`
+  was pushed to `fork/codex/phase-f-deployment`; `git ls-remote` returned that
+  exact SHA (exit 0). GitHub Actions run `39600633448` (`ci`, push event) ran
+  from `2026-10-21T12:34:05Z` through `12:37:43Z`, status `completed`, conclusion
+  `success`. Its `test (windows-2022)` job and fmt, clippy, test, release build,
+  and artifact-upload steps all concluded `success`. Read-only GitHub REST API
+  queries for the run, jobs, and artifact exited 0. Artifact `coord-windows-2022`
+  (`12346386475`) is present, 4,226,358 bytes, not expired; API archive digest
+  SHA-256 is `87a5a2a94fa009175f1e8d65282a128fd86160ecfc4442a389c3e79f24655cab`.
 
 ## Arasaka Deployment
 
@@ -313,8 +322,9 @@ TODO until that run succeeds.
   isolation, coord WAL integrity, previous backup/restore rehearsal, and
   restart-time online backup row-count checks passed.
 - All technical F1 gates, including the Servy configuration database integrity
-  gate, now pass. **Overall F1 remains PARTIAL only until Fork Windows Actions
-  succeeds for the candidate commit.** F2/F3 remain TODO pending that CI result.
+  gate, pass. Fork Windows Actions run `39600633448` for the candidate commit
+  also passed, so **overall F1 is PASS**. F2 and F3 remain TODO pending their
+  respective stage work and gates.
   No service configuration or production queue state was changed during this
   verification.
 - No production tasks or acknowledgements were created. The isolated test DB

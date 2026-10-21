@@ -134,7 +134,7 @@ Windows 本机及 Windows Actions 的真实测试、构建与产物为准。
 | Stage | 状态 | 证据 / 依赖 |
 | --- | --- | --- |
 | F0 | PASS | `docs/verification/PHASE_F0.md`；Servy、远端基线及 Windows Actions 二进制哈希已核验 |
-| F1 | PARTIAL | Servy 主机与 Windows 重启恢复、服务健康、loopback、SYSTEM 监护、WAL/租约及 coord 备份通过；Servy DB 已用对应官方 10.2.0 源码语义 + `System.Data.SQLite` 2.0.4 进行 Online Backup、quick_check/integrity_check，均 PASS；本机 F1 门禁 PASS，候选提交 Windows Actions 待运行，见 `docs/verification/PHASE_F1.md` |
+| F1 | PASS | Servy 主机与 Windows 重启恢复、服务健康、loopback、SYSTEM 监护、WAL/租约及 coord 备份通过；Servy DB 已用对应官方 10.2.0 源码语义 + `System.Data.SQLite` 2.0.4 进行 Online Backup、quick_check/integrity_check，均 PASS；本机 F1 门禁 PASS，Fork Windows Actions run `39600633448` 通过，见 `docs/verification/PHASE_F1.md` |
 | F2 | TODO | 依赖 F1；尚未建立私网转发 |
 | F3 | TODO | 依赖 F2；尚未变更 FeathersJS/OpenResty 或完成 ChatGPT Web OAuth |
 
@@ -144,4 +144,4 @@ Windows 本机及 Windows Actions 的真实测试、构建与产物为准。
 - Gate F3：新增 OAuth/MCP 公网入口及旧 DesktopCommander 所有入口回归 PASS；ChatGPT Web 手动完成工具发现和只读/隔离写任务 E2E 方可标记完整 PASS。
 - 每个 Gate 完成后同步 `docs/verification/` 证据、更新本节进度、生成独立 Git commit 并通过 Fork 的 Windows Actions；部署不擅自创建 Release/tag、不推送上游。
 - 最终输出：Arasaka 服务名/运行账户、二进制 SHA、Servy 参数/健康路径、备份/恢复程序、故障演练记录、中转公网 URL、OAuth/连接器验收与残余风险。敏感信息绝不写文档/日志。
-- 当前状态：F0 部署前审计 PASS。用户授权后，Servy Host 与 Windows 整机重启均已实测；coord、Servy 托管服务和健康监护恢复，coord WAL `quick_check=ok`，coord 在线备份验证通过。Servy 10.2.0 对应官方源码已确认 `UNICODE_NOCASE` 使用 `StringComparison.OrdinalIgnoreCase`；同 Provider/SQLite 版本的只读校验程序对 Online Backup API 快照执行 `quick_check=ok`、`integrity_check=ok`，并核实唯一索引、SchemaInfo 和七个配置行。F1 技术验收与本机门禁均通过，状态暂为 PARTIAL，仅待候选提交 Fork Windows Actions 成功；Actions 成功后再标记 PASS 并进入 F2。TASK.md 保持只读。
+- 当前状态：F0 部署前审计 PASS。Servy Host 与 Windows 整机重启恢复、coord 与 Servy 托管服务健康、健康监护、coord WAL/在线备份均有实测证据。Servy 10.2.0 对应官方源码确认 `UNICODE_NOCASE` 使用 `StringComparison.OrdinalIgnoreCase`；相同 Provider/SQLite 版本的只读校验程序通过 SQLite Online Backup API 创建快照，`quick_check=ok`、`integrity_check=ok`，唯一索引、SchemaInfo 与七个配置行均核实通过。本机 F1 门禁与 Fork Windows Actions run `39600633448` 均通过，F1 为 PASS。F2 尚未开始，按依赖顺序进入；TASK.md 保持只读。
