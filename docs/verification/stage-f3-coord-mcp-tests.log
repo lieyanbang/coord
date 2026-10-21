@@ -1,0 +1,18 @@
+✔ OAuth facade publishes coord scope and only accepts coord bearer tokens (1.7205ms)
+✔ strict tool allowlist maps only fixed coord RPCs and fences mutating inputs (1.035ms)
+✔ lease tokens are removed recursively from read responses in either JSON casing (0.1768ms)
+✔ Streamable HTTP serves initialize, tools/list, and a token-redacted tasks/list (337.592ms)
+✔ unauthorized, invalid content type, malformed and oversized HTTP requests are rejected (19.3434ms)
+✔ unknown tools and extra tool arguments never reach the sidecar (13.9491ms)
+✔ uncertain sidecar writes are MCP errors and are never retried (6.8604ms)
+✔ four active MCP calls are bounded and excess work receives 429 (178.3478ms)
+✔ SidecarClient marks timeouts and oversized replies uncertain without retrying (32.0208ms)
+✔ SidecarClient caps in-flight calls and rejects oversized requests before dispatch (1.8798ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 810.1286

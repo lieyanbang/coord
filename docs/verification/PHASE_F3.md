@@ -1,100 +1,126 @@
 # Phase F3: Public MCP and OAuth
 
 Date: 2026-10-22 (Australia/Brisbane)
-Result: **IN_PROGRESS**. F2 is closed. F3 has completed a read-only
-production baseline; no FeathersJS, OpenResty, DesktopCommanderMCP, OAuth, or
-public route configuration has been changed.
+Result: **PARTIAL**. The isolated CoordMCP endpoint is deployed and its OAuth,
+MCP, and production Sidecar paths pass the checks below. Actual ChatGPT Web
+authorization and an authenticated tool call through the public route are
+**NOT_RUN**, so Gate F3 is not closed.
 
 ## F2 Entry Gate
 
 - F2 closeout commit `2be6ae12c01e2e7d18159dcf80f1e82f09004039` passed Fork
   Windows Actions run [39636977435](https://github.com/lieyanbang/coord/actions/runs/39636977435).
-- The `test (windows-2022)` job and all steps succeeded, including Relay
-  protocol and lease-fencing tests and artifact upload. Artifact
-  `coord-windows-2022` (`12362625678`) is 4,226,357 bytes and has not expired.
-- F2 evidence remains in [`PHASE_F2.md`](PHASE_F2.md) and
+- The Windows job and all steps succeeded, including relay protocol and lease
+  fencing tests and artifact upload (`coord-windows-2022`, `12362625678`).
+- F2 evidence is in [`PHASE_F2.md`](PHASE_F2.md) and
   [`phase-f2-acl-deployment-20261022.md`](phase-f2-acl-deployment-20261022.md).
 
-## Read-only Production Baseline
+## Production Deployment
 
-Direct SSH was used as requested; no MCP/Remote Control tool was used. The
-read-only SSH batch on `instance-20260424-1840` at `2026-10-21T16:57:53Z`
-exited 0.
+The original read-only baseline was recorded at `2026-10-21T16:57:53Z` by
+direct SSH. FeathersJS, OpenResty, coord-relay, and Tailscale were active;
+Feathers listened on loopback `13010`, the Sidecar on loopback `13013`, and the
+existing authenticated relay listeners remained on `100.116.134.114:13011` and
+`:13012`. No existing RemoteControlMCP route was changed.
 
-- `feathersjsapp.service`, `openresty.service`, `coord-relay.service`, and
-  `tailscaled.service` were all active. Feathers main PID was 816, started as
-  `/usr/bin/node /opt/app/feathers/index.js`; `User`/`Group` are unset, and
-  `ps` confirmed the process runs as root.
-- Feathers listens on `127.0.0.1:13010`; coord Sidecar health/API remain on
-  `127.0.0.1:13013`; existing authenticated relay listeners remain on
-  `100.116.134.114:13011` and `:13012`; HTTPS listens on TCP 443.
-- `/app/CoordMCP/` returned HTTP 404. Existing `/app/RemoteControlMCP3/`
-  returned HTTP 401 without credentials; its OAuth authorization-server
-  metadata returned the expected issuer, endpoints, and `S256` PKCE support.
-- Active OpenResty includes `/etc/openresty/conf.d/*.conf`. The active
-  `lieyanbang.conf` resolves to
-  `/usr/local/openresty/nginx/conf/conf.d/lieyanbang.conf`; both paths had
-  SHA-256 `4c9c8ff884a004649bf8349b997cc24d441f28840a3357924c7e27e8a0e8c9a4`.
-  `sudo -n openresty -t` exited 0. Targeted route inspection found the three
-  existing RemoteControlMCP prefixes and no CoordMCP route.
-- Feathers host entry `/opt/app/feathers/index.js` SHA-256 was
-  `057a41549b669406d045d7c017e59e43d37056fd1752239e8f07c0ee6862eea2`.
-  The host operator manual says new service projects are mounted by this
-  shared host entry. Adding the requested module therefore requires a
-  controlled restart of the shared Feathers process; this can briefly affect
-  existing APIs and the 13011 DesktopCommander channel.
-- The deployed DesktopCommander OAuth source SHA-256 was
-  `505db886f21bcdecf800f5f297fa94af705cc0eda80262b55ce8feb9ebf65bd7`,
-  matching the local reference source. The deployed MCP SDK version is
-  `1.30.0`; the local reference lockfile records `1.25.1`, so runtime-specific
-  MCP transport verification remains required before deployment.
-- `node --test test/test-self-hosted-oauth.js
-  test/test-self-hosted-entry-namespaces.js` in the reference worktree exited 0
-  with 2/2 tests passing (S256 PKCE, resource binding, expiry, refresh-token
-  rotation/reuse revocation, namespace isolation, metadata, and tool catalog).
-  The reference worktree status was preserved.
-- Relay secrets were not read. Metadata only confirmed the sidecar client
-  secret is permission-restricted under `/etc/coord-relay`; the existing
-  relay remains a fixed-identity, narrow RPC path. No production task was
-  claimed or mutated by this audit.
-- Installed operator manuals were rendered to PID-scoped `/tmp` scratch files
-  and removed in the same SSH command; no service, production data, or
-  configuration was changed by that read.
-- The local DesktopCommanderMCP worktree contains existing user modifications
-  and untracked files. It was inspected read-only and remains untouched.
+Before deployment, the exact host entry and active OpenResty file were backed
+up under `/var/backups/coord-mcp-f3-038c52fb82844b9897325acabda7b41a/`. The
+directory is `700 root:root`; it contains the original `feathers-index.js`
+(3169 bytes) and `lieyanbang.conf` (24047 bytes). The backups were retained.
 
-## Deployment Guardrails
+The deployed hashes were rechecked over SSH at `2026-10-21T21:52:21Z`:
 
-- Add only the `/app/CoordMCP/` public MCP/OAuth route and a dedicated module
-  mounted by the existing Feathers host. Do not change any
-  RemoteControlMCP routes, DesktopCommander device behavior, or port 13011.
-- Keep the public MCP method list narrower than the Sidecar allowlist; no
-  arbitrary JSON-RPC, task creation, task cancellation, or batch management.
-  `tasks/list` must keep `skip_reclaim=true`; only the relay's fixed agent
-  identity may claim, extend, or complete work.
-- Keep OAuth issuer/resource, DCR clients, token state, audit log, and MCP
-  request journals isolated under a dedicated data path. Never copy credential
-  values into this repository or logs.
-- Return transport uncertainty as an MCP error, never as a successful result;
-  do not retry a dispatched mutating request automatically. Preserve the
-  existing sidecar request ID on explicit reconciliation.
-- Before deployment, save hashes and protected backups of the exact host entry
-  and active OpenResty config. Validate module/OAuth/MCP behavior in isolation,
-  use atomic same-filesystem installs, run `openresty -t`, and only then do a
-  controlled Feathers restart and OpenResty reload. Verify 401 challenge,
-  OAuth metadata/DCR/PKCE, MCP initialize/tools/list/call, existing route
-  regressions, sidecar round-trip, and rollback health.
+| File | SHA-256 |
+| --- | --- |
+| `/opt/app/feathers/index.js` | `b204299f2a10d868b21dd710bf6cce3522ee48147f1d1a830f09d537479372bd` |
+| `/usr/local/openresty/nginx/conf/conf.d/lieyanbang.conf` | `8bcba6f3543623e4ee53aab748e7d6b4fcc33b98b3aaf3eeeb6ef3d01fc7ef7c` |
+| `.../lib/coord-mcp/index.cjs` | `d0438d074a9ee7f03c8171f719e2d0a63cfeaa8195bf04f29321872f5d1bb3e1` |
+| `.../lib/coord-mcp/oauth.cjs` | `9e4d3a2adf595149b3eb672250add56975c5c434d754fd434db23c7576479a8d` |
 
-## Remaining F3 Gates
+The Feathers shared service was controlled-restarted once during the original
+deployment at `2026-10-21 17:36:03 UTC`; this continuation did not restart it or
+reload OpenResty. Current systemd state at `2026-10-21T21:52:21Z`:
 
-- Implement and test the standalone CoordMCP module with strict tool schemas,
-  authorization, request/response bounds, timeouts, concurrency, and safe
-  uncertain-result handling.
-- Verify OAuth positive and negative flows, resource binding, token expiry,
-  and separate token state using temporary test data.
-- Verify authenticated public `initialize` and `tools/list`, then perform a
-  controlled read-only Arasaka query. Create and use an isolated test batch
-  only after the authorization scope is validated.
-- Preserve all existing DesktopCommanderMCP routes and device connectivity;
-  complete the actual ChatGPT Web connector authorization for the final E2E
-  gate. Until then F3 cannot be marked PASS.
+| Service | State | PID | Restarts |
+| --- | --- | ---: | ---: |
+| `feathersjsapp.service` | active/running | 86861 | 0 |
+| `openresty.service` | active/running | 47581 | 0 |
+| `coord-relay.service` | active/running | 81799 | 0 |
+| `tailscaled.service` | active/running | 824 | 0 |
+
+`sudo -n openresty -t` exited 0 with syntax/configuration success. The CoordMCP
+OAuth state directory is `700 root:root`; `oauth.json` and
+`oauth-register.jsonl` are `600 root:root`. Current Sidecar `GET
+http://127.0.0.1:13013/healthz` returned HTTP 200 and
+`{"state":"READY","agentConnected":true,"pending":0}`. Listener inspection
+confirmed `13010`, `13011`, `13012`, and `13013` remain bound to their expected
+addresses. Established connection counts are dynamic and are not used as a
+pass/fail assertion.
+
+## Public Route Checks
+
+Read-only public probes from the relay host at `2026-10-21T21:49:15Z`:
+
+| Request | Result |
+| --- | --- |
+| `GET https://lieyanbang.com/app/CoordMCP/` without credentials | HTTP 401; `WWW-Authenticate` points to the protected-resource metadata and requires `coord` |
+| `GET https://lieyanbang.com/app/CoordMCP/.well-known/oauth-protected-resource/mcp` | HTTP 200; resource and authorization server identify the CoordMCP issuer; scopes are `coord` and `offline_access` |
+| `GET https://lieyanbang.com/app/CoordMCP/.well-known/oauth-authorization-server` | HTTP 200; issuer/endpoints are under `/app/CoordMCP`, PKCE supports `S256`, scopes are `coord` and `offline_access` |
+| `GET https://lieyanbang.com/app/RemoteControlMCP3/` without credentials | HTTP 401 |
+| `GET https://lieyanbang.com/mcp` without credentials | HTTP 401 |
+
+The public authorization-server metadata URL is at the issuer root. A probe
+that appended the backend-only `/coord` suffix returned 404; it was a
+misaddressed probe, not the public route. The exact OpenResty locations proxy
+the public issuer-root metadata path to the existing Feathers metadata suffix.
+
+## OAuth and MCP Verification
+
+The isolated host harness used the deployed OAuth source, Express `4.21.2`,
+MCP SDK `1.30.0`, and Node `v22.23.2`. OAuth state was held in a temporary
+directory. The test owner password was random, process-local, and not logged.
+
+- Local isolated host OAuth/MCP run used the Sidecar stub and a 2-second
+  access-token TTL. It exercised DCR, S256 PKCE, resource/scope checks,
+  refresh, expiration rejection, `initialize`, `tools/list`, and `tasks/list`;
+  process exit 0.
+- The production Sidecar run used the same deployed OAuth/MCP code in a
+  temporary server bound only to `127.0.0.1`, as service user `coord-relay`.
+  Access-token TTL was 60 seconds for the sequential live write path. It
+  verified DCR, PKCE, resource binding, refresh/expiry, MCP initialization,
+  tool discovery, and a live Sidecar `tasks/list`; process exit 0.
+- One isolated production batch/task was created, then the MCP tools performed
+  `coord_claim_next`, `coord_submit_result`, and `coord_get_task` once each.
+  The harness did not retry writes. It exited 0 and reported
+  `isolated_batch_write=PASS` for batch
+  `ee52bcae-f269-498b-b7ed-d740e1b137ab`, task
+  `30aaca96-badb-45cd-a1e7-00ff51ef0800`.
+- Direct coord readback exited 0: task state `completed`, `attempt_no=1`,
+  result marker `f3_acceptance=PASS`; batch state `completed`. The harness
+  verified that readback contained no lease token. Tokens and credentials were
+  not written to logs or documentation.
+- Final Sidecar health after the write remained `READY`,
+  `agentConnected=true`, `pending=0`; no service restart or OpenResty reload was
+  performed for these tests.
+
+The Windows-local CoordMCP suite passes 10/10. A test harness change now runs
+the write probe before its expiration check and uses the refreshed access
+token; `COORD_MCP_ACCESS_TOKEN_TTL_SECONDS` allows a bounded longer TTL for
+live integration tests. Current Windows Stage F3 commands and logs are in
+`docs/verification/stage-f3-*`; the Fork Actions result is pending until the
+verification commit is pushed.
+
+## Remaining F3 Gate
+
+- **NOT_RUN:** add the custom server URL
+  `https://lieyanbang.com/app/CoordMCP/` in ChatGPT Web, complete the real
+  browser OAuth consent, and verify ChatGPT discovers and calls the public MCP
+  endpoint using the authorized token.
+- **NOT_RUN:** an authenticated `initialize`/`tools/list` and tool call through
+  the public OpenResty route. The live batch round-trip above used an isolated
+  local OAuth server with the production Sidecar; it does not prove this public
+  authenticated path.
+- User/browser authorization was not performed in this continuation. No
+  public client credentials, access tokens, or refresh tokens were created or
+  recorded. Keep Phase F3 **PARTIAL** until these user-facing checks have real
+  evidence; do not promote this result to PASS based on service health alone.

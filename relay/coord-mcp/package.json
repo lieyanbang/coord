@@ -1,0 +1,14 @@
+{
+  "name": "coord-mcp",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "test": "node --test coord-mcp.test.cjs",
+    "test:host-oauth": "node host-oauth.integration.cjs"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/sdk": "1.30.0",
+    "express": "4.21.2"
+  }
+}

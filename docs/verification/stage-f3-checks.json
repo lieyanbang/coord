@@ -1,0 +1,37 @@
+[
+  {
+    "started": "2026-10-21T21:55:20.7097297Z",
+    "log": "docs/verification/stage-f3-fmt.log",
+    "exit": 0,
+    "seconds": 0.7049248,
+    "command": "cargo fmt --all -- --check"
+  },
+  {
+    "started": "2026-10-21T21:55:21.4927605Z",
+    "log": "docs/verification/stage-f3-clippy.log",
+    "exit": 0,
+    "seconds": 1.5297134,
+    "command": "cargo clippy --all-targets --all-features --locked -- -D warnings"
+  },
+  {
+    "started": "2026-10-21T21:55:23.0248362Z",
+    "log": "docs/verification/stage-f3-test.log",
+    "exit": 0,
+    "seconds": 36.7444008,
+    "command": "cargo test --all-features --locked"
+  },
+  {
+    "started": "2026-10-21T21:55:59.7708163Z",
+    "log": "docs/verification/stage-f3-build.log",
+    "exit": 0,
+    "seconds": 0.6233941,
+    "command": "cargo build --release --locked"
+  },
+  {
+    "started": "2026-10-21T21:56:00.3963837Z",
+    "log": "docs/verification/stage-f3-coord-mcp-tests.log",
+    "exit": 0,
+    "seconds": 0.8730165,
+    "command": "node --test relay/coord-mcp/coord-mcp.test.cjs"
+  }
+]
