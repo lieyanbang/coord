@@ -4,7 +4,7 @@
   "private": true,
   "type": "commonjs",
   "scripts": {
-    "test": "node --test coord-mcp.test.cjs",
+    "test": "node --test coord-mcp.test.cjs oauth-access.test.cjs",
     "test:host-oauth": "node host-oauth.integration.cjs"
   },
   "devDependencies": {

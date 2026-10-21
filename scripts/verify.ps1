@@ -57,15 +57,15 @@ try {
         Write-Output "$Stage relay-tests: exit=$code"
         if ($code -ne 0) { throw "relay tests failed; inspect $log" }
     }
-    if ($Stage -eq 'f3' -and $env:OS -eq 'Windows_NT') {
+    if ($Stage -in @('f3','f3-r') -and $env:OS -eq 'Windows_NT') {
         $log = "docs/verification/stage-$Stage-coord-mcp-tests.log"
         $started = [DateTime]::UtcNow
-        $node = (Get-Command node.exe -ErrorAction Stop).Source
-        & $node --test relay/coord-mcp/coord-mcp.test.cjs 2>&1 | ForEach-Object {
+        $npm = (Get-Command npm.cmd -ErrorAction Stop).Source
+        & $npm test --prefix relay/coord-mcp 2>&1 | ForEach-Object {
             $_.ToString().Replace($repoRoot,'<workspace>').Replace($env:USERPROFILE,'<user>')
         } | Set-Content -Encoding utf8 $log
         $code = $LASTEXITCODE
-        $results += @{command=('node --test relay/coord-mcp/coord-mcp.test.cjs');exit=$code;started=$started.ToString('o');seconds=([DateTime]::UtcNow-$started).TotalSeconds;log=$log}
+        $results += @{command=('npm test --prefix relay/coord-mcp');exit=$code;started=$started.ToString('o');seconds=([DateTime]::UtcNow-$started).TotalSeconds;log=$log}
         $results | ConvertTo-Json -Depth 5 | Set-Content -Encoding utf8 "docs/verification/stage-$Stage-checks.json"
         Write-Output "$Stage coord-mcp-tests: exit=$code"
         if ($code -ne 0) { throw "Coord MCP tests failed; inspect $log" }

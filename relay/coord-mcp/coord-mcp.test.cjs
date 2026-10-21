@@ -175,7 +175,15 @@ test('OAuth facade publishes coord scope and only accepts coord bearer tokens', 
   assert.deepEqual(oauth.metadata().scopes_supported, ['coord', 'offline_access']);
   assert.deepEqual(oauth.protectedResourceMetadata().scopes_supported, ['coord', 'offline_access']);
   assert.equal((await oauth.registerClient({})).scope, 'coord');
-  await oauth.validateAuthorizationRequest({ scope: 'coord offline_access' });
+  await oauth.validateAuthorizationRequest({
+    scope: 'coord offline_access',
+    response_type: 'code',
+    client_id: 'client',
+    redirect_uri: 'http://127.0.0.1/callback',
+    resource: 'https://example.test/app/CoordMCP/',
+    code_challenge: 'A'.repeat(43),
+    code_challenge_method: 'S256',
+  });
   assert.equal(oauth.authorizationScope, 'desktop-commander offline_access');
   await assert.rejects(oauth.validateAuthorizationRequest({ scope: 'admin' }));
   assert.equal((await oauth.issueTokens('client', 'desktop-commander offline_access')).scope, 'coord offline_access');

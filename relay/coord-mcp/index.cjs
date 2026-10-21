@@ -417,9 +417,16 @@ function createCoordMcpServer(authInfo, sidecar, loadSdk) {
 
 function oauthConfig(options) {
   const issuer = options.issuer || 'https://lieyanbang.com/app/CoordMCP';
+  const allowedEmails = options.accessAllowedEmails
+    ?? process.env.COORD_MCP_ACCESS_ALLOWED_EMAILS?.split(',').map((value) => value.trim()).filter(Boolean)
+    ?? [];
   return {
     issuer,
     resource: `${issuer}/`,
+    authorizationOrigin: options.authorizationOrigin,
+    accessTeamDomain: options.accessTeamDomain ?? process.env.COORD_MCP_ACCESS_TEAM_DOMAIN ?? '',
+    accessApplicationAud: options.accessApplicationAud ?? process.env.COORD_MCP_ACCESS_APPLICATION_AUD ?? '',
+    accessAllowedEmails: allowedEmails,
     oauthStatePath: options.oauthStatePath || '/var/lib/coord-mcp/oauth.json',
     oauthDiagnosticLogPath: options.oauthDiagnosticLogPath || '/var/lib/coord-mcp/oauth-register.jsonl',
     oauthAccessTokenTtlSeconds: options.oauthAccessTokenTtlSeconds || 900,
@@ -435,6 +442,7 @@ async function registerCoordMcp(httpApp, options = {}) {
     oauthRoutePrefix: '/coord/oauth',
     authorizationFormActionPrefix: `${config.issuer}/oauth`,
     protectedResourceMetadataUrl: `${config.issuer}/.well-known/oauth-protected-resource/mcp`,
+    accessJwksProvider: options.accessJwksProvider,
   });
   const sidecar = options.sidecar || new SidecarClient(options.sidecarOptions);
   const loadSdk = options.loadSdk || defaultSdkLoader(options.sdkResolutionBase);

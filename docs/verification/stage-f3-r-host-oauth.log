@@ -1,0 +1,1 @@
+host OAuth and MCP integration: PASS (Cloudflare Access RS256/JWKS owner validation, password-free consent, CSRF binding, one-time code, DCR, S256 PKCE, resource binding, scope mapping, refresh, expiry, initialize, tools/list, isolated sidecar stub)

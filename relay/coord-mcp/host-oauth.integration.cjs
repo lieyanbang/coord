@@ -61,13 +61,27 @@ function findLeaseToken(value) {
   return undefined;
 }
 
-async function postForm(url, values) {
+async function postForm(url, values, origin, headers = {}) {
   return fetch(url, {
     method: 'POST',
-    headers: { 'content-type': 'application/x-www-form-urlencoded' },
+    headers: {
+      'content-type': 'application/x-www-form-urlencoded',
+      ...(origin ? { origin } : {}),
+      ...headers,
+    },
     body: new URLSearchParams(values),
     redirect: 'manual',
   });
+}
+
+function signAccessAssertion(privateKey, claims, kid = 'coord-test-access-key') {
+  const encode = (value) => Buffer.from(JSON.stringify(value)).toString('base64url');
+  const header = encode({ alg: 'RS256', typ: 'JWT', kid });
+  const payload = encode(claims);
+  const signer = crypto.createSign('RSA-SHA256');
+  signer.update(`${header}.${payload}`);
+  signer.end();
+  return `${header}.${payload}.${signer.sign(privateKey).toString('base64url')}`;
 }
 
 async function mcpPost(url, token, message) {
@@ -91,6 +105,8 @@ async function main() {
     throw new Error('COORD_MCP_ACCESS_TOKEN_TTL_SECONDS must be an integer from 1 to 3600.');
   }
   const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'coord-mcp-host-oauth-'));
+  const { privateKey, publicKey } = crypto.generateKeyPairSync('rsa', { modulusLength: 2048 });
+  const testAccessJwk = { ...publicKey.export({ format: 'jwk' }), kid: 'coord-test-access-key', kty: 'RSA' };
   const app = require(requiredEnvironment('COORD_MCP_EXPRESS_MODULE'))();
   const oauthModule = require(requiredEnvironment('COORD_MCP_OAUTH_MODULE'));
   const sdkResolutionBase = requiredEnvironment('COORD_MCP_SDK_RESOLUTION_BASE');
@@ -138,6 +154,11 @@ async function main() {
       express: require(requiredEnvironment('COORD_MCP_EXPRESS_MODULE')),
       oauthModule,
       issuer: PUBLIC_ISSUER,
+      authorizationOrigin: origin,
+      accessTeamDomain: 'https://coord-test.cloudflareaccess.com',
+      accessApplicationAud: 'coord-test-access-aud',
+      accessAllowedEmails: ['coord-owner@example.test'],
+      accessJwksProvider: async () => [testAccessJwk],
       oauthStatePath: path.join(tempDir, 'oauth.json'),
       oauthDiagnosticLogPath: path.join(tempDir, 'oauth-audit.jsonl'),
       oauthAccessTokenTtlSeconds: accessTokenTtlSeconds,
@@ -181,16 +202,36 @@ async function main() {
       state: crypto.randomUUID(),
     };
     const authorizeUrl = `${oauthEndpoint}/authorize?${new URLSearchParams(authorizeParams)}`;
-    const authorizePage = await fetch(authorizeUrl, { redirect: 'manual' });
+    const accessAssertion = signAccessAssertion(privateKey, {
+      iss: 'https://coord-test.cloudflareaccess.com',
+      aud: ['coord-test-access-aud'],
+      sub: 'coord-test-owner',
+      email: 'coord-owner@example.test',
+      exp: Math.floor(Date.now() / 1000) + 600,
+      nbf: Math.floor(Date.now() / 1000) - 5,
+    });
+    const noAccess = await fetch(authorizeUrl, { redirect: 'manual' });
+    assert.equal(noAccess.status, 403);
+    const authorizeHeaders = { 'cf-access-jwt-assertion': accessAssertion };
+    const authorizePage = await fetch(authorizeUrl, { headers: authorizeHeaders, redirect: 'manual' });
     assert.equal(authorizePage.status, 200);
-    assert.match(await authorizePage.text(), /Authorize Coord MCP/);
+    const authorizeHtml = await authorizePage.text();
+    assert.match(authorizeHtml, /Authorize Coord MCP/);
+    assert.doesNotMatch(authorizeHtml, /password|type="password"/i);
+    const csrfToken = authorizeHtml.match(/name="csrf_token" value="([A-Za-z0-9_-]{43})"/)?.[1];
+    assert.ok(csrfToken);
 
-    const wrongScope = await fetch(`${oauthEndpoint}/authorize?${new URLSearchParams({ ...authorizeParams, scope: 'admin' })}`, { redirect: 'manual' });
+    const wrongScope = await fetch(`${oauthEndpoint}/authorize?${new URLSearchParams({ ...authorizeParams, scope: 'admin' })}`, {
+      headers: authorizeHeaders,
+      redirect: 'manual',
+    });
     assert.equal(wrongScope.status, 302);
     assert.equal(new URL(wrongScope.headers.get('location')).searchParams.get('error'), 'invalid_request');
 
-    const authorization = await postForm(`${oauthEndpoint}/authorize`, { ...authorizeParams, password });
-    assert.equal(authorization.status, 302);
+    const authorization = await postForm(`${oauthEndpoint}/authorize`, { ...authorizeParams, csrf_token: csrfToken }, origin, {
+      ...authorizeHeaders,
+    });
+    assert.equal(authorization.status, 302, await authorization.clone().text());
     const authorizationRedirect = new URL(authorization.headers.get('location'));
     const code = authorizationRedirect.searchParams.get('code');
     assert.ok(code);
@@ -207,8 +248,12 @@ async function main() {
     assert.equal(wrongResource.status, 400);
     const wrongPkce = await postForm(`${oauthEndpoint}/token`, { ...tokenRequest, code_verifier: `${verifier.slice(0, -1)}x` });
     assert.equal(wrongPkce.status, 400);
-    const tokenResponse = await postForm(`${oauthEndpoint}/token`, tokenRequest);
-    assert.equal(tokenResponse.status, 200);
+    const tokenExchanges = await Promise.all([
+      postForm(`${oauthEndpoint}/token`, tokenRequest),
+      postForm(`${oauthEndpoint}/token`, tokenRequest),
+    ]);
+    assert.deepEqual(tokenExchanges.map((response) => response.status).sort(), [200, 400]);
+    const tokenResponse = tokenExchanges.find((response) => response.status === 200);
     const tokens = await tokenResponse.json();
     assert.equal(tokens.scope, 'coord');
     assert.equal(tokens.resource, PUBLIC_RESOURCE);
@@ -320,7 +365,7 @@ async function main() {
     assert.match(expired.headers.get('www-authenticate'), /invalid_token/);
     assert.equal(sidecarCalls.length, sidecarCallsBeforeExpiry);
 
-    process.stdout.write(`host OAuth and MCP integration: PASS (DCR, S256 PKCE, resource binding, scope mapping, refresh, expiry, initialize, tools/list, ${sidecarLabel}${shapeLabel})\n`);
+    process.stdout.write(`host OAuth and MCP integration: PASS (Cloudflare Access RS256/JWKS owner validation, password-free consent, CSRF binding, one-time code, DCR, S256 PKCE, resource binding, scope mapping, refresh, expiry, initialize, tools/list, ${sidecarLabel}${shapeLabel})\n`);
     if (writeLabel) process.stdout.write(`production batch tool round-trip: PASS${writeLabel}\n`);
   } finally {
     await registered?.shutdown();
