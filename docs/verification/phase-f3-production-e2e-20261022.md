@@ -21,6 +21,7 @@ below omit private-key values and all OAuth/Sidecar/lease credentials.
 
 - `npm test` in `relay/coord-mcp` — exit 0, 10/10 tests.
 - `node --check host-oauth.integration.cjs` — exit 0.
+- Fork Windows Actions run [39682968742](https://github.com/lieyanbang/coord/actions/runs/39682968742) for commit `8c86342b36ecd7c5a00b4b6123be806f62c99b18` completed with `conclusion=success`; the Windows job and all 29 steps succeeded, including `npm ci`, CoordMCP tests, and artifact upload. Artifact `coord-windows-2022` (`12385511806`, 4,226,358 bytes) is present and not expired.
 - The temporary host harness ran as `coord-relay`, using Node `v22.23.2`, Express `4.21.2`, MCP SDK `1.30.0`, and the deployed DesktopCommander OAuth implementation. With the default 2-second token TTL and the isolated Sidecar stub, DCR, S256 PKCE, scope/resource failures, refresh, expiry, MCP initialize/tools/list and tasks/list passed; exit 0.
 - A single production test batch was created through Arasaka JSON-RPC `batches/create` and `batches/add_tasks`; both calls returned successfully (SSH process exit 0). Batch ID: `ee52bcae-f269-498b-b7ed-d740e1b137ab`. Its only task ID: `30aaca96-badb-45cd-a1e7-00ff51ef0800`.
 - The live harness ran with `COORD_MCP_USE_LIVE_SIDECAR=1`, a 60-second temporary access-token TTL, and the two IDs above. It used a loopback-only temporary HTTP server and the real production Sidecar client. DCR, PKCE, refresh/expiry, initialize, tools/list, live tasks/list, and the one claim/submit/readback sequence all passed; process exit 0.

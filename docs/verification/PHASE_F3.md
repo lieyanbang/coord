@@ -106,9 +106,13 @@ directory. The test owner password was random, process-local, and not logged.
 The Windows-local CoordMCP suite passes 10/10. A test harness change now runs
 the write probe before its expiration check and uses the refreshed access
 token; `COORD_MCP_ACCESS_TOKEN_TTL_SECONDS` allows a bounded longer TTL for
-live integration tests. Current Windows Stage F3 commands and logs are in
-`docs/verification/stage-f3-*`; the Fork Actions result is pending until the
-verification commit is pushed.
+live integration tests. Stage F3 commands and logs are in
+`docs/verification/stage-f3-*`. Fork Windows Actions run
+[39682968742](https://github.com/lieyanbang/coord/actions/runs/39682968742)
+completed successfully for commit `8c86342b36ecd7c5a00b4b6123be806f62c99b18`;
+all 29 job steps passed, including dependency install, CoordMCP OAuth/HTTP
+tests, and artifact upload. Artifact `coord-windows-2022`
+(`12385511806`, 4,226,358 bytes) is present and not expired.
 
 ## Remaining F3 Gate
 
