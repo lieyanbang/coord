@@ -28,10 +28,16 @@ $healthArgs = @(
     '--degraded-after-ms', '2000'
 )
 try {
-    $null = & $CoordExe @healthArgs 2>$null
+    # Windows PowerShell 5.1 can promote native stderr to a terminating error.
+    $probeStartedAt = [DateTimeOffset]::UtcNow
+    $previousErrorActionPreference = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    $null = & $CoordExe @healthArgs 2>&1 | Out-Null
     $healthExit = $LASTEXITCODE
 } catch {
-    exit 2
+    $healthExit = 1
+} finally {
+    $ErrorActionPreference = $previousErrorActionPreference
 }
 
 if (-not (Test-Path -LiteralPath $StatusPath -PathType Leaf)) {
@@ -44,6 +50,9 @@ try {
     exit 2
 }
 if (([DateTimeOffset]::UtcNow - $checkedAt.ToUniversalTime()).TotalSeconds -gt 120) {
+    exit 2
+}
+if ($checkedAt -lt $probeStartedAt) {
     exit 2
 }
 
@@ -79,10 +88,23 @@ if ($recent.Count -gt 0) {
     }
 }
 
-$serviceState = ((& $ServyCli status --name coord --quiet 2>$null) -join '').Trim()
-if ($LASTEXITCODE -ne 0) {
+$previousErrorActionPreference = $ErrorActionPreference
+try {
+    $ErrorActionPreference = 'Continue'
+    $serviceStateOutput = (& $ServyCli status --name coord --quiet 2>&1 | Out-String).Trim()
+    $serviceStatusExit = $LASTEXITCODE
+} finally {
+    $ErrorActionPreference = $previousErrorActionPreference
+}
+if ($serviceStatusExit -ne 0) {
     exit $healthExit
 }
+$serviceStateLine = ($serviceStateOutput -split '\r?\n' | Where-Object { $_.Trim() } | Select-Object -Last 1).Trim()
+$serviceStateMatch = [regex]::Match($serviceStateLine, '^(?:.*:\s*)?(Running|Stopped)$')
+if (-not $serviceStateMatch.Success) {
+    exit $healthExit
+}
+$serviceState = $serviceStateMatch.Groups[1].Value
 if ($serviceState -eq 'Running') {
     $action = 'restart'
 } elseif ($serviceState -eq 'Stopped') {
@@ -91,8 +113,16 @@ if ($serviceState -eq 'Running') {
     exit $healthExit
 }
 
-$null = & $ServyCli $action --name coord --quiet 2>$null
-$recoveryExit = $LASTEXITCODE
+$previousErrorActionPreference = $ErrorActionPreference
+try {
+    $ErrorActionPreference = 'Continue'
+    $null = & $ServyCli $action --name coord --quiet 2>&1 | Out-Null
+    $recoveryExit = $LASTEXITCODE
+} catch {
+    $recoveryExit = 1
+} finally {
+    $ErrorActionPreference = $previousErrorActionPreference
+}
 $recent += [pscustomobject]@{
     attempted_at_utc = $now.ToString('o')
     attempted_at_unix_ms = $now.ToUnixTimeMilliseconds()
