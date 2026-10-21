@@ -1,8 +1,12 @@
 # Phase F1: Arasaka Service and Health
 
 Date: 2026-10-21 (Australia/Brisbane)
-Result: **IN_PROGRESS**. The deployed service and scoped recovery gates pass;
-Servy-host and Windows restart tests remain NOT_RUN.
+Result: **PARTIAL**. Servy-host and Windows restart recovery, live service health,
+coord WAL integrity, and coord backup checks passed. A full SQLite integrity
+check of Servy's own configuration DB remains NOT_RUN because its
+`UNICODE_NOCASE` collation is unavailable to the installed Python SQLite; the
+Servy CLI provides no database integrity command. Do not advance to F2 until
+this evidence gap is resolved or explicitly excluded from the acceptance gate.
 
 ## Local Implementation and Gate
 
@@ -80,15 +84,123 @@ Servy-host and Windows restart tests remain NOT_RUN.
   three-failure branch against a fake Servy CLI that emits the real prefixed
   status format; calls were exactly `status coord` then `start coord`.
 
-## Remaining Gate
+## Post-Restart Acceptance (2026-10-21)
 
-- **NOT_RUN:** restarting the Servy host would interrupt six dependent
-  production services. A full Windows restart may also start
-  `OCI-A1-Grabber`, which can create OCI resources. Neither restart was
-  performed; both await the user's explicit decision.
-- The boot trigger is configured but cannot be promoted to tested until a
-  restart is authorized. F1 therefore remains IN_PROGRESS; F2/F3 must not start
-  until the remaining F1 gate is resolved.
+### Servy host restart
+
+- After the user authorized the operation, `Restart-Service -Name Servy -Force`
+  was issued at `2026-10-21T06:29:52Z`; the remote acceptance script exited 0.
+  Servy PID changed from 10700 to 6260. `ArasakaDDNS`, both FFmpeg services,
+  `MediaSTT`, `OCI-A1-Grabber`, and `coord` returned to Running. `CodexProxy`
+  remained Stopped, matching its pre-restart state; it was not started or
+  stopped by this task.
+- Immediately after that restart, coord returned READY in 67 ms. The monitor
+  task briefly reported Task Scheduler result `267009` (running); after it
+  settled, it was Ready with `LastTaskResult=0`, and another probe returned
+  READY in 4 ms. The temporary running result was not treated as a failure or
+  as a completed success.
+
+### Windows restart and live recovery
+
+- `shutdown.exe /r /t 0 /f` was issued at `2026-10-21T06:31:53.629Z` and
+  returned exit 0. The user reported that Tailscale, SSH, and Remote Control 4
+  were temporarily unavailable after reboot and later recovered. Direct SSH
+  was independently working by `2026-10-21T08:06:29Z`; Remote Control 4
+  recovery is user-reported and was not independently tested because this task
+  did not use MCP.
+- The live Windows `LastBootUpTime` was `2026-10-21T06:35:49.835Z`.
+  Tailscale was Running/Automatic at `100.89.6.126`; `sshd` and Servy were also
+  Running. Servy was Automatic/LocalSystem, PID 3224.
+- Post-boot service inventory showed all seven Servy-managed entries Running:
+  `ArasakaDDNS`, `ArasakaFFmpegWatchdog`, `ArasakaFFmpegWorker`, `CodexProxy`,
+  `MediaSTT`, `OCI-A1-Grabber`, and `coord`. Windows service start mode was
+  Automatic for each. Servy CLI `status --name <name> --quiet` returned exit 0
+  and Running for every entry.
+- `CodexProxy` had an initial post-boot Stopped status despite a separately
+  running process, as reported by the user. The user subsequently started its
+  Windows service. Current state was independently verified without changing
+  it: Servy DB contains its service entry, Servy CLI reports Running (exit 0),
+  the Windows service is Running/Automatic/LocalSystem (PID 8236), and the
+  process chain is `Servy.Service.CLI.exe` PID 8236 -> `powershell.exe` PID
+  8188 -> `codex-proxy.exe` PID 1020. Its health request returned HTTP 200 in
+  109 ms. Thus it is currently Servy-managed, not merely an independent
+  orphan process. No CodexProxy process or service was started/stopped by this
+  verification, and no Servy configuration was changed.
+- Port/process ownership after boot: coord PID 5368 owns only
+  `127.0.0.1:7777`; CodexProxy PID 1020 owns `0.0.0.0:13556`, `0.0.0.0:8790`,
+  and `127.0.0.1:9090`; MediaSTT's process tree owns `127.0.0.1:13356`; the
+  FFmpeg worker owns `192.168.137.1:13324`. The DDNS and OCI Grabber process
+  trees had no listening ports. No listener was found for `coord` outside
+  loopback.
+- Actual local health requests returned: coord `health` READY at
+  `2026-10-21T08:06:40.993Z` (JSON-RPC `tasks/list` and read-only SQLite both
+  PASS, 4 ms total); CodexProxy `GET /health` 200; MediaSTT `GET /health/live`
+  and `/health/ready` both 200; FFmpeg Worker `GET /health` and `/ready` both
+  200. ArasakaDDNS, FFmpeg Watchdog, FFmpeg Worker, and OCI-A1-Grabber also
+  passed Servy status/process liveness checks. The OCI Grabber check did not
+  query or mutate OCI resources.
+- Servy configuration flags read from its DB, excluding command parameters and
+  credentials: coord health monitoring enabled (10 s heartbeat, two failed
+  checks, bounded recovery); process heartbeat monitoring was enabled for
+  ArasakaDDNS (15 s), both FFmpeg services (10 s), and OCI-A1-Grabber (300 s).
+  It was disabled for CodexProxy and MediaSTT; those services were instead
+  covered by the HTTP checks above. MediaSTT readiness and FFmpeg backend
+  readiness both returned HTTP 200.
+- The SYSTEM/highest-run-level `coord-health-monitor` task has enabled boot and
+  periodic triggers. After reboot it was Ready with `LastTaskResult=0`; its
+  latest recorded probe at `2026-10-21T08:07:16.178Z` was READY, 4 ms, zero
+  consecutive failures. No recovery action was recorded for this boot.
+
+### Database and lease state after reboot
+
+- Current coord DB was opened read-only while the daemon was running. It
+  reported `journal_mode=wal`, `PRAGMA quick_check=ok`, and four user tables:
+  `agents=0`, `batches=0`, `task_receipts=0`, `tasks=0`. There were zero active
+  leases, expired leases, claimed rows without tokens, or submitted tasks. No
+  production task or acknowledgement was created; therefore there was no live
+  production lease to reclaim after this reboot. The earlier isolated crash/WAL
+  rehearsal remains the evidence for attempt-1 -> attempt-2 reclaim behavior.
+- Current coord files after boot: `coord.db` 4,096 bytes,
+  `coord.db-wal` 61,832 bytes, `coord.db-shm` 32,768 bytes. The read-only
+  `quick_check` included the active WAL and returned `ok`; no checkpoint or
+  database mutation was issued.
+- Online backups were made with
+  `py -3.14 sqlite-online-backup-v3.py --source ... --destination ...` before
+  each disruptive restart, then re-opened with the same helper's
+  `--verify-only` mode. The Servy-host-restart pair is
+  `coord-pre-host-restart-20261021T062927182Z.db` (61,440 bytes,
+  `quick_check=ok`, four table row counts match, SHA-256
+  `6744ae421cff06b4fa4ab423a2a7777657bc7f046140659ab56d5d136c08dba5`) and
+  `servy-pre-host-restart-20261021T062927182Z.db` (32,768 bytes, two table row
+  counts match, SHA-256
+  `0c22950d27d00926640ef9e732b433d45619a6852c355e3259c42b2ba358e7d0`).
+- The pre-Windows-restart pair is `coord-pre-windows-restart-20261021T063113961Z.db`
+  (same size/counts/hash as the first coord backup) and
+  `servy-pre-windows-restart-20261021T063113961Z.db` (32,768 bytes, two table
+  row counts match, SHA-256
+  `a31ca224a73979d065a3b3b315498396f4cba45eb25c1edcfbf2fece348e549a`).
+  Post-boot `--verify-only` against current sources exited 0 for all four
+  snapshots and reported matching row counts.
+- The current Servy DB is also in WAL mode (`Servy.db` 32,768 bytes,
+  `-wal` 4,152 bytes, `-shm` 32,768 bytes); read-only enumeration found
+  `SchemaInfo=1` and `Services=7`, matching its online backups. However,
+  `PRAGMA quick_check` returned **NOT_RUN** with
+  `no such collation sequence: UNICODE_NOCASE`; the failing index is
+  `idx_services_name_unique`. Servy's CLI help exposes no integrity-check
+  command, and no collation semantics were guessed or registered. This is the
+  remaining evidence gap; online backup consistency and successful Servy
+  startup/config reads do not prove this index's full SQLite integrity.
+
+## Gate Decision
+
+- Servy-host restart, Windows boot recovery, coord and service health, loopback
+  isolation, coord WAL integrity, previous backup/restore rehearsal, and
+  restart-time online backup row-count checks passed.
+- **Overall F1 remains PARTIAL** solely because full integrity of the Servy
+  configuration DB could not be verified with the available native tools.
+  F2/F3 must remain TODO until a non-mutating, collation-aware integrity check
+  is available or this acceptance item is explicitly excluded. No service
+  configuration or production queue state was changed during this verification.
 - No production tasks or acknowledgements were created. The isolated test DB
   and monitor fixtures remain under
   `C:\ProgramData\coord\data\verification-20261021`; lease token values were

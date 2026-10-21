@@ -134,7 +134,7 @@ Windows 本机及 Windows Actions 的真实测试、构建与产物为准。
 | Stage | 状态 | 证据 / 依赖 |
 | --- | --- | --- |
 | F0 | PASS | `docs/verification/PHASE_F0.md`；Servy、远端基线及 Windows Actions 二进制哈希已核验 |
-| F1 | IN_PROGRESS | Arasaka coord/health 已部署；loopback、SYSTEM 监护、进程强杀恢复、定向启动、WAL/租约恢复及 SQLite 备份还原演练通过；Windows Actions `39542595503` 全绿；Servy 主机与 Windows 重启仍 NOT_RUN，见 `docs/verification/PHASE_F1.md` |
+| F1 | PARTIAL | Servy 主机与 Windows 重启后服务恢复、coord/CodexProxy/MediaSTT/FFmpeg 健康、loopback、SYSTEM 监护、WAL/租约及 coord 在线备份验证通过；Servy DB `PRAGMA quick_check` 因 `UNICODE_NOCASE` collation 缺失为 NOT_RUN，故不宣称 F1 完整 PASS，见 `docs/verification/PHASE_F1.md` |
 | F2 | TODO | 依赖 F1；尚未建立私网转发 |
 | F3 | TODO | 依赖 F2；尚未变更 FeathersJS/OpenResty 或完成 ChatGPT Web OAuth |
 
@@ -144,4 +144,4 @@ Windows 本机及 Windows Actions 的真实测试、构建与产物为准。
 - Gate F3：新增 OAuth/MCP 公网入口及旧 DesktopCommander 所有入口回归 PASS；ChatGPT Web 手动完成工具发现和只读/隔离写任务 E2E 方可标记完整 PASS。
 - 每个 Gate 完成后同步 `docs/verification/` 证据、更新本节进度、生成独立 Git commit 并通过 Fork 的 Windows Actions；部署不擅自创建 Release/tag、不推送上游。
 - 最终输出：Arasaka 服务名/运行账户、二进制 SHA、Servy 参数/健康路径、备份/恢复程序、故障演练记录、中转公网 URL、OAuth/连接器验收与残余风险。敏感信息绝不写文档/日志。
-- 当前状态：F0 部署前审计 PASS；F1 服务已部署且受控运行/恢复、备份还原和隔离租约故障演练通过。Servy 主机重启会影响六个既有服务，Windows 重启会启动 OCI-A1-Grabber；两项均未执行，F1 保持 IN_PROGRESS，等待用户决定后再关闭 Gate。F2–F3 仍 TODO，尚未部署公网 OAuth/MCP E2E。
+- 当前状态：F0 部署前审计 PASS。用户授权后，Servy Host 与 Windows 整机重启均已实测；coord、Servy 托管服务和健康监护恢复，coord WAL `quick_check=ok`，coord 在线备份验证通过。F1 仍为 PARTIAL：Servy 配置 DB 的自定义 `UNICODE_NOCASE` collation 无法由现有 Python SQLite 做完整性检查，Servy CLI 没有原生校验命令；行数及运行态可读不冒充索引完整性 PASS。按验收要求，F2–F3 保持 TODO，待该证据缺口解决或获明确排除后再进入 F2。
