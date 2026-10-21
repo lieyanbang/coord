@@ -103,3 +103,45 @@ Windows 本机及 Windows Actions 的真实测试、构建与产物为准。
 - 容量与兼容性原始数据见 `verification/stage-e-capacity.json`、`verification/stage-e-migration.json`；容量为本机测量，无虚构吞吐门槛。
 - Stage D Windows [Actions 39434225476](https://github.com/lieyanbang/coord/actions/runs/39434225476) 已实测 success。
 - Stage E Windows [Actions 39436136707](https://github.com/lieyanbang/coord/actions/runs/39436136707) 全步骤 success；artifact `12272506068` 下载并执行成功。最终覆盖及边界见 `verification/FINAL_ACCEPTANCE.md`。
+
+## 10. Phase F — Arasaka 常驻 coord 与自托管 ChatGPT MCP（2026-10-21）
+> 本节为新增部署阶段；原 Stage 0–E 是已验收 Windows MVP 历史记录，不重新实施。实施入口为根目录 `TASK.md`；部署前 Gate 不得预先标记 PASS。
+### F0 架构与边界
+- **生产计算/持久化**：Arasaka（Windows 10、Tailscale `100.89.6.126`）运行 `coord.exe serve`、SQLite WAL、租约/Validator，并按需运行受限 Worker。生产 DB、Vault、日志和密钥不保存在 Git 工作区。
+- **公网中转保持不变**：`instance-20260424-1840`（Tailscale `100.116.134.114`）继续承担 `lieyanbang.com` 的 OpenResty + FeathersJS + OAuth；只新增独立 `/app/CoordMCP/`。不得改写 DesktopCommander 现有三条 MCP 路由、设备连接及其他站点。
+- 路由：ChatGPT Web → HTTPS OpenResty → FeathersJS Streamable HTTP MCP/OAuth → Tailscale 专用链路 → Arasaka `coord` loopback JSON-RPC；不使用 OpenAI Tunnel 或 OpenAI API Key。
+- 本机 BT-7274 用于开发/测试；在 Fork `lieyanbang/coord` Windows Actions 构建并验证 exe，再以 SHA-256 校验后部署 Arasaka。Linux/macOS 仍不在当前支持范围。
+- Arasaka Servy 已核实：`Servy` 服务 Running/Automatic；安装 `C:\Program Files\Servy\servy-cli.exe`。优先复用 Servy 管理 coord 常驻、自动拉起及状态；先查官方/本地 CLI 的确切可用参数，不臆造命令。
+### F1 部署与持久化
+- 先检查 Arasaka 上 Servy 现有任务、监听端口、磁盘/权限/启动账户和 Tailscale；避开当前其他服务。专用路径建议 `C:\ProgramData\coord\` 下分 bin/data/logs/backup，创建最小权限运行账户或受限服务身份。
+- coord 只绑定 `127.0.0.1:7777`，端口冲突时改用未占用 loopback 端口并统一配置；SQLite 放持久卷、启用 WAL，与文件系统权限及日志轮转配套。
+- Servy 建立独立 coord 服务，设置机器启动自动运行、退出重启、合理退避、工作目录、独立日志。若 Servy 内建健康监控支持 HTTP 检查，则使用；否则创建独立最小健康检查进程/计划触发器，并由 Servy 或既有监控联动恢复，不能仅认为进程存在就是健康。
+- **Health 检查**：至少检查服务存活、仅本地 JSON-RPC `tasks/list` 可返回有效 JSON、数据库读写可用和延时阈值；写操作使用隔离测试 DB 或专用 canary，不能向生产队列定期添加垃圾任务。状态包含 READY/DEGRADED/FAIL；记录最后成功时间和失败原因，不记录敏感数据。
+- Windows 系统重启、Servy 自身重启、coord 崩溃、磁盘异常、网络断开后恢复必须实测；确认过期租约可以重新领取、没有重复终态或回执丢失。
+- SQLite 备份通过受控停止/SQLite backup API 保证一致，若启用 Vault 同步备份；执行恢复演练并确保恢复后服务及任务数据正确。
+### F2 远程私网中继
+- 服务器不直接向公网转发 `coord` JSON-RPC，也不让 coord 绑定 `0.0.0.0`。
+- 优先参照 `C:\Users\leiya\Desktop\project\DesktopCommanderMCP` 的 `Socket.IO` 已认证 Device Agent 模式，为 Arasaka 部署**独立 coord agent** 或安全地扩展既有通道；应区分设备凭证、namespace/消息类型和方法白名单，避免破坏 DesktopCommander 的正在使用的 Agent。
+- 若代理复用成本过高，可评估 Arasaka 本地 loopback relay + Tailscale 私网反向连接/受控代理；必须限制服务端来源与可调用方法，不能单靠私网即视作无条件授权。
+- MCP server 只暴露经授权需要的工具，明确定义 tool schema、超时、断连、并发、结果大小、幂等性与错误映射；不可把任意客户端 JSON-RPC 完整透传。
+- `lease_token` 是 fencing 凭据；对其他 Agent 的 list/get 必须避免暴露正在使用的 token。若底层 API 需要修复，先添加回归测试并兼顾真实领取者的可用性。
+### F3 公网 FeathersJS / OAuth / OpenResty
+- 在既有 FeathersJS Host 内新增独立 CoordMCP MCP Streamable HTTP 入口、OAuth 元数据/DCR/PKCE、授权边界与认证工具调用。优先抽取可复用的安全实现，不复制密钥，也不得弱化原 DesktopCommander OAuth 策略。
+- 独立路径 `https://lieyanbang.com/app/CoordMCP/`，OpenResty 仅添加精确关联 location；无改动的原入口、WebSocket、反代必须保持正常；更改前记录配置、备份与回滚命令。
+- `nginx -t`、Feathers 启动检查、OAuth 未认证 401、合法 OAuth 初始化/tools/list、错误认证拒绝及 ChatGPT Web 浏览器实际授权必须实测。先私下验证新入口再 reload 生产配置。
+- 仍为可信单用户用途，接口最小授权；不得因简化而允许无认证公网写任务/读取任意令牌。
+### F4 分阶段门槛与交付
+| Stage | 状态 | 证据 / 依赖 |
+| --- | --- | --- |
+| F0 | PASS | `docs/verification/PHASE_F0.md`；Servy、远端基线及 Windows Actions 二进制哈希已核验 |
+| F1 | TODO | 依赖 F0；尚未安装或启动 coord |
+| F2 | TODO | 依赖 F1；尚未建立私网转发 |
+| F3 | TODO | 依赖 F2；尚未变更 FeathersJS/OpenResty 或完成 ChatGPT Web OAuth |
+
+- Gate F0：远端/本地服务状态、Servy 功能与部署/回滚路径基线记录；构建产物哈希匹配。
+- Gate F1：Servy 托管服务、自启动、健康检测、重启/杀进程恢复、数据库一致性、备份恢复 PASS。
+- Gate F2：受限 Tailscale 通道真实转发、负向鉴权、掉线重连、超时与租约竞态 PASS。
+- Gate F3：新增 OAuth/MCP 公网入口及旧 DesktopCommander 所有入口回归 PASS；ChatGPT Web 手动完成工具发现和只读/隔离写任务 E2E 方可标记完整 PASS。
+- 每个 Gate 完成后同步 `docs/verification/` 证据、更新本节进度、生成独立 Git commit 并通过 Fork 的 Windows Actions；部署不擅自创建 Release/tag、不推送上游。
+- 最终输出：Arasaka 服务名/运行账户、二进制 SHA、Servy 参数/健康路径、备份/恢复程序、故障演练记录、中转公网 URL、OAuth/连接器验收与残余风险。敏感信息绝不写文档/日志。
+- 当前状态：F0 部署前审计 PASS；F1–F3 TODO。尚未部署 coord，也未通过公网 OAuth/MCP E2E。
