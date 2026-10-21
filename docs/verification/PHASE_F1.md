@@ -1,12 +1,12 @@
 # Phase F1: Arasaka Service and Health
 
 Date: 2026-10-21 (Australia/Brisbane)
-Result: **PARTIAL**. Servy-host and Windows restart recovery, live service health,
-coord WAL integrity, and coord backup checks passed. A full SQLite integrity
-check of Servy's own configuration DB remains NOT_RUN because its
-`UNICODE_NOCASE` collation is unavailable to the installed Python SQLite; the
-Servy CLI provides no database integrity command. Do not advance to F2 until
-this evidence gap is resolved or explicitly excluded from the acceptance gate.
+Result: **PARTIAL (technical acceptance complete; candidate Windows Actions pending)**.
+Servy-host and Windows restart recovery, live service health, coord WAL integrity,
+coord backup checks, and the Servy configuration DB integrity gate have passed.
+The only remaining F1 closure condition is successful Fork Windows Actions for
+the commit containing this evidence and the collation-aware checker. Keep F2
+TODO until that run succeeds.
 
 ## Local Implementation and Gate
 
@@ -185,26 +185,138 @@ this evidence gap is resolved or explicitly excluded from the acceptance gate.
   `a31ca224a73979d065a3b3b315498396f4cba45eb25c1edcfbf2fece348e549a`).
   Post-boot `--verify-only` against current sources exited 0 for all four
   snapshots and reported matching row counts.
-- The current Servy DB is also in WAL mode (`Servy.db` 32,768 bytes,
+- Before the collation-aware gate below, the current Servy DB was found in WAL mode (`Servy.db` 32,768 bytes,
   `-wal` 4,152 bytes, `-shm` 32,768 bytes); read-only enumeration found
-  `SchemaInfo=1` and `Services=7`, matching its online backups. However,
+  `SchemaInfo=1` and `Services=7`, matching its online backups. At that point,
   `PRAGMA quick_check` returned **NOT_RUN** with
   `no such collation sequence: UNICODE_NOCASE`; the failing index is
   `idx_services_name_unique`. Servy's CLI help exposes no integrity-check
-  command, and no collation semantics were guessed or registered. This is the
-  remaining evidence gap; online backup consistency and successful Servy
-  startup/config reads do not prove this index's full SQLite integrity.
+  command, and no collation semantics were guessed or registered. This was the
+  remaining evidence gap; the later source-matched check below closes it.
+
+## Servy Configuration Integrity Gate (2026-10-21)
+
+### Installed version and source
+
+- Direct SSH read-only query to `C:\Program Files\Servy\servy-cli.exe
+  --version` returned `Servy.CLI 10.2.0+bc0f0c7b67862028549e8d99c0b1d16c2b58d228`
+  with exit 0. The executable ProductVersion matched; its SHA-256 was
+  `8ACBBD8253982FFC1FD05CE1DFF080426638D6B64BA25A59B1AF0A21DDEFE032`.
+- The installed `Servy.psd1` names `https://github.com/aelassas/servy` as its
+  ProjectUri. GitHub's commit API resolved the exact build commit, dated
+  `2026-10-05T06:10:14Z`, with `verification.verified=true`:
+  [Servy commit bc0f0c7](https://github.com/aelassas/servy/commit/bc0f0c7b67862028549e8d99c0b1d16c2b58d228).
+- At that commit,
+  [UnicodeNoCaseCollation.cs](https://github.com/aelassas/servy/blob/bc0f0c7b67862028549e8d99c0b1d16c2b58d228/src/Servy.Infrastructure/Data/UnicodeNoCaseCollation.cs#L16)
+  registers the `UNICODE_NOCASE` SQLite collation; its `Compare` method handles
+  nulls and returns `string.Compare(param1, param2,
+  StringComparison.OrdinalIgnoreCase)` ([lines 46-56](https://github.com/aelassas/servy/blob/bc0f0c7b67862028549e8d99c0b1d16c2b58d228/src/Servy.Infrastructure/Data/UnicodeNoCaseCollation.cs#L46-L56)).
+  [`AppDbContext` registers before opening connections](https://github.com/aelassas/servy/blob/bc0f0c7b67862028549e8d99c0b1d16c2b58d228/src/Servy.Infrastructure/Data/AppDbContext.cs#L23-L26);
+  the database initializers also register this type before schema work.
+- The same source commit declares `System.Data.SQLite` **2.0.4** and
+  `SourceGear.sqlite3` **3.53.4** in
+  [`Directory.Packages.props`](https://github.com/aelassas/servy/blob/bc0f0c7b67862028549e8d99c0b1d16c2b58d228/Directory.Packages.props#L17-L18),
+  targeting `net10.0-windows`. The checker used that Provider package and native
+  SQLite package, and ran on Arasaka as .NET 10.0.10; observed Provider assembly
+  version was `2.0.4.0` and SQLite engine version was `3.53.4`. No Python Unicode
+  comparison approximation was used.
+
+### Checker and snapshot
+
+- Added `scripts/verification/ServySnapshotCheck/Program.cs` and its project
+  file. It registers the source-equivalent collation before opening SQLite,
+  opens the source with `ReadOnly=true` and `FailIfMissing=true`, refuses an
+  existing snapshot path, and uses `SQLiteConnection.BackupDatabase` to create
+  the new snapshot. It enables `query_only` only on the snapshot connection;
+  both integrity PRAGMAs and all schema/configuration reads use that snapshot.
+  The tool outputs service names and full-row SHA-256 values, never raw config,
+  command-line, or credential columns.
+- `dotnet publish scripts/verification/ServySnapshotCheck/ServySnapshotCheck.csproj
+  -c Release -r win-x64 --self-contained true`: exit 0 (local SDK 10.0.302).
+  Local `--self-test`: exit 0. It created a temporary WAL fixture using the
+  SQLite Online Backup API, passed both integrity checks and seven Unicode
+  comparison cases, and proved an existing snapshot is not overwritten. The
+  exact published binary was uploaded to Arasaka; remote `--self-test` also
+  exited 0. The uploaded executable was removed from its verified per-run Temp
+  directory after validation; the snapshot was preserved. No service was
+  started, stopped, or restarted.
+- The production snapshot was created at `2026-10-21T12:19:39Z` from the live
+  source `C:\ProgramData\Servy\db\Servy.db` to the previously absent
+  `C:\ProgramData\coord\backup\servy-f1-collation-20261021T121838Z.db`.
+  Command: `servy-snapshot-check.exe --source
+  C:\ProgramData\Servy\db\Servy.db --snapshot
+  C:\ProgramData\coord\backup\servy-f1-collation-20261021T121838Z.db`;
+  checker and SSH exits were both 0. Source was opened read-only and copied via
+  the SQLite Online Backup API; no production database file was written. The
+  create run used checker EXE SHA-256
+  `70C1E43CCFFBFEE378C1C0667AEC3075DEE517165E6212761A227CA43BE3F30E`.
+- The final checker re-opened only the snapshot in read-only mode at
+  `2026-10-21T12:23:45Z`; `--verify-snapshot` and SSH both exited 0. A separate
+  `Get-FileHash -Algorithm SHA256` at `12:24:41Z` confirmed the same main-file
+  hash. The main snapshot is 32,768 bytes with SHA-256
+  `9E64050D0A5FCA14FB460D7730996960A34612AE3C8E012AB5A16A7A4A1ACB29`.
+  The snapshot `-wal` sidecar is 0 bytes (empty-file SHA-256
+  `E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855`); a
+  32,768-byte `-shm` sidecar was created by the read-only WAL-mode verification.
+
+### Results
+
+- Checker output: `quick_check=["ok"]`, `integrity_check=["ok"]`, seven of
+  seven collation comparisons matched `StringComparison.OrdinalIgnoreCase`.
+- `idx_services_name_unique` exists, is unique, and its single key is
+  `Services.Name COLLATE UNICODE_NOCASE` (`index_list` and `index_xinfo` agreed).
+- `SchemaInfo` contains exactly one row: `Id=1`, `Version=10`.
+- `Services` contains exactly these seven rows. `record_sha256` covers every
+  column of each row; raw configuration values were not emitted:
+
+| Service | record_sha256 |
+| --- | --- |
+| ArasakaDDNS | `080058B717D4139A1C71021613CD23D90D0A2A6E3BE5C209EC7B1E0BA43D022A` |
+| ArasakaFFmpegWatchdog | `190239B8CD1FE2F898D6C82E77B2D6B19C2C0A2E347AE29BD647AD69E20D0305` |
+| ArasakaFFmpegWorker | `30764475F914038EBF89F0EA03A703453CCF73F06C9921E783155E5360803C18` |
+| CodexProxy | `FB2573763189B04872C3AB72082C650E1034ACDA204C1F80D2C2B1DF89718F91` |
+| coord | `2F83F99D2B600A228B6816B5517B71A67EE39C3F60A99806FC71393B7BBF0F05` |
+| MediaSTT | `333A7FA95FE4FDB5B4F80A2ACEB18FDD85FE8CF59E59163090D6CEAB850719E1` |
+| OCI-A1-Grabber | `2969F540B58BA4B7FB8533024721FBAB353C394BB9A7B77A1BAE2F70EBBD2978` |
+
+- Final checker EXE: 75,918,514 bytes, SHA-256
+  `9A324BC43795675EA47E991FF36907D4A36FAEAD8E95EA429BC97CEFDCB084BD`.
+  `Program.cs` SHA-256 is
+  `F7376BC60D97F5484DA2CBF9E297E89C4DEFF4A863E636AF61AF6F719CAB60C4`;
+  `ServySnapshotCheck.csproj` SHA-256 is
+  `66685FF0F845BB6F61DF03B54A321A03F59C13C539DDCFBA0F302955B8D03D6F`.
+
+### Post-integrity health
+
+- At `2026-10-21T12:28:30Z`, Windows `LastBootUpTime` remained
+  `2026-10-21T06:35:49.8354060Z`; Servy was Running/Automatic.
+- `servy-cli.exe status --name coord --quiet`: exit 0, `Running`.
+- `coord.exe --url http://127.0.0.1:7777/ health --db
+  C:\ProgramData\coord\data\coord.db --status
+  C:\Users\lieyanbang\AppData\Local\Temp\coord-f1-health-after-final-integrity-20261021T1225Z.json
+  --timeout-ms 2000 --degraded-after-ms 2000`:
+  exit 0, READY at `12:28:32.282Z`, total 4 ms, `tasks_list=PASS` (3 ms),
+  `sqlite_read_only=PASS` (1 ms), zero consecutive failures. The command used
+  `tasks/list` with `skip_reclaim=true`; the unique temporary status file was
+  removed after the probe.
+- The listener remained `127.0.0.1:7777`, owned by PID 5368 at
+  `C:\ProgramData\coord\bin\coord.exe`. No restart or recovery action was
+  issued during the collation gate.
+- Local `pwsh.exe -NoProfile -File scripts/verify.ps1 -Stage f1` completed with
+  fmt, locked clippy, locked all-feature tests, locked release build, and the
+  Windows PowerShell health-monitor harness all exit 0. Timings and command
+  names are in `stage-f1-checks.json` and individual logs.
 
 ## Gate Decision
 
 - Servy-host restart, Windows boot recovery, coord and service health, loopback
   isolation, coord WAL integrity, previous backup/restore rehearsal, and
   restart-time online backup row-count checks passed.
-- **Overall F1 remains PARTIAL** solely because full integrity of the Servy
-  configuration DB could not be verified with the available native tools.
-  F2/F3 must remain TODO until a non-mutating, collation-aware integrity check
-  is available or this acceptance item is explicitly excluded. No service
-  configuration or production queue state was changed during this verification.
+- All technical F1 gates, including the Servy configuration database integrity
+  gate, now pass. **Overall F1 remains PARTIAL only until Fork Windows Actions
+  succeeds for the candidate commit.** F2/F3 remain TODO pending that CI result.
+  No service configuration or production queue state was changed during this
+  verification.
 - No production tasks or acknowledgements were created. The isolated test DB
   and monitor fixtures remain under
   `C:\ProgramData\coord\data\verification-20261021`; lease token values were
