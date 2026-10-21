@@ -9,6 +9,7 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { test } from 'node:test';
 import { createAgent } from './agent.mjs';
 import { createSidecar } from './server.mjs';
+import { reservePort } from './test-ports.mjs';
 import { COORD_AGENT_ID, RELAY_AGENT_ID } from './protocol.mjs';
 
 const agentSecret = '55'.repeat(32);
@@ -16,17 +17,6 @@ const clientSecret = '66'.repeat(32);
 const coordExe = process.env.COORD_TEST_BIN
   ? resolve(process.env.COORD_TEST_BIN)
   : resolve('target/release/coord.exe');
-
-function reservePort() {
-  return new Promise((resolvePort, reject) => {
-    const server = createHttpServer();
-    server.once('error', reject);
-    server.listen(0, '127.0.0.1', () => {
-      const port = server.address().port;
-      server.close(error => error ? reject(error) : resolvePort(port));
-    });
-  });
-}
 
 async function directRpc(url, method, params) {
   const response = await fetch(url, {

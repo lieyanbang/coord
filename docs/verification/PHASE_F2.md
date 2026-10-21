@@ -2,9 +2,11 @@
 
 Date: 2026-10-22 (Australia/Brisbane)
 Result: **PARTIAL**. The production source boundary, authenticated
-Arasaka-to-sidecar path, sidecar-to-coord RPC, persistent host filter, and
-existing-service regression checks now pass. The updated closeout is awaiting
-its local Windows gate and Fork Actions result before F2 is marked PASS.
+Arasaka-to-sidecar path, sidecar-to-coord RPC, persistent host filter,
+existing-service regression checks, and Fork Actions for `06c2bf0` passed.
+A later local gate run exposed a Fetch-blocked ephemeral-port defect in the
+test harness; the harness fix and a clean closeout gate are still pending.
+F3 has not started.
 
 ## Scope and Architecture
 
@@ -157,6 +159,9 @@ address. No production task was claimed, completed, or mutated by these probes.
 | Previous Windows stage | `pwsh.exe -NoProfile -File scripts/verify.ps1 -Stage f2` | exit 0; all five checks |
 | Previous Fork Actions | Windows run `39620800985` for `41aa36d` | success; all steps and artifact upload passed |
 | ACL closeout Windows stage | same command at `2026-10-21T16:17:56Z` | exit 0; fmt, clippy, tests, release build, and Relay tests all passed; 12/12 Relay tests |
+| ACL closeout Fork Actions | Windows run `39633826204` for `06c2bf0` | success at `2026-10-21T16:24:21Z`; all Windows-2022 steps passed; artifact `coord-windows-2022` ID `12359913911`, 4,226,357 bytes, not expired |
+| Follow-up local stage | same command at `2026-10-21T16:25:40Z` | fmt/clippy/tests/release passed; Relay tests exit 1 (11/12) because a test HTTP fixture bound Node Fetch-blocked port 10080; no production RPC was affected; see refreshed `stage-f2-relay-tests.log` |
+| Port-fix Windows stage | same command at `2026-10-21T16:32:02Z` | exit 0; fmt/clippy/tests/release passed; Relay tests 13/13; refreshed `stage-f2-checks.json` and logs |
 | Arasaka service state | `servy-cli.exe status/show --name CoordRelayAgent --quiet` over SSH | both exit 0; Running / LocalService |
 | Sidecar deployment | hash-verified staged file, atomic install, `systemctl restart coord-relay.service` | SSH script exit 0; READY and agent reconnected |
 | Production RPC | authenticated `tasks/list`, `skip_reclaim=true` | HTTP 200, `state=ok` |
@@ -167,7 +172,7 @@ address. No production task was claimed, completed, or mutated by these probes.
 | Production RPC | Authenticated relay `tasks/list`, `skip_reclaim=true` | HTTP 200, `state=ok`, one result; no task mutation |
 | Persistent ACL unit | `/usr/local/sbin/coord-relay-acl-verify` | exit 0 / `host_acl=PASS`; unit active/enabled, exact rule and hashes verified |
 
-F3 remains **TODO** until this closeout's Windows Actions result is available.
-`TASK.md` was not changed. Only the new ACL unit was started; existing
-production services, Tailscale, and port 13011 were not restarted or
-reconfigured, and Arasaka was not rebooted.
+F2 remains **PARTIAL** until the test-port fix receives a successful Fork
+Actions run. F3 remains **TODO**. `TASK.md` was not changed. Only the new ACL
+unit was started; existing production services, Tailscale, and port 13011 were
+not restarted or reconfigured, and Arasaka was not rebooted.

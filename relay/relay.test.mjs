@@ -7,17 +7,11 @@ import { createHmac, randomUUID } from 'node:crypto';
 import { test } from 'node:test';
 import { createAgent } from './agent.mjs';
 import { createSidecar } from './server.mjs';
+import { isFetchBlockedPort, listen, reservePort } from './test-ports.mjs';
 import { COORD_AGENT_ID, makeAgentProof, validateRpcRequest } from './protocol.mjs';
 
 const agentSecret = '11'.repeat(32);
 const clientSecret = '22'.repeat(32);
-
-function listen(server) {
-  return new Promise((resolve, reject) => {
-    server.once('error', reject);
-    server.listen(0, '127.0.0.1', () => resolve(server.address()));
-  });
-}
 
 async function startCoord(handler) {
   const state = { count: 0 };
@@ -45,11 +39,12 @@ async function startRig({ handler, timeoutMs = 1_000, maxPending = 4, allowedPee
   const folder = await mkdtemp(join(tmpdir(), 'coord-relay-test-'));
   const journalFile = join(folder, 'requests.ndjson');
   const coord = await startCoord(handler ?? (async () => ({ result: [] })));
+  const clientPort = await reservePort();
   const sidecar = await createSidecar({
     agentHost: '127.0.0.1',
     agentPort: 0,
     clientHost: '127.0.0.1',
-    clientPort: 0,
+    clientPort,
     allowedPeerIp,
     agentId: 'test-agent',
     agentSecret,
@@ -109,6 +104,16 @@ test('whitelist and strict schemas reject side effects and reclaiming list calls
   assert.equal(validateRpcRequest({ ...base, requestId: 'not-a-uuid' }).ok, false);
   assert.ok(makeAgentProof(agentSecret, 'test-agent', 'nonce').length === 64);
   assert.equal(typeof COORD_AGENT_ID, 'string');
+});
+
+test('HTTP test listeners avoid Fetch-blocked ports', async t => {
+  assert.equal(isFetchBlockedPort(10080), true);
+  const server = createHttpServer((request, response) => response.end('ok'));
+  const address = await listen(server);
+  t.after(() => new Promise(resolve => server.close(resolve)));
+  assert.equal(isFetchBlockedPort(address.port), false);
+  const response = await fetch(`http://127.0.0.1:${address.port}/`);
+  assert.equal(response.status, 200);
 });
 
 test('authenticated Arasaka agent round-trips through sidecar to coord; denied calls never dispatch', async t => {
@@ -294,9 +299,10 @@ test('sidecar restart marks dispatched requests uncertain and never replays them
   assert.equal(rig.coord.state.count, 1);
 
   await rig.sidecar.stop();
+  const clientPort = await reservePort();
   const recovered = await createSidecar({
     agentHost: '127.0.0.1', agentPort: rig.agentPort,
-    clientHost: '127.0.0.1', clientPort: 0,
+    clientHost: '127.0.0.1', clientPort,
     allowedPeerIp: '127.0.0.1', agentId: 'test-agent',
     agentSecret, clientSecret, journalFile: rig.journalFile,
     requestTimeoutMs: 2_000, heartbeatTimeoutMs: 2_000,

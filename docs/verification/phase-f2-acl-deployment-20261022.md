@@ -123,5 +123,26 @@ were not run. The persistent boot order is configured and inspected, but this
 evidence does not claim a post-reboot test.
 
 The exact deployment files, verifier, and scoped rollback procedure are in
-`relay/host-acl/`. The closeout commit's local Windows gate and Fork Actions
-run are tracked separately in `PHASE_F2.md` after they complete.
+`relay/host-acl/`.
+
+## Test Harness Port Regression and Retest
+
+At `2026-10-21T16:25:40Z`, a later full local F2 gate had fmt, clippy, Rust
+tests, and release build exit 0, but Relay tests exited 1 (11/12). The failure
+was `TypeError: fetch failed` / `cause: Error: bad port` when a test fixture
+bound its HTTP client API to `127.0.0.1:10080`. A direct
+`node.exe -e "fetch('http://127.0.0.1:10080')..."` probe reproduced `bad port`
+without opening a connection. Windows' configured dynamic TCP range starts at
+1024, while WHATWG Fetch blocks port 10080; this was a test-harness-only
+failure, not a Sidecar or production network regression.
+
+`relay/test-ports.mjs` now retries dynamic test listeners on Fetch-blocked
+ports, and both Relay suites use the shared allocator for HTTP fixture ports.
+A regression test recognizes 10080 and verifies a fetch against the selected
+port. The targeted test run at `16:31:24Z` exited 0 (2/2); the full Relay run
+at `16:31:38Z` exited 0 (13/13). The full
+`pwsh.exe -NoProfile -File scripts/verify.ps1 -Stage f2` run started at
+`16:32:02Z` and exited 0: fmt, clippy, tests, release build, and Relay suite
+(13/13). Detailed timings and outputs are in `stage-f2-checks.json` and
+`stage-f2-*.log`. The fix is awaiting its own Fork Windows Actions run before
+F2 is marked PASS and F3 starts.
