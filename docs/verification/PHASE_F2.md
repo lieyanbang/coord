@@ -1,101 +1,156 @@
 # Phase F2: Tailscale Private Relay
 
-Date: 2026-10-21 (Australia/Brisbane)
-Result: **IN_PROGRESS (read-only protocol and dependency audit only)**.
-F1 is closed. No F2 relay has been implemented, deployed, or accepted yet.
-No production relay configuration, listener, or service was changed in this
-initial F2 work.
+Date: 2026-10-22 (Australia/Brisbane)
+Result: **PARTIAL**. The isolated sidecar, strict application boundary,
+production round-trip, recovery semantics, and regression tests pass. The
+tailnet control-plane ACL is not readable from either node; a live probe also
+showed BT-7274 can establish TCP to 13012, although the sidecar rejects it
+before sending an authentication challenge. F2 is not closed and F3 has not
+started pending the ACL decision.
 
-## Existing Reference Protocol
+## Scope and Architecture
 
-- The read-only reference workspace is
-  `C:\Users\leiya\Desktop\project\DesktopCommanderMCP`, HEAD
-  `c95a0be` (`fix: prevent duplicate remote startup and normalize Windows output`).
-  Its worktree already contains tracked modifications and untracked files,
-  including `server/`, deployment scripts, and a `TASK.md`; this task changed
-  none of them.
-- `src/remote-device/remote-channel.ts` uses `socket.io-client` 4.8.3, websocket
-  transport only, namespace `/desktop-commander`, and path
-  `/desktop-commander/socket.io`. Device identity is sent in the Socket.IO auth
-  handshake as `device` plus `token`; after connect, `hello` identifies protocol
-  version 1 and runtime metadata. Calls and responses use `call`, `result`, and
-  `error` message types.
-- `server/desktop-commander/device-manager.cjs` authenticates enabled devices
-  with `crypto.timingSafeEqual`, enforces hello identity/version, limits each
-  device to 64 pending calls, and applies a configured call timeout. Its generic
-  `toolName` dispatch is intentionally **not** an acceptable coord interface.
-  The coord relay must use a distinct identity and namespace/path or a separate
-  service, and allow only explicitly enumerated `coord_rpc` methods and schemas.
-- `docs/API.md` documents coord HTTP JSON-RPC as unauthenticated and intended
-  for trusted local clients. Therefore the coord daemon must remain loopback-only;
-  an authenticated relay must validate every method, parameter shape, payload
-  size, concurrency, and timeout before calling it. Lease tokens and task
-  payloads must not appear in logs.
+- All remote checks/deployment used direct SSH; no MCP tools were used.
+- Production coord remains on Arasaka at `127.0.0.1:7777`; it is not exposed
+  on the relay host or a non-loopback Arasaka interface.
+- The new, separate Linux sidecar runs at
+  `100.116.134.114:13012/tcp`. Arasaka's Servy-managed `CoordRelayAgent`
+  initiates the authenticated outbound connection. No FeathersJS, OpenResty,
+  DesktopCommanderMCP, or existing 13011 configuration was changed.
+- Sidecar API is bound only to `127.0.0.1:13013`. It uses a separate 32-byte
+  bearer credential from the agent's 32-byte HMAC-SHA256 challenge credential.
+  Credentials remain in the existing protected host directories and are not
+  copied into the repository or evidence.
+- Allowed methods are `tasks/list`, `tasks/get`, `agents/heartbeat`,
+  `tasks/claim`, `tasks/extend`, `tasks/complete`, `scheduler/claim`,
+  `scheduler/extend`, `scheduler/submit`, and `scheduler/failure`, each with
+  exact schemas and fixed agent identity. `tasks/list` requires
+  `skip_reclaim: true`. In particular, task creation/cancel and arbitrary RPC
+  forwarding are denied.
+- Requests/results are bounded to 64 KiB, frames to 96 KiB, concurrency to
+  four, and calls have bounded timeouts. A dispatched call is not retried.
+  Timeout, connector loss, or restart reports `uncertain`; lease-token fencing
+  remains authoritative in coord.
+- Journal fingerprints are HMAC-SHA256 keyed by the client credential. The
+  journal omits parameters, results, bearer values, and lease tokens. Reused
+  request IDs are never dispatched again; in-flight duplicate IDs are rejected
+  as `uncertain`. Restart converts nonterminal journal records to `uncertain`.
 
-## Relay-Side Preflight Snapshot
+## Local Gate and Regression Evidence
 
-The earlier same-task, read-only preflight of `instance-20260424-1840` recorded
-Tailscale, Feathers, and OpenResty active; Tailscale address `100.116.134.114`;
-Feathers backend port `13010` bound to loopback; and the existing DesktopCommander
-channel on `100.116.134.114:13011`. The earlier preflight also observed the
-Arasaka DesktopCommander Agent task and an established connection to port 13011.
-An established TCP connection does not prove a valid hello/heartbeat. These are
-historical preflight observations, not a new live F2 acceptance probe; the exact
-observation timestamps were not retained in this closeout.
+- `node --test --test-name-pattern="concurrent duplicate request ids" relay/relay.test.mjs`
+  at `2026-10-21T14:32:42Z` first reproduced a race: exit 1, seven `dispatched` records for eight
+  simultaneous requests sharing one ID. After checking `pending` by request ID
+  before creating a second pending record, the same command at
+  `2026-10-21T14:33:07Z` exited 0: one dispatch, one
+  successful response, seven `uncertain` responses, and one coord-side call.
+- `node --test --test-name-pattern="journal fingerprints are keyed HMACs" relay/relay.test.mjs`
+  exited 0. It computes the expected HMAC from the test credential, verifies
+  the journal fingerprint, and asserts parameters are absent.
+- `node --test relay/relay.test.mjs relay/live-coord.test.mjs` at
+  `2026-10-21T14:46:33Z` exited 0: 12 tests passed, zero failed or skipped.
+  Coverage includes authenticated/invalid agents and clients, whitelist/schema
+  rejection, payload and concurrency bounds, peer rejection before challenge,
+  reconnect, timeout/late response, restart uncertainty, duplicate IDs,
+  HMAC journal, token redaction, and real isolated release-coord lease fencing
+  and submit replay. Tests use temporary state and do not touch production DB.
+- `pwsh.exe -NoProfile -File scripts/verify.ps1 -Stage f2` at
+  `2026-10-21T14:46:42Z` exited 0. `cargo fmt --all -- --check`, locked
+  clippy, locked all-feature tests, locked release build, and relay tests each
+  exited 0. Exact stage times and logs are in `stage-f2-checks.json` and
+  `stage-f2-*.log`; the final relay test output is
+  `stage-f2-relay-tests.log`.
 
-Existing namespace `/desktop-commander`, devices BT-7274, 1840, and Arasaka, and
-the current Arasaka Agent must remain untouched. The DesktopCommander workspace
-is dirty, so integration must be additive and limited to explicitly owned files
-after the startup hook and rollback boundary are understood.
+## Production Deployment and Health
 
-## Live Relay Host Read-only Audit
+At `2026-10-21T14:43:45Z`, the existing sidecar health was `READY`, the Arasaka
+agent was connected, and there were zero pending calls. The candidate
+`relay/server.mjs` was copied to a unique `/tmp` path and SHA-256 checked before
+installation. `node --check --input-type=module < <staged-file>` exited 0. A
+filename-extension-only probe (`node --check <staged-file-with-.next-suffix>`)
+returned `ERR_UNKNOWN_FILE_EXTENSION`; no source change followed from that
+probe.
 
-At `2026-10-21T12:55Z`-`12:56Z`, direct SSH read-only checks (no MCP) recorded:
+The previous source hash was
+`1d8388ad7a2514cf02fad08ad737b4640b94fb62c917c12c92424f879d561573`.
+The new deployed `server.mjs` SHA-256 is
+`3351081c4d2ef9ba7f166822dc48e5a1bf6b8fe18e1ff36fac11a051e98dcf84` and
+matches the tested workspace file. `protocol.mjs` and `agent.mjs` also match
+their workspace SHA-256 values (`b0f262091f98cab400ce3254713460301964c093431c0419728a6860df3f6f9a` and
+`9070da2bc597152ed81c43535ea7df21d07941fe18216fe39a96edc2774cdc68`). The
+Arasaka copies of `protocol.mjs` and `agent.mjs` match those same hashes.
 
-- `sudo -n systemctl show feathersjsapp.service --property=FragmentPath --property=User --property=Group --property=MainPID --property=WorkingDirectory --property=ExecStart --property=ActiveState --property=SubState` exited 0. `feathersjsapp.service` is active/running, PID 816, working directory `/opt/app/feathers`, entrypoint `/usr/bin/node /opt/app/feathers/index.js`, unit `/etc/systemd/system/feathersjsapp.service`. `User` and `Group` are unset; `ps -o uid=,gid=,pid=,comm= -p 816` exited 0 and confirmed UID/GID 0.
-- `sudo -n grep -nE 'fileshareModule|registerFileshare|resolveListenPort|createServer|serviceHandles' /opt/app/feathers/index.js` exited 0. The active bootstrap declares the DesktopCommander module path at line 6, requires `registerDesktopCommander` at line 17, creates its handle at line 91, and calls `server.listen` at line 92. The service shares this HTTP server with existing Feathers modules. Adding a namespace there would require a Feathers process restart and carries broader impact, so it is not the initial F2 integration choice.
-- `systemctl is-active tailscaled` exited 0 (`active`); `ip -4 -brief addr show dev tailscale0` reported `100.116.134.114/32`. `ss -ltnp` exited 0 and showed `127.0.0.1:13010` owned by PID 816 and `100.116.134.114:13011` owned by Nginx. A read-only listener check exited 0 and found no listener on candidate `100.116.134.114:13012`.
-- The installed Socket.IO server package is `4.8.1`. Remote file hashes: `/opt/app/feathers/index.js` `057a41549b669406d045d7c017e59e43d37056fd1752239e8f07c0ee6862eea2`; `realtimetext/lib/desktop-commander/device-manager.cjs` `2226267e490e232dafe292b7ee552dce44a49712a0441a69663ed6368e97a2e0`; `realtimetext/lib/desktop-commander/index.cjs` `5f6f8f4dbf42cfbffbe609772a912dc84890535ab7cf731b3962b703d100e55d`. Local reference `device-manager.cjs` and `index.cjs` SHA-256 values match the installed files.
-- SSH command outcomes: the remote `rg` probe exited 1 because `rg` is not installed; the first escaped `grep` pattern exited 1 with `Unmatched ( or \(`. A simpler `grep -nE` probe succeeded. An initial Node version expression returned a `require` function rather than a version despite exit 0; it was not used as evidence, and `grep -m1 version` on the installed package manifest then confirmed `4.8.1` with exit 0. These were read-only probe errors; no remote file or service changed.
+The update used an atomic same-directory rename and restarted only
+`coord-relay.service`. The prior server file is preserved at
+`/var/backups/coord-relay/server.mjs.20261021T144345Z`. At
+`2026-10-21T14:43:47Z`, the service was active under UID/GID 991
+(`coord-relay`), PID 81799; health returned `READY`, `agentConnected=true`,
+`pending=0`. No rollback was required. The service has `NoNewPrivileges=yes`,
+empty capability sets, `PrivateTmp=yes`, `ProtectSystem=strict`,
+`ProtectHome=yes`, `UMask=0077`, and writes only to `/var/lib/coord-relay`.
+Configuration and separate secret files remain under `/etc/coord-relay`.
 
-Candidate direction: implement a dedicated coord relay sidecar bound only to the
-Tailscale address on an unused port, with its own restricted service identity,
-namespace/path, and credential. Port `13012` is only a candidate: Tailscale ACL
-reachability from Arasaka, firewall behavior, service-account setup, and the
-rollback package are not yet verified. Do not reload Feathers or alter the
-existing DesktopCommander channel as part of F2.
+At `2026-10-21T14:44:42Z`, direct checks returned exit 0 for
+`coord-relay.service`, `feathersjsapp.service`, `openresty.service`, and
+`tailscaled.service` active. Listeners were `100.116.134.114:13011`,
+`100.116.134.114:13012`, and `127.0.0.1:13013`; 13011 still had an established
+Arasaka connection. The new 13012 listener was owned by the isolated relay
+unit. The narrow UFW entry remained present; its effective behavior is
+discussed below.
 
-## F2 Kickoff Windows Gate
+At `2026-10-21T14:44:59Z`, Arasaka's Windows boot time was unchanged at
+`2026-10-21T06:35:49.8354060Z`. `Servy`, `CoordRelayAgent`,
+`ArasakaDDNS`, `ArasakaFFmpegWatchdog`, `ArasakaFFmpegWorker`, `MediaSTT`,
+`OCI-A1-Grabber`, and `CodexProxy` were all Running/Automatic. Servy
+`status --name CoordRelayAgent --quiet` and `show --name CoordRelayAgent --quiet`
+both exited 0; the entry remained Running as `NT AUTHORITY\LocalService`,
+PID 8460, with automatic startup and process recovery. The agent's established
+socket was from `100.89.6.126` to relay port 13012. Coord continued listening
+only on `127.0.0.1:7777`.
 
-- `pwsh.exe -NoProfile -File scripts/verify.ps1 -Stage f2` ran from
-  `2026-10-21T12:53:30Z` to `12:54:06Z`; fmt, locked clippy, locked all-feature
-  tests, and locked release build each exited 0. Details are in
-  `stage-f2-checks.json` and `stage-f2-*.log`.
-- Kickoff commit `ec0d3c856fe8cf7efc9cd3cee252620bf75a42c9` was pushed to the
-  Fork branch. Windows Actions run `39603443737` completed from
-  `12:54:47Z` to `12:58:30Z`, conclusion `success`; job `test (windows-2022)`
-  and fmt, clippy, test, release build, and artifact-upload steps all succeeded.
-  Read-only REST queries for run/jobs and artifacts exited 0. Artifact
-  `coord-windows-2022` (`12348150026`) is present, 4,226,357 bytes, not expired;
-  API archive SHA-256 is
-  `f970baeae2899d6f9c2b174751d0c29032aafaebee2d07860d7a11db9f23707e`.
-- After the host audit, `pwsh.exe -NoProfile -File scripts/verify.ps1 -Stage f2`
-  ran from `2026-10-21T13:01:39Z` to `13:02:14Z`; fmt, locked clippy, locked
-  all-feature tests, and locked release build each exited 0. The refreshed
-  output is in `stage-f2-checks.json` and `stage-f2-*.log`.
+At `2026-10-21T14:52:05Z`, the production round-trip, executed as the dedicated
+`coord-relay` identity, returned HTTP 200 / `state=ok` for `tasks/list` with
+`skip_reclaim=true` and one result. Health was READY with the real Arasaka
+connector. Negative checks
+returned 401 for an invalid bearer, 400 for `tasks/send`, and 400 for
+`tasks/list` with `skip_reclaim=false`; those rejected calls did not grow the
+journal. `127.0.0.1:13013` was not reachable through the relay's Tailscale
+address. No production task was claimed, completed, or mutated by these probes.
 
-## Next F2 Work
+## Tailscale ACL and Effective Source Boundary
 
-- Complete the deployment and rollback design for the isolated sidecar; verify
-  Tailscale ACL reachability, candidate port availability, and a non-root service
-  identity before creating any service or listener.
-- Define a separate 256-bit coord identity, constant-time token verification,
-  Tailscale-only reachability, and a strict `coord_rpc` allowlist. Do not forward
-  generic DesktopCommander `call` messages or arbitrary JSON-RPC methods.
-- Add local protocol regression tests for valid/invalid identities, wrong
-  namespace, denied methods and malformed parameters, request/result limits,
-  timeout and concurrency bounds, reconnect behavior, and redaction of lease
-  tokens. Then test real Arasaka-to-relay calls, disconnect/reconnect, lease
-  fencing, and existing DesktopCommander channel regression.
-- F2 remains **NOT_ACCEPTED** until deployment and every F2 gate in `TASK.md`
-  has real evidence. No remote F2 mutation or service interruption has occurred.
+- At `2026-10-21T14:49:59Z`, read-only `tailscale status` listed Arasaka `100.89.6.126` and BT-7274
+  `100.124.104.23` as active peers. The node-side Tailscale CLI does not expose
+  the administrator ACL policy, so the configured policy itself is
+  **UNVERIFIED**; no tailnet policy was changed.
+- `ufw status numbered` showed rule 48 allowing only Arasaka to
+  `100.116.134.114:13012/tcp` on `tailscale0`. However, `iptables -S INPUT`
+  showed `ts-input` before UFW, and `ts-input` contains `-i tailscale0 -j
+  ACCEPT`. Therefore the UFW entry is not an effective Tailscale source filter
+  on this host and is not counted as a passing boundary.
+- At `2026-10-21T14:50:05Z`, from BT-7274, TCP connect to 13012 succeeded, but reading the application
+  socket returned EOF with zero bytes and no challenge. The sidecar checks the
+  peer IP against the single configured Arasaka address before sending a
+  challenge; invalid credentials and wrong peer identity are independently
+  rejected. This proves application-level rejection, not network-layer ACL
+  isolation.
+- A narrowly scoped ACL change was requested for authorization. Until the
+  Tailscale policy is independently inspected/updated and the non-Arasaka TCP
+  probe is blocked, the control-plane ACL gate remains open and F2 stays
+  PARTIAL. The request does not authorize changes to any other Tailscale grant.
+
+## Commands and Outcomes
+
+| Check | Command / method | Outcome |
+| --- | --- | --- |
+| Relay suite | `node --test relay/relay.test.mjs relay/live-coord.test.mjs` | exit 0; 12/12 |
+| Windows stage | `pwsh.exe -NoProfile -File scripts/verify.ps1 -Stage f2` | exit 0; all five checks |
+| Arasaka service state | `servy-cli.exe status/show --name CoordRelayAgent --quiet` over SSH | both exit 0; Running / LocalService |
+| Sidecar deployment | hash-verified staged file, atomic install, `systemctl restart coord-relay.service` | SSH script exit 0; READY and agent reconnected |
+| Production RPC | authenticated `tasks/list`, `skip_reclaim=true` | HTTP 200, `state=ok` |
+| Production negative RPC | bad bearer, `tasks/send`, reclaim-enabled list | 401 / 400 / 400; no journal dispatch |
+| Existing channel regression | `ss` listener and established connection checks | 13011 remained active with Arasaka; shared services active |
+| Non-Arasaka source | BT-7274 TCP + application read | TCP connected, zero bytes/no challenge; app rejected; Tailscale ACL unresolved |
+
+F3 remains **TODO**. `TASK.md` was not changed. Existing production services and
+port 13011 were not restarted or reconfigured; Arasaka was not rebooted.

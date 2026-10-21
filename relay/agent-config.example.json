@@ -1,0 +1,12 @@
+{
+  "serverHost": "100.116.134.114",
+  "serverPort": 13012,
+  "agentId": "arasaka-coord-agent",
+  "coordUrl": "http://127.0.0.1:7777/",
+  "secretFile": "C:\\ProgramData\\coord-relay-agent\\agent.secret",
+  "heartbeatMs": 10000,
+  "reconnectMinMs": 1000,
+  "reconnectMaxMs": 30000,
+  "coordTimeoutMs": 8000,
+  "maxInflight": 4
+}

@@ -1,0 +1,14 @@
+{
+  "agentHost": "100.116.134.114",
+  "agentPort": 13012,
+  "clientHost": "127.0.0.1",
+  "clientPort": 13013,
+  "allowedPeerIp": "100.89.6.126",
+  "agentId": "arasaka-coord-agent",
+  "requestTimeoutMs": 10000,
+  "heartbeatTimeoutMs": 35000,
+  "maxPending": 4,
+  "journalFile": "/var/lib/coord-relay/requests.ndjson",
+  "agentSecretFile": "/etc/coord-relay/agent.secret",
+  "clientSecretFile": "/etc/coord-relay/client.secret"
+}

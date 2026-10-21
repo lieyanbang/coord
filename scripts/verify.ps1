@@ -38,4 +38,23 @@ try {
         Write-Output "$Stage health-monitor: exit=$code"
         if ($code -ne 0) { throw "health-monitor test failed; inspect $log" }
     }
+    if ($Stage -eq 'f2' -and $env:OS -eq 'Windows_NT') {
+        $log = "docs/verification/stage-$Stage-relay-tests.log"
+        $started = [DateTime]::UtcNow
+        $node = (Get-Command node.exe -ErrorAction Stop).Source
+        $previousCoordTestBin = $env:COORD_TEST_BIN
+        $env:COORD_TEST_BIN = (Resolve-Path -LiteralPath 'target/release/coord.exe').Path
+        try {
+            & $node --test relay/relay.test.mjs relay/live-coord.test.mjs 2>&1 | ForEach-Object {
+                $_.ToString().Replace($repoRoot,'<workspace>').Replace($env:USERPROFILE,'<user>')
+            } | Set-Content -Encoding utf8 $log
+            $code = $LASTEXITCODE
+        } finally {
+            $env:COORD_TEST_BIN = $previousCoordTestBin
+        }
+        $results += @{command=('node --test relay/relay.test.mjs relay/live-coord.test.mjs');exit=$code;started=$started.ToString('o');seconds=([DateTime]::UtcNow-$started).TotalSeconds;log=$log}
+        $results | ConvertTo-Json -Depth 5 | Set-Content -Encoding utf8 "docs/verification/stage-$Stage-checks.json"
+        Write-Output "$Stage relay-tests: exit=$code"
+        if ($code -ne 0) { throw "relay tests failed; inspect $log" }
+    }
 } finally { Pop-Location }

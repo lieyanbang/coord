@@ -1,0 +1,38 @@
+[Unit]
+Description=coord Tailscale relay sidecar
+After=network-online.target tailscaled.service
+Wants=network-online.target
+Requires=tailscaled.service
+
+[Service]
+Type=simple
+User=coord-relay
+Group=coord-relay
+WorkingDirectory=/opt/coord-relay
+ExecStart=/usr/bin/node /opt/coord-relay/server.mjs --config /etc/coord-relay/config.json
+Restart=on-failure
+RestartSec=3
+TimeoutStopSec=10
+KillSignal=SIGTERM
+UMask=0077
+NoNewPrivileges=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+RestrictRealtime=yes
+LockPersonality=yes
+CapabilityBoundingSet=
+AmbientCapabilities=
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+ReadWritePaths=/var/lib/coord-relay
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=coord-relay
+
+[Install]
+WantedBy=multi-user.target
