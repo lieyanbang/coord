@@ -7,7 +7,9 @@ provided: agent IDs/tokens fence concurrent attempts, not hostile tenants.
 ## Fenced single-task lifecycle (Stage B)
 
 `tasks/send`, `tasks/get`, filtered/long-poll `tasks/list`, announcement kinds,
-heartbeats and watcher/ack discovery remain available.
+heartbeats and watcher/ack discovery remain available. `tasks/list` accepts
+`skip_reclaim: true` for read-only monitoring; it leaves expired leases for the
+daemon's background reclaimer and does not change the default behavior.
 
 | Operation | HTTP parameters | MCP tool / CLI |
 | --- | --- | --- |
@@ -53,6 +55,28 @@ Rollback means stop the upgraded daemon, restore the pre-upgrade backup and run
 the preserved old binary. Do not open the only upgraded database with an older
 binary, and do not assume additive columns make old unsafe writers compatible.
 Vault files are best-effort; new UUID-based filenames leave old notes intact.
+
+## Local health probe
+
+The operator-only `health` CLI command checks a valid JSON-RPC `tasks/list`
+response and opens the configured SQLite database read-only. It queries at most
+one task, discards the response, and stores no task payload or lease token.
+`tasks/list` accepts `skip_reclaim: true` for this probe so expired leases remain
+the responsibility of the daemon's background reclaimer. The status file records
+READY, DEGRADED, or FAIL, latency, check names, consecutive failures, and the
+last READY timestamp; critical failures return exit code 1.
+
+```powershell
+coord.exe --url http://127.0.0.1:7777/ health `
+  --db C:\ProgramData\coord\data\coord.db `
+  --status C:\ProgramData\coord\health\status.json
+```
+
+On Windows, `scripts/windows/coord-health-monitor.ps1` is intended for a
+SYSTEM-owned one-minute Scheduled Task. It requests only a targeted `coord`
+service start/restart after three consecutive failed probes, with a ten-minute
+cooldown and a three-restarts-per-hour cap. Successful but slow checks become
+DEGRADED and do not trigger recovery.
 
 ## Batches and scheduling (Stage C)
 

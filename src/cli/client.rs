@@ -5,6 +5,7 @@
 use anyhow::{anyhow, Context, Result};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use std::time::Duration;
 
 pub struct Client {
     pub url: String,
@@ -17,6 +18,14 @@ impl Client {
             url,
             http: reqwest::blocking::Client::new(),
         }
+    }
+
+    pub fn with_timeout(url: String, timeout: Duration) -> Result<Self> {
+        let http = reqwest::blocking::Client::builder()
+            .timeout(timeout)
+            .build()
+            .context("build HTTP client")?;
+        Ok(Self { url, http })
     }
 
     pub fn call(&self, method: &str, params: Value) -> Result<Value> {
@@ -34,6 +43,9 @@ impl Client {
             .with_context(|| format!("POST {}", self.url))?
             .json()
             .context("decode response")?;
+        if resp.jsonrpc.as_deref() != Some("2.0") || resp.id.as_ref() != Some(&Value::from(1)) {
+            return Err(anyhow!("invalid JSON-RPC response envelope"));
+        }
         if let Some(err) = resp.error {
             return Err(anyhow!("coord error {}: {}", err.code, err.message));
         }
@@ -51,6 +63,10 @@ struct Req<'a> {
 
 #[derive(Deserialize)]
 struct Resp {
+    #[serde(default)]
+    jsonrpc: Option<String>,
+    #[serde(default)]
+    id: Option<Value>,
     #[serde(default)]
     result: Option<Value>,
     #[serde(default)]

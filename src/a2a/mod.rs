@@ -428,6 +428,10 @@ async fn tasks_list(state: &AppState, params: Value) -> Result<Value, MethodErro
             .map(String::from),
     };
     let wait_ms = params.get("wait_ms").and_then(|v| v.as_u64()).unwrap_or(0);
+    let skip_reclaim = params
+        .get("skip_reclaim")
+        .and_then(Value::as_bool)
+        .unwrap_or(false);
 
     // Lazy self-heal: expired claims surface as `pending` without a
     // separate operator action. Cheap (indexed range scan) and bounded
@@ -435,11 +439,12 @@ async fn tasks_list(state: &AppState, params: Value) -> Result<Value, MethodErro
     // Subscribe BEFORE observing the database: any later write is either
     // visible to the query or queued on this receiver.
     let mut rx = state.bus.subscribe();
-    if !state
-        .store
-        .reclaim_expired_leases()
-        .map_err(MethodError::internal)?
-        .is_empty()
+    if !skip_reclaim
+        && !state
+            .store
+            .reclaim_expired_leases()
+            .map_err(MethodError::internal)?
+            .is_empty()
     {
         state.bus.notify();
     }
@@ -474,11 +479,12 @@ async fn tasks_list(state: &AppState, params: Value) -> Result<Value, MethodErro
             // lagged. Both cases want a fresh query — if there's still
             // nothing, fall back to waiting again until the deadline.
             Ok(Ok(())) | Ok(Err(broadcast::error::RecvError::Lagged(_))) => {
-                if !state
-                    .store
-                    .reclaim_expired_leases()
-                    .map_err(MethodError::internal)?
-                    .is_empty()
+                if !skip_reclaim
+                    && !state
+                        .store
+                        .reclaim_expired_leases()
+                        .map_err(MethodError::internal)?
+                        .is_empty()
                 {
                     state.bus.notify();
                 }

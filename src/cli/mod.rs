@@ -11,6 +11,7 @@ use crate::server;
 
 mod client;
 mod format;
+mod health;
 mod init;
 mod tui;
 mod wait;
@@ -26,6 +27,8 @@ pub enum Cmd {
     Mcp(McpArgs),
     /// Print version and protocol info.
     Version,
+    /// Check the local JSON-RPC and SQLite deployment without changing task state.
+    Health(health::HealthArgs),
     /// Scaffold a project for use with coord (drops .mcp.json + AGENTS.md).
     Init(init::InitArgs),
 
@@ -164,6 +167,7 @@ pub async fn dispatch(url: String, cmd: Cmd) -> Result<()> {
 fn run_client(url: String, cmd: Cmd) -> Result<()> {
     let client = Client::new(url);
     match cmd {
+        Cmd::Health(args) => health::run(&client.url, &args),
         Cmd::Status => format::print_status(&client),
         Cmd::Top { once } => {
             if once {

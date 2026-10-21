@@ -134,7 +134,7 @@ Windows 本机及 Windows Actions 的真实测试、构建与产物为准。
 | Stage | 状态 | 证据 / 依赖 |
 | --- | --- | --- |
 | F0 | PASS | `docs/verification/PHASE_F0.md`；Servy、远端基线及 Windows Actions 二进制哈希已核验 |
-| F1 | TODO | 依赖 F0；尚未安装或启动 coord |
+| F1 | IN_PROGRESS | 依赖 F0；本机只读健康探针与受控恢复监护器实现/测试中；尚未部署或启动 coord |
 | F2 | TODO | 依赖 F1；尚未建立私网转发 |
 | F3 | TODO | 依赖 F2；尚未变更 FeathersJS/OpenResty 或完成 ChatGPT Web OAuth |
 
@@ -144,4 +144,4 @@ Windows 本机及 Windows Actions 的真实测试、构建与产物为准。
 - Gate F3：新增 OAuth/MCP 公网入口及旧 DesktopCommander 所有入口回归 PASS；ChatGPT Web 手动完成工具发现和只读/隔离写任务 E2E 方可标记完整 PASS。
 - 每个 Gate 完成后同步 `docs/verification/` 证据、更新本节进度、生成独立 Git commit 并通过 Fork 的 Windows Actions；部署不擅自创建 Release/tag、不推送上游。
 - 最终输出：Arasaka 服务名/运行账户、二进制 SHA、Servy 参数/健康路径、备份/恢复程序、故障演练记录、中转公网 URL、OAuth/连接器验收与残余风险。敏感信息绝不写文档/日志。
-- 当前状态：F0 部署前审计 PASS；F1–F3 TODO。尚未部署 coord，也未通过公网 OAuth/MCP E2E。
+- 当前状态：F0 部署前审计 PASS；F1 本机实现与自动化测试通过，远端仅已准备 coord 目录/ACL 并完成 Servy 配置库在线备份，coord 尚未安装；F2–F3 TODO。尚未部署 coord，也未通过公网 OAuth/MCP E2E。
