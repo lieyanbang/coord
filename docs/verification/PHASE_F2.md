@@ -4,7 +4,7 @@ Date: 2026-10-22 (Australia/Brisbane)
 Result: **PASS**. The production source boundary, authenticated
 Arasaka-to-sidecar path, sidecar-to-coord RPC, persistent host filter,
 existing-service regression checks, the test-port allocation fix, and the
-Windows gate all passed. F3 has not started yet.
+Windows gate all passed. F3 has started with a read-only production baseline.
 
 ## Scope and Architecture
 
@@ -78,6 +78,13 @@ Windows gate all passed. F3 has not started yet.
   `coord-windows-2022` (`12360789368`) is 4,226,357 bytes and is not expired.
   The run and job/step conclusions were read from the GitHub REST API at
   `2026-10-21T16:38:13Z`.
+- F2 closeout commit `2be6ae12c01e2e7d18159dcf80f1e82f09004039` triggered
+  Actions run [39636977435](https://github.com/lieyanbang/coord/actions/runs/39636977435)
+  (`push`, branch `codex/phase-f-deployment`). The Windows 2022 job and every
+  step succeeded from `2026-10-21T16:41:13Z` through `16:45:00Z`, including
+  Relay protocol and lease-fencing tests and artifact upload. Artifact
+  `coord-windows-2022` (`12362625678`) is 4,226,357 bytes and is not expired.
+  Final status was read through the GitHub REST API at `2026-10-21T16:45:03Z`.
 
 ## Production Deployment and Health
 
@@ -171,6 +178,7 @@ address. No production task was claimed, completed, or mutated by these probes.
 | Port-fix Windows stage | same command at `2026-10-21T16:32:02Z` | exit 0; fmt/clippy/tests/release passed; Relay tests 13/13; refreshed `stage-f2-checks.json` and logs |
 | F2 closeout Windows stage | `pwsh.exe -NoProfile -File scripts/verify.ps1 -Stage f2` | exit 0; fmt, clippy, locked tests, release build, and Relay tests all passed |
 | F2 port-fix Fork Actions | Windows run `39635980349` for `61f4ac6` | success at `2026-10-21T16:38:12Z`; all Windows-2022 steps passed; artifact `coord-windows-2022` ID `12360789368`, 4,226,357 bytes, not expired |
+| F2 closeout Fork Actions | Windows run `39636977435` for `2be6ae1` | success at `2026-10-21T16:45:00Z`; all Windows-2022 steps passed; artifact `coord-windows-2022` ID `12362625678`, 4,226,357 bytes, not expired |
 | Arasaka service state | `servy-cli.exe status/show --name CoordRelayAgent --quiet` over SSH | both exit 0; Running / LocalService |
 | Sidecar deployment | hash-verified staged file, atomic install, `systemctl restart coord-relay.service` | SSH script exit 0; READY and agent reconnected |
 | Production RPC | authenticated `tasks/list`, `skip_reclaim=true` | HTTP 200, `state=ok` |
@@ -181,10 +189,10 @@ address. No production task was claimed, completed, or mutated by these probes.
 | Production RPC | Authenticated relay `tasks/list`, `skip_reclaim=true` | HTTP 200, `state=ok`, one result; no task mutation |
 | Persistent ACL unit | `/usr/local/sbin/coord-relay-acl-verify` | exit 0 / `host_acl=PASS`; unit active/enabled, exact rule and hashes verified |
 
-F2 is **PASS**: the local F2 gate, Fork Actions for the test-port fix, and all
-production-side functional, ACL, source-isolation, and existing-service
-regression checks passed. F3 remains **TODO** pending the F2 closeout document
-commit's own Actions verification and the start of F3 audit. `TASK.md` was not
-changed. Only the new ACL unit was started; existing production services,
-Tailscale, and port 13011 were not restarted or reconfigured, and Arasaka was
-not rebooted.
+F2 is **PASS**: the local F2 gate, Fork Actions for the test-port fix and
+closeout document commit, and all production-side functional, ACL,
+source-isolation, and existing-service regression checks passed. F3 is now
+**IN_PROGRESS** with a read-only production baseline; no F3 production changes
+have been made. `TASK.md` was not changed. Only the new ACL unit was started;
+existing production services, Tailscale, and port 13011 were not restarted or
+reconfigured, and Arasaka was not rebooted.
