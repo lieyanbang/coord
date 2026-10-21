@@ -1,12 +1,10 @@
 # Phase F2: Tailscale Private Relay
 
 Date: 2026-10-22 (Australia/Brisbane)
-Result: **PARTIAL**. The production source boundary, authenticated
+Result: **PASS**. The production source boundary, authenticated
 Arasaka-to-sidecar path, sidecar-to-coord RPC, persistent host filter,
-existing-service regression checks, and Fork Actions for `06c2bf0` passed.
-A later local gate run exposed a Fetch-blocked ephemeral-port defect in the
-test harness; the harness fix and a clean closeout gate are still pending.
-F3 has not started.
+existing-service regression checks, the test-port allocation fix, and the
+Windows gate all passed. F3 has not started yet.
 
 ## Scope and Architecture
 
@@ -71,6 +69,15 @@ F3 has not started.
   tests, release build, `relay protocol and lease-fencing tests`, and artifact
   upload. Artifact `coord-windows-2022` (`12355300591`) is 4,226,358 bytes and
   has not expired.
+- Commit `61f4ac635d2acb0696c8c0c17a31c471827c9bf6` triggered Actions run
+  [39635980349](https://github.com/lieyanbang/coord/actions/runs/39635980349)
+  (`push`, branch `codex/phase-f-deployment`). Job `test (windows-2022)` ran
+  from `2026-10-21T16:34:30Z` to `16:38:12Z` and concluded `success`. Setup,
+  fmt, clippy, tests, release build, Relay protocol and lease-fencing tests,
+  artifact upload, and post-job steps all succeeded. Artifact
+  `coord-windows-2022` (`12360789368`) is 4,226,357 bytes and is not expired.
+  The run and job/step conclusions were read from the GitHub REST API at
+  `2026-10-21T16:38:13Z`.
 
 ## Production Deployment and Health
 
@@ -162,6 +169,8 @@ address. No production task was claimed, completed, or mutated by these probes.
 | ACL closeout Fork Actions | Windows run `39633826204` for `06c2bf0` | success at `2026-10-21T16:24:21Z`; all Windows-2022 steps passed; artifact `coord-windows-2022` ID `12359913911`, 4,226,357 bytes, not expired |
 | Follow-up local stage | same command at `2026-10-21T16:25:40Z` | fmt/clippy/tests/release passed; Relay tests exit 1 (11/12) because a test HTTP fixture bound Node Fetch-blocked port 10080; no production RPC was affected; see refreshed `stage-f2-relay-tests.log` |
 | Port-fix Windows stage | same command at `2026-10-21T16:32:02Z` | exit 0; fmt/clippy/tests/release passed; Relay tests 13/13; refreshed `stage-f2-checks.json` and logs |
+| F2 closeout Windows stage | `pwsh.exe -NoProfile -File scripts/verify.ps1 -Stage f2` | exit 0; fmt, clippy, locked tests, release build, and Relay tests all passed |
+| F2 port-fix Fork Actions | Windows run `39635980349` for `61f4ac6` | success at `2026-10-21T16:38:12Z`; all Windows-2022 steps passed; artifact `coord-windows-2022` ID `12360789368`, 4,226,357 bytes, not expired |
 | Arasaka service state | `servy-cli.exe status/show --name CoordRelayAgent --quiet` over SSH | both exit 0; Running / LocalService |
 | Sidecar deployment | hash-verified staged file, atomic install, `systemctl restart coord-relay.service` | SSH script exit 0; READY and agent reconnected |
 | Production RPC | authenticated `tasks/list`, `skip_reclaim=true` | HTTP 200, `state=ok` |
@@ -172,7 +181,10 @@ address. No production task was claimed, completed, or mutated by these probes.
 | Production RPC | Authenticated relay `tasks/list`, `skip_reclaim=true` | HTTP 200, `state=ok`, one result; no task mutation |
 | Persistent ACL unit | `/usr/local/sbin/coord-relay-acl-verify` | exit 0 / `host_acl=PASS`; unit active/enabled, exact rule and hashes verified |
 
-F2 remains **PARTIAL** until the test-port fix receives a successful Fork
-Actions run. F3 remains **TODO**. `TASK.md` was not changed. Only the new ACL
-unit was started; existing production services, Tailscale, and port 13011 were
-not restarted or reconfigured, and Arasaka was not rebooted.
+F2 is **PASS**: the local F2 gate, Fork Actions for the test-port fix, and all
+production-side functional, ACL, source-isolation, and existing-service
+regression checks passed. F3 remains **TODO** pending the F2 closeout document
+commit's own Actions verification and the start of F3 audit. `TASK.md` was not
+changed. Only the new ACL unit was started; existing production services,
+Tailscale, and port 13011 were not restarted or reconfigured, and Arasaka was
+not rebooted.

@@ -135,8 +135,8 @@ Windows 本机及 Windows Actions 的真实测试、构建与产物为准。
 | --- | --- | --- |
 | F0 | PASS | `docs/verification/PHASE_F0.md`；Servy、远端基线及 Windows Actions 二进制哈希已核验 |
 | F1 | PASS | Servy 主机与 Windows 重启恢复、服务健康、loopback、SYSTEM 监护、WAL/租约及 coord 备份通过；Servy DB 已用对应官方 10.2.0 源码语义 + `System.Data.SQLite` 2.0.4 进行 Online Backup、quick_check/integrity_check，均 PASS；本机 F1 门禁 PASS，Fork Windows Actions run `39600633448` 通过，见 `docs/verification/PHASE_F1.md` |
-| F2 | PARTIAL | 独立 sidecar 与早期 nftables 主机过滤已部署，真实网络正反向、RPC、既有服务回归和 Actions `39633826204` 通过；已修复 Relay 测试夹具随机绑定 Fetch 禁用端口 10080 的问题，本机 gate 现为 13/13 全通过；修复提交仍待 Fork Actions 后关闭 F2 |
-| F3 | TODO | 依赖 F2 最终本机门禁与 Actions；尚未变更 FeathersJS/OpenResty 或完成 ChatGPT Web OAuth |
+| F2 | PASS | 独立 sidecar 与早期 nftables 主机过滤已部署；真实网络正反向、RPC、既有服务回归及本机 F2 gate 通过。修复 Fetch 禁用端口 10080 的测试夹具后，Fork Windows Actions `39635980349` 全步骤成功并上传 artifact `12360789368`；详见 `docs/verification/PHASE_F2.md` |
+| F3 | TODO | F2 业务门槛通过；等待 F2 收口文档提交的 Windows Actions 验证后开始。尚未变更 FeathersJS/OpenResty 或完成 ChatGPT Web OAuth |
 
 - Gate F0：远端/本地服务状态、Servy 功能与部署/回滚路径基线记录；构建产物哈希匹配。
 - Gate F1：Servy 托管服务、自启动、健康检测、重启/杀进程恢复、数据库一致性、备份恢复 PASS。
@@ -144,4 +144,4 @@ Windows 本机及 Windows Actions 的真实测试、构建与产物为准。
 - Gate F3：新增 OAuth/MCP 公网入口及旧 DesktopCommander 所有入口回归 PASS；ChatGPT Web 手动完成工具发现和只读/隔离写任务 E2E 方可标记完整 PASS。
 - 每个 Gate 完成后同步 `docs/verification/` 证据、更新本节进度、生成独立 Git commit 并通过 Fork 的 Windows Actions；部署不擅自创建 Release/tag、不推送上游。
 - 最终输出：Arasaka 服务名/运行账户、二进制 SHA、Servy 参数/健康路径、备份/恢复程序、故障演练记录、中转公网 URL、OAuth/连接器验收与残余风险。敏感信息绝不写文档/日志。
-- 当前状态：F0 部署前审计 PASS。Servy Host 与 Windows 整机重启恢复、coord 与 Servy 托管服务健康、健康监护、coord WAL/在线备份均有实测证据。Servy 10.2.0 对应官方源码确认 `UNICODE_NOCASE` 使用 `StringComparison.OrdinalIgnoreCase`；相同 Provider/SQLite 版本的只读校验程序通过 SQLite Online Backup API 创建快照，`quick_check=ok`、`integrity_check=ok`，唯一索引、SchemaInfo 与七个配置行均核实通过。本机 F1 门禁与 Fork Windows Actions runs `39600633448`、`39602363789` 均通过，F1 为 PASS。F2 sidecar 与早期优先级 -10 nftables 过滤器已部署，生产 BT-7274 TCP 负向、Arasaka 认证 `tasks/list` E2E、13011/服务回归及 Actions `39633826204` 通过；一次本机复跑发现 Windows Fetch 禁用端口 10080 导致测试夹具失败，现已修复且本机 Gate 13/13 全通过，修复提交的 Actions 待验证。F2 暂保持 PARTIAL，F3 为 TODO；TASK.md 保持只读。详见 `verification/PHASE_F2.md` 与 `verification/phase-f2-acl-deployment-20261022.md`。
+- 当前状态：F0 部署前审计 PASS。Servy Host 与 Windows 整机重启恢复、coord 与 Servy 托管服务健康、健康监护、coord WAL/在线备份均有实测证据。Servy 10.2.0 对应官方源码确认 `UNICODE_NOCASE` 使用 `StringComparison.OrdinalIgnoreCase`；相同 Provider/SQLite 版本的只读校验程序通过 SQLite Online Backup API 创建快照，`quick_check=ok`、`integrity_check=ok`，唯一索引、SchemaInfo 与七个配置行均核实通过。本机 F1 门禁与 Fork Windows Actions runs `39600633448`、`39602363789` 均通过，F1 为 PASS。F2 sidecar 与早期优先级 -10 nftables 过滤器已部署，生产 BT-7274 TCP 负向、Arasaka 认证 `tasks/list` E2E、13011/服务回归、本机 Gate 13/13 及 Fork Windows Actions `39635980349`（所有步骤成功、artifact `12360789368`）均通过，F2 为 PASS。F3 尚未开始，待 F2 收口文档提交 Actions 验证后进入；TASK.md 保持只读。详见 `verification/PHASE_F2.md` 与 `verification/phase-f2-acl-deployment-20261022.md`。
