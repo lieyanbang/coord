@@ -134,7 +134,7 @@ Windows 本机及 Windows Actions 的真实测试、构建与产物为准。
 | Stage | 状态 | 证据 / 依赖 |
 | --- | --- | --- |
 | F0 | PASS | `docs/verification/PHASE_F0.md`；Servy、远端基线及 Windows Actions 二进制哈希已核验 |
-| F1 | IN_PROGRESS | Arasaka coord/health 已部署；loopback、SYSTEM 监护、进程强杀恢复、定向启动、WAL/租约恢复及 SQLite 备份还原演练通过；Servy 主机与 Windows 重启仍 NOT_RUN，见 `docs/verification/PHASE_F1.md` |
+| F1 | IN_PROGRESS | Arasaka coord/health 已部署；loopback、SYSTEM 监护、进程强杀恢复、定向启动、WAL/租约恢复及 SQLite 备份还原演练通过；Windows Actions `39542595503` 全绿；Servy 主机与 Windows 重启仍 NOT_RUN，见 `docs/verification/PHASE_F1.md` |
 | F2 | TODO | 依赖 F1；尚未建立私网转发 |
 | F3 | TODO | 依赖 F2；尚未变更 FeathersJS/OpenResty 或完成 ChatGPT Web OAuth |
 

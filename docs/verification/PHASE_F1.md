@@ -23,6 +23,12 @@ Servy-host and Windows restart tests remain NOT_RUN.
   clippy 0, locked all-feature tests 0, locked release build 0, monitor harness
   0. Evidence: `stage-f1-checks.json`, `stage-f1-*.log`, and
   `stage-f1-health-monitor.log`.
+- Fork Windows Actions run `39542595503` for commit `76f9e85` completed with
+  the Windows job and fmt/clippy/test/release-build/artifact-upload steps all
+  successful. Artifact `coord-windows-2022` (`12319759491`, 4,226,357 bytes)
+  has API digest `sha256:331baddc816c47f6e14c764d289af7a3417f0968315a85319c2506da8b6839a2`.
+  This monitor/docs-only commit did not change the deployed Rust executable;
+  the installed EXE hash remains independently verified above.
 
 ## Arasaka Deployment
 
