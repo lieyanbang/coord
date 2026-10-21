@@ -10,6 +10,7 @@ Result: **PASS for F0 audit only**. No remote service, database, route, or proce
 - No coord daemon was known at task start. Arasaka had no `C:\ProgramData\coord`, coord process, or listener in ports 7700-7800. No task/ack IDs were created.
 - Windows Actions run `39436136707` on `d4f41043c75a811ab756e2bc65a816eefef823a8` completed successfully. Artifact `12272506068` is recorded in `stage-e-actions.json` with EXE SHA-256 `6884df79dff810546db84cace765991b9ebec168701136ce0fa15fe51c43d3f6`.
 - Local artifact copy `target/verification/stage-e-ci/coord.exe` has the same SHA-256. Use this CI artifact for deployment; the unrelated current `target/release/coord.exe` has a different hash.
+- The Phase F0 documentation commit's Windows Actions run `39535913687` completed successfully on `de86cc561c8eb0816e8d075903c401d208319fa6`. GitHub's run/job API reports `fmt`, `clippy`, `test`, `release build`, and artifact upload all successful. Artifact `12318140191` (`coord-windows-2022`, 4,199,537 bytes) is present and not expired; its GitHub API `digest` is the ZIP archive SHA-256 `997279838f03ebe0b3ca30bfc75136c2e8a6ccf044bd7a715d89a7a8113cc8f6`, not an executable hash. The anonymous artifact-download endpoint requires authentication, so this run verifies workflow and artifact metadata only; deployment remains pinned to the locally available Stage E executable above, whose EXE hash was verified.
 
 ## Arasaka
 
