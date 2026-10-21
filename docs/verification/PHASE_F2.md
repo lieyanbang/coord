@@ -61,6 +61,17 @@ started pending the ACL decision.
   `stage-f2-*.log`; the final relay test output is
   `stage-f2-relay-tests.log`.
 
+## Fork Windows Actions
+
+- Commit `41aa36d2054f2f520972c6cb2225362fc41739dc` triggered Actions run
+  [39620800985](https://github.com/lieyanbang/coord/actions/runs/39620800985)
+  at `2026-10-21T14:53:14Z`; it completed at `14:56:25Z` with conclusion
+  `success`.
+- Job `test (windows-2022)` and all steps succeeded, including fmt, clippy,
+  tests, release build, `relay protocol and lease-fencing tests`, and artifact
+  upload. Artifact `coord-windows-2022` (`12355300591`) is 4,226,358 bytes and
+  has not expired.
+
 ## Production Deployment and Health
 
 At `2026-10-21T14:43:45Z`, the existing sidecar health was `READY`, the Arasaka
@@ -145,6 +156,7 @@ address. No production task was claimed, completed, or mutated by these probes.
 | --- | --- | --- |
 | Relay suite | `node --test relay/relay.test.mjs relay/live-coord.test.mjs` | exit 0; 12/12 |
 | Windows stage | `pwsh.exe -NoProfile -File scripts/verify.ps1 -Stage f2` | exit 0; all five checks |
+| Fork Actions | Windows run `39620800985` for `41aa36d` | success; all steps and artifact upload passed |
 | Arasaka service state | `servy-cli.exe status/show --name CoordRelayAgent --quiet` over SSH | both exit 0; Running / LocalService |
 | Sidecar deployment | hash-verified staged file, atomic install, `systemctl restart coord-relay.service` | SSH script exit 0; READY and agent reconnected |
 | Production RPC | authenticated `tasks/list`, `skip_reclaim=true` | HTTP 200, `state=ok` |
