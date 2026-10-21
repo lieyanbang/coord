@@ -1,4 +1,4 @@
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.50s
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.62s
      Running unittests src\lib.rs (target\debug\deps\coord-f61eb6d9044a408a.exe)
 
 running 1 test
@@ -18,14 +18,14 @@ running 2 tests
 test retry_budget_backoff_receipts_idempotent_keys_and_cancel ... ok
 test hundred_tasks_over_dynamic_independent_mcp_workers_and_recovery ... ok
 
-test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.64s
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.71s
 
      Running tests\cancel_race.rs (target\debug\deps\cancel_race-b4ae55bd887c28b1.exe)
 
 running 1 test
 test cancel_is_sticky_against_late_complete ... ok
 
-test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
 
      Running tests\capacity.rs (target\debug\deps\capacity-4f0280515f8b9963.exe)
 
@@ -42,7 +42,7 @@ test dropped_response_then_daemon_restart_replays_receipt_without_duplicate_ack 
 test twenty_cancel_vs_async_submission_races_keep_one_terminal_state ... ok
 test seeded_process_kills_recover_without_task_loss_or_stale_result_acceptance ... ok
 
-test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.61s
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.69s
 
      Running tests\fencing.rs (target\debug\deps\fencing-5d2f17191dde4b92.exe)
 
@@ -51,7 +51,7 @@ test duplicate_completion_is_exact_and_ack_is_written_once ... ok
 test expiry_cannot_revive_and_same_agent_reclaim_has_new_fence ... ok
 test cancellation_and_completion_from_independent_connections_have_one_terminal_winner ... ok
 
-test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.68s
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.70s
 
      Running tests\fencing_protocol.rs (target\debug\deps\fencing_protocol-267c5d2e5ac8517b.exe)
 
@@ -66,7 +66,7 @@ running 2 tests
 test health_probe_is_read_only_tracks_success_and_does_not_persist_task_data ... ok
 test health_probe_does_not_run_the_tasks_list_lease_reclaimer ... ok
 
-test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.79s
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.78s
 
      Running tests\lease.rs (target\debug\deps\lease-a261352f60e6c563.exe)
 
@@ -76,21 +76,21 @@ test extend_succeeds_only_for_current_claimer ... ok
 test completed_task_does_not_get_reclaimed ... ok
 test expired_lease_reclaims_and_lets_a_new_agent_win ... ok
 
-test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.43s
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.47s
 
      Running tests\list_filter.rs (target\debug\deps\list_filter-9e88fc298ae4df2c.exe)
 
 running 1 test
 test filter_pushdown_finds_match_beyond_naive_limit ... ok
 
-test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.08s
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.10s
 
      Running tests\multi_client.rs (target\debug\deps\multi_client-72b3f3f190f12a67.exe)
 
 running 1 test
 test many_concurrent_clients_share_one_daemon_safely ... ok
 
-test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.86s
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.11s
 
      Running tests\protocol_two_tabs.rs (target\debug\deps\protocol_two_tabs-ae4cf9cc885285f4.exe)
 
@@ -98,26 +98,26 @@ running 2 tests
 test standalone_ack_is_allowed_but_unwalkable ... ok
 test two_tabs_can_coordinate_through_complete_with_ack ... ok
 
-test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.90s
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.93s
 
      Running tests\quality.rs (target\debug\deps\quality-c4f8d2bd1fc31b46.exe)
 
 running 6 tests
 test vault_event_before_heartbeat_does_not_deadlock ... ok
 test vault_same_name_and_agent_slug_collisions_are_distinct ... ok
-test batch_status_rejects_corrupt_state_instead_of_reporting_terminal ... ok
 test failed_migration_rolls_back_columns_added_before_failure ... ok
+test batch_status_rejects_corrupt_state_instead_of_reporting_terminal ... ok
 test pre_lease_schema_migrates_before_indexes ... ok
 test corrupt_rows_never_silently_become_pending_or_null ... ok
 
-test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.32s
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.39s
 
      Running tests\race.rs (target\debug\deps\race-edd0095da8bc79c8.exe)
 
 running 1 test
 test one_claimer_per_task_under_concurrent_load ... ok
 
-test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.49s
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.55s
 
      Running tests\service_boundaries.rs (target\debug\deps\service_boundaries-711a3e7344defae8.exe)
 
@@ -131,17 +131,17 @@ test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
 running 1 test
 test top_once_renders_priorities_and_kinds ... ok
 
-test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.34s
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.36s
 
      Running tests\validation.rs (target\debug\deps\validation-194126baa00f378f.exe)
 
 running 4 tests
-test validator_fail_exhausts_execution_budget_and_old_job_token_cannot_commit ... ok
 test validator_error_budget_is_separate_from_execution_budget ... ok
+test validator_fail_exhausts_execution_budget_and_old_job_token_cannot_commit ... ok
 test async_pass_fail_retry_does_not_block_next_claim_and_ack_waits_for_pass ... ok
 test validation_pending_recovers_after_restart_and_cancel_verdict_is_stale ... ok
 
-test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.68s
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.69s
 
      Running tests\wait_longpoll.rs (target\debug\deps\wait_longpoll-a3879f0b9863e1b0.exe)
 
@@ -155,7 +155,7 @@ test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
 running 1 test
 test real_worker_identity_external_timeout_output_limit_and_kill_recovery ... ok
 
-test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 8.46s
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 8.83s
 
    Doc-tests coord
 

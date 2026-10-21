@@ -135,7 +135,7 @@ Windows 本机及 Windows Actions 的真实测试、构建与产物为准。
 | --- | --- | --- |
 | F0 | PASS | `docs/verification/PHASE_F0.md`；Servy、远端基线及 Windows Actions 二进制哈希已核验 |
 | F1 | PASS | Servy 主机与 Windows 重启恢复、服务健康、loopback、SYSTEM 监护、WAL/租约及 coord 备份通过；Servy DB 已用对应官方 10.2.0 源码语义 + `System.Data.SQLite` 2.0.4 进行 Online Backup、quick_check/integrity_check，均 PASS；本机 F1 门禁 PASS，Fork Windows Actions run `39600633448` 通过，见 `docs/verification/PHASE_F1.md` |
-| F2 | PARTIAL | 独立 sidecar 已部署；本机 Gate 与 Fork Windows Actions `39620800985` 全部通过，生产只读 E2E/负向鉴权和 13011 回归通过。Tailnet ACL 控制面不可由节点读取，且 BT-7274 可建立 13012 TCP、仅被应用层在 challenge 前拒绝；等待明确 ACL 决策后闭合，见 `docs/verification/PHASE_F2.md` |
+| F2 | PARTIAL | 独立 sidecar 与早期 nftables 主机过滤已部署；只读审计发现 Tailnet 存在宽泛 grant，未修改全局策略。BT-7274 新 TCP 被阻断且 drop 计数增长，Arasaka Agent 与真实 tasks/list E2E 通过，13011/既有服务保持在线；本次 F2 收口的 Windows gate/Actions 待验证后正式 PASS，详见 `docs/verification/PHASE_F2.md` 和 ACL 部署证据 |
 | F3 | TODO | 依赖 F2；尚未变更 FeathersJS/OpenResty 或完成 ChatGPT Web OAuth |
 
 - Gate F0：远端/本地服务状态、Servy 功能与部署/回滚路径基线记录；构建产物哈希匹配。
@@ -144,4 +144,4 @@ Windows 本机及 Windows Actions 的真实测试、构建与产物为准。
 - Gate F3：新增 OAuth/MCP 公网入口及旧 DesktopCommander 所有入口回归 PASS；ChatGPT Web 手动完成工具发现和只读/隔离写任务 E2E 方可标记完整 PASS。
 - 每个 Gate 完成后同步 `docs/verification/` 证据、更新本节进度、生成独立 Git commit 并通过 Fork 的 Windows Actions；部署不擅自创建 Release/tag、不推送上游。
 - 最终输出：Arasaka 服务名/运行账户、二进制 SHA、Servy 参数/健康路径、备份/恢复程序、故障演练记录、中转公网 URL、OAuth/连接器验收与残余风险。敏感信息绝不写文档/日志。
-- 当前状态：F0 部署前审计 PASS。Servy Host 与 Windows 整机重启恢复、coord 与 Servy 托管服务健康、健康监护、coord WAL/在线备份均有实测证据。Servy 10.2.0 对应官方源码确认 `UNICODE_NOCASE` 使用 `StringComparison.OrdinalIgnoreCase`；相同 Provider/SQLite 版本的只读校验程序通过 SQLite Online Backup API 创建快照，`quick_check=ok`、`integrity_check=ok`，唯一索引、SchemaInfo 与七个配置行均核实通过。本机 F1 门禁与 Fork Windows Actions runs `39600633448`、`39602363789` 均通过，F1 为 PASS。F2 的隔离 Tailscale sidecar 已部署，12 项 relay/真实隔离 coord 测试、本机 Windows Gate 和 Fork Windows Actions `39620800985` 通过；生产正向/负向 RPC 及 13011 回归通过。ACL 控制面尚未验证：BT-7274 目前可建立 13012 TCP，但应用层在发送 challenge 前拒绝；不将 UFW 的无效 tailscale0 规则算作隔离证据。等待 ACL 决策前 F2 保持 PARTIAL，F3 仍 TODO；详见 `verification/PHASE_F2.md`。TASK.md 保持只读。
+- 当前状态：F0 部署前审计 PASS。Servy Host 与 Windows 整机重启恢复、coord 与 Servy 托管服务健康、健康监护、coord WAL/在线备份均有实测证据。Servy 10.2.0 对应官方源码确认 `UNICODE_NOCASE` 使用 `StringComparison.OrdinalIgnoreCase`；相同 Provider/SQLite 版本的只读校验程序通过 SQLite Online Backup API 创建快照，`quick_check=ok`、`integrity_check=ok`，唯一索引、SchemaInfo 与七个配置行均核实通过。本机 F1 门禁与 Fork Windows Actions runs `39600633448`、`39602363789` 均通过，F1 为 PASS。F2 sidecar 的 12 项协议/租约回归、本机 Windows Gate、既有 Actions `39620800985` 均通过；本轮已检查 Tailnet 宽泛 grant，并以独立优先级 -10 nftables 表实施 13012 精确来源过滤。BT-7274 的新 TCP 被阻断且 drop 计数增加，Arasaka `CoordRelayAgent` 与认证 `tasks/list` E2E 通过，13011/FeathersJS/OpenResty/Tailscale 保持在线。当前 F2 仍 PARTIAL，仅因本轮收口提交尚待 Windows gate/Actions；F3 仍 TODO，TASK.md 保持只读。详见 `verification/PHASE_F2.md` 与 `verification/phase-f2-acl-deployment-20261022.md`。

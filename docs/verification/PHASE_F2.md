@@ -1,12 +1,10 @@
 # Phase F2: Tailscale Private Relay
 
 Date: 2026-10-22 (Australia/Brisbane)
-Result: **PARTIAL**. The isolated sidecar, strict application boundary,
-production round-trip, recovery semantics, and regression tests pass. The
-tailnet control-plane ACL is not readable from either node; a live probe also
-showed BT-7274 can establish TCP to 13012, although the sidecar rejects it
-before sending an authentication challenge. F2 is not closed and F3 has not
-started pending the ACL decision.
+Result: **PARTIAL**. The production source boundary, authenticated
+Arasaka-to-sidecar path, sidecar-to-coord RPC, persistent host filter, and
+existing-service regression checks now pass. The updated closeout is awaiting
+its local Windows gate and Fork Actions result before F2 is marked PASS.
 
 ## Scope and Architecture
 
@@ -130,39 +128,46 @@ address. No production task was claimed, completed, or mutated by these probes.
 
 ## Tailscale ACL and Effective Source Boundary
 
-- At `2026-10-21T14:49:59Z`, read-only `tailscale status` listed Arasaka `100.89.6.126` and BT-7274
-  `100.124.104.23` as active peers. The node-side Tailscale CLI does not expose
-  the administrator ACL policy, so the configured policy itself is
-  **UNVERIFIED**; no tailnet policy was changed.
-- `ufw status numbered` showed rule 48 allowing only Arasaka to
-  `100.116.134.114:13012/tcp` on `tailscale0`. However, `iptables -S INPUT`
-  showed `ts-input` before UFW, and `ts-input` contains `-i tailscale0 -j
-  ACCEPT`. Therefore the UFW entry is not an effective Tailscale source filter
-  on this host and is not counted as a passing boundary.
-- At `2026-10-21T14:50:05Z`, from BT-7274, TCP connect to 13012 succeeded, but reading the application
-  socket returned EOF with zero bytes and no challenge. The sidecar checks the
-  peer IP against the single configured Arasaka address before sending a
-  challenge; invalid credentials and wrong peer identity are independently
-  rejected. This proves application-level rejection, not network-layer ACL
-  isolation.
-- A narrowly scoped ACL change was requested for authorization. Until the
-  Tailscale policy is independently inspected/updated and the non-Arasaka TCP
-  probe is blocked, the control-plane ACL gate remains open and F2 stays
-  PARTIAL. The request does not authorize changes to any other Tailscale grant.
+- The admin policy was inspected read-only. It contains a broad
+  `src: ["*"]` grant to Tailnet address ranges with `ip: ["*"]`; adding a
+  narrow allow could not deny BT-7274, and changing the broad grant would
+  exceed the authorized scope. No Tailnet grant was changed.
+- The prior UFW rule 48 remains present but ineffective for this path because
+  `INPUT` first jumps to Tailscale's `ts-input`, which accepts `tailscale0`.
+  The new early `inet coord_relay_acl` base chain is independent of that table
+  and drops only non-Arasaka IPv4 packets to `100.116.134.114:13012/tcp`.
+- With the real Tailscale `ts-input` accept path still active, BT-7274's fresh
+  TCP connect timed out. The drop counter advanced from 3 to 6 packets / 312
+  bytes. Arasaka's fresh TCP connect succeeded, `CoordRelayAgent` remained
+  Running/Automatic, health remained READY, and authenticated
+  `tasks/list(skip_reclaim=true)` returned HTTP 200 / `state=ok`.
+- The filter is enabled via `coord-relay-acl.service`, ordered before
+  `network-pre.target` and `tailscaled.service`. A full server reboot or
+  `tailscaled` restart was not performed; see the explicit evidence boundary
+  in `phase-f2-acl-deployment-20261022.md`.
+- Exact commands, timestamps, exits, snapshots, deployed file hashes, and
+  rollback details are in
+  [`phase-f2-acl-deployment-20261022.md`](phase-f2-acl-deployment-20261022.md).
 
 ## Commands and Outcomes
 
 | Check | Command / method | Outcome |
 | --- | --- | --- |
 | Relay suite | `node --test relay/relay.test.mjs relay/live-coord.test.mjs` | exit 0; 12/12 |
-| Windows stage | `pwsh.exe -NoProfile -File scripts/verify.ps1 -Stage f2` | exit 0; all five checks |
-| Fork Actions | Windows run `39620800985` for `41aa36d` | success; all steps and artifact upload passed |
+| Previous Windows stage | `pwsh.exe -NoProfile -File scripts/verify.ps1 -Stage f2` | exit 0; all five checks |
+| Previous Fork Actions | Windows run `39620800985` for `41aa36d` | success; all steps and artifact upload passed |
+| ACL closeout Windows stage | same command at `2026-10-21T16:17:56Z` | exit 0; fmt, clippy, tests, release build, and Relay tests all passed; 12/12 Relay tests |
 | Arasaka service state | `servy-cli.exe status/show --name CoordRelayAgent --quiet` over SSH | both exit 0; Running / LocalService |
 | Sidecar deployment | hash-verified staged file, atomic install, `systemctl restart coord-relay.service` | SSH script exit 0; READY and agent reconnected |
 | Production RPC | authenticated `tasks/list`, `skip_reclaim=true` | HTTP 200, `state=ok` |
 | Production negative RPC | bad bearer, `tasks/send`, reclaim-enabled list | 401 / 400 / 400; no journal dispatch |
-| Existing channel regression | `ss` listener and established connection checks | 13011 remained active with Arasaka; shared services active |
-| Non-Arasaka source | BT-7274 TCP + application read | TCP connected, zero bytes/no challenge; app rejected; Tailscale ACL unresolved |
+| Existing channel regression | `ss` listeners/established sessions and `systemctl is-active` | 13011 remained established with Arasaka and BT-7274; Tailscale, sidecar, FeathersJS, and OpenResty active |
+| Network boundary | BT-7274 `TcpClient.ConnectAsync(...).Wait(4000)` plus nft counter | Timed out; expected-denial process exit 0; counter advanced 3 to 6 packets |
+| Arasaka path | Servy `CoordRelayAgent` state plus fresh TCP connect | Running/Automatic, PID 8104; connect passed, exit 0 |
+| Production RPC | Authenticated relay `tasks/list`, `skip_reclaim=true` | HTTP 200, `state=ok`, one result; no task mutation |
+| Persistent ACL unit | `/usr/local/sbin/coord-relay-acl-verify` | exit 0 / `host_acl=PASS`; unit active/enabled, exact rule and hashes verified |
 
-F3 remains **TODO**. `TASK.md` was not changed. Existing production services and
-port 13011 were not restarted or reconfigured; Arasaka was not rebooted.
+F3 remains **TODO** until this closeout's Windows Actions result is available.
+`TASK.md` was not changed. Only the new ACL unit was started; existing
+production services, Tailscale, and port 13011 were not restarted or
+reconfigured, and Arasaka was not rebooted.

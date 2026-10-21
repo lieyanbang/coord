@@ -1,0 +1,8 @@
+destroy table inet coord_relay_acl
+
+table inet coord_relay_acl {
+	chain input {
+		type filter hook input priority -10; policy accept;
+		iifname "tailscale0" ip daddr 100.116.134.114 tcp dport 13012 ip saddr != 100.89.6.126 counter drop
+	}
+}

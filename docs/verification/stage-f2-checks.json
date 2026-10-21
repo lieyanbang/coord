@@ -1,37 +1,37 @@
 [
   {
+    "started": "2026-10-21T16:17:56.6413310Z",
+    "seconds": 0.6244605,
+    "log": "docs/verification/stage-f2-fmt.log",
     "command": "cargo fmt --all -- --check",
-    "seconds": 0.6543418,
-    "exit": 0,
-    "started": "2026-10-21T14:46:43.1177933Z",
-    "log": "docs/verification/stage-f2-fmt.log"
+    "exit": 0
   },
   {
+    "started": "2026-10-21T16:17:57.3351580Z",
+    "seconds": 1.4276168,
+    "log": "docs/verification/stage-f2-clippy.log",
     "command": "cargo clippy --all-targets --all-features --locked -- -D warnings",
-    "seconds": 1.2478648,
-    "exit": 0,
-    "started": "2026-10-21T14:46:43.8465889Z",
-    "log": "docs/verification/stage-f2-clippy.log"
+    "exit": 0
   },
   {
+    "started": "2026-10-21T16:17:58.7656457Z",
+    "seconds": 36.9648545,
+    "log": "docs/verification/stage-f2-test.log",
     "command": "cargo test --all-features --locked",
-    "seconds": 35.8344155,
-    "exit": 0,
-    "started": "2026-10-21T14:46:45.0994205Z",
-    "log": "docs/verification/stage-f2-test.log"
+    "exit": 0
   },
   {
+    "started": "2026-10-21T16:18:35.7325120Z",
+    "seconds": 0.6018027,
+    "log": "docs/verification/stage-f2-build.log",
     "command": "cargo build --release --locked",
-    "seconds": 0.5444032,
-    "exit": 0,
-    "started": "2026-10-21T14:47:20.9358708Z",
-    "log": "docs/verification/stage-f2-build.log"
+    "exit": 0
   },
   {
+    "started": "2026-10-21T16:18:36.3368802Z",
+    "seconds": 4.6830508,
+    "log": "docs/verification/stage-f2-relay-tests.log",
     "command": "node --test relay/relay.test.mjs relay/live-coord.test.mjs",
-    "seconds": 4.5224283,
-    "exit": 0,
-    "started": "2026-10-21T14:47:21.4826506Z",
-    "log": "docs/verification/stage-f2-relay-tests.log"
+    "exit": 0
   }
 ]

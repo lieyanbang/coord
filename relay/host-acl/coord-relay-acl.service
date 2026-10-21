@@ -1,0 +1,23 @@
+[Unit]
+Description=Restrict coord relay Tailscale ingress to Arasaka
+DefaultDependencies=no
+After=local-fs.target
+Before=network-pre.target tailscaled.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/sbin/nft -f /etc/coord-relay-acl/coord-relay-acl.nft
+ExecStop=/usr/sbin/nft delete table inet coord_relay_acl
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectHome=yes
+ProtectSystem=strict
+ProtectKernelModules=yes
+ProtectKernelTunables=yes
+ProtectControlGroups=yes
+CapabilityBoundingSet=CAP_NET_ADMIN
+AmbientCapabilities=CAP_NET_ADMIN
+
+[Install]
+WantedBy=network-pre.target

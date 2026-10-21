@@ -61,22 +61,33 @@ production server or production coord database.
 - Arasaka connector: `C:\ProgramData\coord-relay-agent`, run by the dedicated
   Servy entry `CoordRelayAgent` under `NT AUTHORITY\LocalService`.
 
-The sidecar also checks that the peer source is exactly `100.89.6.126` before
-sending its authentication challenge. The intended host firewall rule is
-source `100.89.6.126`, destination `100.116.134.114`, TCP port `13012`, and
-interface `tailscale0`, but do not assume a UFW rule enforces this on
-`tailscale0`: on the current production host, `INPUT` jumps to Tailscale's
-`ts-input` chain first, and that chain accepts `tailscale0` before UFW. An
-unauthorized tailnet peer can therefore complete TCP but must receive no
-challenge. The tailnet administrator ACL is not exposed by the node-side CLI;
-verify it independently and do not claim network-layer isolation from UFW or
-`tailscale ping` alone.
+The sidecar checks that the peer source is exactly `100.89.6.126` before
+sending its authentication challenge. Network-layer source restriction is
+enforced separately by `relay/host-acl/coord-relay-acl.nft`: an inet input
+chain at priority `-10` drops other IPv4 sources on `tailscale0` only when the
+destination is `100.116.134.114:13012/tcp`. This runs before the iptables-nft
+filter hook where Tailscale's generated `ts-input` chain accepts Tailnet
+traffic. The isolated systemd unit is `coord-relay-acl.service`; see
+`relay/host-acl/README.md` for deployment, verification, and narrow rollback.
+
+The Tailnet policy was inspected in the admin console and has a broad
+`src: ["*"]` grant to Tailnet IP ranges. Grants are additive, so an extra
+allow would not deny BT-7274. That broad grant and all other grants were left
+unchanged. BT-7274's fresh TCP connect to 13012 timed out and incremented the
+dedicated drop counter; Arasaka's new TCP connect and authenticated
+Sidecar-to-coord read-only RPC both succeeded. UFW rule 48 remains present but
+is not treated as the effective filter because `INPUT` reaches `ts-input`
+first. The existing 13011 channel remains outside this boundary.
 
 ## Rollback
 
-Stop and disable only `coord-relay.service`, then stop and uninstall only the
-Servy entry `CoordRelayAgent`, and remove only the exact UFW rule created for
-this sidecar. Keep `/var/lib/coord-relay` and both credential directories until
-their contents have been separately archived or explicitly discarded. Existing
-FeathersJS, OpenResty, DesktopCommanderMCP, and port 13011 are outside this
-package's ownership.
+For an ACL-only rollback, use the scoped procedure in
+`relay/host-acl/README.md`; it removes only `inet coord_relay_acl` and leaves
+the sidecar running with its application-level peer/HMAC checks. For full
+relay removal, first stop and disable `coord-relay.service`, then stop and
+uninstall only the Servy entry `CoordRelayAgent`, then run
+`systemctl disable --now coord-relay-acl.service` and remove only the exact
+UFW rule created for this sidecar. Keep `/var/lib/coord-relay` and both
+credential directories until their contents have been separately archived or
+explicitly discarded. Existing FeathersJS, OpenResty, DesktopCommanderMCP,
+and port 13011 are outside this package's ownership.
