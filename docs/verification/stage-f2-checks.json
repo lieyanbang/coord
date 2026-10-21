@@ -1,30 +1,30 @@
 [
   {
-    "log": "docs/verification/stage-f2-fmt.log",
-    "seconds": 0.5591772,
     "command": "cargo fmt --all -- --check",
-    "started": "2026-10-21T12:53:30.9048620Z",
-    "exit": 0
+    "exit": 0,
+    "log": "docs/verification/stage-f2-fmt.log",
+    "seconds": 0.3127005,
+    "started": "2026-10-21T13:01:39.3231343Z"
   },
   {
-    "log": "docs/verification/stage-f2-clippy.log",
-    "seconds": 0.9244049,
     "command": "cargo clippy --all-targets --all-features --locked -- -D warnings",
-    "started": "2026-10-21T12:53:31.5160691Z",
-    "exit": 0
+    "exit": 0,
+    "log": "docs/verification/stage-f2-clippy.log",
+    "seconds": 0.6477998,
+    "started": "2026-10-21T13:01:39.6770180Z"
   },
   {
-    "log": "docs/verification/stage-f2-test.log",
-    "seconds": 33.8920082,
     "command": "cargo test --all-features --locked",
-    "started": "2026-10-21T12:53:32.4427973Z",
-    "exit": 0
+    "exit": 0,
+    "log": "docs/verification/stage-f2-test.log",
+    "seconds": 33.9577714,
+    "started": "2026-10-21T13:01:40.3270458Z"
   },
   {
-    "log": "docs/verification/stage-f2-build.log",
-    "seconds": 0.467014,
     "command": "cargo build --release --locked",
-    "started": "2026-10-21T12:54:06.3364883Z",
-    "exit": 0
+    "exit": 0,
+    "log": "docs/verification/stage-f2-build.log",
+    "seconds": 0.4348977,
+    "started": "2026-10-21T13:02:14.2862868Z"
   }
 ]

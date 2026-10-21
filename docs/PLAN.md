@@ -135,7 +135,7 @@ Windows 本机及 Windows Actions 的真实测试、构建与产物为准。
 | --- | --- | --- |
 | F0 | PASS | `docs/verification/PHASE_F0.md`；Servy、远端基线及 Windows Actions 二进制哈希已核验 |
 | F1 | PASS | Servy 主机与 Windows 重启恢复、服务健康、loopback、SYSTEM 监护、WAL/租约及 coord 备份通过；Servy DB 已用对应官方 10.2.0 源码语义 + `System.Data.SQLite` 2.0.4 进行 Online Backup、quick_check/integrity_check，均 PASS；本机 F1 门禁 PASS，Fork Windows Actions run `39600633448` 通过，见 `docs/verification/PHASE_F1.md` |
-| F2 | IN_PROGRESS | F1 已闭合；开始隔离的 Socket.IO/Device Agent 只读基线与协议审计，未部署转发，见 `docs/verification/PHASE_F2.md` |
+| F2 | IN_PROGRESS | F1 已闭合；只读审计确认 DesktopCommander 共享 Feathers/Socket.IO 重启边界，候选为独立 Tailscale sidecar（13012 当前无监听）；尚未部署，见 `docs/verification/PHASE_F2.md` |
 | F3 | TODO | 依赖 F2；尚未变更 FeathersJS/OpenResty 或完成 ChatGPT Web OAuth |
 
 - Gate F0：远端/本地服务状态、Servy 功能与部署/回滚路径基线记录；构建产物哈希匹配。
@@ -144,4 +144,4 @@ Windows 本机及 Windows Actions 的真实测试、构建与产物为准。
 - Gate F3：新增 OAuth/MCP 公网入口及旧 DesktopCommander 所有入口回归 PASS；ChatGPT Web 手动完成工具发现和只读/隔离写任务 E2E 方可标记完整 PASS。
 - 每个 Gate 完成后同步 `docs/verification/` 证据、更新本节进度、生成独立 Git commit 并通过 Fork 的 Windows Actions；部署不擅自创建 Release/tag、不推送上游。
 - 最终输出：Arasaka 服务名/运行账户、二进制 SHA、Servy 参数/健康路径、备份/恢复程序、故障演练记录、中转公网 URL、OAuth/连接器验收与残余风险。敏感信息绝不写文档/日志。
-- 当前状态：F0 部署前审计 PASS。Servy Host 与 Windows 整机重启恢复、coord 与 Servy 托管服务健康、健康监护、coord WAL/在线备份均有实测证据。Servy 10.2.0 对应官方源码确认 `UNICODE_NOCASE` 使用 `StringComparison.OrdinalIgnoreCase`；相同 Provider/SQLite 版本的只读校验程序通过 SQLite Online Backup API 创建快照，`quick_check=ok`、`integrity_check=ok`，唯一索引、SchemaInfo 与七个配置行均核实通过。本机 F1 门禁与 Fork Windows Actions runs `39600633448`、`39602363789` 均通过，F1 为 PASS。F2 已开始只读协议和依赖审计；尚无中继实现或远端变更，详见 `verification/PHASE_F2.md`。TASK.md 保持只读。
+- 当前状态：F0 部署前审计 PASS。Servy Host 与 Windows 整机重启恢复、coord 与 Servy 托管服务健康、健康监护、coord WAL/在线备份均有实测证据。Servy 10.2.0 对应官方源码确认 `UNICODE_NOCASE` 使用 `StringComparison.OrdinalIgnoreCase`；相同 Provider/SQLite 版本的只读校验程序通过 SQLite Online Backup API 创建快照，`quick_check=ok`、`integrity_check=ok`，唯一索引、SchemaInfo 与七个配置行均核实通过。本机 F1 门禁与 Fork Windows Actions runs `39600633448`、`39602363789` 均通过，F1 为 PASS。F2 已通过启动提交 Windows Actions，正在完成独立 Tailscale sidecar 的协议、网络与回滚设计；无中继部署或生产服务变更，详见 `verification/PHASE_F2.md`。TASK.md 保持只读。
