@@ -134,7 +134,7 @@ Windows 本机及 Windows Actions 的真实测试、构建与产物为准。
 | Stage | 状态 | 证据 / 依赖 |
 | --- | --- | --- |
 | F0 | PASS | `docs/verification/PHASE_F0.md`；Servy、远端基线及 Windows Actions 二进制哈希已核验 |
-| F1 | PARTIAL | Servy 主机与 Windows 重启后服务恢复、coord/CodexProxy/MediaSTT/FFmpeg 健康、loopback、SYSTEM 监护、WAL/租约及 coord 在线备份验证通过；Servy DB `PRAGMA quick_check` 因 `UNICODE_NOCASE` collation 缺失为 NOT_RUN，故不宣称 F1 完整 PASS，见 `docs/verification/PHASE_F1.md` |
+| F1 | PARTIAL | Servy 主机与 Windows 重启后服务恢复、coord/CodexProxy/MediaSTT/FFmpeg 健康、loopback、SYSTEM 监护、WAL/租约及 coord 在线备份验证通过；Actions `39568595098` 全绿；Servy DB `PRAGMA quick_check` 因 `UNICODE_NOCASE` collation 缺失为 NOT_RUN，故不宣称 F1 完整 PASS，见 `docs/verification/PHASE_F1.md` |
 | F2 | TODO | 依赖 F1；尚未建立私网转发 |
 | F3 | TODO | 依赖 F2；尚未变更 FeathersJS/OpenResty 或完成 ChatGPT Web OAuth |
 

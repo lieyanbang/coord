@@ -1,37 +1,37 @@
 [
   {
+    "seconds": 0.3139329,
+    "exit": 0,
+    "started": "2026-10-21T08:26:25.3398981Z",
     "log": "docs/verification/stage-f1-fmt.log",
-    "exit": 0,
-    "command": "cargo fmt --all -- --check",
-    "started": "2026-10-21T08:19:13.9949801Z",
-    "seconds": 0.636044
+    "command": "cargo fmt --all -- --check"
   },
   {
+    "seconds": 0.6971886,
+    "exit": 0,
+    "started": "2026-10-21T08:26:25.7027875Z",
     "log": "docs/verification/stage-f1-clippy.log",
-    "exit": 0,
-    "command": "cargo clippy --all-targets --all-features --locked -- -D warnings",
-    "started": "2026-10-21T08:19:14.6892595Z",
-    "seconds": 1.2750051
+    "command": "cargo clippy --all-targets --all-features --locked -- -D warnings"
   },
   {
+    "seconds": 33.3038551,
+    "exit": 0,
+    "started": "2026-10-21T08:26:26.4023372Z",
     "log": "docs/verification/stage-f1-test.log",
-    "exit": 0,
-    "command": "cargo test --all-features --locked",
-    "started": "2026-10-21T08:19:15.9667644Z",
-    "seconds": 35.0206532
+    "command": "cargo test --all-features --locked"
   },
   {
+    "seconds": 0.4802565,
+    "exit": 0,
+    "started": "2026-10-21T08:26:59.7076060Z",
     "log": "docs/verification/stage-f1-build.log",
-    "exit": 0,
-    "command": "cargo build --release --locked",
-    "started": "2026-10-21T08:19:50.9890457Z",
-    "seconds": 0.5355539
+    "command": "cargo build --release --locked"
   },
   {
-    "log": "docs/verification/stage-f1-health-monitor.log",
+    "seconds": 11.9304289,
     "exit": 0,
-    "command": "powershell.exe -NoLogo -NoProfile -File scripts/windows/test-coord-health-monitor.ps1",
-    "started": "2026-10-21T08:19:51.5269573Z",
-    "seconds": 12.4842904
+    "started": "2026-10-21T08:27:00.1903562Z",
+    "log": "docs/verification/stage-f1-health-monitor.log",
+    "command": "powershell.exe -NoLogo -NoProfile -File scripts/windows/test-coord-health-monitor.ps1"
   }
 ]

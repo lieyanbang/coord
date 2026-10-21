@@ -33,6 +33,10 @@ this evidence gap is resolved or explicitly excluded from the acceptance gate.
   has API digest `sha256:331baddc816c47f6e14c764d289af7a3417f0968315a85319c2506da8b6839a2`.
   This monitor/docs-only commit did not change the deployed Rust executable;
   the installed EXE hash remains independently verified above.
+- Post-restart evidence commit `54b5863` passed Fork Windows Actions run
+  `39568595098`: job `test (windows-2022)` and fmt, clippy, test, release build,
+  and artifact upload all concluded success. Run metadata and step results
+  were read directly from the GitHub Actions REST API.
 
 ## Arasaka Deployment
 
