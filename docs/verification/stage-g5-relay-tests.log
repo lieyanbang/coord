@@ -1,97 +1,97 @@
-{"time":"2026-10-22T16:54:04.729Z","component":"coord-relay","event":"started","agentAddress":"127.0.0.1:55010","clientAddress":"127.0.0.1:55011"}
-{"time":"2026-10-22T16:54:04.734Z","component":"coord-relay","event":"agent_connected","agentId":"arasaka-coord-agent"}
-{"time":"2026-10-22T16:54:04.734Z","component":"coord-relay-agent","event":"connected","serverHost":"127.0.0.1","serverPort":55010}
-{"time":"2026-10-22T16:54:04.761Z","component":"coord-relay","event":"rpc_finished","requestId":"165feacb-35be-4996-a65c-70ec32978cae","method":"tasks/claim","state":"ok","durationMs":20}
-{"time":"2026-10-22T16:54:06.073Z","component":"coord-relay","event":"rpc_finished","requestId":"d2d66c67-d6b1-4a0f-9021-a5f862562083","method":"tasks/complete","state":"rpc_error","durationMs":17}
-{"time":"2026-10-22T16:54:06.077Z","component":"coord-relay","event":"rpc_finished","requestId":"d2d66c67-d6b1-4a0f-9021-a5f862562083","method":"tasks/complete","state":"uncertain","durationMs":0}
-{"time":"2026-10-22T16:54:06.091Z","component":"coord-relay","event":"rpc_finished","requestId":"94c6f144-f44d-474e-beab-99f3152c7345","method":"tasks/claim","state":"ok","durationMs":9}
-{"time":"2026-10-22T16:54:06.104Z","component":"coord-relay","event":"rpc_finished","requestId":"dc2e2d2f-c023-4774-a579-d5635f126f0c","method":"tasks/complete","state":"ok","durationMs":9}
-{"time":"2026-10-22T16:54:06.107Z","component":"coord-relay","event":"rpc_finished","requestId":"dc2e2d2f-c023-4774-a579-d5635f126f0c","method":"tasks/complete","state":"uncertain","durationMs":0}
-{"time":"2026-10-22T16:54:06.111Z","component":"coord-relay","event":"agent_disconnected","reason":"socket_closed"}
-✔ isolated coord lease fencing and submit replay across the authenticated relay (1571.9292ms)
-✔ whitelist and strict schemas reject side effects and reclaiming list calls (1.4184ms)
-✔ HTTP test listeners avoid Fetch-blocked ports (57.3576ms)
-{"time":"2026-10-22T16:54:04.620Z","component":"coord-relay","event":"started","agentAddress":"127.0.0.1:55017","clientAddress":"127.0.0.1:55016"}
-{"time":"2026-10-22T16:54:04.622Z","component":"coord-relay","event":"agent_connected","agentId":"test-agent"}
-{"time":"2026-10-22T16:54:04.623Z","component":"coord-relay-agent","event":"connected","serverHost":"127.0.0.1","serverPort":55017}
-{"time":"2026-10-22T16:54:04.634Z","component":"coord-relay","event":"request_rejected","code":"method_or_params_denied"}
-{"time":"2026-10-22T16:54:04.637Z","component":"coord-relay","event":"request_rejected","code":"method_or_params_denied"}
-{"time":"2026-10-22T16:54:04.657Z","component":"coord-relay","event":"rpc_finished","requestId":"51b5b07d-90b5-4aa1-bcd2-95f1934e3f61","method":"tasks/list","state":"ok","durationMs":17}
-{"time":"2026-10-22T16:54:04.660Z","component":"coord-relay","event":"rpc_finished","requestId":"51b5b07d-90b5-4aa1-bcd2-95f1934e3f61","method":"tasks/list","state":"uncertain","durationMs":0}
-{"time":"2026-10-22T16:54:04.662Z","component":"coord-relay","event":"agent_disconnected","reason":"socket_closed"}
-✔ authenticated Arasaka agent round-trips through sidecar to coord; denied calls never dispatch (56.4664ms)
-{"time":"2026-10-22T16:54:04.670Z","component":"coord-relay","event":"started","agentAddress":"127.0.0.1:55027","clientAddress":"127.0.0.1:55026"}
-{"time":"2026-10-22T16:54:04.672Z","component":"coord-relay","event":"agent_connected","agentId":"test-agent"}
-{"time":"2026-10-22T16:54:04.672Z","component":"coord-relay-agent","event":"connected","serverHost":"127.0.0.1","serverPort":55027}
-{"time":"2026-10-22T16:54:04.681Z","component":"coord-relay","event":"rpc_finished","requestId":"86d86d15-1d2d-4866-b7e8-f0fe29750b2b","method":"tasks/list","state":"uncertain","durationMs":0}
-{"time":"2026-10-22T16:54:04.682Z","component":"coord-relay","event":"rpc_finished","requestId":"86d86d15-1d2d-4866-b7e8-f0fe29750b2b","method":"tasks/list","state":"uncertain","durationMs":0}
-{"time":"2026-10-22T16:54:04.682Z","component":"coord-relay","event":"rpc_finished","requestId":"86d86d15-1d2d-4866-b7e8-f0fe29750b2b","method":"tasks/list","state":"uncertain","durationMs":0}
-{"time":"2026-10-22T16:54:04.683Z","component":"coord-relay","event":"rpc_finished","requestId":"86d86d15-1d2d-4866-b7e8-f0fe29750b2b","method":"tasks/list","state":"uncertain","durationMs":1}
-{"time":"2026-10-22T16:54:04.683Z","component":"coord-relay","event":"rpc_finished","requestId":"86d86d15-1d2d-4866-b7e8-f0fe29750b2b","method":"tasks/list","state":"uncertain","durationMs":0}
-{"time":"2026-10-22T16:54:04.683Z","component":"coord-relay","event":"rpc_finished","requestId":"86d86d15-1d2d-4866-b7e8-f0fe29750b2b","method":"tasks/list","state":"uncertain","durationMs":0}
-{"time":"2026-10-22T16:54:04.683Z","component":"coord-relay","event":"rpc_finished","requestId":"86d86d15-1d2d-4866-b7e8-f0fe29750b2b","method":"tasks/list","state":"uncertain","durationMs":0}
-{"time":"2026-10-22T16:54:04.809Z","component":"coord-relay","event":"rpc_finished","requestId":"86d86d15-1d2d-4866-b7e8-f0fe29750b2b","method":"tasks/list","state":"ok","durationMs":128}
-{"time":"2026-10-22T16:54:04.811Z","component":"coord-relay","event":"agent_disconnected","reason":"socket_closed"}
-✔ concurrent duplicate request ids are dispatched at most once (148.92ms)
-{"time":"2026-10-22T16:54:04.821Z","component":"coord-relay","event":"started","agentAddress":"127.0.0.1:55044","clientAddress":"127.0.0.1:55043"}
-{"time":"2026-10-22T16:54:04.822Z","component":"coord-relay","event":"agent_connected","agentId":"test-agent"}
-{"time":"2026-10-22T16:54:04.822Z","component":"coord-relay-agent","event":"connected","serverHost":"127.0.0.1","serverPort":55044}
-{"time":"2026-10-22T16:54:04.838Z","component":"coord-relay","event":"rpc_finished","requestId":"45023913-eef5-49f1-af31-7ff2055a1cb7","method":"tasks/list","state":"ok","durationMs":15}
-{"time":"2026-10-22T16:54:04.840Z","component":"coord-relay","event":"agent_disconnected","reason":"socket_closed"}
-✔ journal fingerprints are keyed HMACs and omit request parameters (28.8906ms)
-{"time":"2026-10-22T16:54:04.848Z","component":"coord-relay","event":"started","agentAddress":"127.0.0.1:55050","clientAddress":"127.0.0.1:55049"}
-{"time":"2026-10-22T16:54:04.850Z","component":"coord-relay","event":"agent_connected","agentId":"test-agent"}
-{"time":"2026-10-22T16:54:04.850Z","component":"coord-relay-agent","event":"connected","serverHost":"127.0.0.1","serverPort":55050}
-{"time":"2026-10-22T16:54:05.125Z","component":"coord-relay","event":"rpc_finished","requestId":"5d94407d-eb4d-45ff-965e-f8843a79d4ec","method":"tasks/list","state":"ok","durationMs":269}
-{"time":"2026-10-22T16:54:05.126Z","component":"coord-relay","event":"agent_disconnected","reason":"socket_closed"}
-✔ over-limit body and concurrency are rejected before dispatch (284.5172ms)
-{"time":"2026-10-22T16:54:05.132Z","component":"coord-relay","event":"started","agentAddress":"127.0.0.1:55059","clientAddress":"127.0.0.1:55058"}
-{"time":"2026-10-22T16:54:05.133Z","component":"coord-relay","event":"agent_connected","agentId":"test-agent"}
-{"time":"2026-10-22T16:54:05.133Z","component":"coord-relay-agent","event":"connected","serverHost":"127.0.0.1","serverPort":55059}
-{"time":"2026-10-22T16:54:05.257Z","component":"coord-relay","event":"rpc_finished","requestId":"f524ec20-8b88-46d0-945a-512dd2f66709","method":"tasks/list","state":"uncertain","durationMs":123}
-{"time":"2026-10-22T16:54:05.396Z","component":"coord-relay","event":"late_or_unknown_result","requestId":"f524ec20-8b88-46d0-945a-512dd2f66709"}
-{"time":"2026-10-22T16:54:05.562Z","component":"coord-relay","event":"rpc_finished","requestId":"f524ec20-8b88-46d0-945a-512dd2f66709","method":"tasks/list","state":"uncertain","durationMs":0}
-{"time":"2026-10-22T16:54:05.564Z","component":"coord-relay","event":"agent_disconnected","reason":"socket_closed"}
-✔ timeout and late coord response stay uncertain and are never replayed (439.6602ms)
-{"time":"2026-10-22T16:54:05.571Z","component":"coord-relay","event":"started","agentAddress":"127.0.0.1:55068","clientAddress":"127.0.0.1:55067"}
-{"time":"2026-10-22T16:54:05.572Z","component":"coord-relay","event":"agent_connected","agentId":"test-agent"}
-{"time":"2026-10-22T16:54:05.572Z","component":"coord-relay-agent","event":"connected","serverHost":"127.0.0.1","serverPort":55068}
-{"time":"2026-10-22T16:54:05.590Z","component":"coord-relay","event":"rpc_finished","requestId":"daa51e38-014f-4610-a75f-93a4f85f6575","method":"tasks/list","state":"uncertain","durationMs":16}
-{"time":"2026-10-22T16:54:05.592Z","component":"coord-relay","event":"agent_disconnected","reason":"socket_closed"}
-✔ oversized coord results are never returned as successful RPC responses (26.5077ms)
-{"time":"2026-10-22T16:54:05.598Z","component":"coord-relay","event":"started","agentAddress":"127.0.0.1:55074","clientAddress":"127.0.0.1:55073"}
-{"time":"2026-10-22T16:54:05.599Z","component":"coord-relay","event":"agent_rejected","reason":"peer_denied"}
-{"time":"2026-10-22T16:54:05.901Z","component":"coord-relay","event":"agent_rejected","reason":"peer_denied"}
-{"time":"2026-10-22T16:54:06.215Z","component":"coord-relay","event":"agent_rejected","reason":"peer_denied"}
-{"time":"2026-10-22T16:54:06.518Z","component":"coord-relay","event":"agent_rejected","reason":"peer_denied"}
-✔ unauthorized network peer is rejected before an agent session is established (1230.8723ms)
-{"time":"2026-10-22T16:54:06.830Z","component":"coord-relay","event":"started","agentAddress":"127.0.0.1:55088","clientAddress":"127.0.0.1:55087"}
-{"time":"2026-10-22T16:54:06.831Z","component":"coord-relay","event":"agent_auth_failed","reason":"invalid_identity_or_proof"}
-{"time":"2026-10-22T16:54:07.144Z","component":"coord-relay","event":"agent_auth_failed","reason":"invalid_identity_or_proof"}
-{"time":"2026-10-22T16:54:07.449Z","component":"coord-relay","event":"agent_auth_failed","reason":"invalid_identity_or_proof"}
-{"time":"2026-10-22T16:54:07.754Z","component":"coord-relay","event":"agent_auth_failed","reason":"invalid_identity_or_proof"}
-✔ incorrect shared secret never authenticates (1233.2156ms)
-{"time":"2026-10-22T16:54:08.064Z","component":"coord-relay","event":"started","agentAddress":"127.0.0.1:55097","clientAddress":"127.0.0.1:55096"}
-{"time":"2026-10-22T16:54:08.065Z","component":"coord-relay","event":"agent_connected","agentId":"test-agent"}
-{"time":"2026-10-22T16:54:08.065Z","component":"coord-relay-agent","event":"connected","serverHost":"127.0.0.1","serverPort":55097}
-{"time":"2026-10-22T16:54:08.066Z","component":"coord-relay","event":"agent_rejected","reason":"already_connected"}
-{"time":"2026-10-22T16:54:08.067Z","component":"coord-relay","event":"agent_disconnected","reason":"socket_closed"}
-{"time":"2026-10-22T16:54:08.124Z","component":"coord-relay","event":"agent_connected","agentId":"test-agent"}
-{"time":"2026-10-22T16:54:08.124Z","component":"coord-relay-agent","event":"connected","serverHost":"127.0.0.1","serverPort":55097}
-{"time":"2026-10-22T16:54:08.145Z","component":"coord-relay","event":"rpc_finished","requestId":"fdebbe5d-9bee-4840-8795-36117c69c254","method":"tasks/list","state":"ok","durationMs":19}
-{"time":"2026-10-22T16:54:08.146Z","component":"coord-relay","event":"agent_disconnected","reason":"socket_closed"}
-✔ agent reconnects after its connection drops and resumes bounded RPC (90.6703ms)
-{"time":"2026-10-22T16:54:08.155Z","component":"coord-relay","event":"started","agentAddress":"127.0.0.1:55105","clientAddress":"127.0.0.1:55104"}
-{"time":"2026-10-22T16:54:08.157Z","component":"coord-relay","event":"agent_connected","agentId":"test-agent"}
-{"time":"2026-10-22T16:54:08.158Z","component":"coord-relay-agent","event":"connected","serverHost":"127.0.0.1","serverPort":55105}
-{"time":"2026-10-22T16:54:08.173Z","component":"coord-relay","event":"rpc_finished","requestId":"b306545f-556f-43cf-9382-1f806c0a7dd9","method":"tasks/list","state":"uncertain","durationMs":14}
-{"time":"2026-10-22T16:54:08.176Z","component":"coord-relay","event":"agent_disconnected","reason":"socket_closed"}
-{"time":"2026-10-22T16:54:08.184Z","component":"coord-relay","event":"started","agentAddress":"127.0.0.1:55105","clientAddress":"127.0.0.1:55109"}
-{"time":"2026-10-22T16:54:08.478Z","component":"coord-relay","event":"agent_connected","agentId":"test-agent"}
-{"time":"2026-10-22T16:54:08.479Z","component":"coord-relay-agent","event":"connected","serverHost":"127.0.0.1","serverPort":55105}
-{"time":"2026-10-22T16:54:08.503Z","component":"coord-relay","event":"rpc_finished","requestId":"b306545f-556f-43cf-9382-1f806c0a7dd9","method":"tasks/list","state":"uncertain","durationMs":0}
-{"time":"2026-10-22T16:54:08.859Z","component":"coord-relay","event":"agent_disconnected","reason":"socket_error"}
-✔ sidecar restart marks dispatched requests uncertain and never replays them (712.2832ms)
+{"time":"2026-10-22T17:04:04.645Z","component":"coord-relay","event":"started","agentAddress":"127.0.0.1:22355","clientAddress":"127.0.0.1:22356"}
+{"time":"2026-10-22T17:04:04.649Z","component":"coord-relay","event":"agent_connected","agentId":"arasaka-coord-agent"}
+{"time":"2026-10-22T17:04:04.649Z","component":"coord-relay-agent","event":"connected","serverHost":"127.0.0.1","serverPort":22355}
+{"time":"2026-10-22T17:04:04.673Z","component":"coord-relay","event":"rpc_finished","requestId":"609c6fc7-4f70-491d-b6b6-2d41cdb4f8c2","method":"tasks/claim","state":"ok","durationMs":17}
+{"time":"2026-10-22T17:04:05.975Z","component":"coord-relay","event":"rpc_finished","requestId":"e883ad76-5887-4617-afb9-0797769a8af8","method":"tasks/complete","state":"rpc_error","durationMs":13}
+{"time":"2026-10-22T17:04:05.979Z","component":"coord-relay","event":"rpc_finished","requestId":"e883ad76-5887-4617-afb9-0797769a8af8","method":"tasks/complete","state":"uncertain","durationMs":0}
+{"time":"2026-10-22T17:04:05.993Z","component":"coord-relay","event":"rpc_finished","requestId":"858d39a9-b332-4727-900c-420934d8f96d","method":"tasks/claim","state":"ok","durationMs":9}
+{"time":"2026-10-22T17:04:06.004Z","component":"coord-relay","event":"rpc_finished","requestId":"ac704a2b-f6c5-4410-b9c6-2dc6eb052dfa","method":"tasks/complete","state":"ok","durationMs":9}
+{"time":"2026-10-22T17:04:06.007Z","component":"coord-relay","event":"rpc_finished","requestId":"ac704a2b-f6c5-4410-b9c6-2dc6eb052dfa","method":"tasks/complete","state":"uncertain","durationMs":0}
+{"time":"2026-10-22T17:04:06.010Z","component":"coord-relay","event":"agent_disconnected","reason":"socket_closed"}
+✔ isolated coord lease fencing and submit replay across the authenticated relay (1561.0328ms)
+✔ whitelist and strict schemas reject side effects and reclaiming list calls (1.4759ms)
+✔ HTTP test listeners avoid Fetch-blocked ports (69.4683ms)
+{"time":"2026-10-22T17:04:04.544Z","component":"coord-relay","event":"started","agentAddress":"127.0.0.1:22362","clientAddress":"127.0.0.1:22361"}
+{"time":"2026-10-22T17:04:04.547Z","component":"coord-relay","event":"agent_connected","agentId":"test-agent"}
+{"time":"2026-10-22T17:04:04.547Z","component":"coord-relay-agent","event":"connected","serverHost":"127.0.0.1","serverPort":22362}
+{"time":"2026-10-22T17:04:04.558Z","component":"coord-relay","event":"request_rejected","code":"method_or_params_denied"}
+{"time":"2026-10-22T17:04:04.563Z","component":"coord-relay","event":"request_rejected","code":"method_or_params_denied"}
+{"time":"2026-10-22T17:04:04.584Z","component":"coord-relay","event":"rpc_finished","requestId":"047f69c8-f577-4267-8ccd-b3d9cfc01003","method":"tasks/list","state":"ok","durationMs":18}
+{"time":"2026-10-22T17:04:04.587Z","component":"coord-relay","event":"rpc_finished","requestId":"047f69c8-f577-4267-8ccd-b3d9cfc01003","method":"tasks/list","state":"uncertain","durationMs":0}
+{"time":"2026-10-22T17:04:04.589Z","component":"coord-relay","event":"agent_disconnected","reason":"socket_closed"}
+✔ authenticated Arasaka agent round-trips through sidecar to coord; denied calls never dispatch (58.1118ms)
+{"time":"2026-10-22T17:04:04.596Z","component":"coord-relay","event":"started","agentAddress":"127.0.0.1:22372","clientAddress":"127.0.0.1:22371"}
+{"time":"2026-10-22T17:04:04.598Z","component":"coord-relay","event":"agent_connected","agentId":"test-agent"}
+{"time":"2026-10-22T17:04:04.598Z","component":"coord-relay-agent","event":"connected","serverHost":"127.0.0.1","serverPort":22372}
+{"time":"2026-10-22T17:04:04.608Z","component":"coord-relay","event":"rpc_finished","requestId":"c0189d13-d1b4-4463-ac4f-f17a7312bd1e","method":"tasks/list","state":"uncertain","durationMs":1}
+{"time":"2026-10-22T17:04:04.608Z","component":"coord-relay","event":"rpc_finished","requestId":"c0189d13-d1b4-4463-ac4f-f17a7312bd1e","method":"tasks/list","state":"uncertain","durationMs":0}
+{"time":"2026-10-22T17:04:04.609Z","component":"coord-relay","event":"rpc_finished","requestId":"c0189d13-d1b4-4463-ac4f-f17a7312bd1e","method":"tasks/list","state":"uncertain","durationMs":1}
+{"time":"2026-10-22T17:04:04.609Z","component":"coord-relay","event":"rpc_finished","requestId":"c0189d13-d1b4-4463-ac4f-f17a7312bd1e","method":"tasks/list","state":"uncertain","durationMs":0}
+{"time":"2026-10-22T17:04:04.609Z","component":"coord-relay","event":"rpc_finished","requestId":"c0189d13-d1b4-4463-ac4f-f17a7312bd1e","method":"tasks/list","state":"uncertain","durationMs":0}
+{"time":"2026-10-22T17:04:04.609Z","component":"coord-relay","event":"rpc_finished","requestId":"c0189d13-d1b4-4463-ac4f-f17a7312bd1e","method":"tasks/list","state":"uncertain","durationMs":0}
+{"time":"2026-10-22T17:04:04.610Z","component":"coord-relay","event":"rpc_finished","requestId":"c0189d13-d1b4-4463-ac4f-f17a7312bd1e","method":"tasks/list","state":"uncertain","durationMs":0}
+{"time":"2026-10-22T17:04:04.731Z","component":"coord-relay","event":"rpc_finished","requestId":"c0189d13-d1b4-4463-ac4f-f17a7312bd1e","method":"tasks/list","state":"ok","durationMs":124}
+{"time":"2026-10-22T17:04:04.732Z","component":"coord-relay","event":"agent_disconnected","reason":"socket_closed"}
+✔ concurrent duplicate request ids are dispatched at most once (142.2829ms)
+{"time":"2026-10-22T17:04:04.740Z","component":"coord-relay","event":"started","agentAddress":"127.0.0.1:22388","clientAddress":"127.0.0.1:22387"}
+{"time":"2026-10-22T17:04:04.741Z","component":"coord-relay","event":"agent_connected","agentId":"test-agent"}
+{"time":"2026-10-22T17:04:04.741Z","component":"coord-relay-agent","event":"connected","serverHost":"127.0.0.1","serverPort":22388}
+{"time":"2026-10-22T17:04:04.757Z","component":"coord-relay","event":"rpc_finished","requestId":"8ebc3296-a464-46b5-a922-aae32e565a7d","method":"tasks/list","state":"ok","durationMs":14}
+{"time":"2026-10-22T17:04:04.759Z","component":"coord-relay","event":"agent_disconnected","reason":"socket_closed"}
+✔ journal fingerprints are keyed HMACs and omit request parameters (26.9227ms)
+{"time":"2026-10-22T17:04:04.766Z","component":"coord-relay","event":"started","agentAddress":"127.0.0.1:22394","clientAddress":"127.0.0.1:22393"}
+{"time":"2026-10-22T17:04:04.767Z","component":"coord-relay","event":"agent_connected","agentId":"test-agent"}
+{"time":"2026-10-22T17:04:04.767Z","component":"coord-relay-agent","event":"connected","serverHost":"127.0.0.1","serverPort":22394}
+{"time":"2026-10-22T17:04:05.041Z","component":"coord-relay","event":"rpc_finished","requestId":"7a443781-bd6c-46c6-b0c7-3e9ead852149","method":"tasks/list","state":"ok","durationMs":269}
+{"time":"2026-10-22T17:04:05.043Z","component":"coord-relay","event":"agent_disconnected","reason":"socket_closed"}
+✔ over-limit body and concurrency are rejected before dispatch (284.4791ms)
+{"time":"2026-10-22T17:04:05.050Z","component":"coord-relay","event":"started","agentAddress":"127.0.0.1:22402","clientAddress":"127.0.0.1:22401"}
+{"time":"2026-10-22T17:04:05.051Z","component":"coord-relay","event":"agent_connected","agentId":"test-agent"}
+{"time":"2026-10-22T17:04:05.051Z","component":"coord-relay-agent","event":"connected","serverHost":"127.0.0.1","serverPort":22402}
+{"time":"2026-10-22T17:04:05.167Z","component":"coord-relay","event":"rpc_finished","requestId":"aac2acba-cb49-4823-ad72-5bb25938ad7c","method":"tasks/list","state":"uncertain","durationMs":114}
+{"time":"2026-10-22T17:04:05.313Z","component":"coord-relay","event":"late_or_unknown_result","requestId":"aac2acba-cb49-4823-ad72-5bb25938ad7c"}
+{"time":"2026-10-22T17:04:05.472Z","component":"coord-relay","event":"rpc_finished","requestId":"aac2acba-cb49-4823-ad72-5bb25938ad7c","method":"tasks/list","state":"uncertain","durationMs":0}
+{"time":"2026-10-22T17:04:05.475Z","component":"coord-relay","event":"agent_disconnected","reason":"socket_closed"}
+✔ timeout and late coord response stay uncertain and are never replayed (431.1198ms)
+{"time":"2026-10-22T17:04:05.480Z","component":"coord-relay","event":"started","agentAddress":"127.0.0.1:22410","clientAddress":"127.0.0.1:22409"}
+{"time":"2026-10-22T17:04:05.481Z","component":"coord-relay","event":"agent_connected","agentId":"test-agent"}
+{"time":"2026-10-22T17:04:05.481Z","component":"coord-relay-agent","event":"connected","serverHost":"127.0.0.1","serverPort":22410}
+{"time":"2026-10-22T17:04:05.498Z","component":"coord-relay","event":"rpc_finished","requestId":"da4da524-3181-46d8-b3f6-84a711263a9c","method":"tasks/list","state":"uncertain","durationMs":16}
+{"time":"2026-10-22T17:04:05.499Z","component":"coord-relay","event":"agent_disconnected","reason":"socket_closed"}
+✔ oversized coord results are never returned as successful RPC responses (23.7924ms)
+{"time":"2026-10-22T17:04:05.504Z","component":"coord-relay","event":"started","agentAddress":"127.0.0.1:22416","clientAddress":"127.0.0.1:22415"}
+{"time":"2026-10-22T17:04:05.505Z","component":"coord-relay","event":"agent_rejected","reason":"peer_denied"}
+{"time":"2026-10-22T17:04:05.812Z","component":"coord-relay","event":"agent_rejected","reason":"peer_denied"}
+{"time":"2026-10-22T17:04:06.119Z","component":"coord-relay","event":"agent_rejected","reason":"peer_denied"}
+{"time":"2026-10-22T17:04:06.422Z","component":"coord-relay","event":"agent_rejected","reason":"peer_denied"}
+✔ unauthorized network peer is rejected before an agent session is established (1229.8221ms)
+{"time":"2026-10-22T17:04:06.735Z","component":"coord-relay","event":"started","agentAddress":"127.0.0.1:22430","clientAddress":"127.0.0.1:22429"}
+{"time":"2026-10-22T17:04:06.736Z","component":"coord-relay","event":"agent_auth_failed","reason":"invalid_identity_or_proof"}
+{"time":"2026-10-22T17:04:07.052Z","component":"coord-relay","event":"agent_auth_failed","reason":"invalid_identity_or_proof"}
+{"time":"2026-10-22T17:04:07.361Z","component":"coord-relay","event":"agent_auth_failed","reason":"invalid_identity_or_proof"}
+{"time":"2026-10-22T17:04:07.664Z","component":"coord-relay","event":"agent_auth_failed","reason":"invalid_identity_or_proof"}
+✔ incorrect shared secret never authenticates (1237.1824ms)
+{"time":"2026-10-22T17:04:07.973Z","component":"coord-relay","event":"started","agentAddress":"127.0.0.1:22438","clientAddress":"127.0.0.1:22437"}
+{"time":"2026-10-22T17:04:07.974Z","component":"coord-relay","event":"agent_connected","agentId":"test-agent"}
+{"time":"2026-10-22T17:04:07.974Z","component":"coord-relay-agent","event":"connected","serverHost":"127.0.0.1","serverPort":22438}
+{"time":"2026-10-22T17:04:07.975Z","component":"coord-relay","event":"agent_rejected","reason":"already_connected"}
+{"time":"2026-10-22T17:04:07.975Z","component":"coord-relay","event":"agent_disconnected","reason":"socket_closed"}
+{"time":"2026-10-22T17:04:08.029Z","component":"coord-relay","event":"agent_connected","agentId":"test-agent"}
+{"time":"2026-10-22T17:04:08.029Z","component":"coord-relay-agent","event":"connected","serverHost":"127.0.0.1","serverPort":22438}
+{"time":"2026-10-22T17:04:08.049Z","component":"coord-relay","event":"rpc_finished","requestId":"2defa556-b22a-4512-886f-dd36adddd814","method":"tasks/list","state":"ok","durationMs":19}
+{"time":"2026-10-22T17:04:08.050Z","component":"coord-relay","event":"agent_disconnected","reason":"socket_closed"}
+✔ agent reconnects after its connection drops and resumes bounded RPC (85.2944ms)
+{"time":"2026-10-22T17:04:08.057Z","component":"coord-relay","event":"started","agentAddress":"127.0.0.1:22446","clientAddress":"127.0.0.1:22445"}
+{"time":"2026-10-22T17:04:08.059Z","component":"coord-relay","event":"agent_connected","agentId":"test-agent"}
+{"time":"2026-10-22T17:04:08.059Z","component":"coord-relay-agent","event":"connected","serverHost":"127.0.0.1","serverPort":22446}
+{"time":"2026-10-22T17:04:08.086Z","component":"coord-relay","event":"rpc_finished","requestId":"8062865f-5ea0-429e-892e-17bf071b383a","method":"tasks/list","state":"uncertain","durationMs":25}
+{"time":"2026-10-22T17:04:08.089Z","component":"coord-relay","event":"agent_disconnected","reason":"socket_closed"}
+{"time":"2026-10-22T17:04:08.096Z","component":"coord-relay","event":"started","agentAddress":"127.0.0.1:22446","clientAddress":"127.0.0.1:22450"}
+{"time":"2026-10-22T17:04:08.389Z","component":"coord-relay","event":"agent_connected","agentId":"test-agent"}
+{"time":"2026-10-22T17:04:08.389Z","component":"coord-relay-agent","event":"connected","serverHost":"127.0.0.1","serverPort":22446}
+{"time":"2026-10-22T17:04:08.400Z","component":"coord-relay","event":"rpc_finished","requestId":"8062865f-5ea0-429e-892e-17bf071b383a","method":"tasks/list","state":"uncertain","durationMs":0}
+{"time":"2026-10-22T17:04:08.754Z","component":"coord-relay","event":"agent_disconnected","reason":"socket_closed"}
+✔ sidecar restart marks dispatched requests uncertain and never replays them (702.9066ms)
 ℹ tests 13
 ℹ suites 0
 ℹ pass 13
@@ -99,4 +99,4 @@
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 4419.7266
+ℹ duration_ms 4412.2537

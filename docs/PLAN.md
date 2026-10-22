@@ -198,5 +198,5 @@ Windows 本机及 Windows Actions 的真实测试、构建与产物为准。
 - 不足十张允许；不创建空目录 121/122 任务。初始化器仅 dry-run 生成 121 任务请求；本阶段未创建 Batch/任务。最终图像分类及真实 Agent 操作 NOT_RUN。
 ### G5 部署与验收（PARTIAL：生产部署 NOT_RUN）
 - 本地/隔离库先完成分层回归、六身份 canary、completion hook 崩溃复测，再经 fork Windows Actions 编译 release 并核验 artifact 哈希；备份现有 Arasaka coord DB/WAL/EXE、Sidecar、Feathers；仅最小受控服务重启，验证原 F1/F2/F3 读写/OAuth 与 13011/13012 路由不受影响。
-- Windows 全量门 `pwsh -NoProfile -File scripts/verify.ps1 -Stage g5` 于 2026-10-22T16:53:24Z 起执行，fmt/clippy/tests/release/Relay/MCP/Python 均 exit 0；真实 Fork Actions 与 artifact 仍待核验。因 G1 身份及 G3 低权限动作执行门未通过，不执行生产部署、备份、服务重启、正式队列初始化或生产 Agent 启动。详见 `verification/PHASE_G5.md`。
+- Windows 全量门 `pwsh -NoProfile -File scripts/verify.ps1 -Stage g5` 最新重跑于 2026-10-22T17:03:25Z，fmt/clippy/tests/release/Relay/MCP/Python 均 exit 0。Fork Actions run `39818335937` 对提交 `8a71b0c7ae9d32491cde525640426b28069dccf0` 于 `2026-10-22T17:01:32Z` 完成，Windows 2022 job 全部 success；artifact `12444295367` 内 `coord.exe` SHA-256 为 `15fcf44c...72885327f`，ZIP SHA-256 为 `8b31dc86...7682f9b5`。CI/artifact 子门 PASS，但因 G1 独立身份及 G3 低权限执行/发布门未通过，G5 总体仍 PARTIAL、生产部署 NOT_RUN；没有备份、服务重启、正式队列初始化或生产 Agent 启动。详见 `verification/PHASE_G5.md`。
 - 分阶段验收文档 docs/verification/PHASE_G0..G5.md；不得删历史、force-push、修改其他项目 Access 策略或重启 Arasaka 整机。G1/G2/G3/G5 未通过项标记 PARTIAL，不能据此将 F3-R 提升为 PASS。

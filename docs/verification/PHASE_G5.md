@@ -7,7 +7,7 @@ deployment is **NOT_RUN** because G1 and G3 production gates remain open.
 ## Local Windows Gate
 
 Command: `pwsh -NoProfile -File scripts/verify.ps1 -Stage g5`.
-Started `2026-10-22T16:53:24Z`; all steps exited **0**:
+Latest local re-run started `2026-10-22T17:03:25Z`; all steps exited **0**:
 
 | Check | Exit | Evidence |
 |---|---:|---|
@@ -20,10 +20,28 @@ Started `2026-10-22T16:53:24Z`; all steps exited **0**:
 | `python -m unittest discover -s scripts/phase_g -p test_phase_g_tools.py -v` | 0, 6/6 | `stage-g5-phase-g-tools.log` |
 
 The local Release executable SHA-256 is
-`7e905b97831021114f319be8edcc644a33308cfb0ae52142eadc5908f1ee3fac`. This is
-not a deployed binary or a GitHub Actions artifact. Fork Actions run and
-artifact ID/hash are **PENDING** until the scoped commit is pushed and its
-workflow completes.
+`7e905b97831021114f319be8edcc644a33308cfb0ae52142eadc5908f1ee3fac`. It is
+not a deployed binary.
+
+## Fork GitHub Actions
+
+Result: **PASS** for the automated Windows gate and artifact production.
+
+- Fork branch: `codex/phase-g-agent-actions`.
+- Commit: `8a71b0c7ae9d32491cde525640426b28069dccf0`.
+- Workflow run: `39818335937`, push event, Windows 2022, conclusion `success`;
+  run URL: https://github.com/lieyanbang/coord/actions/runs/39818335937.
+- The job completed at `2026-10-22T17:01:32Z`. fmt, clippy, Rust tests,
+  release build, Relay tests, Coord MCP tests, Phase G utility tests, and
+  artifact upload all concluded `success`.
+- Artifact `coord-windows-2022`, ID `12444295367`, was not expired when checked.
+  Downloaded ZIP SHA-256:
+  `8b31dc865e074c370872d8a4f148dbdd2c31657db89aaf1b4919c95f7682f9b5`.
+  Its sole entry was `coord.exe` (10,760,192 bytes), SHA-256
+  `15fcf44c34d299de43870a2e28c29efd0a006552d36e5200a566fbe72885327f`.
+- The local Release binary hash differs from the Actions artifact hash. The
+  source commit and both build results are identified above; reproducible
+  byte-for-byte builds were not established.
 
 ## Production Boundary
 
@@ -40,5 +58,7 @@ independently protected conversation-bound identity exists and passes
 positive/negative tests; (2) Action execution uses a verified least-privilege
 account and ACLs with reviewed native publisher binaries; and (3) the current
 production OAuth source hash discrepancy is reconciled while F3-R remains
-PARTIAL. No formal 121-task Batch or Agent was started. Human/platform
-intervention is required to resolve the identity and production-account gates.
+PARTIAL. The CI and artifact sub-gate passes, but overall G5 remains
+**PARTIAL** and production deployment is **NOT_RUN**. No formal 121-task Batch
+or Agent was started. Human/platform intervention is required to resolve the
+identity and production-account gates.
