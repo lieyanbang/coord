@@ -547,3 +547,49 @@ CoordMCP reported **12/12 passed**. Timings and exact per-check start times are
 in `stage-f3-r-checks.json`. This gate and the Actions run verify the source;
 they do not close the production identity-negative or isolated write/readback
 gates.
+
+## R4 isolated ChatGPT Web write/readback follow-up (2026-10-22)
+
+Following the user's explicit authorization for a temporary isolated test task,
+the ChatGPT Web Coord connector performed the exact task lifecycle against
+`a0aefa7d-aed2-4287-9f30-4a30421e8c7a` only. The initial exact `coord_get_task`
+confirmed the expected test task name and `pending` state. An initial attempt
+stopped before mutation because the connector binds its caller identity and
+does not accept `agent_id`; no claim or write occurred in that attempt. After
+the user-authorized one-time Coord permission, the connector used its bound
+`coord-relay-agent` identity for the exact-ID operation (not claim-next):
+
+- `coord_claim_task`: success, `lease_seconds=180`, attempt 1.
+- `coord_submit_result`: success (`ok=true`), `post_ack=false`, no retry and no
+  ACK. The result contained only marker `f3-r-r4-9cd9d081` and description
+  `isolated ChatGPT Web R4 write/readback test`.
+- `coord_get_task` on the same ID: `completed`; marker and description matched
+  exactly; attempt/attempt_count were both 1, `error=null`; completed at
+  `2026-10-22T13:29:03.953Z`.
+
+The browser-visible final readback was **PASS**. No `tasks_list`, claim-next,
+other task ID, batch operation, duplicate submission, or ACK was used. This
+closes the isolated task write/readback subgate and supersedes the earlier
+`NOT_RUN` status for that subgate. It does not independently capture OAuth
+callback/token exchange or separate `initialize`/`tools/list` responses, and
+production rejection of a non-owner Access identity remains **NOT_VERIFIED**.
+R4 and F3-R/F3 therefore remain **PARTIAL**; no overall PASS is inferred.
+
+## Windows Gate rerun after the R4 evidence update
+
+`pwsh -NoLogo -NoProfile -File scripts/verify.ps1 -Stage f3-r` ran from
+`2026-10-22T13:34:19.298Z` through `2026-10-22T13:34:56.019Z` and exited 0.
+All five checks exited 0:
+
+| Check | Exit | Result |
+| --- | ---: | --- |
+| `cargo fmt --all -- --check` | 0 | pass |
+| `cargo clippy --all-targets --all-features --locked -- -D warnings` | 0 | pass |
+| `cargo test --all-features --locked` | 0 | pass |
+| `cargo build --release --locked` | 0 | pass |
+| `npm test --prefix relay/coord-mcp` | 0 | 12/12 passed |
+
+Per-command start times, durations, exits and raw output are retained in
+`stage-f3-r-checks.json` and the corresponding `stage-f3-r-*.log` files. This
+is local Windows source verification only; production wrong-identity denial
+remains **NOT_VERIFIED**.
