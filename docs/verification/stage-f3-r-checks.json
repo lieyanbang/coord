@@ -1,37 +1,37 @@
 [
   {
-    "started": "2026-10-22T02:53:01.9149688Z",
-    "command": "cargo fmt --all -- --check",
     "exit": 0,
+    "seconds": 0.6723399,
     "log": "docs/verification/stage-f3-r-fmt.log",
-    "seconds": 0.6646055
+    "command": "cargo fmt --all -- --check",
+    "started": "2026-10-22T07:10:00.6851130Z"
   },
   {
-    "started": "2026-10-22T02:53:02.6597858Z",
-    "command": "cargo clippy --all-targets --all-features --locked -- -D warnings",
     "exit": 0,
+    "seconds": 1.4357437,
     "log": "docs/verification/stage-f3-r-clippy.log",
-    "seconds": 1.2478545
+    "command": "cargo clippy --all-targets --all-features --locked -- -D warnings",
+    "started": "2026-10-22T07:10:01.4283716Z"
   },
   {
-    "started": "2026-10-22T02:53:03.9105684Z",
-    "command": "cargo test --all-features --locked",
     "exit": 0,
+    "seconds": 35.0892098,
     "log": "docs/verification/stage-f3-r-test.log",
-    "seconds": 34.5382418
+    "command": "cargo test --all-features --locked",
+    "started": "2026-10-22T07:10:02.8663508Z"
   },
   {
-    "started": "2026-10-22T02:53:38.4510214Z",
-    "command": "cargo build --release --locked",
     "exit": 0,
+    "seconds": 0.6404195,
     "log": "docs/verification/stage-f3-r-build.log",
-    "seconds": 0.5871504
+    "command": "cargo build --release --locked",
+    "started": "2026-10-22T07:10:37.9574297Z"
   },
   {
-    "started": "2026-10-22T02:53:39.0413263Z",
-    "command": "npm test --prefix relay/coord-mcp",
     "exit": 0,
+    "seconds": 1.5694014,
     "log": "docs/verification/stage-f3-r-coord-mcp-tests.log",
-    "seconds": 1.6397095
+    "command": "npm test --prefix relay/coord-mcp",
+    "started": "2026-10-22T07:10:38.6005758Z"
   }
 ]

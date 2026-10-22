@@ -429,3 +429,27 @@ tests, locked release build, and CoordMCP tests all exited 0. CoordMCP reported
 `stage-f3-r-checks.json` and the matching `stage-f3-r-*.log` files. This local
 gate verifies source regressions only and does not change the R3/R4 acceptance
 status.
+
+## R4 browser follow-up (2026-10-22)
+
+At approximately `07:00:53Z`, Edge showed a ChatGPT OAuth request at the
+password-free `Authorize Coord MCP` page with a new-looking authorization URL;
+the query values are intentionally omitted. At approximately `07:03Z`, one
+browser `Authorize` click was issued. A subsequent browser snapshot still
+showed the same authorize URL and consent form; no callback or connected-state
+confirmation was observed. The POST result and whether a short-lived code was
+issued are **UNVERIFIED**. No token exchange, MCP call, batch/task write, or
+production queue operation was observed.
+
+The application code sets the authorization-form challenge TTL to five
+minutes. By `07:08:59Z` the displayed request was treated as stale and was not
+replayed or refreshed. This browser surface did not expose the ChatGPT
+connector's resulting status. R4 remains **PARTIAL**; start a new association
+from ChatGPT's Coord connector settings and capture the callback/connected
+state before proceeding to MCP protocol checks. No service configuration or
+production task data was changed in this follow-up.
+
+The local `scripts/verify.ps1 -Stage f3-r` gate was rerun from
+`2026-10-22T07:10:00Z` through `07:10:40Z`; fmt, clippy, tests, release build,
+and CoordMCP tests all exited 0 (CoordMCP 12/12). The updated command summary
+and logs are `stage-f3-r-checks.json` and `stage-f3-r-*.log`.
