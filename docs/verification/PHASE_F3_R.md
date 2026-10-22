@@ -1,6 +1,6 @@
 # Phase F3-R: Cloudflare Access identity authorization
 
-Last updated 2026-10-23 00:06 Australia/Brisbane (2026-10-22 14:06 UTC).
+Last updated 2026-10-23 00:17:38 Australia/Brisbane (2026-10-22 14:17:38 UTC).
 Overall result: **PARTIAL**. R0, R1 and R2 pass. The latest recorded
 Cloudflare read-back shows the approved exact browser authorize target in the
 existing Access application; the owner session reached the password-free
@@ -643,7 +643,7 @@ remains **NOT_VERIFIED**.
 
 The Windows closeout gate ran with
 `pwsh -NoLogo -NoProfile -File scripts/verify.ps1 -Stage f3-r` from
-`2026-10-22T14:05:19Z` to approximately `14:05:58Z`, exit 0. All five checks
+`2026-10-22T14:16:51Z` to approximately `14:17:32Z`, exit 0. All five checks
 exited 0:
 
 | Check | Exit | Result |
@@ -655,8 +655,11 @@ exited 0:
 | `npm test --prefix relay/coord-mcp` | 0 | 12/12 passed |
 
 Per-command timings and output are in `stage-f3-r-checks.json` and the matching
-`stage-f3-r-*.log` files. Before this documentation closeout, the public
-GitHub Actions API showed Fork run [39789443574](https://github.com/lieyanbang/coord/actions/runs/39789443574)
-completed `success` for commit `9e666504f1265bcaecc1fab42b4f3d83e4d3c5a6`
-(`2026-10-22T13:43:54Z`–`13:48:14Z`). That run predates the documentation-only
-closeout commit; no Actions result for the closeout commit is inferred here.
+`stage-f3-r-*.log` files. Fork Windows Actions run
+[39793009407](https://github.com/lieyanbang/coord/actions/runs/39793009407)
+completed `success` for closeout commit
+`83569f5357c4dd935e57092e4f38eecb1b2a0045` at `2026-10-22T14:16:12Z` (started
+`14:07:34Z`). The Windows 2022 job's 29 steps all completed successfully,
+including fmt, clippy, tests, release build, relay protocol/lease tests,
+CoordMCP OAuth/HTTP tests and artifact upload. This is source/CI verification;
+it does not close the production non-owner denial or callback-source-hash gaps.
