@@ -1,15 +1,18 @@
 # Phase F3-R: Cloudflare Access identity authorization
 
-Recorded 2026-10-22 09:55 Australia/Brisbane (2026-10-21 23:55 UTC).
-Overall result: **PARTIAL**. R1 implementation and R2 local verification pass.
-R0 is partial because the actual Access application/policy cannot be read with
-the available Cloudflare credential. R3 production deployment and R4 ChatGPT
-Web authorization remain **NOT_RUN** at this revision. Phase F3 stays PARTIAL.
+Recorded 2026-10-22 10:19 Australia/Brisbane (2026-10-22 00:19 UTC).
+Overall result: **PARTIAL**. R1 and R2 pass; R0 remains partial because the
+actual Access application/policy is not readable with the available Cloudflare
+credential. R3 code deployment and Feathers reload are complete, but the
+authorize path is not protected by a verified Access application and returns
+503 with missing Access configuration. R3 is therefore **PARTIAL**. R4 ChatGPT
+Web authorization remains **NOT_RUN**. Phase F3 stays PARTIAL.
 
 `TASK.md` was read-only throughout; SHA-256 remained
 `780ee0eabbee510cdd7ad6c33d561698b19075d550e20d4d91b2a9725775fef8`.
-No production service, Access policy, OpenResty configuration, Feathers code,
-Sidecar, coord database, or 13011/13012 listener was changed in this revision.
+The later controlled production follow-up restarted only
+`feathersjsapp.service`. No Access policy, OpenResty configuration, Sidecar,
+coord database, Arasaka service, or 13011/13012 listener was changed.
 
 ## R0: Read-only audit
 
@@ -153,23 +156,117 @@ is in [`stage-f3-r-host-oauth.log`](stage-f3-r-host-oauth.log).
 | `cargo build --release --locked` | 0 | `stage-f3-r-build.log` |
 | `npm test --prefix relay/coord-mcp` | 0 | `stage-f3-r-coord-mcp-tests.log` |
 
-Fork Windows Actions has not yet run for this revision. Local checks do not
-substitute for that run.
+Fork Windows Actions run
+[39696859131](https://github.com/lieyanbang/coord/actions/runs/39696859131)
+completed successfully for commit
+`a640ce8427ae096f2f5ec488a8d16d9e8c074219` at `2026-10-22T00:03:08Z`.
+The Windows-2022 job completed with no failed steps. Artifact
+`coord-windows-2022` (`12390883361`, 4,226,357 bytes) is present and not
+expired. The run and artifact metadata were read from GitHub's public Actions
+API at `2026-10-22T00:13Z`.
 
-## R3 and R4
+The complete local gate was rerun before this documentation closeout with
+`pwsh -NoLogo -NoProfile -File scripts/verify.ps1 -Stage f3-r`, from
+`00:17:31Z` through `00:18:10Z`. All five checks exited 0: fmt, clippy,
+all-feature tests, release build, and CoordMCP tests (12/12). Fresh command
+timings and output are in `stage-f3-r-checks.json` and the matching
+`stage-f3-r-*.log` files.
 
-- **R3 NOT_RUN:** no production file was deployed and no service was restarted
-  in this revision. The Access app/path/policy cannot yet be read or backed up,
-  and the exact AUD/owner email are not verified. Deploying a positive login
-  configuration with guessed values would not be safe. Existing production
-  backup is ready for a later controlled deployment. Cloudflare policy writes,
-  OpenResty reload, and Feathers restart were not attempted.
-- **R4 NOT_RUN:** no ChatGPT Web login or public authenticated MCP call was
-  performed. Simulated JWTs and local MCP calls are only automated evidence.
+## R3: Controlled production deployment
 
-Next required evidence is an authorized Cloudflare credential with Access Apps
-and Policies read/edit for the `lieyanbang.com` account (or an authenticated
-dashboard session), so the exact `lieyanbang-auth` policy can be reviewed and
-backed up, then the CoordMCP authorize path can be protected and the actual
-owner identity confirmed. Only after that can R3 production verification and
-the user-facing R4 browser flow proceed. F3 remains **PARTIAL** until both pass.
+**Result: PARTIAL.** Deployment and runtime loading succeeded; actual Cloudflare
+Access policy integration is still missing and is not inferred from mock tests
+or the existing RemoteControl application.
+
+The root-only rollback snapshot created before deployment remains at
+`/var/backups/coord-mcp-f3-r-20261021T233725Z/` (`700 root:root`). Its original
+CoordMCP source hashes were verified again before the reload:
+`coord-mcp/index.cjs`=`d0438d074a9ee7f03c8171f719e2d0a63cfeaa8195bf04f29321872f5d1bb3e1`,
+`coord-mcp/oauth.cjs`=`9e4d3a2adf595149b3eb672250add56975c5c434d754fd434db23c7576479a8d`.
+The current deployed source hashes match the tested revision:
+`index.cjs`=`e2a4c125f6742f915662707ff123f3eb0a3e3ec6b64ae2818baf1c3ea7cd5db3`,
+`oauth.cjs`=`48406ef0f3fde42fcc4cf8cdc7def1d51f047845d38cce51f738c7c53a51423c`.
+
+At `2026-10-22T00:09Z`, direct SSH commands
+`node --check /opt/app/feathers/realtimetext/lib/coord-mcp/index.cjs` and
+`node --check /opt/app/feathers/realtimetext/lib/coord-mcp/oauth.cjs` both
+exited 0. At `00:10Z`,
+`sudo -n systemctl restart feathersjsapp.service` exited 0. Read-back showed
+`active/running`, MainPID `94312`, `NRestarts=0`, start time
+`2026-10-22 00:10:00 UTC`. `systemctl is-active feathersjsapp.service
+openresty.service coord-relay.service tailscaled.service` exited 0 and printed
+`active` for all four units. The post-restart process-environment check
+`sudo -n grep -aoE "COORD_MCP_ACCESS_(TEAM_DOMAIN|APPLICATION_AUD|ALLOWED_EMAILS)"
+/proc/94312/environ | sort -u` exited 0 with no matching variable names.
+
+The post-restart listener check (`sudo ss -ltnp`, exit 0) showed:
+
+| Port | Binding / owner |
+| --- | --- |
+| 13010 | `127.0.0.1`, Feathers Node PID `94312` |
+| 13011 | `100.116.134.114`, existing OpenResty workers |
+| 13012 | `100.116.134.114`, Sidecar Node PID `90506` |
+| 13013 | `127.0.0.1`, Sidecar Node PID `90506` |
+
+The established-session check still showed BT-7274 and Arasaka sessions on
+13011 and Arasaka `100.89.6.126` on 13012. OpenResty, Sidecar, Tailscale,
+13011/13012, and Arasaka were not restarted or reconfigured. Sidecar
+`GET http://127.0.0.1:13013/healthz` returned HTTP 200 with
+`state=READY`, `agentConnected=true`, `pending=0` at `00:11:09Z`.
+
+For the real Sidecar-to-coord path, a one-shot Node probe ran as `coord-relay`
+over direct SSH. It loaded the bearer from the existing protected file in
+memory and sent only `tasks/list` with `skip_reclaim=true`, `limit=1` to
+`127.0.0.1:13013/v1/rpc`. It returned HTTP 200, `state=ok`, one item, exit 0.
+The task database was not mutated; the Sidecar's normal request journal records
+this read-only call. No bearer or task contents were emitted.
+
+Arasaka read-only checks also passed at `00:14Z`: Servy CLI
+`status --name CoordRelayAgent --quiet` returned Running, exit 0. The local
+coord health command exited 0 and returned `READY`, zero consecutive failures,
+4 ms total latency, `tasks_list=PASS` and `sqlite_read_only=PASS`; its temporary
+status file was removed. No Arasaka service or machine restart occurred.
+
+Public requests used
+`curl.exe --max-time 25 --silent --show-error --dump-header - --output NUL`
+without following redirects; the matrix was rechecked at approximately
+`2026-10-22T00:15Z` (each curl exit 0):
+
+| GET path | HTTP | Observation |
+| --- | ---: | --- |
+| `/app/CoordMCP/` | 401 | OAuth Bearer challenge |
+| `/app/CoordMCP/.well-known/oauth-protected-resource/mcp` | 200 | Public metadata |
+| `/app/CoordMCP/.well-known/oauth-authorization-server` | 200 | Public metadata |
+| `/app/CoordMCP/oauth/authorize` | 503 | Access configuration missing; fail closed, no redirect |
+| Same authorize URL with `cf-access-jwt-assertion: forged` | 503 | No authorization code issued |
+| `/app/RemoteControlMCP/` | 302 | Existing Access login host |
+| `/app/RemoteControlMCP2/` | 302 | Existing Access login host |
+| `/app/RemoteControlMCP3/` | 401 | Existing Feathers challenge unchanged |
+| `/mcp` | 401 | Existing Feathers challenge unchanged |
+
+`wrangler whoami` exited 0 for Wrangler `4.128.0`; the active OAuth token
+reported account/zone/Workers scopes but no Access Apps/Policies read or edit
+scope. The prior read-only Access Apps API response contained zero items and
+was not treated as authoritative. The exact app paths, policies, AUD, team
+domain and allowed owner identity therefore remain **UNVERIFIED**. No Access
+policy was changed and no positive Access JWT configuration was guessed. The
+authorize URL currently has no Cloudflare Access redirect, so R3 cannot pass.
+OpenResty was not reloaded; no RemoteControl route or shared OAuth logic was
+changed.
+
+## R4: ChatGPT Web end-to-end
+
+**NOT_RUN.** No ChatGPT Web login/consent, real Access identity assertion,
+public OAuth token exchange, or authenticated public MCP tool call was
+performed. Mock JWT tests and the production Sidecar read-only probe do not
+substitute for this gate.
+
+Next steps: provide an authenticated Cloudflare dashboard session or a
+credential with Access Apps/Policies read and edit for the `lieyanbang.com`
+account. Read and back up the actual `lieyanbang-auth` application/policy,
+confirm its team domain, AUD and allowed owner identity, then protect only the
+CoordMCP browser authorize route and set the matching protected Feathers
+environment values. Re-run the real positive/negative Access flow and R3
+regression. Only then can ChatGPT Web complete the real OAuth consent, token
+exchange, `initialize`, `tools/list`, read-only `tasks/list`, and isolated
+write/readback. F3 remains **PARTIAL** until all required gates pass.

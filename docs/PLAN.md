@@ -145,3 +145,26 @@ Windows 本机及 Windows Actions 的真实测试、构建与产物为准。
 - 每个 Gate 完成后同步 `docs/verification/` 证据、更新本节进度、生成独立 Git commit 并通过 Fork 的 Windows Actions；部署不擅自创建 Release/tag、不推送上游。
 - 最终输出：Arasaka 服务名/运行账户、二进制 SHA、Servy 参数/健康路径、备份/恢复程序、故障演练记录、中转公网 URL、OAuth/连接器验收与残余风险。敏感信息绝不写文档/日志。
 - 当前状态：F0 部署前审计 PASS。Servy Host 与 Windows 整机重启恢复、coord 与 Servy 托管服务健康、健康监护、coord WAL/在线备份均有实测证据。Servy 10.2.0 对应官方源码确认 `UNICODE_NOCASE` 使用 `StringComparison.OrdinalIgnoreCase`；相同 Provider/SQLite 版本的只读校验程序通过 SQLite Online Backup API 创建快照，`quick_check=ok`、`integrity_check=ok`，唯一索引、SchemaInfo 与七个配置行均核实通过。本机 F1 门禁与 Fork Windows Actions runs `39600633448`、`39602363789` 均通过，F1 为 PASS。F2 sidecar 与早期优先级 -10 nftables 过滤器已部署，生产 BT-7274 TCP 负向、Arasaka 认证 `tasks/list` E2E、13011/服务回归、本机 Gate 13/13、测试修复 Actions `39635980349` 及收口提交 Actions `39636977435`（全部步骤成功并上传 artifact）均通过，F2 为 PASS。F3 的独立 CoordMCP OAuth/MCP 模块与 `/app/CoordMCP/` 精确路由已部署；公网未认证 challenge/metadata、旧路由回归、生产 Sidecar 读写闭环和 Windows Actions `39682968742` 均通过。ChatGPT Web 授权和公网认证工具调用仍未执行，因此 F3 保持 PARTIAL，不能宣称完整 E2E PASS。`TASK.md` 保持只读。详见 `verification/PHASE_F2.md`、`verification/phase-f2-acl-deployment-20261022.md` 与 `verification/PHASE_F3.md`。
+
+
+### F3-R — 强制修正：Cloudflare Access 用户身份认证（2026-10-22，用户新授权）
+**目标约束（高于此前 F3 密码 OAuth 设计）：** CoordMCP 的真实用户登录必须由现有 Cloudflare Access 完成，不得显示或要求输入独立 Owner Password；FeathersJS 可保留 OAuth 2.1 所需的 DCR、S256 PKCE、authorization code、access/refresh token 和 MCP Bearer 校验，但签发 authorization code 前必须验证真实 Access 身份及允许策略。此前以密码表单为基础的 F3 实现不符合目标，现有 F3 PARTIAL 不可提升为 PASS。
+- **参考而非照搬：** `C:\Users\leiya\Desktop\project\DesktopCommanderMCP\SELF_HOSTED_REMOTE.md`、OpenResty locations、服务器 `/opt/app/feathers/realtimetext/lib/desktop-commander/oauth.cjs`。其中 RemoteControlMCP 与 MCP2 使用 `lieyanbang-auth` Access 保护；MCP3 例外并沿用 Feathers 密码表单，该模式明确不采用。Remote Control 未来整体迁移 Access 是跨项目长期方向，**本次不得改其原有路由、OAuth 或密码策略**。
+- **已确认代码差异：** `relay/coord-mcp/oauth.cjs` 的 `authorizationGet()` 只替换密码页标题；继承父类 `authorizationPost()` 验证 `DC_OAUTH_OWNER_PASSWORD_*`；`authenticateRequest()` 覆盖父类逻辑，仅支持 Bearer。参考父类已有 `validateAccessAssertion()`，它使用 Cloudflare JWKS 验证 Access JWT 签名、Issuer、AUD、有效期；不能仅信任 HTTP header，也不能以 Bearer token 代替用户授权。
+- **身份与协议分层：** ChatGPT OAuth 元数据、protected-resource metadata、DCR 与 token endpoint 必须按真实客户端协议验证可达性；浏览器 `/oauth/authorize` 授权动作经过 Access 登录/身份验证。服务端验证 Access JWT 并限制允许的 owner identity；仅在校验成功、OAuth client/redirect_uri/resource/scope/state/PKCE 满足约束且用户授权后颁发短期 authorization code。令牌交换与 MCP tools 接口沿用严格 OAuth Bearer 权限。不得把整个 OAuth prefix 直接改成会返回 HTML 登录重定向的 Access 防线而破坏非浏览器发现/DCR/token。
+- **Access 策略：** 审计 Cloudflare `lieyanbang-auth` 的真实应用、保护路径、团队域、AUD、Session/Identity，记录证据（不记录敏感令牌）；确定精确授权路径及与 ChatGPT 回调兼容的行为。为 CoordMCP 建独立最小策略或精确路径，不削弱已有 Access 覆盖范围。不允许未验证来源直接调用授权签发接口；必要时审计/限定回调 URI 白名单。
+- **安全细节：** 校验 Access JWT RS256/JWKS 的签名、`iss`、`aud`、`exp`/`nbf` 与 owner 身份；拒绝缺失、伪造、错误 AUD、过期、错误身份；防止 Access cookie/Header 伪造、代理信任边界错误、CSRF、OAuth 请求参数被替换及错误回调。新登录流程不能静默回退到密码表单；若 Access 不可用须 fail closed。
+- **R0 审计**：保存线上原版本及 rollback、记录各 URL 和真实 Challenge/redirect，建立分层诊断表；明确哪些端点允许匿名协议发现而哪些要求 Access。
+- **R1 实现**：最小修改 CoordMCP 授权逻辑与独立配置；复用已审计 Access JWT 验证函数，不影响 DesktopCommander MCP3 或旧 token store；增加最小受控授权页或无密码确认。
+- **R2 验证**：mock JWKS / Access JWT、OAuth DCR、PKCE、授权、刷新、失效和 MCP tools 的自动化正负向；验证缺失、错误 Issuer/AUD、签名篡改、过期与身份不匹配必须拒绝；不存在绕过 Access 获取有效 OAuth 授权码的路径。
+- **R3 部署**：仅改变 CoordMCP 相关路径和代码；备份 Feathers/OpenResty/Access 策略，受控语法检查、最小重载、旧 RemoteControlMCP 1/2/3、13011/13012、coord/Servy 及公网回归；保留一键回滚。
+- **R4 ChatGPT E2E**：Web 真实 Access 登录→OAuth 同意→token→MCP initialize/tools/list→只读查询→隔离测试任务写入与 readback；需真实用户浏览器操作时标 NOT_RUN，不得推断 PASS。
+- **范围与状态：** F0/F1/F2 保持 PASS，F3 标记 `PARTIAL / AUTH_REDESIGN_REQUIRED`。本轮只授权改 coord 项目的规划/任务与后续由 Codex 实施 CoordMCP 的必要改造；不直接批量迁移其他 MCP。原 F3 已通过的 Sidecar/写入/CI 证据保留，但不证明 Access 授权。
+
+### F3-R 执行进度（2026-10-22）
+- R0：PARTIAL。直连 SSH 已核对服务、端口、公网路由矩阵并为当前 Feathers/OpenResty/CoordMCP 文件建立 root-only 回滚快照；Cloudflare API 身份没有 Access Apps/Policies 读取权限，实际应用策略与允许用户未验证。
+- R1：PASS（本地实现）。CoordMCP 改为签名 Access JWT + AUD/Issuer/exp/nbf/owner-email 校验、无密码确认、CSRF/OAuth 参数绑定及原子一次性授权码消费；配置缺失时 authorize 返回 503。没有修改 RemoteControl 或共享 OAuth 实现。
+- R2：PASS。`npm test` 12/12；真实 Desktop Commander OAuth 父类哈希匹配生产文件的主机集成通过；`scripts/verify.ps1 -Stage f3-r` 五项在 `00:17:31Z`–`00:18:10Z` 复跑全通过。Fork Windows Actions run `39696859131` 对提交 `a640ce8` 成功，Windows job 全步骤通过，artifact `12390883361` 未过期。
+- R3：PARTIAL。部署的 CoordMCP 两模块哈希匹配已测版本，远端 `node --check` 两项 exit 0；只重启 `feathersjsapp.service` 后 active/running。公网 authorize 未认证与伪造 Access header 均返回 fail-closed 503；元数据及旧 RemoteControl 路由回归通过。Sidecar READY、生产只读 `tasks/list(skip_reclaim=true)`、Arasaka Servy `CoordRelayAgent` Running、coord 健康 `READY`/SQLite read-only 均实测通过；13011/13012 与其他服务未改动。Access Apps/Policies 权限、实际 AUD/owner identity 和保护路径仍 UNVERIFIED，因此不得记 PASS。
+- R4：NOT_RUN。未进行 ChatGPT Web Access 登录/同意、真实公网 token exchange 或认证 MCP 调用。
+- F3-R 总体及 F3：PARTIAL；不得将测试用 mock JWT、历史 Sidecar E2E 或服务在线状态视为真实 Access 授权。详见 `verification/PHASE_F3_R.md`。
