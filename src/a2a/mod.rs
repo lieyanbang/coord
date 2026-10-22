@@ -222,6 +222,82 @@ async fn dispatch(state: &AppState, method: &str, params: Value) -> Result<Value
                 )),
             }
         }
+        "scheduler/progress" => {
+            #[derive(Deserialize)]
+            #[serde(deny_unknown_fields)]
+            struct P {
+                id: Uuid,
+                agent_id: String,
+                lease_token: String,
+                attempt_no: u64,
+                sequence: u64,
+                request_id: Uuid,
+                checkpoint: String,
+            }
+            let p: P = serde_json::from_value(params).map_err(MethodError::bad_params)?;
+            match state
+                .store
+                .report_progress(crate::core::types::ProgressReport {
+                    id: p.id,
+                    agent_id: &p.agent_id,
+                    lease_token: &p.lease_token,
+                    attempt_no: p.attempt_no,
+                    sequence: p.sequence,
+                    request_id: p.request_id,
+                    checkpoint: &p.checkpoint,
+                })
+                .map_err(MethodError::internal)?
+            {
+                Some(progress_at) => Ok(json!({"ok":true,"progress_sequence":p.sequence,"progress_at":progress_at.to_rfc3339()})),
+                None => Err(MethodError::conflict("progress rejected: stale lease, wrong attempt, conflicting sequence or invalid checkpoint")),
+            }
+        }
+        "scheduler/extend_progress" => {
+            #[derive(Deserialize)]
+            #[serde(deny_unknown_fields)]
+            struct P {
+                id: Uuid,
+                agent_id: String,
+                lease_token: String,
+                attempt_no: u64,
+                progress_sequence: u64,
+                request_id: Uuid,
+                lease_seconds: u64,
+            }
+            let p: P = serde_json::from_value(params).map_err(MethodError::bad_params)?;
+            match state.store.extend_lease_with_progress(
+                crate::core::types::ProgressLeaseExtension {
+                    id: p.id,
+                    agent_id: &p.agent_id,
+                    lease_token: &p.lease_token,
+                    attempt_no: p.attempt_no,
+                    progress_sequence: p.progress_sequence,
+                    request_id: p.request_id,
+                    lease_seconds: p.lease_seconds,
+                },
+            )
+                .map_err(MethodError::internal)?
+            {
+                Some(until) => {
+                    state.bus.notify();
+                    Ok(json!({"ok":true,"lease_until":until.to_rfc3339(),"progress_sequence":p.progress_sequence}))
+                }
+                None => Err(MethodError::conflict("lease extension rejected: live fence and fresh, unconsumed progress are required; the batch lease budget may be exhausted")),
+            }
+        }
+        "scheduler/agent_status" => {
+            #[derive(Deserialize)]
+            #[serde(deny_unknown_fields)]
+            struct P {
+                agent_id: String,
+                batch_id: Uuid,
+            }
+            let p: P = serde_json::from_value(params).map_err(MethodError::bad_params)?;
+            state
+                .store
+                .agent_status(&p.agent_id, p.batch_id)
+                .map_err(MethodError::internal)
+        }
         "tasks/reclaim" => {
             let reclaimed = state
                 .store
@@ -295,6 +371,18 @@ async fn dispatch(state: &AppState, method: &str, params: Value) -> Result<Value
             state
                 .store
                 .create_batch(&p.name, &p.description, p.config)
+                .map_err(MethodError::internal)
+        }
+        "actions/status" => {
+            #[derive(Deserialize)]
+            #[serde(deny_unknown_fields)]
+            struct P {
+                batch_id: Uuid,
+            }
+            let p: P = serde_json::from_value(params).map_err(MethodError::bad_params)?;
+            state
+                .store
+                .action_status(p.batch_id)
                 .map_err(MethodError::internal)
         }
         "batches/add_tasks" => {

@@ -16,8 +16,15 @@ use coord::mcp::Bridge;
 /// Short enough that a dead agent doesn't hold a task for long;
 /// long enough that the sweep is cheap on a busy bulletin.
 const RECLAIM_TICK: Duration = Duration::from_secs(30);
+const ACTION_TICK: Duration = Duration::from_millis(100);
+const ACTION_CONCURRENCY: usize = 2;
 
-pub async fn serve(addr: SocketAddr, db: Option<PathBuf>, vault: Option<PathBuf>) -> Result<()> {
+pub async fn serve(
+    addr: SocketAddr,
+    db: Option<PathBuf>,
+    vault: Option<PathBuf>,
+    actions_config: Option<PathBuf>,
+) -> Result<()> {
     if !addr.ip().is_loopback() {
         tracing::warn!(%addr, "unauthenticated RPC exposed beyond loopback; only use a trusted proxy/tunnel");
     }
@@ -26,8 +33,17 @@ pub async fn serve(addr: SocketAddr, db: Option<PathBuf>, vault: Option<PathBuf>
         std::fs::create_dir_all(parent)?;
     }
 
-    tracing::info!(?db_path, ?vault, "opening state");
-    let store = Arc::new(Store::open_with_vault(&db_path, vault)?);
+    tracing::info!(?db_path, ?vault, ?actions_config, "opening state");
+    let actions = actions_config
+        .as_deref()
+        .map(coord::core::actions::ActionRegistry::load)
+        .transpose()?
+        .map(Arc::new);
+    let store = Arc::new(Store::open_with_vault_and_actions(
+        &db_path,
+        vault,
+        actions.clone(),
+    )?);
     let bus = a2a::ChangeBus::new();
     let app = a2a::router_with_bus(store.clone(), bus.clone());
     // Bounded independent validation queue. The stored job fence prevents a
@@ -64,6 +80,68 @@ pub async fn serve(addr: SocketAddr, db: Option<PathBuf>, vault: Option<PathBuf>
             }
         }
     });
+
+    if let Some(registry) = actions {
+        let action_store = store.clone();
+        tokio::spawn(async move {
+            let capacity = Arc::new(tokio::sync::Semaphore::new(ACTION_CONCURRENCY));
+            let owner = format!("coord-{}", uuid::Uuid::new_v4());
+            let mut tick = tokio::time::interval(ACTION_TICK);
+            loop {
+                tick.tick().await;
+                while let Ok(permit) = capacity.clone().try_acquire_owned() {
+                    let job = match action_store.begin_action(&owner) {
+                        Ok(Some(job)) => job,
+                        Ok(None) => {
+                            drop(permit);
+                            break;
+                        }
+                        Err(error) => {
+                            tracing::warn!(error=%error,"completion action queue failed");
+                            drop(permit);
+                            break;
+                        }
+                    };
+                    let store = action_store.clone();
+                    let registry = registry.clone();
+                    tokio::spawn(async move {
+                        let result = tokio::task::spawn_blocking(move || {
+                            let execution = registry.execute(&job);
+                            (job, execution)
+                        })
+                        .await;
+                        match result {
+                            Ok((job, execution)) => match store.finish_action(&job, &execution) {
+                                Ok(true) => tracing::info!(
+                                    action_id=%job.id,
+                                    event_id=%job.event_id,
+                                    state=execution.state.as_str(),
+                                    code=execution.code,
+                                    exit_code=?execution.exit_code,
+                                    output_bytes=execution.output_bytes,
+                                    "completion action finished"
+                                ),
+                                Ok(false) => tracing::warn!(
+                                    action_id=%job.id,
+                                    "completion action result lost its lease fence"
+                                ),
+                                Err(error) => tracing::error!(
+                                    action_id=%job.id,
+                                    error=%error,
+                                    "completion action result could not be persisted"
+                                ),
+                            },
+                            Err(error) => tracing::error!(
+                                error=%error,
+                                "completion action worker panicked; lease recovery will reconcile it"
+                            ),
+                        }
+                        drop(permit);
+                    });
+                }
+            }
+        });
+    }
 
     // Background reclaim sweep. Lazy reclaim on `tasks/list` keeps the
     // bulletin self-healing for active readers, but the ticker covers

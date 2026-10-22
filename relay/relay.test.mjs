@@ -98,10 +98,20 @@ test('whitelist and strict schemas reject side effects and reclaiming list calls
   const base = { requestId: randomUUID(), method: 'tasks/list', params: { limit: 10, skip_reclaim: true } };
   assert.equal(validateRpcRequest(base).ok, true);
   assert.equal(validateRpcRequest({ ...base, method: 'tasks/send', params: { name: 'x' } }).ok, false);
+  assert.equal(validateRpcRequest({ ...base, method: 'actions/status', params: { batch_id: randomUUID() } }).ok, false);
   assert.equal(validateRpcRequest({ ...base, params: { limit: 10, skip_reclaim: false } }).ok, false);
   assert.equal(validateRpcRequest({ ...base, params: { limit: 10, skip_reclaim: true, wait_ms: 500 } }).ok, false);
   assert.equal(validateRpcRequest({ ...base, params: { limit: 10, skip_reclaim: true, arbitrary: true } }).ok, false);
   assert.equal(validateRpcRequest({ ...base, requestId: 'not-a-uuid' }).ok, false);
+  const progressId = randomUUID();
+  const progressParams = {
+    id: randomUUID(), agent_id: COORD_AGENT_ID, lease_token: randomUUID(),
+    attempt_no: 1, sequence: 1, request_id: progressId, checkpoint: 'checked refs',
+  };
+  assert.equal(validateRpcRequest({ requestId: progressId, method: 'scheduler/progress', params: progressParams }).ok, true);
+  assert.equal(validateRpcRequest({ requestId: randomUUID(), method: 'scheduler/progress', params: progressParams }).code, 'request_id_mismatch');
+  assert.equal(validateRpcRequest({ requestId: progressId, method: 'scheduler/progress', params: { ...progressParams, agent_id: 'attacker' } }).ok, false);
+  assert.equal(validateRpcRequest({ requestId: randomUUID(), method: 'scheduler/agent_status', params: { agent_id: COORD_AGENT_ID, batch_id: randomUUID() } }).ok, true);
   assert.ok(makeAgentProof(agentSecret, 'test-agent', 'nonce').length === 64);
   assert.equal(typeof COORD_AGENT_ID, 'string');
 });

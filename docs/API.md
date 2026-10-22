@@ -163,3 +163,74 @@ suppresses stale submission. Empty/reconnect loops back off; receipt retries
 reuse the same request. Ctrl+C stops the worker and its adapter. Workers exit
 when the batch has no active tasks; start/join more workers when adding work.
 The example does not imply every IDE MCP client supports unattended execution.
+
+## Agent Progress (Phase G)
+
+Batches may set `require_progress: true` and
+`agent_lease_budget_seconds` (default 3600, maximum 86400). A claim remains at
+most 600 seconds. The worker reports `scheduler/progress` with the exact task,
+agent, lease token, attempt number and next sequence, then extends via
+`scheduler/extend_progress` using that unconsumed sequence. Checkpoints are
+limited to 1024 bytes and accepted for an extension only while no older than
+600 seconds. One sequence can authorize at most one extension. The cumulative
+budget is measured from the current claim's `claimed_at`; a later retry is a
+new attempt with a new budget window.
+
+Progress is self-reported text, not a liveness proof and not a background
+timer. It cannot establish that a ChatGPT conversation will wake later. A
+progress-required batch rejects the legacy `scheduler/extend` method. The
+read-only `scheduler/agent_status` response contains current claims and recent
+checkpoints but never lease tokens. A timeout or uncertain write must be
+reconciled by reading the exact task and attempt; do not replay side effects.
+
+## Trusted Completion Actions (Phase G)
+
+Completion actions are disabled unless the operator starts the daemon with a
+trusted JSON registry:
+
+```powershell
+$env:COORD_ACTIONS_CONFIG = 'C:\ProgramData\coord\actions\registry.json'
+coord serve --actions-config $env:COORD_ACTIONS_CONFIG
+```
+
+Only registry profiles can select `on_task_completed` or
+`on_batch_completed`. `batches/create.config.action_profile` selects a profile
+ID; the daemon pins its version and action policy in the batch. A profile must
+be changed under a new version/ID. Agent payloads cannot supply executables,
+working directories, arguments, shell fragments or registry changes. Arguments
+are static strings with only `{event_id}`, `{task_id}`, `{batch_id}`,
+`{action_kind}` and `{attempt_no}` placeholders; process creation uses
+`shell=false`. Results are passed on stdin only when the trusted profile sets
+`include_result: true`. Known token/secret/password/credential fields are
+removed recursively first. Process output is drained, bounded, discarded and
+never written to logs.
+
+The Windows executor accepts only regular native `.exe`/`.com` files and a
+working directory canonicalized beneath the registry's `allowed_root`. It uses
+at most two concurrent actions. Each action is limited to 1–300 seconds, 64 KiB
+combined stdout/stderr, 4 MiB event input, eight processes and 256 MiB Job
+Object memory. The Job Object kills descendants on timeout, output overflow or
+worker exit. The child inherits the coord daemon's Windows account and file
+ACLs; the registry is **not** a filesystem sandbox and does not switch users.
+Production must use a dedicated least-privilege daemon account and verify ACLs
+before enabling actions.
+
+Completion and the outbox row commit in one SQLite transaction, both for direct
+completion and validator `PASS`. Task actions are queued once per task/profile
+version. The batch action is queued once only when every task is `completed`;
+failed, cancelled or merely submitted work does not qualify. Once that batch
+event exists, adding new tasks is rejected. Action state is independent from
+task state and can be read through loopback JSON-RPC:
+
+```json
+{"jsonrpc":"2.0","id":1,"method":"actions/status","params":{"batch_id":"BATCH_UUID"}}
+```
+
+The response contains bounded state/attempt/error-code/exit-code/byte-count
+metadata, never the event body or lease token. It is intentionally not included
+in the Relay agent RPC whitelist. Action attempts have their own owner/token
+fence and a 360-second lease. Idempotent actions may retry up to the trusted
+profile's limit (1–5); non-idempotent profiles are limited to one attempt. If a
+worker disappears after an external side effect may have happened, a
+non-idempotent action becomes `uncertain`, not `succeeded`; idempotent replay is
+at-least-once, not exactly-once. Action failure never reopens a completed task.

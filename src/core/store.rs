@@ -14,8 +14,8 @@ use std::sync::Arc;
 use uuid::Uuid;
 
 use super::types::{
-    Agent, Task, TaskState, DEFAULT_KIND, DEFAULT_LEASE_SECONDS, DEFAULT_PRIORITY,
-    MAX_LEASE_SECONDS,
+    Agent, ProgressLeaseExtension, ProgressReport, Task, TaskState, DEFAULT_KIND,
+    DEFAULT_LEASE_SECONDS, DEFAULT_PRIORITY, MAX_LEASE_SECONDS,
 };
 use crate::vault::Vault;
 
@@ -60,7 +60,11 @@ pub enum CompleteOutcome {
 pub struct Store {
     conn: Mutex<Connection>,
     vault: Option<Arc<Vault>>,
+    actions: Option<Arc<super::actions::ActionRegistry>>,
 }
+
+const MAX_AGENT_LEASE_SECONDS: u64 = 600;
+const PROGRESS_FRESH_SECONDS: i64 = 600;
 
 impl Store {
     pub fn open(path: &Path) -> Result<Self> {
@@ -68,6 +72,21 @@ impl Store {
     }
 
     pub fn open_with_vault(path: &Path, vault_dir: Option<PathBuf>) -> Result<Self> {
+        Self::open_with_vault_and_actions(path, vault_dir, None)
+    }
+
+    pub fn open_with_actions(
+        path: &Path,
+        actions: Arc<super::actions::ActionRegistry>,
+    ) -> Result<Self> {
+        Self::open_with_vault_and_actions(path, None, Some(actions))
+    }
+
+    pub fn open_with_vault_and_actions(
+        path: &Path,
+        vault_dir: Option<PathBuf>,
+        actions: Option<Arc<super::actions::ActionRegistry>>,
+    ) -> Result<Self> {
         let mut conn = Connection::open(path).context("open sqlite")?;
         conn.busy_timeout(std::time::Duration::from_secs(5))?;
         // WAL keeps short writes from blocking concurrent readers, which
@@ -130,6 +149,7 @@ impl Store {
             [],
         )?;
         tx.commit()?;
+        validate_action_registry(&conn, actions.as_deref())?;
 
         let vault = vault_dir
             .map(|p| -> Result<Arc<Vault>> { Ok(Arc::new(Vault::open(p)?)) })
@@ -137,7 +157,12 @@ impl Store {
         Ok(Self {
             conn: Mutex::new(conn),
             vault,
+            actions,
         })
+    }
+
+    pub fn action_registry(&self) -> Option<Arc<super::actions::ActionRegistry>> {
+        self.actions.clone()
     }
 
     pub fn create_task(&self, name: &str, payload: serde_json::Value) -> Result<Task> {
@@ -278,11 +303,32 @@ impl Store {
         agent_id: &str,
         lease_seconds: Option<u64>,
     ) -> Result<Option<Task>> {
-        let lease = clamp_lease(lease_seconds.unwrap_or(DEFAULT_LEASE_SECONDS));
+        let requested_lease = lease_seconds.unwrap_or(DEFAULT_LEASE_SECONDS);
         let task_opt = {
             let mut connection = self.conn.lock();
             let tx =
                 connection.transaction_with_behavior(rusqlite::TransactionBehavior::Immediate)?;
+            let batch: Option<String> = tx
+                .query_row(
+                    "SELECT batch_id FROM tasks WHERE id=?1",
+                    params![id.to_string()],
+                    |row| row.get(0),
+                )
+                .optional()?
+                .flatten();
+            let batch_cfg = batch
+                .map(|value| Uuid::parse_str(&value).map_err(anyhow::Error::from))
+                .transpose()?
+                .map(|batch_id| batch_config(&tx, batch_id, false))
+                .transpose()?;
+            let lease = if batch_cfg
+                .as_ref()
+                .is_some_and(|config| config.require_progress)
+            {
+                requested_lease.clamp(1, MAX_AGENT_LEASE_SECONDS)
+            } else {
+                clamp_lease(requested_lease)
+            };
             let now = Utc::now();
             let until = now + Duration::seconds(lease as i64);
             let token = Uuid::new_v4().to_string();
@@ -321,6 +367,20 @@ impl Store {
         lease_seconds: Option<u64>,
     ) -> Result<Option<DateTime<Utc>>> {
         let conn = self.conn.lock();
+        let batch: Option<String> = conn
+            .query_row(
+                "SELECT batch_id FROM tasks WHERE id=?1",
+                params![id.to_string()],
+                |row| row.get(0),
+            )
+            .optional()?
+            .flatten();
+        if let Some(batch) = batch {
+            let batch_id = Uuid::parse_str(&batch)?;
+            if batch_config(&conn, batch_id, false)?.require_progress {
+                return Ok(None);
+            }
+        }
         let now = Utc::now();
         let until = now
             + Duration::seconds(clamp_lease(lease_seconds.unwrap_or(DEFAULT_LEASE_SECONDS)) as i64);
@@ -339,6 +399,189 @@ impl Store {
                     .map_err(Into::into)
             })
             .transpose()
+    }
+
+    pub fn report_progress(&self, report: ProgressReport<'_>) -> Result<Option<DateTime<Utc>>> {
+        let ProgressReport {
+            id,
+            agent_id,
+            lease_token,
+            attempt_no,
+            sequence,
+            request_id,
+            checkpoint,
+        } = report;
+        if sequence == 0 || checkpoint.trim().is_empty() || checkpoint.len() > 1024 {
+            return Ok(None);
+        }
+        let mut conn = self.conn.lock();
+        let tx = conn.transaction_with_behavior(rusqlite::TransactionBehavior::Immediate)?;
+        if let Some((owner, prior_sequence, prior_checkpoint, at)) = tx
+            .query_row(
+                "SELECT agent_id,sequence,checkpoint,progress_at FROM task_progress_receipts WHERE task_id=?1 AND lease_token=?2 AND request_id=?3",
+                params![id.to_string(), lease_token, request_id.to_string()],
+                |row| Ok((row.get::<_, String>(0)?, row.get::<_, u64>(1)?, row.get::<_, String>(2)?, row.get::<_, String>(3)?)),
+            )
+            .optional()?
+        {
+            if owner != agent_id || prior_sequence != sequence || prior_checkpoint != checkpoint {
+                return Ok(None);
+            }
+            return Ok(Some(DateTime::parse_from_rfc3339(&at)?.with_timezone(&Utc)));
+        }
+        let current: Option<i64> = tx
+            .query_row(
+                "SELECT attempt_no FROM tasks WHERE id=?1 AND state='claimed' AND claimed_by=?2 AND lease_token=?3 AND attempt_no=?4 AND julianday(lease_until)>julianday('now')",
+                params![id.to_string(), agent_id, lease_token, attempt_no],
+                |row| row.get(0),
+            )
+            .optional()?;
+        if current.is_none() {
+            return Ok(None);
+        }
+        let previous: Option<u64> = tx
+            .query_row(
+                "SELECT sequence FROM task_progress WHERE task_id=?1 AND lease_token=?2",
+                params![id.to_string(), lease_token],
+                |row| row.get(0),
+            )
+            .optional()?;
+        if sequence != previous.unwrap_or(0).saturating_add(1) {
+            return Ok(None);
+        }
+        let now = Utc::now();
+        let at = now.to_rfc3339();
+        tx.execute(
+            "INSERT INTO task_progress(task_id,lease_token,agent_id,attempt_no,sequence,checkpoint,progress_at) VALUES(?1,?2,?3,?4,?5,?6,?7) ON CONFLICT(task_id,lease_token) DO UPDATE SET sequence=excluded.sequence,checkpoint=excluded.checkpoint,progress_at=excluded.progress_at",
+            params![id.to_string(), lease_token, agent_id, attempt_no, sequence, checkpoint, at],
+        )?;
+        tx.execute(
+            "INSERT INTO task_progress_receipts(task_id,lease_token,request_id,agent_id,sequence,checkpoint,progress_at) VALUES(?1,?2,?3,?4,?5,?6,?7)",
+            params![id.to_string(), lease_token, request_id.to_string(), agent_id, sequence, checkpoint, at],
+        )?;
+        tx.commit()?;
+        Ok(Some(now))
+    }
+
+    pub fn extend_lease_with_progress(
+        &self,
+        extension: ProgressLeaseExtension<'_>,
+    ) -> Result<Option<DateTime<Utc>>> {
+        let ProgressLeaseExtension {
+            id,
+            agent_id,
+            lease_token,
+            attempt_no,
+            progress_sequence,
+            request_id,
+            lease_seconds,
+        } = extension;
+        if !(1..=MAX_AGENT_LEASE_SECONDS).contains(&lease_seconds) || progress_sequence == 0 {
+            return Ok(None);
+        }
+        let mut conn = self.conn.lock();
+        let tx = conn.transaction_with_behavior(rusqlite::TransactionBehavior::Immediate)?;
+        if let Some((sequence, at)) = tx
+            .query_row(
+                "SELECT progress_sequence,lease_until FROM task_progress_extend_receipts WHERE task_id=?1 AND lease_token=?2 AND request_id=?3",
+                params![id.to_string(), lease_token, request_id.to_string()],
+                |row| Ok((row.get::<_, u64>(0)?, row.get::<_, String>(1)?)),
+            )
+            .optional()?
+        {
+            if sequence != progress_sequence {
+                return Ok(None);
+            }
+            return Ok(Some(DateTime::parse_from_rfc3339(&at)?.with_timezone(&Utc)));
+        }
+        let task = tx
+            .query_row(
+                &format!("SELECT {TASK_COLUMNS} FROM tasks WHERE id=?1 AND state='claimed' AND claimed_by=?2 AND lease_token=?3 AND attempt_no=?4 AND julianday(lease_until)>julianday('now')"),
+                params![id.to_string(), agent_id, lease_token, attempt_no],
+                row_to_task,
+            )
+            .optional()?;
+        let Some(task) = task else { return Ok(None) };
+        let Some(batch_id) = task.batch_id else {
+            return Ok(None);
+        };
+        let config = batch_config(&tx, batch_id, false)?;
+        if !config.require_progress {
+            return Ok(None);
+        }
+        let progress: Option<(u64, String, i64)> = tx
+            .query_row(
+                "SELECT sequence,progress_at,last_extended_sequence FROM task_progress WHERE task_id=?1 AND lease_token=?2 AND agent_id=?3 AND attempt_no=?4",
+                params![id.to_string(), lease_token, agent_id, attempt_no],
+                |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)),
+            )
+            .optional()?;
+        let Some((latest_sequence, progress_at, last_extended_sequence)) = progress else {
+            return Ok(None);
+        };
+        let reported = DateTime::parse_from_rfc3339(&progress_at)?.with_timezone(&Utc);
+        let now = Utc::now();
+        if latest_sequence != progress_sequence
+            || progress_sequence <= last_extended_sequence as u64
+            || now.signed_duration_since(reported).num_seconds() > PROGRESS_FRESH_SECONDS
+        {
+            return Ok(None);
+        }
+        let claimed_at = task
+            .claimed_at
+            .context("claimed task is missing claimed_at")?;
+        let budget =
+            Duration::seconds(config.agent_lease_budget_seconds.min(i64::MAX as u64) as i64);
+        let budget_until = claimed_at + budget;
+        let requested_until = now + Duration::seconds(lease_seconds as i64);
+        let capped_until = std::cmp::min(requested_until, budget_until);
+        if capped_until <= now {
+            return Ok(None);
+        }
+        let current_until = task
+            .lease_until
+            .context("claimed task is missing lease_until")?;
+        let until = std::cmp::max(current_until, capped_until);
+        let changed = tx.execute(
+            "UPDATE tasks SET lease_until=?1,updated_at=?2 WHERE id=?3 AND state='claimed' AND claimed_by=?4 AND lease_token=?5 AND attempt_no=?6 AND julianday(lease_until)>julianday('now')",
+            params![until.to_rfc3339(), now.to_rfc3339(), id.to_string(), agent_id, lease_token, attempt_no],
+        )?;
+        if changed == 0 {
+            return Ok(None);
+        }
+        tx.execute(
+            "UPDATE task_progress SET last_extended_sequence=?3 WHERE task_id=?1 AND lease_token=?2",
+            params![id.to_string(), lease_token, progress_sequence],
+        )?;
+        tx.execute(
+            "INSERT INTO task_progress_extend_receipts(task_id,lease_token,request_id,progress_sequence,lease_until) VALUES(?1,?2,?3,?4,?5)",
+            params![id.to_string(), lease_token, request_id.to_string(), progress_sequence, until.to_rfc3339()],
+        )?;
+        tx.commit()?;
+        Ok(Some(until))
+    }
+
+    pub fn agent_status(&self, agent_id: &str, batch_id: Uuid) -> Result<serde_json::Value> {
+        let conn = self.conn.lock();
+        let mut stmt = conn.prepare(
+            "SELECT t.id,t.state,t.attempt_no,t.lease_until,p.sequence,p.checkpoint,p.progress_at FROM tasks t LEFT JOIN task_progress p ON p.task_id=t.id AND p.lease_token=t.lease_token WHERE t.batch_id=?1 AND t.state='claimed' AND t.claimed_by=?2 ORDER BY t.id",
+        )?;
+        let rows = stmt
+            .query_map(params![batch_id.to_string(), agent_id], |row| {
+                Ok(serde_json::json!({
+                    "task_id": row.get::<_, String>(0)?,
+                    "state": row.get::<_, String>(1)?,
+                    "attempt_no": row.get::<_, u64>(2)?,
+                    "lease_until": row.get::<_, Option<String>>(3)?,
+                    "progress_sequence": row.get::<_, Option<u64>>(4)?,
+                    "checkpoint": row.get::<_, Option<String>>(5)?,
+                    "progress_at": row.get::<_, Option<String>>(6)?,
+                }))
+            })?
+            .collect::<rusqlite::Result<Vec<_>>>()?;
+        Ok(
+            serde_json::json!({"agent_id":agent_id,"batch_id":batch_id,"active_claims":rows.len(),"tasks":rows}),
+        )
     }
 
     /// Sweep claimed tasks whose lease has expired back to `pending`,
@@ -496,6 +739,13 @@ impl Store {
             }
 
             let ack_task = write_ack(&tx, id, ack, now)?;
+            let completed_task = tx.query_row(
+                &format!("SELECT {TASK_COLUMNS} FROM tasks WHERE id=?1"),
+                params![id.to_string()],
+                row_to_task,
+            )?;
+            enqueue_task_completion_action(&tx, &completed_task, now)?;
+            enqueue_batch_completion_action(&tx, completed_task.batch_id, now)?;
             tx.execute(
                 "INSERT INTO task_receipts VALUES(?1,?2,'complete',?3,?4,?5)",
                 params![
@@ -678,6 +928,218 @@ impl Store {
 
 pub const TASK_COLUMNS: &str = "id,name,kind,priority,state,claimed_by,payload,result,created_at,updated_at,claimed_at,lease_until,lease_token,attempt_no,attempt_count,max_attempts,available_at,batch_id,task_key,error,completed_at,submission_id,validation_attempts,validation_error_count";
 
+fn validate_action_registry(
+    conn: &Connection,
+    registry: Option<&super::actions::ActionRegistry>,
+) -> Result<()> {
+    let mut stmt = conn.prepare("SELECT config FROM batches WHERE status='active'")?;
+    let configs = stmt
+        .query_map([], |row| row.get::<_, String>(0))?
+        .collect::<rusqlite::Result<Vec<_>>>()?;
+    drop(stmt);
+    for raw in configs {
+        let config: super::types::BatchConfig = serde_json::from_str(&raw)?;
+        if let Some(profile_id) = config.action_profile {
+            let profile_version = config
+                .action_profile_version
+                .context("active batch is missing its trusted action profile version")?;
+            let registry = registry.context("active action profile requires --actions-config")?;
+            let profile = registry
+                .profile(&profile_id)
+                .filter(|profile| profile.version == profile_version)
+                .context("active batch action profile is not present at its pinned version")?;
+            for action_kind in config.action_profile_actions {
+                let configured = match action_kind.as_str() {
+                    "on_task_completed" => profile.on_task_completed.is_some(),
+                    "on_batch_completed" => profile.on_batch_completed.is_some(),
+                    _ => false,
+                };
+                if !configured {
+                    anyhow::bail!("active batch action is missing from its pinned profile");
+                }
+            }
+        }
+    }
+
+    let mut stmt = conn.prepare(
+        "SELECT DISTINCT profile_id,profile_version FROM completion_actions WHERE state IN ('pending','running')",
+    )?;
+    let pending = stmt
+        .query_map([], |row| {
+            Ok((row.get::<_, String>(0)?, row.get::<_, u32>(1)?))
+        })?
+        .collect::<rusqlite::Result<Vec<_>>>()?;
+    for (profile_id, version) in pending {
+        let profile = registry
+            .and_then(|registry| registry.profile(&profile_id))
+            .filter(|profile| profile.version == version)
+            .context("pending completion actions require their pinned profile version")?;
+        if profile.on_task_completed.is_none() && profile.on_batch_completed.is_none() {
+            anyhow::bail!("pending completion action profile has no actions");
+        }
+    }
+    Ok(())
+}
+
+fn enqueue_task_completion_action(tx: &Connection, task: &Task, now: DateTime<Utc>) -> Result<()> {
+    let Some(batch_id) = task.batch_id else {
+        return Ok(());
+    };
+    let config = batch_config(tx, batch_id, false)?;
+    enqueue_configured_action(
+        tx,
+        &config,
+        CompletionActionEvent {
+            action_kind: "on_task_completed",
+            batch_id,
+            task_id: Some(task.id),
+            attempt_no: task.attempt_no,
+            result: task.result.clone(),
+            batch_counts: None,
+        },
+        now,
+    )
+}
+
+fn enqueue_batch_completion_action(
+    tx: &Connection,
+    batch_id: Option<Uuid>,
+    now: DateTime<Utc>,
+) -> Result<()> {
+    let Some(batch_id) = batch_id else {
+        return Ok(());
+    };
+    let (status, total, completed): (String, u64, u64) = tx.query_row(
+        "SELECT b.status,count(t.id),coalesce(sum(t.state='completed'),0)
+         FROM batches b LEFT JOIN tasks t ON t.batch_id=b.id WHERE b.id=?1 GROUP BY b.id",
+        params![batch_id.to_string()],
+        |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)),
+    )?;
+    if status != "active" || total == 0 || total != completed {
+        return Ok(());
+    }
+    let config = batch_config(tx, batch_id, false)?;
+    enqueue_configured_action(
+        tx,
+        &config,
+        CompletionActionEvent {
+            action_kind: "on_batch_completed",
+            batch_id,
+            task_id: None,
+            attempt_no: 0,
+            result: None,
+            batch_counts: Some((total, completed)),
+        },
+        now,
+    )
+}
+
+struct CompletionActionEvent {
+    action_kind: &'static str,
+    batch_id: Uuid,
+    task_id: Option<Uuid>,
+    attempt_no: u64,
+    result: Option<serde_json::Value>,
+    batch_counts: Option<(u64, u64)>,
+}
+
+fn enqueue_configured_action(
+    tx: &Connection,
+    config: &super::types::BatchConfig,
+    event: CompletionActionEvent,
+    now: DateTime<Utc>,
+) -> Result<()> {
+    let CompletionActionEvent {
+        action_kind,
+        batch_id,
+        task_id,
+        attempt_no,
+        result,
+        batch_counts,
+    } = event;
+    let (Some(profile_id), Some(profile_version), Some(policy)) = (
+        config.action_profile.as_deref(),
+        config.action_profile_version,
+        config.action_policy.get(action_kind),
+    ) else {
+        return Ok(());
+    };
+    let event_id = Uuid::new_v4().to_string();
+    let mut payload = serde_json::json!({
+        "schema_version": 1,
+        "event_id": event_id,
+        "batch_id": batch_id,
+        "task_id": task_id,
+        "action_kind": action_kind,
+        "attempt_no": attempt_no,
+    });
+    if policy.include_result {
+        if let Some(result) = result {
+            payload["result"] = redact_action_secrets(result);
+        }
+    }
+    if let Some((total, completed)) = batch_counts {
+        payload["total_tasks"] = total.into();
+        payload["completed_tasks"] = completed.into();
+    }
+    let event_key = format!(
+        "{}:{}:{}:{}",
+        if task_id.is_some() { "task" } else { "batch" },
+        task_id.unwrap_or(batch_id),
+        action_kind,
+        profile_version
+    );
+    tx.execute(
+        "INSERT INTO completion_actions(
+            id,event_id,event_key,batch_id,task_id,profile_id,profile_version,
+            action_kind,payload,state,idempotent,max_attempts,created_at,updated_at
+         ) VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9,'pending',?10,?11,?12,?12)
+         ON CONFLICT(event_key) DO NOTHING",
+        params![
+            Uuid::new_v4().to_string(),
+            event_id,
+            event_key,
+            batch_id.to_string(),
+            task_id.map(|id| id.to_string()),
+            profile_id,
+            profile_version,
+            action_kind,
+            serde_json::to_string(&payload)?,
+            policy.idempotent,
+            policy.max_attempts,
+            now.to_rfc3339(),
+        ],
+    )?;
+    Ok(())
+}
+
+fn redact_action_secrets(value: serde_json::Value) -> serde_json::Value {
+    match value {
+        serde_json::Value::Object(object) => serde_json::Value::Object(
+            object
+                .into_iter()
+                .filter(|(key, _)| {
+                    let normalized = key
+                        .chars()
+                        .filter(|character| character.is_ascii_alphanumeric())
+                        .flat_map(char::to_lowercase)
+                        .collect::<String>();
+                    !(normalized.ends_with("token")
+                        || normalized.ends_with("secret")
+                        || normalized.ends_with("password")
+                        || normalized.ends_with("credential")
+                        || matches!(normalized.as_str(), "authorization" | "capability"))
+                })
+                .map(|(key, value)| (key, redact_action_secrets(value)))
+                .collect(),
+        ),
+        serde_json::Value::Array(values) => {
+            serde_json::Value::Array(values.into_iter().map(redact_action_secrets).collect())
+        }
+        other => other,
+    }
+}
+
 #[derive(Debug)]
 pub struct SchedulerError {
     pub code: i32,
@@ -702,14 +1164,48 @@ impl Store {
         &self,
         name: &str,
         description: &str,
-        config: super::types::BatchConfig,
+        mut config: super::types::BatchConfig,
     ) -> Result<serde_json::Value> {
         if config.max_attempts == 0
             || config.max_attempts > 100
             || config.max_backoff_ms > 3_600_000
             || config.retry_backoff_ms > config.max_backoff_ms
+            || config.agent_lease_budget_seconds == 0
+            || config.agent_lease_budget_seconds > 86_400
         {
             return Err(scheduler_error(-32602, "invalid retry configuration"));
+        }
+        if let Some(profile_id) = config.action_profile.clone() {
+            let profile = self
+                .actions
+                .as_ref()
+                .and_then(|registry| registry.profile(&profile_id))
+                .ok_or_else(|| {
+                    scheduler_error(-32602, "trusted action profile is not configured")
+                })?;
+            config.action_profile_version = Some(profile.version);
+            config.action_profile_actions.clear();
+            config.action_policy.clear();
+            for (action_kind, command) in [
+                ("on_task_completed", profile.on_task_completed.as_ref()),
+                ("on_batch_completed", profile.on_batch_completed.as_ref()),
+            ] {
+                if let Some(command) = command {
+                    config.action_profile_actions.push(action_kind.to_string());
+                    config.action_policy.insert(
+                        action_kind.to_string(),
+                        super::types::ActionPolicy {
+                            idempotent: command.idempotent,
+                            max_attempts: command.max_attempts,
+                            include_result: command.include_result,
+                        },
+                    );
+                }
+            }
+        } else {
+            config.action_profile_version = None;
+            config.action_profile_actions.clear();
+            config.action_policy.clear();
         }
         if let Some(v) = &config.validator {
             if v.timeout_ms == 0
@@ -776,6 +1272,18 @@ impl Store {
                 out.push(t);
                 continue;
             }
+            let batch_event_exists: bool = tx.query_row(
+                "SELECT EXISTS(SELECT 1 FROM completion_actions
+                 WHERE batch_id=?1 AND task_id IS NULL AND action_kind='on_batch_completed')",
+                params![batch_id.to_string()],
+                |row| row.get(0),
+            )?;
+            if batch_event_exists {
+                return Err(scheduler_error(
+                    -32001,
+                    "cannot add new tasks after the batch completion action was emitted",
+                ));
+            }
             let id = Uuid::new_v4();
             tx.execute("INSERT INTO tasks(id,name,state,payload,created_at,updated_at,batch_id,task_key,max_attempts) VALUES(?1,?2,'pending',?3,?4,?4,?5,?6,?7)",params![id.to_string(),input.name,serde_json::to_string(&input.payload)?,now,batch_id.to_string(),input.key,config.max_attempts])?;
             out.push(tx.query_row(
@@ -801,12 +1309,18 @@ impl Store {
         self.reclaim_expired_leases()?;
         let mut conn = self.conn.lock();
         let tx = conn.transaction_with_behavior(rusqlite::TransactionBehavior::Immediate)?;
-        if let Some(id) = batch_id {
-            batch_config(&tx, id, true)?;
-        }
+        let config = batch_id.map(|id| batch_config(&tx, id, true)).transpose()?;
         let now = Utc::now();
-        let until = now
-            + Duration::seconds(clamp_lease(lease_seconds.unwrap_or(DEFAULT_LEASE_SECONDS)) as i64);
+        let requested_lease = lease_seconds.unwrap_or(DEFAULT_LEASE_SECONDS);
+        let lease = if config
+            .as_ref()
+            .is_some_and(|config| config.require_progress)
+        {
+            requested_lease.clamp(1, MAX_AGENT_LEASE_SECONDS)
+        } else {
+            clamp_lease(requested_lease)
+        };
+        let until = now + Duration::seconds(lease as i64);
         let t=tx.query_row(&format!("UPDATE tasks SET state='claimed',claimed_by=?1,claimed_at=?2,updated_at=?2,lease_until=?3,lease_token=?4,attempt_no=attempt_no+1,attempt_count=attempt_count+1
             WHERE id=(SELECT id FROM tasks WHERE state='pending' AND attempt_count<max_attempts AND (?5 IS NULL OR batch_id=?5) AND (batch_id IS NULL OR EXISTS(SELECT 1 FROM batches b WHERE b.id=tasks.batch_id AND b.status='active')) AND (available_at IS NULL OR julianday(available_at)<=julianday('now')) ORDER BY CASE priority WHEN 'urgent' THEN 0 WHEN 'high' THEN 1 ELSE 2 END,created_at,id LIMIT 1) RETURNING {TASK_COLUMNS}"),params![agent_id,now.to_rfc3339(),until.to_rfc3339(),Uuid::new_v4().to_string(),batch_id.map(|id|id.to_string())],row_to_task).optional()?;
         tx.commit()?;
@@ -934,6 +1448,186 @@ impl Store {
 }
 
 impl Store {
+    pub fn begin_action(&self, lease_owner: &str) -> Result<Option<super::actions::ActionJob>> {
+        if self.actions.is_none() || lease_owner.is_empty() || lease_owner.len() > 128 {
+            return Ok(None);
+        }
+        let now = Utc::now();
+        let token = Uuid::new_v4().to_string();
+        let until = now + Duration::seconds(super::actions::ACTION_LEASE_SECONDS as i64);
+        let mut conn = self.conn.lock();
+        let tx = conn.transaction_with_behavior(rusqlite::TransactionBehavior::Immediate)?;
+        tx.execute(
+            "UPDATE completion_actions SET
+                state=CASE WHEN idempotent=1 AND attempt_count<max_attempts THEN 'pending'
+                           WHEN idempotent=1 THEN 'failed' ELSE 'uncertain' END,
+                available_at=NULL,
+                lease_owner=NULL,lease_token=NULL,lease_until=NULL,
+                last_error='action_lease_expired',updated_at=?1
+             WHERE state='running' AND lease_until IS NOT NULL
+               AND julianday(lease_until)<=julianday('now')",
+            params![now.to_rfc3339()],
+        )?;
+        let candidate = tx
+            .query_row(
+                "SELECT id,event_id,profile_id,profile_version,action_kind,payload,
+                        idempotent,max_attempts
+                 FROM completion_actions
+                 WHERE state='pending'
+                   AND (available_at IS NULL OR julianday(available_at)<=julianday('now'))
+                 ORDER BY created_at,id LIMIT 1",
+                [],
+                |row| {
+                    Ok((
+                        row.get::<_, String>(0)?,
+                        row.get::<_, String>(1)?,
+                        row.get::<_, String>(2)?,
+                        row.get::<_, u32>(3)?,
+                        row.get::<_, String>(4)?,
+                        row.get::<_, String>(5)?,
+                        row.get::<_, bool>(6)?,
+                        row.get::<_, u32>(7)?,
+                    ))
+                },
+            )
+            .optional()?;
+        let Some((
+            id,
+            event_id,
+            profile_id,
+            profile_version,
+            action_kind,
+            payload,
+            idempotent,
+            max_attempts,
+        )) = candidate
+        else {
+            tx.commit()?;
+            return Ok(None);
+        };
+        let changed = tx.execute(
+            "UPDATE completion_actions SET state='running',attempt_count=attempt_count+1,
+                lease_owner=?1,lease_token=?2,lease_until=?3,updated_at=?4
+             WHERE id=?5 AND state='pending'",
+            params![lease_owner, token, until.to_rfc3339(), now.to_rfc3339(), id],
+        )?;
+        if changed != 1 {
+            tx.commit()?;
+            return Ok(None);
+        }
+        let attempt_count = tx.query_row(
+            "SELECT attempt_count FROM completion_actions WHERE id=?1",
+            params![id],
+            |row| row.get(0),
+        )?;
+        tx.commit()?;
+        Ok(Some(super::actions::ActionJob {
+            id,
+            event_id,
+            lease_owner: lease_owner.to_string(),
+            profile_id,
+            profile_version,
+            action_kind,
+            payload: serde_json::from_str(&payload)?,
+            lease_token: token,
+            attempt_count,
+            max_attempts,
+            idempotent,
+        }))
+    }
+
+    pub fn finish_action(
+        &self,
+        job: &super::actions::ActionJob,
+        outcome: &super::actions::ActionExecution,
+    ) -> Result<bool> {
+        let now = Utc::now();
+        let retry = outcome.state == super::actions::ActionState::Failed
+            && job.idempotent
+            && job.attempt_count < job.max_attempts
+            && matches!(
+                outcome.code,
+                "spawn_failed"
+                    | "job_assignment_retryable"
+                    | "timeout_retryable"
+                    | "output_limit_retryable"
+                    | "nonzero_exit_retryable"
+                    | "process_wait_retryable"
+            );
+        let state = if retry {
+            "pending"
+        } else {
+            outcome.state.as_str()
+        };
+        let delay_ms = 100u64
+            .saturating_mul(1u64 << job.attempt_count.saturating_sub(1).min(8))
+            .min(30_000);
+        let available_at =
+            retry.then(|| (now + Duration::milliseconds(delay_ms as i64)).to_rfc3339());
+        let mut conn = self.conn.lock();
+        let tx = conn.transaction_with_behavior(rusqlite::TransactionBehavior::Immediate)?;
+        let changed = tx.execute(
+            "UPDATE completion_actions SET state=?1,available_at=?2,last_error=?3,
+                exit_code=?4,output_bytes=?5,lease_owner=NULL,lease_token=NULL,lease_until=NULL,
+                updated_at=?6
+             WHERE id=?7 AND event_id=?8 AND state='running' AND lease_owner=?9
+               AND lease_token=?10 AND julianday(lease_until)>julianday('now')",
+            params![
+                state,
+                available_at,
+                if outcome.state == super::actions::ActionState::Succeeded {
+                    None
+                } else {
+                    Some(outcome.code)
+                },
+                outcome.exit_code,
+                outcome.output_bytes as u64,
+                now.to_rfc3339(),
+                job.id,
+                job.event_id,
+                job.lease_owner,
+                job.lease_token,
+            ],
+        )?;
+        tx.commit()?;
+        Ok(changed == 1)
+    }
+
+    pub fn action_status(&self, batch_id: Uuid) -> Result<serde_json::Value> {
+        let conn = self.conn.lock();
+        batch_config(&conn, batch_id, false)?;
+        let mut stmt = conn.prepare(
+            "SELECT id,event_id,task_id,profile_id,profile_version,action_kind,state,
+                    attempt_count,max_attempts,available_at,last_error,exit_code,output_bytes
+             FROM completion_actions WHERE batch_id=?1 ORDER BY created_at,id LIMIT 201",
+        )?;
+        let rows = stmt
+            .query_map(params![batch_id.to_string()], |row| {
+                Ok(serde_json::json!({
+                    "id": row.get::<_, String>(0)?,
+                    "event_id": row.get::<_, String>(1)?,
+                    "task_id": row.get::<_, Option<String>>(2)?,
+                    "profile_id": row.get::<_, String>(3)?,
+                    "profile_version": row.get::<_, u32>(4)?,
+                    "action_kind": row.get::<_, String>(5)?,
+                    "state": row.get::<_, String>(6)?,
+                    "attempt_count": row.get::<_, u32>(7)?,
+                    "max_attempts": row.get::<_, u32>(8)?,
+                    "available_at": row.get::<_, Option<String>>(9)?,
+                    "last_error": row.get::<_, Option<String>>(10)?,
+                    "exit_code": row.get::<_, Option<i32>>(11)?,
+                    "output_bytes": row.get::<_, Option<u64>>(12)?,
+                }))
+            })?
+            .collect::<rusqlite::Result<Vec<_>>>()?;
+        let truncated = rows.len() > 200;
+        Ok(serde_json::json!({
+            "batch_id": batch_id,
+            "actions": rows.into_iter().take(200).collect::<Vec<_>>(),
+            "truncated": truncated,
+        }))
+    }
+
     pub fn begin_validation(&self) -> Result<Option<super::validator::ValidationJob>> {
         let mut conn = self.conn.lock();
         let tx = conn.transaction_with_behavior(rusqlite::TransactionBehavior::Immediate)?;
@@ -1030,6 +1724,13 @@ impl Store {
                 |r| r.get(0),
             )?;
             ack = write_ack(&tx, task.id, serde_json::from_str(&spec)?, now)?;
+            let completed_task = tx.query_row(
+                &format!("SELECT {TASK_COLUMNS} FROM tasks WHERE id=?1"),
+                params![task.id.to_string()],
+                row_to_task,
+            )?;
+            enqueue_task_completion_action(&tx, &completed_task, now)?;
+            enqueue_batch_completion_action(&tx, completed_task.batch_id, now)?;
         }
         tx.commit()?;
         drop(conn);
@@ -1275,6 +1976,64 @@ CREATE TABLE IF NOT EXISTS agents (
     last_seen  TEXT NOT NULL,
     first_seen TEXT NOT NULL DEFAULT '1970-01-01T00:00:00Z'
 );
+CREATE TABLE IF NOT EXISTS task_progress (
+    task_id TEXT NOT NULL,
+    lease_token TEXT NOT NULL,
+    agent_id TEXT NOT NULL,
+    attempt_no INTEGER NOT NULL,
+    sequence INTEGER NOT NULL,
+    checkpoint TEXT NOT NULL,
+    progress_at TEXT NOT NULL,
+    last_extended_sequence INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY(task_id, lease_token)
+);
+CREATE TABLE IF NOT EXISTS task_progress_receipts (
+    task_id TEXT NOT NULL,
+    lease_token TEXT NOT NULL,
+    request_id TEXT NOT NULL,
+    agent_id TEXT NOT NULL,
+    sequence INTEGER NOT NULL,
+    checkpoint TEXT NOT NULL,
+    progress_at TEXT NOT NULL,
+    PRIMARY KEY(task_id, lease_token, request_id),
+    UNIQUE(task_id, lease_token, sequence)
+);
+CREATE TABLE IF NOT EXISTS task_progress_extend_receipts (
+    task_id TEXT NOT NULL,
+    lease_token TEXT NOT NULL,
+    request_id TEXT NOT NULL,
+    progress_sequence INTEGER NOT NULL,
+    lease_until TEXT NOT NULL,
+    PRIMARY KEY(task_id, lease_token, request_id),
+    UNIQUE(task_id, lease_token, progress_sequence)
+);
+CREATE INDEX IF NOT EXISTS idx_task_progress_at ON task_progress(progress_at);
+CREATE TABLE IF NOT EXISTS completion_actions (
+    id TEXT PRIMARY KEY,
+    event_id TEXT NOT NULL UNIQUE,
+    event_key TEXT NOT NULL UNIQUE,
+    batch_id TEXT NOT NULL,
+    task_id TEXT,
+    profile_id TEXT NOT NULL,
+    profile_version INTEGER NOT NULL,
+    action_kind TEXT NOT NULL,
+    payload TEXT NOT NULL,
+    state TEXT NOT NULL DEFAULT 'pending',
+    idempotent INTEGER NOT NULL,
+    max_attempts INTEGER NOT NULL,
+    attempt_count INTEGER NOT NULL DEFAULT 0,
+    available_at TEXT,
+    lease_owner TEXT,
+    lease_token TEXT,
+    lease_until TEXT,
+    last_error TEXT,
+    exit_code INTEGER,
+    output_bytes INTEGER,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_completion_actions_ready ON completion_actions(state, available_at, created_at);
+CREATE INDEX IF NOT EXISTS idx_completion_actions_batch ON completion_actions(batch_id, created_at);
 "#;
 
 fn write_ack(

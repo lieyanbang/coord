@@ -31,6 +31,8 @@ function integerSchema(description, minimum, maximum) {
 const REQUEST_ID_PROPERTY = stringSchema('Unique UUID for this state-changing relay request. Reuse it unchanged when reconciling an uncertain outcome.', 36);
 const TASK_ID_PROPERTY = stringSchema('coord task UUID.', 36);
 const LEASE_TOKEN_PROPERTY = stringSchema('The lease token returned by this agent claim. Never substitute a token from another task or attempt.', 36);
+const ATTEMPT_NO_PROPERTY = integerSchema('The attempt number returned by the exact current task claim.', 1, 1000000000);
+const PROGRESS_SEQUENCE_PROPERTY = integerSchema('The next monotonically increasing checkpoint number for this task attempt.', 1, 1000000000);
 
 const TOOLS = [
   {
@@ -72,7 +74,7 @@ const TOOLS = [
   },
   {
     name: 'coord_extend_lease',
-    description: 'Extend the active lease using its exact current token. Do not retry automatically after a timeout or uncertain result; inspect the task first.',
+    description: 'Extend a legacy lease using its exact current token. Progress-required batches reject this method; use coord_report_progress then coord_extend_lease_progress. Do not retry an uncertain result.',
     inputSchema: objectSchema({
       id: TASK_ID_PROPERTY,
       lease_token: LEASE_TOKEN_PROPERTY,
@@ -80,6 +82,38 @@ const TOOLS = [
       lease_seconds: integerSchema('Requested lease duration.', 1, 600),
     }, ['id', 'lease_token', 'request_id']),
     annotations: { title: 'Extend coord lease', readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+  },
+  {
+    name: 'coord_report_progress',
+    description: 'Record a short self-reported checkpoint for the current attempt. It is fenced by the lease token and attempt number; it is not proof of model liveness.',
+    inputSchema: objectSchema({
+      id: TASK_ID_PROPERTY,
+      lease_token: LEASE_TOKEN_PROPERTY,
+      attempt_no: ATTEMPT_NO_PROPERTY,
+      sequence: PROGRESS_SEQUENCE_PROPERTY,
+      request_id: REQUEST_ID_PROPERTY,
+      checkpoint: stringSchema('Short concrete work completed since the previous checkpoint.', 1024),
+    }, ['id', 'lease_token', 'attempt_no', 'sequence', 'request_id', 'checkpoint']),
+    annotations: { title: 'Report coord progress', readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+  },
+  {
+    name: 'coord_extend_lease_progress',
+    description: 'Extend a progress-required lease after a fresh, unconsumed checkpoint for the same attempt. One request extends at most 600 seconds and the batch total budget is finite.',
+    inputSchema: objectSchema({
+      id: TASK_ID_PROPERTY,
+      lease_token: LEASE_TOKEN_PROPERTY,
+      attempt_no: ATTEMPT_NO_PROPERTY,
+      progress_sequence: PROGRESS_SEQUENCE_PROPERTY,
+      request_id: REQUEST_ID_PROPERTY,
+      lease_seconds: integerSchema('Requested extension, capped at 600 seconds.', 1, 600),
+    }, ['id', 'lease_token', 'attempt_no', 'progress_sequence', 'request_id']),
+    annotations: { title: 'Extend coord lease with progress', readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+  },
+  {
+    name: 'coord_agent_status',
+    description: 'Read current tasks and last accepted progress for this relay identity within one batch. No lease tokens are returned.',
+    inputSchema: objectSchema({ batch_id: stringSchema('Batch UUID.', 36) }, ['batch_id']),
+    annotations: { title: 'Read coord agent status', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
   },
   {
     name: 'coord_submit_result',
@@ -201,6 +235,63 @@ function validateToolInput(name, args) {
       const params = { id: args.id, agentId: COORD_AGENT_ID, leaseToken: args.lease_token };
       if (args.lease_seconds !== undefined) params.leaseSeconds = args.lease_seconds;
       return { method: 'tasks/extend', requestId: args.request_id, params, readOnly: false };
+    }
+    case 'coord_report_progress': {
+      if (!hasExactKeys(args, ['id', 'lease_token', 'attempt_no', 'sequence', 'request_id', 'checkpoint'], ['id', 'lease_token', 'attempt_no', 'sequence', 'request_id', 'checkpoint'])
+          || !validUuid(args.id) || !validUuid(args.lease_token) || !validUuid(args.request_id)
+          || !Number.isInteger(args.attempt_no) || args.attempt_no < 1 || args.attempt_no > 1000000000
+          || !Number.isInteger(args.sequence) || args.sequence < 1 || args.sequence > 1000000000
+          || typeof args.checkpoint !== 'string' || args.checkpoint.trim().length < 1 || args.checkpoint.length > 1024) {
+        throw new ToolInputError('invalid_progress_arguments');
+      }
+      return {
+        method: 'scheduler/progress',
+        requestId: args.request_id,
+        params: {
+          id: args.id,
+          agent_id: COORD_AGENT_ID,
+          lease_token: args.lease_token,
+          attempt_no: args.attempt_no,
+          sequence: args.sequence,
+          request_id: args.request_id,
+          checkpoint: args.checkpoint,
+        },
+        readOnly: false,
+      };
+    }
+    case 'coord_extend_lease_progress': {
+      if (!hasExactKeys(args, ['id', 'lease_token', 'attempt_no', 'progress_sequence', 'request_id', 'lease_seconds'], ['id', 'lease_token', 'attempt_no', 'progress_sequence', 'request_id'])
+          || !validUuid(args.id) || !validUuid(args.lease_token) || !validUuid(args.request_id)
+          || !Number.isInteger(args.attempt_no) || args.attempt_no < 1 || args.attempt_no > 1000000000
+          || !Number.isInteger(args.progress_sequence) || args.progress_sequence < 1 || args.progress_sequence > 1000000000
+          || (args.lease_seconds !== undefined && (!Number.isInteger(args.lease_seconds) || args.lease_seconds < 1 || args.lease_seconds > 600))) {
+        throw new ToolInputError('invalid_progress_extend_arguments');
+      }
+      return {
+        method: 'scheduler/extend_progress',
+        requestId: args.request_id,
+        params: {
+          id: args.id,
+          agent_id: COORD_AGENT_ID,
+          lease_token: args.lease_token,
+          attempt_no: args.attempt_no,
+          progress_sequence: args.progress_sequence,
+          request_id: args.request_id,
+          lease_seconds: args.lease_seconds ?? 300,
+        },
+        readOnly: false,
+      };
+    }
+    case 'coord_agent_status': {
+      if (!hasExactKeys(args, ['batch_id'], ['batch_id']) || !validUuid(args.batch_id)) {
+        throw new ToolInputError('invalid_agent_status_arguments');
+      }
+      return {
+        method: 'scheduler/agent_status',
+        requestId: crypto.randomUUID(),
+        params: { agent_id: COORD_AGENT_ID, batch_id: args.batch_id },
+        readOnly: true,
+      };
     }
     case 'coord_submit_result': {
       const allowed = ['id', 'lease_token', 'request_id', 'result', 'post_ack', 'ack_name', 'ack_priority', 'ack_payload'];

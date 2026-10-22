@@ -35,6 +35,9 @@ parking_lot = "0.12"
 rmcp = { version = "0.16", features = ["server", "macros", "transport-io"] }
 schemars = "1.0"
 
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.61.2", features = ["Win32_Foundation", "Win32_System_JobObjects", "Win32_System_Threading"] }
+
 [profile.release]
 opt-level = 3
 lto = "thin"

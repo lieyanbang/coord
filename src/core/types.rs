@@ -2,6 +2,7 @@
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
@@ -121,6 +122,43 @@ pub struct BatchConfig {
     pub retry_backoff_ms: u64,
     pub max_backoff_ms: u64,
     pub validator: Option<super::validator::ValidatorConfig>,
+    pub require_progress: bool,
+    pub agent_lease_budget_seconds: u64,
+    pub action_profile: Option<String>,
+    pub action_profile_version: Option<u32>,
+    pub action_profile_actions: Vec<String>,
+    pub action_policy: BTreeMap<String, ActionPolicy>,
+}
+
+#[derive(Debug)]
+pub struct ProgressReport<'a> {
+    pub id: Uuid,
+    pub agent_id: &'a str,
+    pub lease_token: &'a str,
+    pub attempt_no: u64,
+    pub sequence: u64,
+    pub request_id: Uuid,
+    pub checkpoint: &'a str,
+}
+
+#[derive(Debug)]
+pub struct ProgressLeaseExtension<'a> {
+    pub id: Uuid,
+    pub agent_id: &'a str,
+    pub lease_token: &'a str,
+    pub attempt_no: u64,
+    pub progress_sequence: u64,
+    pub request_id: Uuid,
+    pub lease_seconds: u64,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, schemars::JsonSchema)]
+#[serde(default)]
+#[serde(deny_unknown_fields)]
+pub struct ActionPolicy {
+    pub idempotent: bool,
+    pub max_attempts: u32,
+    pub include_result: bool,
 }
 impl Default for BatchConfig {
     fn default() -> Self {
@@ -129,6 +167,12 @@ impl Default for BatchConfig {
             retry_backoff_ms: 100,
             max_backoff_ms: 30_000,
             validator: None,
+            require_progress: false,
+            agent_lease_budget_seconds: 3_600,
+            action_profile: None,
+            action_profile_version: None,
+            action_profile_actions: Vec::new(),
+            action_policy: BTreeMap::new(),
         }
     }
 }

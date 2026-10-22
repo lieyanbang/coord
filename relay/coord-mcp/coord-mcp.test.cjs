@@ -195,7 +195,7 @@ test('OAuth facade publishes coord scope and only accepts coord bearer tokens', 
 });
 
 test('strict tool allowlist maps only fixed coord RPCs and fences mutating inputs', () => {
-  assert.equal(TOOLS.length, 7);
+  assert.equal(TOOLS.length, 10);
   assert.ok(TOOLS.every((tool) => tool.inputSchema.additionalProperties === false));
   assert.ok(!TOOLS.some((tool) => /create|cancel|batch_status/i.test(tool.name)));
 
@@ -210,6 +210,20 @@ test('strict tool allowlist maps only fixed coord RPCs and fences mutating input
   assert.deepEqual(next.params, { agent_id: 'coord-relay-agent', batch_id: BATCH_ID });
   const extend = validateToolInput('coord_extend_lease', { id: TASK_ID, lease_token: LEASE_TOKEN, request_id: TASK_ID });
   assert.equal(extend.params.agentId, 'coord-relay-agent');
+  const progress = validateToolInput('coord_report_progress', {
+    id: TASK_ID, lease_token: LEASE_TOKEN, attempt_no: 2, sequence: 1,
+    request_id: TASK_ID, checkpoint: 'Reviewed the first reference sheet.',
+  });
+  assert.equal(progress.method, 'scheduler/progress');
+  assert.equal(progress.requestId, progress.params.request_id);
+  assert.equal(progress.params.agent_id, 'coord-relay-agent');
+  const progressExtend = validateToolInput('coord_extend_lease_progress', {
+    id: TASK_ID, lease_token: LEASE_TOKEN, attempt_no: 2, progress_sequence: 1,
+    request_id: TASK_ID,
+  });
+  assert.equal(progressExtend.method, 'scheduler/extend_progress');
+  assert.equal(progressExtend.params.lease_seconds, 300);
+  assert.equal(validateToolInput('coord_agent_status', { batch_id: BATCH_ID }).readOnly, true);
   const submit = validateToolInput('coord_submit_result', { id: TASK_ID, lease_token: LEASE_TOKEN, request_id: TASK_ID, result: { ok: true } });
   assert.equal(submit.method, 'tasks/complete');
   const failure = validateToolInput('coord_report_failure', { id: TASK_ID, lease_token: LEASE_TOKEN, request_id: TASK_ID, error: 'failed' });
@@ -218,8 +232,13 @@ test('strict tool allowlist maps only fixed coord RPCs and fences mutating input
   assert.throws(() => validateToolInput('coord_tasks_list', { limit: 5, skip_reclaim: false }));
   assert.throws(() => validateToolInput('coord_claim_task', { id: TASK_ID, request_id: TASK_ID, agentId: 'attacker' }));
   assert.throws(() => validateToolInput('coord_claim_next', { request_id: TASK_ID }));
+  assert.throws(() => validateToolInput('coord_claim_next', { batch_id: BATCH_ID, request_id: TASK_ID, agent_id: 'A0' }));
   assert.throws(() => validateToolInput('coord_submit_result', { id: TASK_ID, lease_token: LEASE_TOKEN, request_id: TASK_ID, result: {}, bypass_fence: true }));
+  assert.throws(() => validateToolInput('coord_submit_result', { id: TASK_ID, lease_token: LEASE_TOKEN, request_id: TASK_ID, result: {}, agent_id: 'A1' }));
   assert.throws(() => validateToolInput('coord_report_failure', { id: TASK_ID, lease_token: LEASE_TOKEN, request_id: 'bad', error: 'failed' }));
+  assert.throws(() => validateToolInput('coord_report_progress', { id: TASK_ID, lease_token: LEASE_TOKEN, attempt_no: 2, sequence: 1, request_id: TASK_ID, checkpoint: '   ' }));
+  assert.throws(() => validateToolInput('coord_extend_lease_progress', { id: TASK_ID, lease_token: LEASE_TOKEN, attempt_no: 2, progress_sequence: 1, request_id: TASK_ID, lease_seconds: 601 }));
+  assert.throws(() => validateToolInput('coord_agent_status', { batch_id: 'bad' }));
   assert.throws(() => validateToolInput('tasks/cancel', { id: TASK_ID }));
 });
 
@@ -246,7 +265,7 @@ test('Streamable HTTP serves initialize, tools/list, and a token-redacted tasks/
   const listed = await postMcp(fixture, rpc('tools/list', 2));
   assert.equal(listed.response.status, 200, listed.text);
   const toolResult = parseJsonResponse(listed.text).result.tools;
-  assert.equal(toolResult.length, 7);
+  assert.equal(toolResult.length, TOOLS.length);
   assert.ok(toolResult.some((tool) => tool.name === 'coord_tasks_list'));
 
   const called = await postMcp(fixture, rpc('tools/call', 3, {

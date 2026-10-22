@@ -15,15 +15,22 @@ pub struct Daemon {
     pub child: Child,
     pub http: reqwest::blocking::Client,
     port: u16,
+    actions_config: Option<std::path::PathBuf>,
 }
 impl Daemon {
     pub fn new() -> Self {
+        Self::with_optional_actions(None)
+    }
+    pub fn with_actions_config(path: std::path::PathBuf) -> Self {
+        Self::with_optional_actions(Some(path))
+    }
+    fn with_optional_actions(actions_config: Option<std::path::PathBuf>) -> Self {
         let l = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
         let port = l.local_addr().unwrap().port();
         drop(l);
         let root = std::env::temp_dir().join(format!("coord-e2e-{}", uuid::Uuid::new_v4()));
         std::fs::create_dir_all(&root).unwrap();
-        let child = Self::spawn(port, &root);
+        let child = Self::spawn(port, &root, actions_config.as_deref());
         let d = Self {
             root,
             url: format!("http://127.0.0.1:{port}"),
@@ -33,19 +40,25 @@ impl Daemon {
                 .build()
                 .unwrap(),
             port,
+            actions_config,
         };
         d.ready();
         d
     }
-    fn spawn(port: u16, root: &std::path::Path) -> Child {
+    fn spawn(port: u16, root: &std::path::Path, actions_config: Option<&std::path::Path>) -> Child {
         let log = std::fs::OpenOptions::new()
             .create(true)
             .append(true)
             .open(root.join("daemon.log"))
             .unwrap();
-        Command::new(binary())
+        let mut command = Command::new(binary());
+        command
             .args(["serve", "--addr", &format!("127.0.0.1:{port}"), "--db"])
-            .arg(root.join("state.db"))
+            .arg(root.join("state.db"));
+        if let Some(path) = actions_config {
+            command.args(["--actions-config"]).arg(path);
+        }
+        command
             .stdout(Stdio::from(log.try_clone().unwrap()))
             .stderr(Stdio::from(log))
             .spawn()
@@ -66,9 +79,15 @@ impl Daemon {
         panic!("daemon readiness timeout");
     }
     pub fn restart(&mut self) {
-        self.child.kill().unwrap();
-        self.child.wait().unwrap();
-        self.child = Self::spawn(self.port, &self.root);
+        self.stop();
+        self.start();
+    }
+    pub fn stop(&mut self) {
+        let _ = self.child.kill();
+        let _ = self.child.wait();
+    }
+    pub fn start(&mut self) {
+        self.child = Self::spawn(self.port, &self.root, self.actions_config.as_deref());
         self.ready();
     }
     pub fn request(&self, method: &str, params: Value) -> Value {

@@ -17,9 +17,24 @@ loopback only.
 - The JSON-RPC allowlist is limited to `tasks/list`, `tasks/get`,
   `agents/heartbeat`, `tasks/claim`, `tasks/extend`, `tasks/complete`,
   `scheduler/claim`, `scheduler/extend`, `scheduler/submit`, and
-  `scheduler/failure`. `tasks/list` requires `skip_reclaim: true`; the relay
-  denies task creation, cancellation, arbitrary methods, unknown parameters,
-  and caller-selected agent identities.
+  `scheduler/failure`, `scheduler/progress`, `scheduler/extend_progress`, and
+  `scheduler/agent_status`. `tasks/list` requires `skip_reclaim: true`; the
+  relay denies task creation, cancellation, arbitrary methods, unknown
+  parameters, and caller-selected agent identities.
+- The MCP facade maps all connected clients to the fixed
+  `coord-relay-agent`. Cloudflare Access authenticates the same owner account;
+  it does not bind an A0-A5 label to an individual ChatGPT conversation. The
+  current route therefore provides shared logical identity plus lease fencing,
+  not six independently authenticated workers. Do not use it for the six
+  production workers until a conversation-bound capability is implemented and
+  verified.
+- Progress-required batches can call `scheduler/progress` with the current
+  task, lease token, attempt number, next sequence and a short checkpoint, then
+  `scheduler/extend_progress` with that unconsumed sequence. The batch's
+  cumulative lease budget is finite. Checkpoints are self-reported work notes,
+  not proof that a model is alive or will wake later; an idle conversation must
+  be allowed to lose its lease. `scheduler/agent_status` returns no lease
+  tokens.
 - Requests, frames, and results are bounded at 64 KiB, concurrency is limited
   to four requests, and a dispatched call is never retried. The client must
   reuse the same UUID `requestId` when reconciling a transport interruption.

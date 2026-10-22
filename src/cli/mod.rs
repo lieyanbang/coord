@@ -139,6 +139,8 @@ pub struct ServeArgs {
     pub db: Option<std::path::PathBuf>,
     #[arg(long, env = "COORD_VAULT")]
     pub vault: Option<std::path::PathBuf>,
+    #[arg(long, env = "COORD_ACTIONS_CONFIG")]
+    pub actions_config: Option<std::path::PathBuf>,
 }
 
 #[derive(clap::Args)]
@@ -149,7 +151,7 @@ pub struct McpArgs {
 
 pub async fn dispatch(url: String, cmd: Cmd) -> Result<()> {
     match cmd {
-        Cmd::Serve(a) => server::serve(a.addr, a.db, a.vault).await,
+        Cmd::Serve(a) => server::serve(a.addr, a.db, a.vault, a.actions_config).await,
         Cmd::Mcp(a) => server::mcp(a.url).await,
         Cmd::Version => {
             server::print_version();

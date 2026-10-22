@@ -233,6 +233,61 @@ impl Bridge {
     async fn extend_lease(&self, a: Parameters<ExtendArgs>) -> Result<CallToolResult, McpError> {
         self.tasks_extend(a).await
     }
+    #[tool(
+        description = "Report one strictly increasing, bounded work checkpoint for the current task attempt. This is self-reported progress, not proof of unattended model activity."
+    )]
+    async fn coord_report_progress(
+        &self,
+        Parameters(a): Parameters<AgentProgressArgs>,
+    ) -> Result<CallToolResult, McpError> {
+        self.call(
+            "scheduler/progress",
+            json!({
+                "id": a.id,
+                "agent_id": a.agent_id,
+                "lease_token": a.lease_token,
+                "attempt_no": a.attempt_no,
+                "sequence": a.sequence,
+                "request_id": a.request_id,
+                "checkpoint": a.checkpoint,
+            }),
+        )
+        .await
+    }
+    #[tool(
+        description = "Extend a progress-required batch lease using fresh unconsumed progress for the exact attempt. Each extension is at most 600 seconds and the batch budget is finite."
+    )]
+    async fn coord_extend_lease_progress(
+        &self,
+        Parameters(a): Parameters<AgentLeaseExtendArgs>,
+    ) -> Result<CallToolResult, McpError> {
+        self.call(
+            "scheduler/extend_progress",
+            json!({
+                "id": a.id,
+                "agent_id": a.agent_id,
+                "lease_token": a.lease_token,
+                "attempt_no": a.attempt_no,
+                "progress_sequence": a.progress_sequence,
+                "request_id": a.request_id,
+                "lease_seconds": a.lease_seconds,
+            }),
+        )
+        .await
+    }
+    #[tool(
+        description = "Read one agent's current leases and last accepted work checkpoint for a batch. Lease tokens are not returned."
+    )]
+    async fn coord_agent_status(
+        &self,
+        Parameters(a): Parameters<AgentStatusArgs>,
+    ) -> Result<CallToolResult, McpError> {
+        self.call(
+            "scheduler/agent_status",
+            json!({ "agent_id": a.agent_id, "batch_id": a.batch_id }),
+        )
+        .await
+    }
     #[tool(description = "Get a generic task by UUID.")]
     async fn get_task(&self, a: Parameters<IdArgs>) -> Result<CallToolResult, McpError> {
         self.tasks_get(a).await
@@ -436,6 +491,34 @@ pub struct FailureArgs {
 }
 #[derive(Debug, Deserialize, JsonSchema)]
 pub struct BatchArgs {
+    pub batch_id: String,
+}
+
+#[derive(Debug, Deserialize, JsonSchema)]
+pub struct AgentProgressArgs {
+    pub id: String,
+    pub agent_id: String,
+    pub lease_token: String,
+    pub attempt_no: u64,
+    pub sequence: u64,
+    pub request_id: String,
+    pub checkpoint: String,
+}
+
+#[derive(Debug, Deserialize, JsonSchema)]
+pub struct AgentLeaseExtendArgs {
+    pub id: String,
+    pub agent_id: String,
+    pub lease_token: String,
+    pub attempt_no: u64,
+    pub progress_sequence: u64,
+    pub request_id: String,
+    pub lease_seconds: u64,
+}
+
+#[derive(Debug, Deserialize, JsonSchema)]
+pub struct AgentStatusArgs {
+    pub agent_id: String,
     pub batch_id: String,
 }
 

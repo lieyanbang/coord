@@ -104,6 +104,28 @@ function validParams(method, params) {
         && params.agent_id === COORD_AGENT_ID
         && validLeaseToken(params.lease_token)
         && validLeaseSeconds(params.lease_seconds);
+    case 'scheduler/progress':
+      return exactKeys(params, ['id', 'agent_id', 'lease_token', 'attempt_no', 'sequence', 'request_id', 'checkpoint'], ['id', 'agent_id', 'lease_token', 'attempt_no', 'sequence', 'request_id', 'checkpoint'])
+        && validUuid(params.id)
+        && params.agent_id === COORD_AGENT_ID
+        && validLeaseToken(params.lease_token)
+        && Number.isInteger(params.attempt_no) && params.attempt_no >= 1 && params.attempt_no <= 1_000_000_000
+        && Number.isInteger(params.sequence) && params.sequence >= 1 && params.sequence <= 1_000_000_000
+        && validUuid(params.request_id)
+        && typeof params.checkpoint === 'string' && params.checkpoint.trim().length > 0 && params.checkpoint.length <= 1024;
+    case 'scheduler/extend_progress':
+      return exactKeys(params, ['id', 'agent_id', 'lease_token', 'attempt_no', 'progress_sequence', 'request_id', 'lease_seconds'], ['id', 'agent_id', 'lease_token', 'attempt_no', 'progress_sequence', 'request_id', 'lease_seconds'])
+        && validUuid(params.id)
+        && params.agent_id === COORD_AGENT_ID
+        && validLeaseToken(params.lease_token)
+        && Number.isInteger(params.attempt_no) && params.attempt_no >= 1 && params.attempt_no <= 1_000_000_000
+        && Number.isInteger(params.progress_sequence) && params.progress_sequence >= 1 && params.progress_sequence <= 1_000_000_000
+        && validUuid(params.request_id)
+        && validLeaseSeconds(params.lease_seconds);
+    case 'scheduler/agent_status':
+      return exactKeys(params, ['agent_id', 'batch_id'], ['agent_id', 'batch_id'])
+        && params.agent_id === COORD_AGENT_ID
+        && validUuid(params.batch_id);
     case 'scheduler/submit':
       return exactKeys(params, ['id', 'agent_id', 'lease_token', 'result', 'post_ack', 'ack_name', 'ack_priority', 'ack_payload'], ['id', 'agent_id', 'lease_token', 'result'])
         && validUuid(params.id)
@@ -134,6 +156,10 @@ export function validateRpcRequest(request) {
   }
   if (!validParams(request.method, request.params)) {
     return { ok: false, code: 'method_or_params_denied' };
+  }
+  if (['scheduler/progress', 'scheduler/extend_progress'].includes(request.method)
+    && request.params.request_id !== request.requestId) {
+    return { ok: false, code: 'request_id_mismatch' };
   }
   if (!boundedJson(request, MAX_REQUEST_BYTES)) {
     return { ok: false, code: 'request_too_large' };
