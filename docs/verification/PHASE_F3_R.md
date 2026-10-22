@@ -1,15 +1,19 @@
 # Phase F3-R: Cloudflare Access identity authorization
 
-Last updated 2026-10-22 22:03 Australia/Brisbane (2026-10-22 12:03 UTC).
+Last updated 2026-10-22 23:08 Australia/Brisbane (2026-10-22 13:08 UTC).
 Overall result: **PARTIAL**. R0, R1 and R2 pass. The later production follow-up
 deployed the tested CoordMCP source, applied the one approved Cloudflare Access
 authorize target, and populated the Access runtime configuration. The owner
 Access session reached the password-free consent page, but production
 wrong-identity denial is not independently verified; R3 remains **PARTIAL**.
-A fresh ChatGPT authorization POST returned 302, but the browser's
-`form-action 'self'` CSP blocked the redirect to ChatGPT's callback. A local
-fix is tested but not yet deployed. Token exchange and authenticated MCP calls
-remain **NOT_RUN**; R4 and Phase F3 remain **PARTIAL**.
+After refreshing ChatGPT Web, its actual `Coord tasks/list` call succeeded and
+returned one pending ordinary task. This is positive evidence for the real
+authenticated read-only MCP path, superseding the earlier `NOT_RUN` status for
+that call. No task was claimed or changed. The isolated batch/task write and
+readback remain **NOT_RUN** because the available connector tools do not expose
+batch/task creation. Callback/token HTTP details and individual MCP
+initialization/tool-list responses were not captured separately. R4 and Phase
+F3 therefore remain **PARTIAL**.
 
 `TASK.md` was read-only throughout; SHA-256 remained
 `780ee0eabbee510cdd7ad6c33d561698b19075d550e20d4d91b2a9725775fef8`.
@@ -356,9 +360,9 @@ Cloudflare Access redirect. The later approved exact-path addition is recorded
 below. OpenResty was not reloaded; no RemoteControl route or shared OAuth
 logic was changed.
 
-## R4: ChatGPT Web end-to-end
+## R4: ChatGPT Web end-to-end (initial attempt; superseded below)
 
-**PARTIAL / USER ACTION REQUIRED.** The `Coord` ChatGPT plugin points to the
+**Initial checkpoint: PARTIAL / USER ACTION REQUIRED.** The `Coord` ChatGPT plugin points to the
 exact URL `https://lieyanbang.com/app/CoordMCP/` and advertises OAuth. Its
 settings page still shows **Associate** after refresh, so the connector is not
 established. The real Cloudflare Access owner session reached the
@@ -493,7 +497,53 @@ Local validation from 2026-10-22T12:00:21Z to 12:01:00Z:
   tests each exited 0. Exact commands, timings, and logs are in
   `stage-f3-r-checks.json` and `stage-f3-r-*.log` files.
 
-This fix is local-only at this checkpoint. Production source, Feathers service,
-Cloudflare, and other services have not been changed for it. F3-R/R4 remain
-**PARTIAL** until the tested fix is deployed, the browser reaches the ChatGPT
-callback, and token/MCP/isolated task readback gates pass.
+This fix was local-only at this checkpoint. Production source, Feathers
+service, Cloudflare, and other services had not been changed for it then. The
+subsequent successful real read-only call is recorded below; it does not
+retroactively establish the production source hash or individual OAuth
+substep statuses.
+
+## R4 ChatGPT Web read-only follow-up (2026-10-22)
+
+The user reported ChatGPT Web's “Unable to load this reply” display and asked
+for a refresh. After refreshing ChatGPT Web, the actual Coord connector call
+`Coord tasks/list` completed successfully and returned **1 pending ordinary
+task**. Only the count was recorded; no task content or identifier was copied
+into this report. This was a real ChatGPT Web tool invocation against the
+deployed service, not a local/mock JWT test. The successful method call is
+positive end-to-end evidence for the authenticated read-only path. The UI did
+not expose a request timestamp, HTTP trace, or exit code, and separate callback,
+token-exchange, MCP initialization, and tool-list responses were not captured;
+no individual status is inferred for those substeps.
+
+No claim, write, batch creation, or readback was performed. The available
+ChatGPT connector tools do not expose batch/task creation, so the authorized
+isolated write-and-readback scenario remains **NOT_RUN**. Production rejection
+of a non-owner Access identity also remains **NOT_VERIFIED**. Thus R4 and Phase
+F3 stay **PARTIAL** despite the successful real read-only tool call. The
+production queue and existing tasks were not mutated.
+
+The current code revision is `6853a21eb5fe78f857a8d1c1d49aae6bc4253384`
+(`Fix ChatGPT OAuth callback CSP`). Fork Windows Actions run
+[39775572446](https://github.com/lieyanbang/coord/actions/runs/39775572446)
+completed `success` for this exact commit at `2026-10-22T12:09:43Z` (workflow
+`ci`; run started at `12:05:43Z`). The Actions result was read from the public
+GitHub Actions API; no artifact execution is claimed here.
+
+After the ChatGPT Web follow-up, the local Windows Gate was rerun with
+`pwsh -NoLogo -NoProfile -File scripts/verify.ps1 -Stage f3-r` from
+`2026-10-22T13:07:50Z` to `13:08:29Z`; the command exited 0. All five checks
+exited 0:
+
+| Check | Exit | Log |
+| --- | ---: | --- |
+| `cargo fmt --all -- --check` | 0 | `stage-f3-r-fmt.log` |
+| `cargo clippy --all-targets --all-features --locked -- -D warnings` | 0 | `stage-f3-r-clippy.log` |
+| `cargo test --all-features --locked` | 0 | `stage-f3-r-test.log` |
+| `cargo build --release --locked` | 0 | `stage-f3-r-build.log` |
+| `npm test --prefix relay/coord-mcp` | 0 | `stage-f3-r-coord-mcp-tests.log` |
+
+CoordMCP reported **12/12 passed**. Timings and exact per-check start times are
+in `stage-f3-r-checks.json`. This gate and the Actions run verify the source;
+they do not close the production identity-negative or isolated write/readback
+gates.
