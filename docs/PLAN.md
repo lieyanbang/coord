@@ -162,9 +162,9 @@ Windows 本机及 Windows Actions 的真实测试、构建与产物为准。
 - **范围与状态：** F0/F1/F2 保持 PASS，F3 标记 `PARTIAL / AUTH_REDESIGN_REQUIRED`。本轮只授权改 coord 项目的规划/任务与后续由 Codex 实施 CoordMCP 的必要改造；不直接批量迁移其他 MCP。原 F3 已通过的 Sidecar/写入/CI 证据保留，但不证明 Access 授权。
 
 ### F3-R 执行进度（2026-10-22）
-- R0：PARTIAL。直连 SSH 已核对服务、端口、公网路由矩阵并为当前 Feathers/OpenResty/CoordMCP 文件建立 root-only 回滚快照；Cloudflare API 身份没有 Access Apps/Policies 读取权限，实际应用策略与允许用户未验证。
+- R0：PASS。Cloudflare 已登录 Dashboard 直接核实 `lieyanbang-auth` 的六个现有目标、team domain `lieyanbang.cloudflareaccess.com`、AUD、单一管理员邮箱 Allow 策略（邮箱值不入文档）、Google OIDC、24 小时会话；直连 SSH 复核服务/路由/变量缺失和 root-only 回滚快照。仅添加 CoordMCP 精确 authorize 路径的变更仍待 action-time 确认，未保存。
 - R1：PASS（本地实现）。CoordMCP 改为签名 Access JWT + AUD/Issuer/exp/nbf/owner-email 校验、无密码确认、CSRF/OAuth 参数绑定及原子一次性授权码消费；配置缺失时 authorize 返回 503。没有修改 RemoteControl 或共享 OAuth 实现。
 - R2：PASS。`npm test` 12/12；真实 Desktop Commander OAuth 父类哈希匹配生产文件的主机集成通过；`scripts/verify.ps1 -Stage f3-r` 五项在 `00:17:31Z`–`00:18:10Z` 复跑全通过。Fork Windows Actions run `39696859131` 对提交 `a640ce8` 成功，Windows job 全步骤通过，artifact `12390883361` 未过期。
-- R3：PARTIAL。部署的 CoordMCP 两模块哈希匹配已测版本，远端 `node --check` 两项 exit 0；只重启 `feathersjsapp.service` 后 active/running。公网 authorize 未认证与伪造 Access header 均返回 fail-closed 503；元数据及旧 RemoteControl 路由回归通过。Sidecar READY、生产只读 `tasks/list(skip_reclaim=true)`、Arasaka Servy `CoordRelayAgent` Running、coord 健康 `READY`/SQLite read-only 均实测通过；13011/13012 与其他服务未改动。Access Apps/Policies 权限、实际 AUD/owner identity 和保护路径仍 UNVERIFIED，因此不得记 PASS。
+- R3：PARTIAL。部署的 CoordMCP 两模块哈希匹配已测版本，远端 `node --check` 两项 exit 0；只重启 `feathersjsapp.service` 后 active/running。Cloudflare app/policy 已由 Dashboard 核实，但 authorize 精确路径还未加到 Access，匿名请求当前 fail-closed 503；生产 Feathers 的 Access 环境变量仍缺失。元数据保持 200、MCP root 401；Sidecar READY、生产只读 `tasks/list(skip_reclaim=true)`、Arasaka Servy `CoordRelayAgent` Running、coord 健康 `READY`/SQLite read-only 均实测通过；13011/13012 与其他服务未改动。安全敏感的单一路径变更等待 action-time 确认，故 R3 不能 PASS。
 - R4：NOT_RUN。未进行 ChatGPT Web Access 登录/同意、真实公网 token exchange 或认证 MCP 调用。
 - F3-R 总体及 F3：PARTIAL；不得将测试用 mock JWT、历史 Sidecar E2E 或服务在线状态视为真实 Access 授权。详见 `verification/PHASE_F3_R.md`。

@@ -1,12 +1,11 @@
 # Phase F3-R: Cloudflare Access identity authorization
 
-Recorded 2026-10-22 10:19 Australia/Brisbane (2026-10-22 00:19 UTC).
-Overall result: **PARTIAL**. R1 and R2 pass; R0 remains partial because the
-actual Access application/policy is not readable with the available Cloudflare
-credential. R3 code deployment and Feathers reload are complete, but the
-authorize path is not protected by a verified Access application and returns
-503 with missing Access configuration. R3 is therefore **PARTIAL**. R4 ChatGPT
-Web authorization remains **NOT_RUN**. Phase F3 stays PARTIAL.
+Recorded 2026-10-22 11:29 Australia/Brisbane (2026-10-22 01:29 UTC).
+Overall result: **PARTIAL**. R0, R1 and R2 pass. R3 code deployment and
+Feathers reload are complete, but the exact Cloudflare Access path and runtime
+identity configuration have not been applied; the anonymous authorize request
+still returns fail-closed 503. R3 is **PARTIAL**. R4 ChatGPT Web authorization
+remains **NOT_RUN**. Phase F3 stays PARTIAL.
 
 `TASK.md` was read-only throughout; SHA-256 remained
 `780ee0eabbee510cdd7ad6c33d561698b19075d550e20d4d91b2a9725775fef8`.
@@ -66,9 +65,9 @@ not treated as authoritative policy evidence. The `lieyanbang.com` zone resolves
 to the same account. The current server's
 `/etc/desktop-commander/devices.json` has null `accessTeamDomain` and
 `accessApplicationAud` fields; the CoordMCP baseline also did not pass Access
-configuration to its OAuth server. Exact owner identity and policy scope remain
-**UNVERIFIED**. No DCR POST was made during R0 because it would persist a
-production client record.
+configuration to its OAuth server. At this API-only audit point, exact owner
+identity and policy scope remained **UNVERIFIED**. No DCR POST was made during
+R0 because it would persist a production client record.
 
 Before any production change, an additional root-only backup was created at
 `/var/backups/coord-mcp-f3-r-20261021T233725Z/` (directory `700 root:root`). It
@@ -89,6 +88,66 @@ Its `validateAccessAssertion()` verifies RS256/JWKS, issuer, audience, expiry,
 and not-before; the CoordMCP facade adds the owner identity allowlist and a
 strict `nbf <= now` check. No RemoteControl route or shared OAuth source was
 modified.
+
+### Authenticated dashboard follow-up (2026-10-22, before 01:16:35Z): R0 PASS
+
+The user completed Cloudflare dashboard login in the Codex In-App Browser. The
+account selected in the dashboard owns `lieyanbang.com`; the Access settings
+page identifies the team domain as `lieyanbang.cloudflareaccess.com`. This
+matches issuer `https://lieyanbang.cloudflareaccess.com` expected by the
+CoordMCP validator.
+
+The self-hosted application `lieyanbang-auth` (application ID
+`156d1459-b420-43b5-982f-43f8cd7ceeab`) has AUD
+`1734f817a08554ce3f4f093c7d39067164470afb519f1c8019b704da550a51a4`, matching
+the earlier live Access challenge. Its six existing targets are exactly:
+
+- `lieyanbang.com/auth/*`
+- `lieyanbang.com/app/realtimetext/admin`
+- `lieyanbang.com/app/realtimetext/api/admin/*`
+- `lieyanbang.com/app/webqqnt/api/access-login`
+- `lieyanbang.com/app/RemoteControlMCP/*`
+- `lieyanbang.com/app/RemoteControlMCP2/*`
+
+The existing `allow-lieyanbang-admin` policy (ID
+`838dac51-2d06-4d32-aa26-c66da1498f75`) is one Allow rule with one exact email
+include matcher; the value is intentionally redacted from this report. The
+policy is attached to three apps. `lieyanbang-auth` permits only Google OIDC,
+uses instant identity-provider redirect, has a 24-hour app session, and does
+not enable WARP authentication. No policy, target, identity provider, session,
+AUD, or other Access setting was changed during this audit.
+
+Direct SSH recheck immediately before the public probes found
+`feathersjsapp.service`, `openresty.service`, `coord-relay.service`, and
+`tailscaled.service` active.
+Feathers loads `/etc/desktop-commander/device.env` (mode `600 root:root`); the
+live process had none of `COORD_MCP_ACCESS_TEAM_DOMAIN`,
+`COORD_MCP_ACCESS_APPLICATION_AUD`, or `COORD_MCP_ACCESS_ALLOWED_EMAILS`.
+Deployed CoordMCP source SHA-256 still matches the tested files:
+`index.cjs`=`e2a4c125f6742f915662707ff123f3eb0a3e3ec6b64ae2818baf1c3ea7cd5db3`,
+`oauth.cjs`=`48406ef0f3fde42fcc4cf8cdc7def1d51f047845d38cce51f738c7c53a51423c`.
+OpenResty `/etc/openresty/conf.d/lieyanbang.conf` maps exact MCP and metadata
+routes separately and proxies the `/app/CoordMCP/oauth/` prefix; no OpenResty
+change is required for a path-scoped Access target. The existing root-only
+rollback directory remains present at mode `700`.
+
+Current public probes at approximately 2026-10-22T01:16Z, each `curl.exe` exit
+0 (the authorize response `Date` header was `2026-10-22T01:16:35Z`):
+
+| GET path | HTTP | Observation |
+| --- | ---: | --- |
+| `/app/CoordMCP/oauth/authorize` | 503 | Origin fail-closed; no Access challenge yet |
+| `/app/CoordMCP/.well-known/oauth-protected-resource/mcp` | 200 | Public protected-resource metadata |
+| `/app/CoordMCP/.well-known/oauth-authorization-server` | 200 | Public authorization-server metadata |
+| `/app/CoordMCP/` | 401 | OAuth Bearer challenge |
+
+The narrow candidate change is to add only
+`lieyanbang.com/app/CoordMCP/oauth/authorize` to `lieyanbang-auth`, thereby
+reusing its verified policy and AUD while leaving its six current targets and
+all non-browser OAuth/MCP endpoints unchanged. No Access save has occurred;
+this security-sensitive change is awaiting action-time confirmation. R0 is
+now **PASS** because the required app, issuer, AUD, policy, identity matcher,
+paths, server route, backup, and runtime baseline have direct evidence.
 
 ## R1: CoordMCP implementation
 
@@ -172,11 +231,17 @@ all-feature tests, release build, and CoordMCP tests (12/12). Fresh command
 timings and output are in `stage-f3-r-checks.json` and the matching
 `stage-f3-r-*.log` files.
 
+Latest supplemental rerun on 2026-10-22T01:28:46Z–01:29:23Z used the same
+command and again exited 0 for all five checks: fmt, clippy, all-feature tests,
+release build, and CoordMCP tests. Command timings and logs are recorded in
+`stage-f3-r-checks.json` and the matching `stage-f3-r-*.log` files.
+
 ## R3: Controlled production deployment
 
-**Result: PARTIAL.** Deployment and runtime loading succeeded; actual Cloudflare
-Access policy integration is still missing and is not inferred from mock tests
-or the existing RemoteControl application.
+**Result: PARTIAL.** Deployment and runtime loading succeeded, and the existing
+Cloudflare application/policy are now directly verified in the dashboard. The
+CoordMCP authorize target and runtime identity configuration have not been
+applied; this is not inferred from mock tests or the RemoteControl route.
 
 The root-only rollback snapshot created before deployment remains at
 `/var/backups/coord-mcp-f3-r-20261021T233725Z/` (`700 root:root`). Its original
@@ -246,13 +311,12 @@ without following redirects; the matrix was rechecked at approximately
 
 `wrangler whoami` exited 0 for Wrangler `4.128.0`; the active OAuth token
 reported account/zone/Workers scopes but no Access Apps/Policies read or edit
-scope. The prior read-only Access Apps API response contained zero items and
-was not treated as authoritative. The exact app paths, policies, AUD, team
-domain and allowed owner identity therefore remain **UNVERIFIED**. No Access
-policy was changed and no positive Access JWT configuration was guessed. The
-authorize URL currently has no Cloudflare Access redirect, so R3 cannot pass.
-OpenResty was not reloaded; no RemoteControl route or shared OAuth logic was
-changed.
+scope. The earlier zero-item API response was not treated as authoritative;
+the subsequent authenticated dashboard audit above resolved the app/policy
+facts. No Access policy or target was changed and no positive Access JWT
+configuration was guessed. The authorize URL currently has no Cloudflare
+Access redirect, so R3 remains partial. OpenResty was not reloaded; no
+RemoteControl route or shared OAuth logic was changed.
 
 ## R4: ChatGPT Web end-to-end
 
@@ -261,12 +325,12 @@ public OAuth token exchange, or authenticated public MCP tool call was
 performed. Mock JWT tests and the production Sidecar read-only probe do not
 substitute for this gate.
 
-Next steps: provide an authenticated Cloudflare dashboard session or a
-credential with Access Apps/Policies read and edit for the `lieyanbang.com`
-account. Read and back up the actual `lieyanbang-auth` application/policy,
-confirm its team domain, AUD and allowed owner identity, then protect only the
-CoordMCP browser authorize route and set the matching protected Feathers
-environment values. Re-run the real positive/negative Access flow and R3
-regression. Only then can ChatGPT Web complete the real OAuth consent, token
-exchange, `initialize`, `tools/list`, read-only `tasks/list`, and isolated
-write/readback. F3 remains **PARTIAL** until all required gates pass.
+Next steps: obtain action-time confirmation for adding only
+`lieyanbang.com/app/CoordMCP/oauth/authorize` to the verified
+`lieyanbang-auth` Access application. If approved, back up the current protected
+Feathers environment file, add only the three CoordMCP Access values from the
+verified team domain/AUD/policy identity, restart only `feathersjsapp.service`,
+then verify real Access positive/negative authorization and R3 regressions.
+R4 still requires ChatGPT Web OAuth consent, token exchange, `initialize`,
+`tools/list`, read-only `tasks/list`, and isolated write/readback. F3 remains
+**PARTIAL** until all required gates pass.
