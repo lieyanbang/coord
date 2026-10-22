@@ -578,7 +578,7 @@ R4 and F3-R/F3 therefore remain **PARTIAL**; no overall PASS is inferred.
 ## Windows Gate rerun after the R4 evidence update
 
 `pwsh -NoLogo -NoProfile -File scripts/verify.ps1 -Stage f3-r` ran from
-`2026-10-22T13:34:19.298Z` through `2026-10-22T13:34:56.019Z` and exited 0.
+`2026-10-22T13:42:24.275Z` through `2026-10-22T13:43:00.726Z` and exited 0.
 All five checks exited 0:
 
 | Check | Exit | Result |
@@ -590,6 +590,9 @@ All five checks exited 0:
 | `npm test --prefix relay/coord-mcp` | 0 | 12/12 passed |
 
 Per-command start times, durations, exits and raw output are retained in
-`stage-f3-r-checks.json` and the corresponding `stage-f3-r-*.log` files. This
-is local Windows source verification only; production wrong-identity denial
+`stage-f3-r-checks.json` and the corresponding `stage-f3-r-*.log` files. Fork
+Windows Actions run [39788439712](https://github.com/lieyanbang/coord/actions/runs/39788439712)
+completed `success` for exact commit `574fbd6996da4904af7f5a0b5449bb8f9bae1479`
+at `2026-10-22T13:41:13Z` (workflow `ci`), verified through the GitHub Actions
+API. This is source verification only; production wrong-identity denial
 remains **NOT_VERIFIED**.

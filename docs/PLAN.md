@@ -136,7 +136,7 @@ Windows 本机及 Windows Actions 的真实测试、构建与产物为准。
 | F0 | PASS | `docs/verification/PHASE_F0.md`；Servy、远端基线及 Windows Actions 二进制哈希已核验 |
 | F1 | PASS | Servy 主机与 Windows 重启恢复、服务健康、loopback、SYSTEM 监护、WAL/租约及 coord 备份通过；Servy DB 已用对应官方 10.2.0 源码语义 + `System.Data.SQLite` 2.0.4 进行 Online Backup、quick_check/integrity_check，均 PASS；本机 F1 门禁 PASS，Fork Windows Actions run `39600633448` 通过，见 `docs/verification/PHASE_F1.md` |
 | F2 | PASS | 独立 sidecar 与早期 nftables 主机过滤已部署；真实网络正反向、RPC、既有服务回归及本机 F2 gate 通过。修复 Fetch 禁用端口 10080 的测试夹具后，Fork Windows Actions `39635980349` 全步骤成功并上传 artifact `12360789368`；详见 `docs/verification/PHASE_F2.md` |
-| F3 | PARTIAL | CoordMCP Feathers 模块与精确 OpenResty 路由已部署；F3-R 的精确 Cloudflare Access authorize 目标及运行配置已应用，owner Access 会话到达无密码 consent。真实 ChatGPT Web `Coord tasks/list` 成功；随后隔离任务 `a0aefa7d-aed2-4287-9f30-4a30421e8c7a` 经精确领取、单次提交与精确读回完成，标记匹配，时间 `2026-10-22T13:29:03.953Z`。生产非 owner 身份拒绝仍未独立验证，OAuth 子步骤及 initialize/tools/list 也未单独留证，故 F3 保持 PARTIAL。本机 F3-R Windows Gate 于 `2026-10-22T13:34:19.298Z`–`13:34:56.019Z` 五项 exit 0；代码提交 `6853a21` 的 Windows Actions `39775572446` success。详见 `docs/verification/PHASE_F3_R.md` |
+| F3 | PARTIAL | CoordMCP Feathers 模块与精确 OpenResty 路由已部署；F3-R 的精确 Cloudflare Access authorize 目标及运行配置已应用，owner Access 会话到达无密码 consent。真实 ChatGPT Web `Coord tasks/list` 成功；随后隔离任务 `a0aefa7d-aed2-4287-9f30-4a30421e8c7a` 经精确领取、单次提交与精确读回完成，标记匹配，时间 `2026-10-22T13:29:03.953Z`。生产非 owner 身份拒绝仍未独立验证，OAuth 子步骤及 initialize/tools/list 也未单独留证，故 F3 保持 PARTIAL。本机 F3-R Windows Gate 于 `2026-10-22T13:42:24.275Z`–`13:43:00.726Z` 五项 exit 0；Fork Windows Actions `39788439712` 对提交 `574fbd6` success。详见 `docs/verification/PHASE_F3_R.md` |
 
 - Gate F0：远端/本地服务状态、Servy 功能与部署/回滚路径基线记录；构建产物哈希匹配。
 - Gate F1：Servy 托管服务、自启动、健康检测、重启/杀进程恢复、数据库一致性、备份恢复 PASS。
