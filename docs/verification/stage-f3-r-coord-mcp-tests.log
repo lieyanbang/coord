@@ -2,18 +2,18 @@
 > coord-mcp@1.0.0 test
 > node --test coord-mcp.test.cjs oauth-access.test.cjs
 
-✔ OAuth facade publishes coord scope and only accepts coord bearer tokens (1.9579ms)
-✔ strict tool allowlist maps only fixed coord RPCs and fences mutating inputs (0.9636ms)
-✔ lease tokens are removed recursively from read responses in either JSON casing (0.2169ms)
-✔ Streamable HTTP serves initialize, tools/list, and a token-redacted tasks/list (374.0023ms)
-✔ unauthorized, invalid content type, malformed and oversized HTTP requests are rejected (20.4081ms)
-✔ unknown tools and extra tool arguments never reach the sidecar (15.7579ms)
-✔ uncertain sidecar writes are MCP errors and are never retried (8.2388ms)
-✔ four active MCP calls are bounded and excess work receives 429 (170.6266ms)
-✔ SidecarClient marks timeouts and oversized replies uncertain without retrying (36.5962ms)
-✔ SidecarClient caps in-flight calls and rejects oversized requests before dispatch (1.4617ms)
-✔ Cloudflare Access is required for a password-free, CSRF-bound, one-time OAuth authorization (274.9106ms)
-✔ missing Access configuration fails closed without taking down protocol metadata (0.4396ms)
+✔ OAuth facade publishes coord scope and only accepts coord bearer tokens (2.2599ms)
+✔ strict tool allowlist maps only fixed coord RPCs and fences mutating inputs (0.9056ms)
+✔ lease tokens are removed recursively from read responses in either JSON casing (0.1766ms)
+✔ Streamable HTTP serves initialize, tools/list, and a token-redacted tasks/list (389.8488ms)
+✔ unauthorized, invalid content type, malformed and oversized HTTP requests are rejected (20.0548ms)
+✔ unknown tools and extra tool arguments never reach the sidecar (16.5716ms)
+✔ uncertain sidecar writes are MCP errors and are never retried (12.9705ms)
+✔ four active MCP calls are bounded and excess work receives 429 (168.7877ms)
+✔ SidecarClient marks timeouts and oversized replies uncertain without retrying (30.0517ms)
+✔ SidecarClient caps in-flight calls and rejects oversized requests before dispatch (2.0225ms)
+✔ Cloudflare Access is required for a password-free, CSRF-bound, one-time OAuth authorization (255.0729ms)
+✔ missing Access configuration fails closed without taking down protocol metadata (0.4231ms)
 ℹ tests 12
 ℹ suites 0
 ℹ pass 12
@@ -21,4 +21,4 @@
 ℹ cancelled 0
 ℹ skipped 0
 ℹ todo 0
-ℹ duration_ms 863.3682
+ℹ duration_ms 879.7285

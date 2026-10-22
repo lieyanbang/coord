@@ -14,6 +14,7 @@ const AUTHORIZATION_PARAMETERS = [
   'state',
 ];
 const AUTHORIZATION_PARAMETER_SET = new Set(AUTHORIZATION_PARAMETERS);
+const OPTIONAL_IGNORED_AUTHORIZATION_PARAMETERS = new Set(['ui_locales']);
 const AUTHORIZATION_REQUEST_TTL_MS = 5 * 60 * 1000;
 const MAX_PENDING_AUTHORIZATION_REQUESTS = 256;
 
@@ -59,11 +60,14 @@ function parseAuthorizationQuery(req) {
   const queryIndex = originalUrl.indexOf('?');
   const query = queryIndex < 0 ? '' : originalUrl.slice(queryIndex + 1).split('#', 1)[0];
   const params = {};
+  const seen = new Set();
   for (const [key, value] of new URLSearchParams(query)) {
-    if (!AUTHORIZATION_PARAMETER_SET.has(key) || Object.hasOwn(params, key)) {
+    if ((!AUTHORIZATION_PARAMETER_SET.has(key) && !OPTIONAL_IGNORED_AUTHORIZATION_PARAMETERS.has(key))
+        || seen.has(key)) {
       throw new Error('The authorization request contains unsupported or duplicate parameters.');
     }
-    params[key] = value;
+    seen.add(key);
+    if (AUTHORIZATION_PARAMETER_SET.has(key)) params[key] = value;
   }
   return params;
 }

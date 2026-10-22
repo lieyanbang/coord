@@ -377,6 +377,27 @@ test('Cloudflare Access is required for a password-free, CSRF-bound, one-time OA
   const csrfToken = page.match(/name="csrf_token" value="([A-Za-z0-9_-]{43})"/)?.[1];
   assert.ok(csrfToken);
 
+  const localizedUrl = new URL(authorizeUrl);
+  localizedUrl.searchParams.set('ui_locales', 'zh-CN');
+  const localizedPage = await fetch(localizedUrl, {
+    headers: { 'cf-access-jwt-assertion': validAssertion },
+    redirect: 'manual',
+  });
+  assert.equal(localizedPage.status, 200);
+  assert.match(await localizedPage.text(), /Authorize Coord MCP/);
+
+  const duplicateLocaleUrl = new URL(localizedUrl);
+  duplicateLocaleUrl.searchParams.append('ui_locales', 'en');
+  const duplicateLocale = await fetch(duplicateLocaleUrl, { redirect: 'manual' });
+  assert.equal(duplicateLocale.status, 400);
+  assert.match((await duplicateLocale.json()).error_description, /unsupported or duplicate/);
+
+  const unknownParameterUrl = new URL(authorizeUrl);
+  unknownParameterUrl.searchParams.set('unexpected', 'value');
+  const unknownParameter = await fetch(unknownParameterUrl, { redirect: 'manual' });
+  assert.equal(unknownParameter.status, 400);
+  assert.match((await unknownParameter.json()).error_description, /unsupported or duplicate/);
+
   const noAccessPost = await postForm(`${oauthEndpoint}/authorize`, { ...params, csrf_token: csrfToken }, origin);
   assert.equal(noAccessPost.status, 403);
 

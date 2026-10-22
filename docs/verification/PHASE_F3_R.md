@@ -236,6 +236,35 @@ command and again exited 0 for all five checks: fmt, clippy, all-feature tests,
 release build, and CoordMCP tests. Command timings and logs are recorded in
 `stage-f3-r-checks.json` and the matching `stage-f3-r-*.log` files.
 
+### ChatGPT Web compatibility correction (2026-10-22)
+
+The first real ChatGPT Web connection attempt reached the CoordMCP authorize
+URL with the standard OAuth parameters plus `ui_locales=zh-CN`. The server
+returned HTTP 400 JSON `invalid_request` before the Access login or consent
+step; no authorization code, token, or MCP call was produced. The cause was the
+strict query allowlist rejecting this display-only parameter.
+
+The parser now accepts one `ui_locales` value and ignores it. Duplicate
+parameters, including duplicate `ui_locales`, and all other unknown parameters
+remain rejected. `oauth-access.test.cjs` covers the accepted locale plus the
+duplicate and unknown-parameter rejection paths. `npm test --prefix
+relay/coord-mcp` exited 0 (12/12). The full Windows command
+`pwsh -NoProfile -File scripts/verify.ps1 -Stage f3-r` ran at
+2026-10-22T02:17:24Z–02:18:03Z and exited 0: fmt, clippy, all-feature tests,
+release build, and CoordMCP tests. Fresh output is recorded in
+`stage-f3-r-checks.json` and `stage-f3-r-*.log`.
+
+The exact `lieyanbang.com/app/CoordMCP/oauth/authorize` target is now visible
+on the existing `lieyanbang-auth` Cloudflare Access application; its existing
+policy remains attached. A no-follow public probe at 2026-10-22T02:15:37Z
+returned HTTP 302 to the verified Access team login host and expected
+application AUD. Read-only process-environment inspection found all three
+`COORD_MCP_ACCESS_*` variable names in the active Feathers process (PID 97915);
+values were not displayed. Feathers remained active with `NRestarts=0`.
+The updated OAuth source has not yet been deployed, so this is local evidence
+only. R3 remains **PARTIAL** until deployment and live Access-positive/negative
+checks are repeated.
+
 ## R3: Controlled production deployment
 
 **Result: PARTIAL.** Deployment and runtime loading succeeded, and the existing
@@ -320,17 +349,16 @@ RemoteControl route or shared OAuth logic was changed.
 
 ## R4: ChatGPT Web end-to-end
 
-**NOT_RUN.** No ChatGPT Web login/consent, real Access identity assertion,
-public OAuth token exchange, or authenticated public MCP tool call was
-performed. Mock JWT tests and the production Sidecar read-only probe do not
-substitute for this gate.
+**PARTIAL / IN_PROGRESS.** ChatGPT Web shows the custom Coord app URL as
+`https://lieyanbang.com/app/CoordMCP/`. The first real OAuth authorization
+request was rejected with HTTP 400 `invalid_request` because of
+`ui_locales=zh-CN`; this compatibility issue is fixed locally and awaits
+Actions/deployment. No Cloudflare Access identity login, OAuth consent, token
+exchange, public authenticated MCP call, or isolated batch/task write has yet
+completed. No production task was touched.
 
-Next steps: obtain action-time confirmation for adding only
-`lieyanbang.com/app/CoordMCP/oauth/authorize` to the verified
-`lieyanbang-auth` Access application. If approved, back up the current protected
-Feathers environment file, add only the three CoordMCP Access values from the
-verified team domain/AUD/policy identity, restart only `feathersjsapp.service`,
-then verify real Access positive/negative authorization and R3 regressions.
-R4 still requires ChatGPT Web OAuth consent, token exchange, `initialize`,
-`tools/list`, read-only `tasks/list`, and isolated write/readback. F3 remains
-**PARTIAL** until all required gates pass.
+After deploying the tested fix, retry the same ChatGPT app connection, complete
+the normal Access identity login and consent, then verify public token exchange,
+`initialize`, `tools/list`, read-only `tasks/list`, and one dedicated isolated
+batch/task write with readback. F3 and F3-R remain **PARTIAL** until these steps
+and the remaining R3 regressions pass.
