@@ -1,19 +1,61 @@
 # Phase F3-R: Cloudflare Access identity authorization
 
-Last updated 2026-10-22 23:08 Australia/Brisbane (2026-10-22 13:08 UTC).
-Overall result: **PARTIAL**. R0, R1 and R2 pass. The later production follow-up
-deployed the tested CoordMCP source, applied the one approved Cloudflare Access
-authorize target, and populated the Access runtime configuration. The owner
-Access session reached the password-free consent page, but production
-wrong-identity denial is not independently verified; R3 remains **PARTIAL**.
-After refreshing ChatGPT Web, its actual `Coord tasks/list` call succeeded and
-returned one pending ordinary task. This is positive evidence for the real
-authenticated read-only MCP path, superseding the earlier `NOT_RUN` status for
-that call. No task was claimed or changed. The isolated batch/task write and
-readback remain **NOT_RUN** because the available connector tools do not expose
-batch/task creation. Callback/token HTTP details and individual MCP
-initialization/tool-list responses were not captured separately. R4 and Phase
-F3 therefore remain **PARTIAL**.
+Last updated 2026-10-23 00:06 Australia/Brisbane (2026-10-22 14:06 UTC).
+Overall result: **PARTIAL**. R0, R1 and R2 pass. The latest recorded
+Cloudflare read-back shows the approved exact browser authorize target in the
+existing Access application; the owner session reached the password-free
+CoordMCP consent page. The real ChatGPT Web `Coord tasks/list` call succeeded;
+the later isolated write/readback subgate also passed. Production denial of a
+non-owner Access identity has not been independently verified. Separate
+callback/token-exchange evidence and individual MCP `initialize`/`tools/list`
+responses were not captured. R3, R4 and Phase F3 therefore remain **PARTIAL**.
+
+## Current delivery summary
+
+The browser identity boundary is Cloudflare Access, not an independent Coord
+owner password. The recorded approved Access change was adding
+`lieyanbang.com/app/CoordMCP/oauth/authorize` to the existing
+`lieyanbang-auth` application. At that read-back, its existing
+administrator-only Google OIDC policy and other targets were unchanged. Before
+issuing an OAuth code, the F3-R implementation validates the signed Access
+assertion through the audited JWKS validator and checks issuer, application
+audience, time claims and the allowlisted identity; the user then consents to
+an OAuth authorization code
+bound to the registered redirect URI and PKCE challenge. MCP requests use the
+resulting OAuth Bearer token. Sensitive identity, audience and credential
+values are intentionally omitted.
+
+### OAuth failures and corrections
+
+1. ChatGPT's first real authorization request included `ui_locales=zh-CN`,
+   which the strict parameter allowlist rejected. The implementation now
+   accepts this single display-only parameter while continuing to reject
+   duplicate and unknown parameters. Regression tests cover both cases; the
+   change is in commit `c54084e`.
+2. On a later fresh authorization, the consent POST returned HTTP 302 to
+   `https://chatgpt.com/connector_platform_oauth_redirect`, but the browser
+   reported `net::ERR_ABORTED`: the consent page's CSP allowed only
+   `form-action 'self'`, blocking the cross-origin ChatGPT callback. No
+   `/oauth/token` request or stored access/refresh token was observed in that
+   attempt. Commit `6853a21` keeps `'self'` and adds only the origin parsed
+   from the already validated, registered redirect URI; the exact redirect
+   remains bound to the OAuth challenge/code, with a regression assertion.
+
+The callback CSP fix passed local tests and Fork Windows Actions run
+`39775572446`. The last recorded production `oauth.cjs` hash predates that
+commit (`1f9e4f8a...`); a production hash read-back for the CSP-fixed source is
+not recorded. The later successful ChatGPT tool calls prove that the live
+connector could make authenticated requests, but do not establish which
+`oauth.cjs` revision served the browser callback. Do not infer deployment of
+the CSP fix from local CI or tool-call success.
+
+The later successful ChatGPT Web read-only call returned one pending ordinary
+task. The separately authorized isolated test task
+`a0aefa7d-aed2-4287-9f30-4a30421e8c7a` was claimed once, submitted once and
+read back as completed with the expected marker. This closes that isolated
+write/readback subgate only. The production non-owner denial test and separate
+response-level evidence for token exchange, MCP initialization and tool
+discovery remain open; overall status stays **PARTIAL**.
 
 `TASK.md` was read-only throughout; SHA-256 remained
 `780ee0eabbee510cdd7ad6c33d561698b19075d550e20d4d91b2a9725775fef8`.
@@ -596,3 +638,25 @@ completed `success` for exact commit `574fbd6996da4904af7f5a0b5449bb8f9bae1479`
 at `2026-10-22T13:41:13Z` (workflow `ci`), verified through the GitHub Actions
 API. This is source verification only; production wrong-identity denial
 remains **NOT_VERIFIED**.
+
+## Final documentation closeout (2026-10-23)
+
+The Windows closeout gate ran with
+`pwsh -NoLogo -NoProfile -File scripts/verify.ps1 -Stage f3-r` from
+`2026-10-22T14:05:19Z` to approximately `14:05:58Z`, exit 0. All five checks
+exited 0:
+
+| Check | Exit | Result |
+| --- | ---: | --- |
+| `cargo fmt --all -- --check` | 0 | pass |
+| `cargo clippy --all-targets --all-features --locked -- -D warnings` | 0 | pass |
+| `cargo test --all-features --locked` | 0 | pass |
+| `cargo build --release --locked` | 0 | pass |
+| `npm test --prefix relay/coord-mcp` | 0 | 12/12 passed |
+
+Per-command timings and output are in `stage-f3-r-checks.json` and the matching
+`stage-f3-r-*.log` files. Before this documentation closeout, the public
+GitHub Actions API showed Fork run [39789443574](https://github.com/lieyanbang/coord/actions/runs/39789443574)
+completed `success` for commit `9e666504f1265bcaecc1fab42b4f3d83e4d3c5a6`
+(`2026-10-22T13:43:54Z`–`13:48:14Z`). That run predates the documentation-only
+closeout commit; no Actions result for the closeout commit is inferred here.

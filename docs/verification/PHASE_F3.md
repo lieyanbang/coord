@@ -1,10 +1,11 @@
 # Phase F3: Public MCP and OAuth
 
-Date: 2026-10-22 (Australia/Brisbane)
-Result: **PARTIAL**. The isolated CoordMCP endpoint is deployed and its OAuth,
-MCP, and production Sidecar paths pass the checks below. Actual ChatGPT Web
-authorization and an authenticated tool call through the public route are
-**NOT_RUN**, so Gate F3 is not closed.
+Historical checkpoint date: 2026-10-22 (Australia/Brisbane).
+Result: **PARTIAL**. This report records the initial F3 deployment and local
+OAuth/MCP checks. Its original ChatGPT Web `NOT_RUN` statements are superseded
+by the later browser and isolated-task evidence in
+[`PHASE_F3_R.md`](PHASE_F3_R.md). The current acceptance status remains
+**PARTIAL**; use that F3-R report for the handover and outstanding gates.
 
 ## F2 Entry Gate
 
@@ -114,17 +115,12 @@ all 29 job steps passed, including dependency install, CoordMCP OAuth/HTTP
 tests, and artifact upload. Artifact `coord-windows-2022`
 (`12385511806`, 4,226,358 bytes) is present and not expired.
 
-## Remaining F3 Gate
+## Current F3 Gate
 
-- **NOT_RUN:** add the custom server URL
-  `https://lieyanbang.com/app/CoordMCP/` in ChatGPT Web, complete the real
-  browser OAuth consent, and verify ChatGPT discovers and calls the public MCP
-  endpoint using the authorized token.
-- **NOT_RUN:** an authenticated `initialize`/`tools/list` and tool call through
-  the public OpenResty route. The live batch round-trip above used an isolated
-  local OAuth server with the production Sidecar; it does not prove this public
-  authenticated path.
-- User/browser authorization was not performed in this continuation. No
-  public client credentials, access tokens, or refresh tokens were created or
-  recorded. Keep Phase F3 **PARTIAL** until these user-facing checks have real
-  evidence; do not promote this result to PASS based on service health alone.
+The initial `NOT_RUN` checkpoint above is superseded. ChatGPT Web later made a
+successful authenticated `Coord tasks/list` call, and the isolated task
+write/readback subgate passed. Production non-owner Access rejection remains
+unverified; standalone callback/token-exchange and `initialize`/`tools/list`
+responses were not separately captured. The callback CSP fix's production
+source hash also has not been re-read. Keep Phase F3 **PARTIAL**; details and
+the authorization failure diagnosis are in [`PHASE_F3_R.md`](PHASE_F3_R.md).

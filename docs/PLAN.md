@@ -136,7 +136,7 @@ Windows 本机及 Windows Actions 的真实测试、构建与产物为准。
 | F0 | PASS | `docs/verification/PHASE_F0.md`；Servy、远端基线及 Windows Actions 二进制哈希已核验 |
 | F1 | PASS | Servy 主机与 Windows 重启恢复、服务健康、loopback、SYSTEM 监护、WAL/租约及 coord 备份通过；Servy DB 已用对应官方 10.2.0 源码语义 + `System.Data.SQLite` 2.0.4 进行 Online Backup、quick_check/integrity_check，均 PASS；本机 F1 门禁 PASS，Fork Windows Actions run `39600633448` 通过，见 `docs/verification/PHASE_F1.md` |
 | F2 | PASS | 独立 sidecar 与早期 nftables 主机过滤已部署；真实网络正反向、RPC、既有服务回归及本机 F2 gate 通过。修复 Fetch 禁用端口 10080 的测试夹具后，Fork Windows Actions `39635980349` 全步骤成功并上传 artifact `12360789368`；详见 `docs/verification/PHASE_F2.md` |
-| F3 | PARTIAL | CoordMCP Feathers 模块与精确 OpenResty 路由已部署；F3-R 的精确 Cloudflare Access authorize 目标及运行配置已应用，owner Access 会话到达无密码 consent。真实 ChatGPT Web `Coord tasks/list` 成功；随后隔离任务 `a0aefa7d-aed2-4287-9f30-4a30421e8c7a` 经精确领取、单次提交与精确读回完成，标记匹配，时间 `2026-10-22T13:29:03.953Z`。生产非 owner 身份拒绝仍未独立验证，OAuth 子步骤及 initialize/tools/list 也未单独留证，故 F3 保持 PARTIAL。本机 F3-R Windows Gate 于 `2026-10-22T13:42:24.275Z`–`13:43:00.726Z` 五项 exit 0；Fork Windows Actions `39788439712` 对提交 `574fbd6` success。详见 `docs/verification/PHASE_F3_R.md` |
+| F3 | PARTIAL | CoordMCP 与精确路由已部署；Cloudflare Access owner consent、真实 ChatGPT Web `Coord tasks/list`、隔离任务 `a0aefa7d-aed2-4287-9f30-4a30421e8c7a` 的单次领取/提交/精确读回均有证据。生产 non-owner 拒绝未验证，OAuth callback CSP 修正后的生产源码哈希未复核，token exchange 与 MCP initialize/tools/list 未单独留证，故不升 PASS。本机及 Fork Windows Actions 证据见 `docs/verification/PHASE_F3_R.md` |
 
 - Gate F0：远端/本地服务状态、Servy 功能与部署/回滚路径基线记录；构建产物哈希匹配。
 - Gate F1：Servy 托管服务、自启动、健康检测、重启/杀进程恢复、数据库一致性、备份恢复 PASS。
@@ -144,7 +144,7 @@ Windows 本机及 Windows Actions 的真实测试、构建与产物为准。
 - Gate F3：新增 OAuth/MCP 公网入口及旧 DesktopCommander 所有入口回归 PASS；ChatGPT Web 手动完成工具发现和只读/隔离写任务 E2E 方可标记完整 PASS。
 - 每个 Gate 完成后同步 `docs/verification/` 证据、更新本节进度、生成独立 Git commit 并通过 Fork 的 Windows Actions；部署不擅自创建 Release/tag、不推送上游。
 - 最终输出：Arasaka 服务名/运行账户、二进制 SHA、Servy 参数/健康路径、备份/恢复程序、故障演练记录、中转公网 URL、OAuth/连接器验收与残余风险。敏感信息绝不写文档/日志。
-- 当前状态：F0 部署前审计 PASS。Servy Host 与 Windows 整机重启恢复、coord 与 Servy 托管服务健康、健康监护、coord WAL/在线备份均有实测证据。Servy 10.2.0 对应官方源码确认 `UNICODE_NOCASE` 使用 `StringComparison.OrdinalIgnoreCase`；相同 Provider/SQLite 版本的只读校验程序通过 SQLite Online Backup API 创建快照，`quick_check=ok`、`integrity_check=ok`，唯一索引、SchemaInfo 与七个配置行均核实通过。本机 F1 门禁与 Fork Windows Actions runs `39600633448`、`39602363789` 均通过，F1 为 PASS。F2 sidecar 与早期优先级 -10 nftables 过滤器已部署，生产 BT-7274 TCP 负向、Arasaka 认证 `tasks/list` E2E、13011/服务回归、本机 Gate 13/13、测试修复 Actions `39635980349` 及收口提交 Actions `39636977435`（全部步骤成功并上传 artifact）均通过，F2 为 PASS。F3 的独立 CoordMCP OAuth/MCP 模块与 `/app/CoordMCP/` 精确路由已部署；公网未认证 challenge/metadata、旧路由回归、生产 Sidecar 读写闭环和 Windows Actions `39682968742` 均通过。刷新 ChatGPT Web 后真实认证 `Coord tasks/list` 调用成功，返回 1 条待处理普通任务且未领取或写入；隔离 batch/task 创建与读回仍 `NOT_RUN`，生产非 owner 拒绝仍 `NOT_VERIFIED`，故 F3 保持 PARTIAL。`TASK.md` 保持只读。详见 `verification/PHASE_F2.md`、`verification/phase-f2-acl-deployment-20261022.md` 与 `verification/PHASE_F3.md`、`verification/PHASE_F3_R.md`。
+- 当前状态：F0/F1/F2 均 PASS，证据见各阶段验收文档。F3 当前为 PARTIAL：真实 ChatGPT Web 只读调用与隔离测试任务写入/读回通过；生产 non-owner Access 拒绝、CSP 修复版本的线上源码哈希、独立 token exchange 及 MCP `initialize`/`tools/list` 留证尚缺。早期 F3 记录中的 ChatGPT `NOT_RUN` 与隔离写入 `NOT_RUN` 已被后续实测取代，不得沿用为当前状态。`TASK.md` 保持只读。详见 `verification/PHASE_F3_R.md`。
 
 
 ### F3-R — 强制修正：Cloudflare Access 用户身份认证（2026-10-22，用户新授权）
@@ -159,13 +159,12 @@ Windows 本机及 Windows Actions 的真实测试、构建与产物为准。
 - **R2 验证**：mock JWKS / Access JWT、OAuth DCR、PKCE、授权、刷新、失效和 MCP tools 的自动化正负向；验证缺失、错误 Issuer/AUD、签名篡改、过期与身份不匹配必须拒绝；不存在绕过 Access 获取有效 OAuth 授权码的路径。
 - **R3 部署**：仅改变 CoordMCP 相关路径和代码；备份 Feathers/OpenResty/Access 策略，受控语法检查、最小重载、旧 RemoteControlMCP 1/2/3、13011/13012、coord/Servy 及公网回归；保留一键回滚。
 - **R4 ChatGPT E2E**：Web 真实 Access 登录→OAuth 同意→token→MCP initialize/tools/list→只读查询→隔离测试任务写入与 readback；需真实用户浏览器操作时标 NOT_RUN，不得推断 PASS。
-- **范围与状态：** F0/F1/F2 保持 PASS，F3 标记 `PARTIAL / AUTH_REDESIGN_REQUIRED`。本轮只授权改 coord 项目的规划/任务与后续由 Codex 实施 CoordMCP 的必要改造；不直接批量迁移其他 MCP。原 F3 已通过的 Sidecar/写入/CI 证据保留，但不证明 Access 授权。
+- **范围与状态：** F0/F1/F2 保持 PASS；F3-R 已完成身份边界改造，但 F3 仍为 `PARTIAL`，直到生产 non-owner 拒绝和剩余真实 OAuth/MCP 子步骤有证据。原 F3 的 Sidecar/写入/CI 证据保留，但不能单独证明 Cloudflare Access 身份授权。
 
 ### F3-R 执行进度（2026-10-22）
 - R0：PASS。Cloudflare 已登录 Dashboard 直接核实 `lieyanbang-auth` 的六个原有目标、team domain `lieyanbang.cloudflareaccess.com`、AUD、单一管理员邮箱 Allow 策略（邮箱值不入文档）、Google OIDC、24 小时会话；直连 SSH 复核服务/路由/变量和 root-only 回滚快照。用户后续单独批准了仅添加 CoordMCP 精确 authorize 路径。
 - R1：PASS（本地实现）。CoordMCP 改为签名 Access JWT + AUD/Issuer/exp/nbf/owner-email 校验、无密码确认、CSRF/OAuth 参数绑定及原子一次性授权码消费；配置缺失时 authorize 返回 503。没有修改 RemoteControl 或共享 OAuth 实现。
 - R2：PASS。`npm test` 12/12；真实 Desktop Commander OAuth 父类哈希匹配生产文件的主机集成通过。ChatGPT Web 首次真实授权请求发现 `ui_locales=zh-CN` 被严格参数白名单拒绝；现已最小兼容该单一展示参数，并新增重复/未知参数仍拒绝的回归。`scripts/verify.ps1 -Stage f3-r` 于 2026-10-22T02:17Z 与 02:53Z 两次五项全通过；本次精确命令/日志见 `stage-f3-r-checks.json` 和对应日志。兼容修正提交 `c54084e1d784a8108436396b2b58ae878b9580f8` 已推送，Fork Windows Actions run `39710903473` 成功。
-- R3：PARTIAL。已部署修正后的 CoordMCP OAuth 源码，SHA-256 `1f9e4f8aff7c2dd823fd7b79e8832131b37143e7d94891ae4d39f3ed54fac464`；仅重启 `feathersjsapp.service`，2026-10-22T02:27:57Z 后 active、PID `98918`、`NRestarts=0`。用户批准后只向既有 `lieyanbang-auth` 增加 `lieyanbang.com/app/CoordMCP/oauth/authorize`；原六个目标、策略、AUD、OIDC、会话、OpenResty、Sidecar/Arasaka、13011/13012 不变。公网 authorize 302 到 Access，登录 owner 到达无密码 consent，元数据和旧路由探测正常；生产非 owner 身份拒绝尚未独立验证，故不宣称 R3 PASS。
-- R4 历史回调故障检查点：2026-10-22T11:57:33Z 的授权 POST 曾因 `form-action 'self'` CSP 阻断跨源 callback；本地已加入仅允许已注册 callback origin 的 CSP 修正，后续实际 ChatGPT Web 只读调用及隔离任务读写证据见 `PHASE_F3_R.md` 的后续记录。本行仅保留故障诊断历史，不代表当前步骤状态。
-- F3-R 总体及 F3：PARTIAL；不得将测试用 mock JWT、历史 Sidecar E2E 或服务在线状态视为真实 Access 授权。详见 `verification/PHASE_F3_R.md`。
-- R4 最新隔离任务子门（2026-10-22T13:29:03.953Z）：PASS。ChatGPT Web Coord connector 对测试 ID `a0aefa7d-aed2-4287-9f30-4a30421e8c7a` 精确领取 attempt 1、`coord_submit_result` 返回 `ok=true` 且 `post_ack=false`，随后 `coord_get_task` 读回 `completed`，测试标记和说明完全匹配；没有调用 claim-next、触碰其他任务或创建 ACK。此结果替代上方历史记录中的隔离写入/读回 `NOT_RUN`，不改变 R4/F3-R 总体 PARTIAL：生产非 owner 身份拒绝仍未验证，独立 OAuth/token 与 initialize/tools/list 响应仍未完整留证。详见 `verification/PHASE_F3_R.md`。
+- R3：PARTIAL。已部署 CoordMCP OAuth 修正；最后记录的生产 `oauth.cjs` SHA-256 为 `1f9e4f8aff7c2dd823fd7b79e8832131b37143e7d94891ae4d39f3ed54fac464`。之后的回调 CSP 修复已提交并通过本机/Actions，但没有复核该修复版本是否已部署。仅向既有 `lieyanbang-auth` 添加精确 authorize 路径；owner 可到达无密码 consent。生产 non-owner 拒绝仍未验证。
+- R4：ChatGPT Web `Coord tasks/list` 真实调用成功；隔离 task `a0aefa7d-aed2-4287-9f30-4a30421e8c7a` 在 `2026-10-22T13:29:03.953Z` 精确领取 attempt 1、单次提交（`post_ack=false`）并读回 completed，测试标记匹配。授权提交失败根因及修正记录在 `PHASE_F3_R.md`；该项回调 CSP 源码修正的生产部署哈希仍待只读复核。
+- F3-R 总体及 F3：PARTIAL。独立生产身份拒绝验证、CSP 修复源码线上哈希以及分开的 OAuth/token 和 MCP `initialize`/`tools/list` 证据尚缺。详见 `verification/PHASE_F3_R.md`。
