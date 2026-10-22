@@ -1,0 +1,51 @@
+[
+  {
+    "log": "docs/verification/stage-g4-fmt.log",
+    "command": "cargo fmt --all -- --check",
+    "started": "2026-10-22T16:52:15.6986191Z",
+    "seconds": 0.363707,
+    "exit": 0
+  },
+  {
+    "log": "docs/verification/stage-g4-clippy.log",
+    "command": "cargo clippy --all-targets --all-features --locked -- -D warnings",
+    "started": "2026-10-22T16:52:16.1306855Z",
+    "seconds": 0.6852246,
+    "exit": 0
+  },
+  {
+    "log": "docs/verification/stage-g4-test.log",
+    "command": "cargo test --all-features --locked",
+    "started": "2026-10-22T16:52:16.8183042Z",
+    "seconds": 37.9316613,
+    "exit": 0
+  },
+  {
+    "log": "docs/verification/stage-g4-build.log",
+    "command": "cargo build --release --locked",
+    "started": "2026-10-22T16:52:54.7513103Z",
+    "seconds": 0.5563457,
+    "exit": 0
+  },
+  {
+    "log": "docs/verification/stage-g4-relay-tests.log",
+    "command": "node --test relay/relay.test.mjs relay/live-coord.test.mjs",
+    "started": "2026-10-22T16:52:55.3255082Z",
+    "seconds": 4.5805611,
+    "exit": 0
+  },
+  {
+    "log": "docs/verification/stage-g4-coord-mcp-tests.log",
+    "command": "npm test --prefix relay/coord-mcp",
+    "started": "2026-10-22T16:52:59.9075803Z",
+    "seconds": 1.338153,
+    "exit": 0
+  },
+  {
+    "log": "docs/verification/stage-g4-phase-g-tools.log",
+    "command": "python -m unittest discover -s scripts/phase_g -p test_phase_g_tools.py -v",
+    "started": "2026-10-22T16:53:01.2469889Z",
+    "seconds": 0.1708205,
+    "exit": 0
+  }
+]

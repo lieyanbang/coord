@@ -1,0 +1,136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lieyanbang.com/coord/phase-g/emote-result.schema.json",
+  "title": "Coord emote group first-pass result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "group_id",
+    "agent_id",
+    "attempt_no",
+    "source_image_ids",
+    "characters",
+    "uncertain",
+    "general_notes"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "group_id": { "type": "string", "pattern": "^(0[0-9]|[1-9][0-9]|1[01][0-9]|120)$" },
+    "agent_id": { "type": "string", "enum": ["A0", "A1", "A2", "A3", "A4", "A5"] },
+    "attempt_no": { "type": "integer", "minimum": 1, "maximum": 1000000000 },
+    "source_image_ids": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 10,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/imageId" }
+    },
+    "characters": {
+      "type": "array",
+      "maxItems": 20,
+      "items": { "$ref": "#/$defs/character" }
+    },
+    "uncertain": {
+      "type": "array",
+      "maxItems": 10,
+      "items": { "$ref": "#/$defs/uncertainImage" }
+    },
+    "general_notes": { "type": "string", "maxLength": 4000 }
+  },
+  "$defs": {
+    "imageId": { "type": "string", "pattern": "^[0-9]+$" },
+    "referenceCandidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["game", "operator_name", "icon_path"],
+      "properties": {
+        "game": { "type": "string", "enum": ["arknights", "endfield"] },
+        "operator_name": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "icon_path": { "type": "string", "pattern": "^refs/(arknights|endfield)/icons/[^/]+$" },
+        "visual_notes": { "type": "string", "maxLength": 1000 }
+      }
+    },
+    "referenceMatch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["match_status", "candidates", "checked_paths", "conclusion"],
+      "properties": {
+        "match_status": { "type": "string", "enum": ["matched", "candidate", "no_match"] },
+        "candidates": {
+          "type": "array",
+          "maxItems": 20,
+          "items": { "$ref": "#/$defs/referenceCandidate" }
+        },
+        "checked_paths": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1, "maxLength": 512, "pattern": "^refs/.+" }
+        },
+        "conclusion": { "type": "string", "minLength": 10, "maxLength": 2000 }
+      }
+    },
+    "character": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "local_character_id",
+        "image_ids",
+        "representative_image_id",
+        "visual_description",
+        "game",
+        "reference_match",
+        "confidence",
+        "notes"
+      ],
+      "properties": {
+        "local_character_id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$" },
+        "image_ids": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 10,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/imageId" }
+        },
+        "representative_image_id": { "$ref": "#/$defs/imageId" },
+        "visual_description": { "type": "string", "minLength": 20, "maxLength": 4000 },
+        "game": { "type": "string", "enum": ["arknights", "endfield", "unknown"] },
+        "reference_match": { "$ref": "#/$defs/referenceMatch" },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "notes": { "type": "string", "maxLength": 2000 }
+      }
+    },
+    "uncertainImage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "image_id",
+        "visible_features",
+        "reference_candidates",
+        "checked_paths",
+        "check_conclusion",
+        "reason",
+        "review_priority"
+      ],
+      "properties": {
+        "image_id": { "$ref": "#/$defs/imageId" },
+        "visible_features": { "type": "string", "minLength": 10, "maxLength": 2000 },
+        "reference_candidates": {
+          "type": "array",
+          "maxItems": 20,
+          "items": { "$ref": "#/$defs/referenceCandidate" }
+        },
+        "checked_paths": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1, "maxLength": 512, "pattern": "^refs/.+" }
+        },
+        "check_conclusion": { "type": "string", "minLength": 10, "maxLength": 2000 },
+        "reason": { "type": "string", "minLength": 10, "maxLength": 2000 },
+        "review_priority": { "type": "string", "enum": ["low", "medium", "high", "urgent"] }
+      }
+    }
+  }
+}
