@@ -369,6 +369,10 @@ test('Cloudflare Access is required for a password-free, CSRF-bound, one-time OA
     redirect: 'manual',
   });
   assert.equal(pageResponse.status, 200);
+  assert.equal(
+    pageResponse.headers.get('content-security-policy'),
+    `default-src 'none'; style-src 'unsafe-inline'; form-action 'self' ${new URL(REDIRECT_URI).origin}; base-uri 'none'; frame-ancestors 'none'`,
+  );
   const page = await pageResponse.text();
   assert.match(page, /Authorize Coord MCP/);
   assert.match(page, /Coord test client/);

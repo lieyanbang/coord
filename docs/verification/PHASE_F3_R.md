@@ -1,14 +1,15 @@
 # Phase F3-R: Cloudflare Access identity authorization
 
-Last updated 2026-10-22 12:54 Australia/Brisbane (2026-10-22 02:54 UTC).
+Last updated 2026-10-22 22:03 Australia/Brisbane (2026-10-22 12:03 UTC).
 Overall result: **PARTIAL**. R0, R1 and R2 pass. The later production follow-up
 deployed the tested CoordMCP source, applied the one approved Cloudflare Access
 authorize target, and populated the Access runtime configuration. The owner
 Access session reached the password-free consent page, but production
 wrong-identity denial is not independently verified; R3 remains **PARTIAL**.
-ChatGPT Web still shows the Coord app as unassociated. OAuth callback/token
-exchange and authenticated MCP calls are **NOT_RUN**; R4 and Phase F3 remain
-**PARTIAL**.
+A fresh ChatGPT authorization POST returned 302, but the browser's
+`form-action 'self'` CSP blocked the redirect to ChatGPT's callback. A local
+fix is tested but not yet deployed. Token exchange and authenticated MCP calls
+remain **NOT_RUN**; R4 and Phase F3 remain **PARTIAL**.
 
 `TASK.md` was read-only throughout; SHA-256 remained
 `780ee0eabbee510cdd7ad6c33d561698b19075d550e20d4d91b2a9725775fef8`.
@@ -453,3 +454,46 @@ The local `scripts/verify.ps1 -Stage f3-r` gate was rerun from
 `2026-10-22T07:10:00Z` through `07:10:40Z`; fmt, clippy, tests, release build,
 and CoordMCP tests all exited 0 (CoordMCP 12/12). The updated command summary
 and logs are `stage-f3-r-checks.json` and `stage-f3-r-*.log`.
+
+## R4 callback CSP diagnosis and local fix (2026-10-22)
+
+Two new association attempts used fresh ChatGPT settings sessions and the
+owner's existing Cloudflare Access session. The first fresh request at
+`11:49:55Z` reached the password-free consent page; its authorized button
+submission at `11:50:36Z` returned HTTP 302. A second fresh request at
+`11:56:16Z` was submitted once at `11:57:33Z` and also returned HTTP 302.
+Sanitized read-only OpenResty access-log queries exited 0 and showed no
+`/app/CoordMCP/oauth/token` request in the inspected window.
+
+Before the second submission, read-only Edge CDP events were enabled for that
+tab. The POST response status was 302 and its `Location` origin/path was
+`https://chatgpt.com/connector_platform_oauth_redirect`. The browser then
+reported `net::ERR_ABORTED`; its console recorded that the form submission to
+the ChatGPT callback violated the page's `form-action 'self'` Content Security
+Policy. This explains why the address bar remained on the authorization page
+and why ChatGPT did not exchange the code. A read-only OAuth state summary
+showed zero access-token and refresh-token records; authorization-code values,
+OAuth `state`, PKCE values, cookies, and tokens were not read into the report.
+The ChatGPT settings page still showed **Associate**. No task, batch, or
+production queue data was read or written during these attempts.
+
+The local fix in `relay/coord-mcp/oauth.cjs` retains `form-action 'self'` and
+adds only the parsed origin of the already validated, registered callback URI
+when it differs from the authorization origin. The redirect URI remains
+exactly bound to the OAuth challenge and authorization code. No raw callback
+path or query is inserted into the CSP header. The regression test asserts the
+resulting policy for a registered loopback callback; the existing unregistered
+callback test remains rejected.
+
+Local validation from 2026-10-22T12:00:21Z to 12:01:00Z:
+
+- `npm test --prefix relay/coord-mcp`: exit 0, 12/12 tests passed.
+- `pwsh -NoLogo -NoProfile -File scripts/verify.ps1 -Stage f3-r`: exit 0;
+  fmt, locked clippy, all-feature tests, locked release build, and CoordMCP
+  tests each exited 0. Exact commands, timings, and logs are in
+  `stage-f3-r-checks.json` and `stage-f3-r-*.log` files.
+
+This fix is local-only at this checkpoint. Production source, Feathers service,
+Cloudflare, and other services have not been changed for it. F3-R/R4 remain
+**PARTIAL** until the tested fix is deployed, the browser reaches the ChatGPT
+callback, and token/MCP/isolated task readback gates pass.

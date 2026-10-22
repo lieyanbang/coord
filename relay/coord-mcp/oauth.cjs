@@ -261,11 +261,18 @@ function createCoordOAuthServer(BaseOAuthServer, config, options = {}) {
       return csrfToken;
     }
 
-    setAuthorizationPageHeaders(res) {
+    setAuthorizationPageHeaders(res, redirectUri = '') {
       res.setHeader('Cache-Control', 'no-store');
       res.setHeader('Referrer-Policy', 'no-referrer');
       res.setHeader('X-Content-Type-Options', 'nosniff');
-      res.setHeader('Content-Security-Policy', "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'");
+      let formAction = "'self'";
+      if (redirectUri) {
+        const target = new URL(redirectUri);
+        if (target.origin !== this.accessAuthorizationOrigin) {
+          formAction += ` ${target.origin}`;
+        }
+      }
+      res.setHeader('Content-Security-Policy', `default-src 'none'; style-src 'unsafe-inline'; form-action ${formAction}; base-uri 'none'; frame-ancestors 'none'`);
     }
 
     async authorizationGet(req, res) {
@@ -284,7 +291,7 @@ function createCoordOAuthServer(BaseOAuthServer, config, options = {}) {
           .join('');
         const clientName = validated.client?.client_name || 'OAuth client';
         const action = `${this.authorizationFormActionPrefix}/authorize`;
-        this.setAuthorizationPageHeaders(res);
+        this.setAuthorizationPageHeaders(res, validated.redirectUri);
         this.setCors(res);
         res.type('html').send(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Authorize Coord MCP</title></head><body><main><h1>Authorize Coord MCP</h1><p><strong>${htmlEscape(clientName)}</strong> requests access to the coord task service.</p><p>Signed in as ${htmlEscape(access.identity.email)}.</p><form method="post" action="${htmlEscape(action)}">${hidden}<button type="submit">Authorize</button></form></main></body></html>`);
       } catch (error) {
