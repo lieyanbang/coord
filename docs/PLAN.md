@@ -136,7 +136,7 @@ Windows 本机及 Windows Actions 的真实测试、构建与产物为准。
 | F0 | PASS | `docs/verification/PHASE_F0.md`；Servy、远端基线及 Windows Actions 二进制哈希已核验 |
 | F1 | PASS | Servy 主机与 Windows 重启恢复、服务健康、loopback、SYSTEM 监护、WAL/租约及 coord 备份通过；Servy DB 已用对应官方 10.2.0 源码语义 + `System.Data.SQLite` 2.0.4 进行 Online Backup、quick_check/integrity_check，均 PASS；本机 F1 门禁 PASS，Fork Windows Actions run `39600633448` 通过，见 `docs/verification/PHASE_F1.md` |
 | F2 | PASS | 独立 sidecar 与早期 nftables 主机过滤已部署；真实网络正反向、RPC、既有服务回归及本机 F2 gate 通过。修复 Fetch 禁用端口 10080 的测试夹具后，Fork Windows Actions `39635980349` 全步骤成功并上传 artifact `12360789368`；详见 `docs/verification/PHASE_F2.md` |
-| F3 | PARTIAL | CoordMCP Feathers 模块与精确 OpenResty 路由已部署；公网未认证挑战/元数据、旧 RemoteControl 路由回归、生产 Sidecar `tasks/list` 与隔离批次 `claim/submit/readback` 均实测通过；Windows Actions `39682968742` 全部 29 步通过并上传 artifact。ChatGPT Web OAuth 用户授权及经公网入口的认证 MCP 调用尚 NOT_RUN，不能关闭 Gate；详见 `docs/verification/PHASE_F3.md` |
+| F3 | PARTIAL | CoordMCP Feathers 模块与精确 OpenResty 路由已部署；F3-R 的精确 Cloudflare Access authorize 目标及运行配置已应用，owner Access 会话到达无密码 consent。ChatGPT 插件仍显示“关联”，OAuth callback/token exchange、MCP `initialize`/`tools/list`/`tasks/list` 及隔离写入/读回尚未验证；未创建测试任务。本机 F3-R Windows Gate 于 2026-10-22T02:53Z 五项 exit 0；Windows Actions `39710903473` 通过；详见 `docs/verification/PHASE_F3_R.md` |
 
 - Gate F0：远端/本地服务状态、Servy 功能与部署/回滚路径基线记录；构建产物哈希匹配。
 - Gate F1：Servy 托管服务、自启动、健康检测、重启/杀进程恢复、数据库一致性、备份恢复 PASS。
@@ -162,9 +162,9 @@ Windows 本机及 Windows Actions 的真实测试、构建与产物为准。
 - **范围与状态：** F0/F1/F2 保持 PASS，F3 标记 `PARTIAL / AUTH_REDESIGN_REQUIRED`。本轮只授权改 coord 项目的规划/任务与后续由 Codex 实施 CoordMCP 的必要改造；不直接批量迁移其他 MCP。原 F3 已通过的 Sidecar/写入/CI 证据保留，但不证明 Access 授权。
 
 ### F3-R 执行进度（2026-10-22）
-- R0：PASS。Cloudflare 已登录 Dashboard 直接核实 `lieyanbang-auth` 的六个现有目标、team domain `lieyanbang.cloudflareaccess.com`、AUD、单一管理员邮箱 Allow 策略（邮箱值不入文档）、Google OIDC、24 小时会话；直连 SSH 复核服务/路由/变量缺失和 root-only 回滚快照。仅添加 CoordMCP 精确 authorize 路径的变更仍待 action-time 确认，未保存。
+- R0：PASS。Cloudflare 已登录 Dashboard 直接核实 `lieyanbang-auth` 的六个原有目标、team domain `lieyanbang.cloudflareaccess.com`、AUD、单一管理员邮箱 Allow 策略（邮箱值不入文档）、Google OIDC、24 小时会话；直连 SSH 复核服务/路由/变量和 root-only 回滚快照。用户后续单独批准了仅添加 CoordMCP 精确 authorize 路径。
 - R1：PASS（本地实现）。CoordMCP 改为签名 Access JWT + AUD/Issuer/exp/nbf/owner-email 校验、无密码确认、CSRF/OAuth 参数绑定及原子一次性授权码消费；配置缺失时 authorize 返回 503。没有修改 RemoteControl 或共享 OAuth 实现。
-- R2：PASS。`npm test` 12/12；真实 Desktop Commander OAuth 父类哈希匹配生产文件的主机集成通过。ChatGPT Web 首次真实授权请求发现 `ui_locales=zh-CN` 被严格参数白名单拒绝；现已最小兼容该单一展示参数，并新增重复/未知参数仍拒绝的回归。2026-10-22T02:17:24Z–02:18:03Z `scripts/verify.ps1 -Stage f3-r` 五项全通过。Fork Windows Actions run `39696859131` 对提交 `a640ce8` 成功，artifact `12390883361` 未过期；本次兼容修正的 Actions 待触发。
-- R3：PARTIAL。精确 authorize 目标现已显示在既有 `lieyanbang-auth` Access 应用中；2026-10-22T02:15:37Z 公网无跟随重定向探测 HTTP 302 至已核验 Access 团队登录主机，AUD 匹配。只读检查确认三项 `COORD_MCP_ACCESS_*` 名称已存在于活动 Feathers 进程且服务 active、`NRestarts=0`。CoordMCP 新代码修正尚未部署，Access 真实登录成功/失败身份测试及公网回归待复验。Sidecar/Arasaka 与 13011/13012 现状未改动。
-- R4：PARTIAL / IN_PROGRESS。ChatGPT Web custom app URL 与授权 endpoint 均精确匹配；首个真实 OAuth 请求因 `ui_locales` 兼容问题 HTTP 400，未发生 Access 登录、consent、token exchange 或 MCP 调用，也未写入生产任务。补丁和本机 Windows Gate 已通过，等待 Fork Actions、部署及真实 E2E。
+- R2：PASS。`npm test` 12/12；真实 Desktop Commander OAuth 父类哈希匹配生产文件的主机集成通过。ChatGPT Web 首次真实授权请求发现 `ui_locales=zh-CN` 被严格参数白名单拒绝；现已最小兼容该单一展示参数，并新增重复/未知参数仍拒绝的回归。`scripts/verify.ps1 -Stage f3-r` 于 2026-10-22T02:17Z 与 02:53Z 两次五项全通过；本次精确命令/日志见 `stage-f3-r-checks.json` 和对应日志。兼容修正提交 `c54084e1d784a8108436396b2b58ae878b9580f8` 已推送，Fork Windows Actions run `39710903473` 成功。
+- R3：PARTIAL。已部署修正后的 CoordMCP OAuth 源码，SHA-256 `1f9e4f8aff7c2dd823fd7b79e8832131b37143e7d94891ae4d39f3ed54fac464`；仅重启 `feathersjsapp.service`，2026-10-22T02:27:57Z 后 active、PID `98918`、`NRestarts=0`。用户批准后只向既有 `lieyanbang-auth` 增加 `lieyanbang.com/app/CoordMCP/oauth/authorize`；原六个目标、策略、AUD、OIDC、会话、OpenResty、Sidecar/Arasaka、13011/13012 不变。公网 authorize 302 到 Access，登录 owner 到达无密码 consent，元数据和旧路由探测正常；生产非 owner 身份拒绝尚未独立验证，故不宣称 R3 PASS。
+- R4：PARTIAL / USER ACTION REQUIRED。ChatGPT `Coord` 插件精确指向 `https://lieyanbang.com/app/CoordMCP/`，但设置页刷新后仍显示“关联”。Access owner 会话已到达无密码授权页；浏览器自动提交未获得可验证回调，一次重复提交显示 `invalid_authorization_request`。OAuth token exchange、MCP `initialize`/`tools/list`/只读 `tasks/list` 和隔离批次/任务写入读回均 NOT_RUN；未创建测试数据。当前 consent 标签已保留接续，须从 ChatGPT 插件设置新建关联并完成一次有效授权，再继续端到端验证。
 - F3-R 总体及 F3：PARTIAL；不得将测试用 mock JWT、历史 Sidecar E2E 或服务在线状态视为真实 Access 授权。详见 `verification/PHASE_F3_R.md`。

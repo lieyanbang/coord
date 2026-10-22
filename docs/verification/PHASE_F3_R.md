@@ -1,17 +1,22 @@
 # Phase F3-R: Cloudflare Access identity authorization
 
-Recorded 2026-10-22 11:29 Australia/Brisbane (2026-10-22 01:29 UTC).
-Overall result: **PARTIAL**. R0, R1 and R2 pass. R3 code deployment and
-Feathers reload are complete, but the exact Cloudflare Access path and runtime
-identity configuration have not been applied; the anonymous authorize request
-still returns fail-closed 503. R3 is **PARTIAL**. R4 ChatGPT Web authorization
-remains **NOT_RUN**. Phase F3 stays PARTIAL.
+Last updated 2026-10-22 12:54 Australia/Brisbane (2026-10-22 02:54 UTC).
+Overall result: **PARTIAL**. R0, R1 and R2 pass. The later production follow-up
+deployed the tested CoordMCP source, applied the one approved Cloudflare Access
+authorize target, and populated the Access runtime configuration. The owner
+Access session reached the password-free consent page, but production
+wrong-identity denial is not independently verified; R3 remains **PARTIAL**.
+ChatGPT Web still shows the Coord app as unassociated. OAuth callback/token
+exchange and authenticated MCP calls are **NOT_RUN**; R4 and Phase F3 remain
+**PARTIAL**.
 
 `TASK.md` was read-only throughout; SHA-256 remained
 `780ee0eabbee510cdd7ad6c33d561698b19075d550e20d4d91b2a9725775fef8`.
-The later controlled production follow-up restarted only
-`feathersjsapp.service`. No Access policy, OpenResty configuration, Sidecar,
-coord database, Arasaka service, or 13011/13012 listener was changed.
+The first controlled production follow-up restarted only
+`feathersjsapp.service`. The subsequent authorized change added only the exact
+CoordMCP browser authorize target to the existing Access application. No
+OpenResty configuration, Sidecar, coord database, Arasaka service, or
+13011/13012 listener was changed.
 
 ## R0: Read-only audit
 
@@ -267,10 +272,12 @@ checks are repeated.
 
 ## R3: Controlled production deployment
 
-**Result: PARTIAL.** Deployment and runtime loading succeeded, and the existing
-Cloudflare application/policy are now directly verified in the dashboard. The
-CoordMCP authorize target and runtime identity configuration have not been
-applied; this is not inferred from mock tests or the RemoteControl route.
+**Historical checkpoint at 2026-10-22T00:15Z: PARTIAL.** Deployment and runtime
+loading had succeeded, and the existing Cloudflare application/policy were
+verified, but at that checkpoint the CoordMCP authorize target and runtime
+identity configuration had not yet been applied. The later approved change
+and deployment are recorded under “Continuation evidence” below; that section
+supersedes this checkpoint's target/configuration status.
 
 The root-only rollback snapshot created before deployment remains at
 `/var/backups/coord-mcp-f3-r-20261021T233725Z/` (`700 root:root`). Its original
@@ -342,23 +349,83 @@ without following redirects; the matrix was rechecked at approximately
 reported account/zone/Workers scopes but no Access Apps/Policies read or edit
 scope. The earlier zero-item API response was not treated as authoritative;
 the subsequent authenticated dashboard audit above resolved the app/policy
-facts. No Access policy or target was changed and no positive Access JWT
-configuration was guessed. The authorize URL currently has no Cloudflare
-Access redirect, so R3 remains partial. OpenResty was not reloaded; no
-RemoteControl route or shared OAuth logic was changed.
+facts. No Access policy or target had been changed at this checkpoint and no
+positive Access JWT configuration was guessed. The authorize URL then had no
+Cloudflare Access redirect. The later approved exact-path addition is recorded
+below. OpenResty was not reloaded; no RemoteControl route or shared OAuth
+logic was changed.
 
 ## R4: ChatGPT Web end-to-end
 
-**PARTIAL / IN_PROGRESS.** ChatGPT Web shows the custom Coord app URL as
-`https://lieyanbang.com/app/CoordMCP/`. The first real OAuth authorization
-request was rejected with HTTP 400 `invalid_request` because of
-`ui_locales=zh-CN`; this compatibility issue is fixed locally and awaits
-Actions/deployment. No Cloudflare Access identity login, OAuth consent, token
-exchange, public authenticated MCP call, or isolated batch/task write has yet
-completed. No production task was touched.
+**PARTIAL / USER ACTION REQUIRED.** The `Coord` ChatGPT plugin points to the
+exact URL `https://lieyanbang.com/app/CoordMCP/` and advertises OAuth. Its
+settings page still shows **Associate** after refresh, so the connector is not
+established. The real Cloudflare Access owner session reached the
+password-free `Authorize Coord MCP` page and displayed a signed-in identity
+(redacted here). No owner password was requested.
 
-After deploying the tested fix, retry the same ChatGPT app connection, complete
-the normal Access identity login and consent, then verify public token exchange,
-`initialize`, `tools/list`, read-only `tasks/list`, and one dedicated isolated
-batch/task write with readback. F3 and F3-R remain **PARTIAL** until these steps
-and the remaining R3 regressions pass.
+The previous browser audit recorded a latest authorize POST response of HTTP
+302, but no callback or ChatGPT connection confirmation. Earlier repeated
+submissions returned HTTP 403. In this continuation, a fresh Connect flow
+opened the consent page; browser click/key attempts did not produce a
+verifiable callback. A subsequent submission of an earlier challenge displayed
+`invalid_authorization_request`. The current ChatGPT settings still show
+**Associate**. Since the browser did not expose a reliable result, no status
+code is inferred for the latest click. The current consent tab was preserved
+for handoff; do not resubmit an old challenge.
+
+OAuth token exchange, MCP `initialize`, `tools/list`, read-only `tasks/list`,
+and isolated batch/task write/readback are **NOT_RUN**. No batch or task was
+created and no production task was touched. To resume, start a fresh
+association from the ChatGPT Coord plugin settings, complete the visible
+authorization once in the same Edge session, and confirm ChatGPT returns to a
+connected state before continuing the public MCP checks. F3 and F3-R remain
+**PARTIAL**; neither an Access-protected page nor an authorize redirect proves
+token exchange or tool-RPC success.
+
+## Continuation evidence (2026-10-22)
+
+This section supersedes earlier R3 target/configuration status paragraphs;
+the earlier command results remain historical evidence for the initial
+deployment attempt.
+
+The tested compatibility fix was committed as `c54084e1d784a8108436396b2b58ae878b9580f8`
+on `codex/f3-r-chatgpt-oauth`, pushed to the verified user Fork, and passed
+Fork Windows Actions run `39710903473`. The deployed
+`relay/coord-mcp/oauth.cjs` SHA-256 is
+`1f9e4f8aff7c2dd823fd7b79e8832131b37143e7d94891ae4d39f3ed54fac464`. A
+root-only rollback copy is at
+`/var/backups/coord-mcp-f3-r-chatgpt-20261022T022700Z/`.
+
+At `2026-10-22T02:27:57Z`, only `feathersjsapp.service` was restarted for this
+deployment. The service returned active with PID `98918` and `NRestarts=0`;
+OpenResty, Sidecar, Tailscale, Arasaka/Servy, coord, and listeners 13011/13012
+were not restarted. The active process contained all three
+`COORD_MCP_ACCESS_*` variable names; their values were not read or recorded.
+The one exact Access path added was
+`lieyanbang.com/app/CoordMCP/oauth/authorize`; the six existing targets,
+administrator policy, Google OIDC, and 24-hour session were left unchanged.
+
+Post-deployment public probes recorded by the operator returned: authorize
+HTTP 302 to the verified Access login host, `/app/CoordMCP/` HTTP 401,
+authorization-server metadata HTTP 200, and protected-resource metadata HTTP
+200. The existing RemoteControlMCP and RemoteControlMCP2 paths remained HTTP
+302; RemoteControlMCP3 and `/mcp` remained HTTP 401. These are route and
+challenge checks, not proof of successful authorization-code exchange. R3
+remains **PARTIAL** until production rejection of a non-owner identity is
+verified in addition to its existing automated negative tests.
+
+`TASK.md` remains unchanged (SHA-256
+`780ee0eabbee510cdd7ad6c33d561698b19075d550e20d4d91b2a9725775fef8`). The
+worktree's pre-existing `.gitignore`, untracked `TASK.md`,
+`.desktop-commander-artifacts/`, and `relay/coord-mcp/node_modules/` were
+preserved and excluded from this documentation change.
+
+The local Windows regression gate was rerun after this update with
+`pwsh -NoLogo -NoProfile -File scripts/verify.ps1 -Stage f3-r` from
+`2026-10-22T02:53:01Z` through `02:53:40Z`; fmt, locked clippy, all-feature
+tests, locked release build, and CoordMCP tests all exited 0. CoordMCP reported
+12/12 passing tests. Exact commands, timings, and outputs are in
+`stage-f3-r-checks.json` and the matching `stage-f3-r-*.log` files. This local
+gate verifies source regressions only and does not change the R3/R4 acceptance
+status.
