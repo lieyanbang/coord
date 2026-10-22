@@ -168,3 +168,35 @@ Windows 本机及 Windows Actions 的真实测试、构建与产物为准。
 - R3：PARTIAL。已部署 CoordMCP OAuth 修正；最后记录的生产 `oauth.cjs` SHA-256 为 `1f9e4f8aff7c2dd823fd7b79e8832131b37143e7d94891ae4d39f3ed54fac464`。之后的回调 CSP 修复已提交并通过本机/Actions，但没有复核该修复版本是否已部署。仅向既有 `lieyanbang-auth` 添加精确 authorize 路径；owner 可到达无密码 consent。生产 non-owner 拒绝仍未验证。
 - R4：ChatGPT Web `Coord tasks/list` 真实调用成功；隔离 task `a0aefa7d-aed2-4287-9f30-4a30421e8c7a` 在 `2026-10-22T13:29:03.953Z` 精确领取 attempt 1、单次提交（`post_ack=false`）并读回 completed，测试标记匹配。授权提交失败根因及修正记录在 `PHASE_F3_R.md`；该项回调 CSP 源码修正的生产部署哈希仍待只读复核。
 - F3-R 总体及 F3：PARTIAL。独立生产身份拒绝验证、CSP 修复源码线上哈希以及分开的 OAuth/token 和 MCP `initialize`/`tools/list` 证据尚缺。详见 `verification/PHASE_F3_R.md`。
+
+
+## 11. Phase G — 六 ChatGPT Agent 并发识别与 Completion Actions（2026-10-23）
+> 本阶段为新增通用调度能力及其首个业务应用。当前总体 **PARTIAL**：G0 审计与 G4 材料准备 PASS；G1/G2/G3/G5 尚有身份、活性证明或生产执行边界。F0–F2 已通过的生产边界不重做；F3-R 尚存非 owner 拒绝、生产 CSP 哈希、独立 OAuth/MCP 流程证据，仍保持 PARTIAL，不能借 Phase G 宣称 F3 PASS。具体执行入口为根目录 TASK.md。
+### G0 范围与基线（PASS）
+- 目标：六个**独立 ChatGPT Web 对话**共用 Cloudflare Access + CoordMCP 接入，各自绑定 A0–A5，动态领取相同 Batch 的任务；使用 Remote Control 4 读取本地图片及 refs，并通过 Coord MCP 领取、续租与提交。可在工具调用期间连续领取，但 ChatGPT 对话不保证无定时器的 24h 后台自行唤醒；不得声称已实现严格无人值守持续唤醒。
+- 首轮仅初步分类：D:\ChatGPT_Emote_Work 根目录源图片 1218、SHA-256 完全相同的冗余 12、唯一 1206；task/00–119 各 10 张，120 六张，121–122 空（不入队）；A0–A5、refs/operators.csv（463 条，arknights 图标 431，endfield 图标 32）、image_manifest.csv、task_inventory.csv 已准备。图片 ID 原有缺 622/1170，新增非数字文件已赋 ID 1216–1219，不重新编排或删除源图。
+- 不直接创建业务 Batch/任务，先审计 coord Rust core、relay/protocol/agent/server、coord-mcp/index.cjs 与当前生产部署、服务身份和版本；Git 已有 .gitignore 修改、未跟踪 TASK.md、node_modules 保留。创建隔离分支并记录基线/回滚。
+- 验收：2026-10-22 16:37 UTC 直接 SSH 只读核对 Arasaka 和 Relay 主机；Arasaka coord `0.4.1` SHA-256 `b58d3620...f5652e0d`、仅 `127.0.0.1:7777`，只读 `tasks/list(skip_reclaim=true)` 返回 1 条；Servy 与 CoordRelayAgent 均 Running。Relay/ACL/FeathersJS/OpenResty/Tailscale 单元 active，13011/13012 保持监听，13013 loopback health READY、agentConnected=true。初始化器 dry-run 121 任务，manifest 1218/1206/12，request SHA-256 `60126faa...cb1a2c91f`；未创建或入队任务。详见 `verification/PHASE_G0.md`。
+### G1 身份绑定及权限（PARTIAL）
+- Cloudflare Access 证明**用户身份**，不能区分同一个 OAuth 用户的六个对话。增加带显式 A0–A5 声明的独立注册/绑定协议：管理员预置受控身份注册凭证或服务端发行不可冒用的 worker capability；会话凭证只绑定一个 worker、单个允许 Batch/权限/有限 TTL。不得仅信任客户端发来的 agent_id，不能把全体请求映射为 coord-relay-agent。
+- 评估 ChatGPT 独立对话保存/复用身份秘密的实际能力；不得把可冒用密钥写入 ChatGPT 可见日志、公共文件、MCP 工具说明或其他 Agent 工作区。若同一 OAuth 客户端/对话不能提供隔离的安全持久会话，需要明确退化为可信但不抗冒用的逻辑身份（仍使用独立租约 fencing），不得标记安全身份 Gate PASS；优先设计每 Agent 独立受控认证绑定、服务端上下文或凭据隔离的可验证路径。
+- MCP 声明工具、领取/续租/提交/失败调用与 Sidecar→Arasaka 的 agent_id 必须端到端受控匹配。既有固定身份 Legacy MCP 调用需要受限兼容及回归，不得破坏现有任务/租约。每个 worker A0–A5 独立记录会话 ID 与任务审计信息，不把 lease_token 放入 list/get/日志。
+- 本阶段实现未建立独立 capability 或会话绑定。CoordMCP 与 Relay 仍固定映射至 `coord-relay-agent`；客户端声明 A0–A5 不构成身份。固定 agent 字段伪造负向测试通过，但六个直接 JSON-RPC 假客户端只证明调度与 fencing，不证明身份隔离。生产身份 Gate 未通过，不得部署或启动六个正式对话。
+### G2 长任务租约和进度（PARTIAL）
+- 原生最大一次租约 600 秒，保留。提供 coord_agent_status、coord_report_progress、coord_extend_lease_progress 等工具；续租匹配 agent/当前 attempt/token 和单次新鲜未消费序号。预算默认 60 分钟并从当前 claim 的 claimed_at 起算；后续重试会开启新 attempt 预算。进度是自报文本，不是可信 liveness；会话级身份约束未通过。
+- ChatGPT 对话不支持保证每 420 秒自主运行；**不能依赖模型本身作定时器**。如果开发 Lease Supervisor，只能针对可验证心跳有界续租，不可基于浏览器/连接存在无限续期。没有进度则放任租约过期、回收、至多三次重试。
+- 租约不确定结果禁止自动重放有副作用 RPC，先读回精确任务与 attempt；worker 失租后禁止发布正式文件与提交旧结果。隔离 Windows 测试验证 stale attempt/token、序号重放、600 秒租约上限和预算上限。
+### G3 通用完成动作（PARTIAL）
+- 可由**受信本机/管理员配置文件**指定 on_task_completed、on_batch_completed 的固定命令/参数模板；Agent payload/result 不能提供任意可执行文件、shell、working_directory 或覆盖命令。对配置限定路径、可执行白名单、参数占位符、低权限账户、Job Object/子进程终止、timeout/输出/并发上限及秘密屏蔽。命令默认 shell=false，拒绝任意命令拼接。
+- 在同一数据库事务中写 completed 与独立 action outbox（唯一键 batch/task/event/action/version）；异步处理，崩溃恢复与租约 fencing、重复 event、幂等执行及可配置失败重试。状态独立：pending/running/succeeded/failed/uncertain；执行结果独立追踪，task.completed 不因动作失败重新入队。不可断言外部命令 exactly-once；对非幂等命令失败/不确定结果 fail-closed 等待处理。
+- 配置可按 Batch 选择批准的 action profile；禁止通过非管理 MCP 修改命令；on_batch_completed 仅在全部指定任务终态、且满足配置的成功策略时触发一次，新增任务/重试/取消及验证器的 submitted→completed 转换需有明确行为。
+- Gate：隔离 Windows SQLite/进程 Canary 通过 outbox 原子性、重复提交、profile 路径/占位符/shell 拒绝、Job Object 超时和输出限额、任务终态独立性，以及副作用后 daemon 中断恢复为 `uncertain`。生产仍 PARTIAL：动作子进程继承 coord 账户；未验证专用低权限账户/ACL，也没有批准的 publisher/index 二进制。
+### G4 首轮表情包分类（PASS：仅材料准备）
+- 每组输入 task/00–120 的图片与 refs 为只读；先通过 refs 图标与 operators.csv 熟悉两款游戏角色；视觉特征优先，引用匹配仅做辅助。相同角色不同表情/画风/服装合并；不同角色颜色类似仍分开；多角色图片可出现在多个 groups。无法判断时必须检查 refs 并在 uncertain 中记录可见特征、参考候选、检查范围、原因与 review_priority，不能猜测角色名。
+- 每任务 JSON 包括 schema_version、group_id、agent_id、attempt_no、source_image_ids、characters[{local_character_id,image_ids,representative_image_id,visual_description,game,reference_match,confidence,notes}]、uncertain[]、general_notes；输入每张图至少出现在 groups/uncertain 一次，允许多人交叉；引用路径须位于 refs；仅低置信/复杂/冲突记录人工复核注释。
+- 结果先进入 A0–A5 独立 attempt 暂存位置，服务端凭成功提交收据/fence 由可信完成动作原子发布 results/{group}.json。完成动作执行 schema、覆盖率、引用存在性、JSON 大小与安全路径验证；失败需独立 action 状态/可见告警。Batch 满足条件后生成 index.json 与 review_queue/candidates.json：仅候选跨任务合并，不确定最终全局角色 ID、不启动第二轮独立复核。
+- 不足十张允许；不创建空目录 121/122 任务。初始化器仅 dry-run 生成 121 任务请求；本阶段未创建 Batch/任务。最终图像分类及真实 Agent 操作 NOT_RUN。
+### G5 部署与验收（PARTIAL：生产部署 NOT_RUN）
+- 本地/隔离库先完成分层回归、六身份 canary、completion hook 崩溃复测，再经 fork Windows Actions 编译 release 并核验 artifact 哈希；备份现有 Arasaka coord DB/WAL/EXE、Sidecar、Feathers；仅最小受控服务重启，验证原 F1/F2/F3 读写/OAuth 与 13011/13012 路由不受影响。
+- Windows 全量门 `pwsh -NoProfile -File scripts/verify.ps1 -Stage g5` 于 2026-10-22T16:53:24Z 起执行，fmt/clippy/tests/release/Relay/MCP/Python 均 exit 0；真实 Fork Actions 与 artifact 仍待核验。因 G1 身份及 G3 低权限动作执行门未通过，不执行生产部署、备份、服务重启、正式队列初始化或生产 Agent 启动。详见 `verification/PHASE_G5.md`。
+- 分阶段验收文档 docs/verification/PHASE_G0..G5.md；不得删历史、force-push、修改其他项目 Access 策略或重启 Arasaka 整机。G1/G2/G3/G5 未通过项标记 PARTIAL，不能据此将 F3-R 提升为 PASS。

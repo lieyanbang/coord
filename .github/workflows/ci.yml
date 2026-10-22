@@ -47,6 +47,10 @@ jobs:
         run: npm ci --prefix relay/coord-mcp --ignore-scripts --no-audit --no-fund
       - name: Coord MCP OAuth and HTTP tests
         run: npm test --prefix relay/coord-mcp
+      - name: Phase G request and result utility tests
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: python -m unittest discover -s scripts/phase_g -p test_phase_g_tools.py -v
       - uses: actions/upload-artifact@v4
         with:
           name: coord-${{ matrix.os }}
