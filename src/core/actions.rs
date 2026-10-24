@@ -1,5 +1,5 @@
 use anyhow::{bail, Context, Result};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::BTreeMap;
 use std::fs;
@@ -27,6 +27,11 @@ pub struct ActionRegistryFile {
     pub version: u32,
     pub allowed_root: PathBuf,
     pub profiles: BTreeMap<String, ActionProfile>,
+    #[serde(default)]
+    pub external_runner: Option<super::action_runner::RunnerConfig>,
+    /// Unsafe for production; only the existing isolated process canaries use it.
+    #[serde(default)]
+    pub isolated_in_process: bool,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -49,15 +54,20 @@ pub struct ActionCommand {
     pub max_output_bytes: usize,
     pub max_attempts: u32,
     pub idempotent: bool,
+    #[serde(default)]
+    pub sha256: Option<String>,
 }
 
 #[derive(Debug, Clone)]
 pub struct ActionRegistry {
     allowed_root: PathBuf,
     profiles: BTreeMap<String, ActionProfile>,
+    pub external_runner: Option<super::action_runner::RunnerConfig>,
+    pub isolated_in_process: bool,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct ActionJob {
     pub id: String,
     pub event_id: String,
@@ -72,7 +82,8 @@ pub struct ActionJob {
     pub idempotent: bool,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum ActionState {
     Succeeded,
     Failed,
@@ -102,15 +113,16 @@ impl ActionRegistry {
         #[cfg(not(windows))]
         bail!("completion actions require Windows Job Objects");
 
-        let metadata = fs::symlink_metadata(path).context("inspect action registry")?;
+        let safe_path = super::windows_security::safe_existing_path(path)?;
+        let metadata = fs::symlink_metadata(&safe_path).context("inspect action registry")?;
         if !metadata.is_file() || metadata.file_type().is_symlink() || metadata.len() > 256 * 1024 {
             bail!("action registry must be a regular file no larger than 256 KiB");
         }
-        let file: ActionRegistryFile = serde_json::from_slice(&fs::read(path)?)?;
+        let file: ActionRegistryFile = serde_json::from_slice(&fs::read(safe_path)?)?;
         if file.version != 1 || file.profiles.is_empty() {
             bail!("unsupported or empty action registry");
         }
-        let root = fs::canonicalize(&file.allowed_root).context("canonicalize action root")?;
+        let root = super::windows_security::safe_existing_path(&file.allowed_root)?;
         if !root.is_dir() {
             bail!("action root must be a directory");
         }
@@ -122,6 +134,12 @@ impl ActionRegistry {
                 bail!("action profile must define at least one completion action");
             }
         }
+        if file.external_runner.is_some() && file.isolated_in_process {
+            bail!("external and isolated in-process modes cannot be combined");
+        }
+        if let Some(runner) = &file.external_runner {
+            runner.validate()?;
+        }
         let mut profiles = file.profiles;
         for profile in profiles.values_mut() {
             for command in [
@@ -132,11 +150,16 @@ impl ActionRegistry {
             .flatten()
             {
                 validate_command(command, &root)?;
+                if file.external_runner.is_some() && command.sha256.is_none() {
+                    bail!("external runner requires every executable SHA256 pin");
+                }
             }
         }
         Ok(Self {
             allowed_root: root,
             profiles,
+            external_runner: file.external_runner,
+            isolated_in_process: file.isolated_in_process,
         })
     }
 
@@ -159,6 +182,15 @@ impl ActionRegistry {
         let Some(command) = command else {
             return execution(ActionState::Failed, "action_missing", None, 0);
         };
+        if super::windows_security::safe_existing_path(&command.executable).is_err()
+            || super::windows_security::safe_existing_path(&command.working_directory).is_err()
+            || command.sha256.as_ref().is_some_and(|pin| {
+                super::windows_security::file_sha256(&command.executable)
+                    .map_or(true, |actual| !actual.eq_ignore_ascii_case(pin))
+            })
+        {
+            return execution(ActionState::Failed, "executable_integrity_failed", None, 0);
+        }
         if command.idempotent != job.idempotent || command.max_attempts != job.max_attempts {
             return execution(ActionState::Failed, "profile_changed", None, 0);
         }
@@ -215,7 +247,7 @@ fn validate_command(command: &mut ActionCommand, root: &Path) -> Result<()> {
     {
         bail!("completion action executable must be a native .exe or .com file");
     }
-    let executable = fs::canonicalize(&command.executable)?;
+    let executable = super::windows_security::safe_existing_path(&command.executable)?;
     if !executable.starts_with(root) {
         bail!("action executable is outside the trusted root");
     }
@@ -223,7 +255,8 @@ fn validate_command(command: &mut ActionCommand, root: &Path) -> Result<()> {
     if directory_metadata.file_type().is_symlink() || !directory_metadata.is_dir() {
         bail!("action working directory must be a non-symlink directory");
     }
-    let working_directory = fs::canonicalize(&command.working_directory)?;
+    let working_directory =
+        super::windows_security::safe_existing_path(&command.working_directory)?;
     if !working_directory.starts_with(root) {
         bail!("action working directory is outside the trusted root");
     }
@@ -236,6 +269,14 @@ fn validate_command(command: &mut ActionCommand, root: &Path) -> Result<()> {
     }
     command.executable = executable;
     command.working_directory = working_directory;
+    if let Some(pin) = &command.sha256 {
+        if pin.len() != 64
+            || !pin.bytes().all(|byte| byte.is_ascii_hexdigit())
+            || !super::windows_security::file_sha256(&command.executable)?.eq_ignore_ascii_case(pin)
+        {
+            bail!("executable SHA256 pin mismatch");
+        }
+    }
     Ok(())
 }
 
@@ -298,6 +339,12 @@ fn run_command(command: &ActionCommand, args: &[String], event: &[u8]) -> Action
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        // No user code runs before Job Object containment is established.
+        process.creation_flags(windows_sys::Win32::System::Threading::CREATE_SUSPENDED);
+    }
     let mut child = match process.spawn() {
         Ok(child) => child,
         Err(_) => return execution(ActionState::Failed, "spawn_failed", None, 0),
@@ -314,6 +361,12 @@ fn run_command(command: &ActionCommand, args: &[String], event: &[u8]) -> Action
             };
         }
     };
+    #[cfg(windows)]
+    if resume_contained_process(child.id()).is_err() {
+        terminate_child(&mut child, &job);
+        let _ = child.wait();
+        return execution(ActionState::Uncertain, "process_resume_failed", None, 0);
+    }
     let overflow = Arc::new(AtomicBool::new(false));
     let output_bytes = Arc::new(AtomicUsize::new(0));
     let stdout_thread = drain_pipe(
@@ -401,6 +454,51 @@ fn run_command(command: &ActionCommand, args: &[String], event: &[u8]) -> Action
             execution(ActionState::Failed, "process_wait_retryable", None, bytes)
         }
         None => execution(ActionState::Uncertain, "process_wait_failed", None, bytes),
+    }
+}
+
+#[cfg(windows)]
+fn resume_contained_process(process_id: u32) -> Result<()> {
+    use std::mem::{size_of, zeroed};
+    use windows_sys::Win32::Foundation::{CloseHandle, INVALID_HANDLE_VALUE};
+    use windows_sys::Win32::System::Diagnostics::ToolHelp::*;
+    use windows_sys::Win32::System::Threading::{OpenThread, ResumeThread, THREAD_SUSPEND_RESUME};
+    unsafe {
+        let snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
+        if snapshot == INVALID_HANDLE_VALUE {
+            bail!("snapshot suspended action threads");
+        }
+        let result = (|| -> Result<()> {
+            let mut entry: THREADENTRY32 = zeroed();
+            entry.dwSize = size_of::<THREADENTRY32>() as u32;
+            let mut available = Thread32First(snapshot, &mut entry) != 0;
+            let mut thread_id = None;
+            while available {
+                if entry.th32OwnerProcessID == process_id {
+                    if thread_id.is_some() {
+                        bail!("unexpected threads before action startup");
+                    }
+                    thread_id = Some(entry.th32ThreadID);
+                }
+                available = Thread32Next(snapshot, &mut entry) != 0;
+            }
+            let thread = OpenThread(
+                THREAD_SUSPEND_RESUME,
+                0,
+                thread_id.context("suspended primary thread missing")?,
+            );
+            if thread.is_null() {
+                bail!("open suspended action thread");
+            }
+            let previous = ResumeThread(thread);
+            CloseHandle(thread);
+            if previous != 1 {
+                bail!("action primary thread had unexpected suspend count");
+            }
+            Ok(())
+        })();
+        CloseHandle(snapshot);
+        result
     }
 }
 

@@ -1,0 +1,58 @@
+[
+  {
+    "seconds": 0.3949557,
+    "started": "2026-10-24T10:29:59.5452394Z",
+    "command": "cargo fmt --all -- --check",
+    "exit": 0,
+    "log": "docs/verification/stage-g6-final-fmt.log"
+  },
+  {
+    "seconds": 3.6784122,
+    "started": "2026-10-24T10:29:59.9980332Z",
+    "command": "cargo clippy --all-targets --all-features --locked -- -D warnings",
+    "exit": 0,
+    "log": "docs/verification/stage-g6-final-clippy.log"
+  },
+  {
+    "seconds": 44.3053914,
+    "started": "2026-10-24T10:30:03.6803975Z",
+    "command": "cargo test --all-features --locked",
+    "exit": 0,
+    "log": "docs/verification/stage-g6-final-test.log"
+  },
+  {
+    "seconds": 0.5793845,
+    "started": "2026-10-24T10:30:47.9873879Z",
+    "command": "cargo build --release --locked",
+    "exit": 0,
+    "log": "docs/verification/stage-g6-final-build.log"
+  },
+  {
+    "seconds": 22.7084453,
+    "started": "2026-10-24T10:30:48.5722927Z",
+    "command": "powershell.exe -NoLogo -NoProfile -File scripts/windows/test-coord-health-monitor.ps1",
+    "exit": 0,
+    "log": "docs/verification/stage-g6-final-health-monitor.log"
+  },
+  {
+    "seconds": 5.0020633,
+    "started": "2026-10-24T10:31:11.2939334Z",
+    "command": "node --test relay/relay.test.mjs relay/live-coord.test.mjs",
+    "exit": 0,
+    "log": "docs/verification/stage-g6-final-relay-tests.log"
+  },
+  {
+    "seconds": 1.6190888,
+    "started": "2026-10-24T10:31:16.2981243Z",
+    "command": "npm test --prefix relay/coord-mcp",
+    "exit": 0,
+    "log": "docs/verification/stage-g6-final-coord-mcp-tests.log"
+  },
+  {
+    "seconds": 0.2164578,
+    "started": "2026-10-24T10:31:17.9189334Z",
+    "command": "python -m unittest discover -s scripts/phase_g -p test_phase_g_tools.py -v",
+    "exit": 0,
+    "log": "docs/verification/stage-g6-final-phase-g-tools.log"
+  }
+]

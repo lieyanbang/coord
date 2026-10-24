@@ -1,0 +1,45 @@
+{
+  "observed_at": "2026-10-24T09:57:14.8282681Z",
+  "probes": [
+    {
+      "exit": 0,
+      "http": "401",
+      "path": "/app/CoordMCP/"
+    },
+    {
+      "exit": 0,
+      "http": "200",
+      "path": "/app/CoordMCP/.well-known/oauth-authorization-server"
+    },
+    {
+      "exit": 0,
+      "http": "200",
+      "path": "/app/CoordMCP/.well-known/oauth-protected-resource/mcp"
+    },
+    {
+      "exit": 0,
+      "http": "302",
+      "path": "/app/CoordMCP/oauth/authorize"
+    },
+    {
+      "exit": 0,
+      "http": "302",
+      "path": "/app/RemoteControlMCP/"
+    },
+    {
+      "exit": 0,
+      "http": "302",
+      "path": "/app/RemoteControlMCP2/"
+    },
+    {
+      "exit": 0,
+      "http": "401",
+      "path": "/app/RemoteControlMCP3/"
+    },
+    {
+      "exit": 0,
+      "http": "401",
+      "path": "/mcp"
+    }
+  ]
+}

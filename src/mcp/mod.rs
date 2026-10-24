@@ -52,13 +52,19 @@ impl Bridge {
     /// errors so the agent sees them clearly instead of silently failing.
     async fn call(&self, method: &str, params: Value) -> Result<CallToolResult, McpError> {
         let body = json!({ "jsonrpc": "2.0", "id": 1, "method": method, "params": params });
-        let resp = self
-            .http
-            .post(&self.url)
+        let mut request = self.http.post(&self.url);
+        if let Some(key) = crate::core::action_runner::client_management_key(&self.url)
+            .map_err(|error| McpError::internal_error(error.to_string(), None))?
+        {
+            request = request.bearer_auth(key);
+        }
+        let resp = request
             .json(&body)
             .send()
             .await
-            .map_err(|e| McpError::internal_error(format!("coord unreachable: {e}"), None))?;
+            .map_err(|e| McpError::internal_error(format!("coord unreachable: {e}"), None))?
+            .error_for_status()
+            .map_err(|error| McpError::internal_error(format!("coord HTTP: {error}"), None))?;
         let value: Value = resp
             .json()
             .await

@@ -1,8 +1,9 @@
 # Phase G5: Canary, Deployment and Acceptance
 
-Result: **PARTIAL**. Local Windows acceptance passes. Fork Actions artifact
-verification and production deployment are not yet complete; production
-deployment is **NOT_RUN** because G1 and G3 production gates remain open.
+Result: **PARTIAL**. Local Windows acceptance and the Fork Actions artifact
+subgate pass, as recorded below. Production deployment is **NOT_RUN** because
+G1 and G3 production gates remain open. This introduction was corrected during
+G6; the historical command results and hashes below are unchanged.
 
 ## Local Windows Gate
 

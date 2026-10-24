@@ -4,6 +4,7 @@ const path = require('node:path');
 const { createRequire } = require('node:module');
 const { pathToFileURL } = require('node:url');
 const { createCoordOAuthServer } = require('./oauth.cjs');
+const identity = require('../identity.cjs');
 
 const COORD_AGENT_ID = 'coord-relay-agent';
 const MAX_BODY_BYTES = 64 * 1024;
@@ -54,7 +55,7 @@ const TOOLS = [
   },
   {
     name: 'coord_claim_task',
-    description: 'Claim one explicitly selected task as the fixed coord relay agent. A claim returns the current attempt lease token. State-changing calls require request_id; never automatically retry an uncertain outcome.',
+    description: 'Claim one explicitly selected task as the server-authenticated relay identity. A claim returns the current attempt lease token. State-changing calls require request_id; never automatically retry an uncertain outcome.',
     inputSchema: objectSchema({
       id: TASK_ID_PROPERTY,
       request_id: REQUEST_ID_PROPERTY,
@@ -64,7 +65,7 @@ const TOOLS = [
   },
   {
     name: 'coord_claim_next',
-    description: 'Claim the next task only from an explicitly named batch. The fixed coord relay agent identity is used; no other agent ID can be selected.',
+    description: 'Claim the next task only from an explicitly named batch permitted by the server-authenticated relay identity; no agent ID can be selected.',
     inputSchema: objectSchema({
       batch_id: stringSchema('Required batch UUID. This tool never claims from the global queue.', 36),
       request_id: REQUEST_ID_PROPERTY,
@@ -455,7 +456,7 @@ function toolErrorText(error) {
   return 'Coord MCP operation failed; no success is being reported.';
 }
 
-function createCoordMcpServer(authInfo, sidecar, loadSdk) {
+function createCoordMcpServer(authInfo, sidecar, loadSdk, identityPolicy = null) {
   return (async () => {
     const { server: sdk, types } = await loadSdk();
     const instructions = [
@@ -491,7 +492,15 @@ function createCoordMcpServer(authInfo, sidecar, loadSdk) {
         return { isError: true, content: [{ type: 'text', text: toolErrorText(error) }] };
       }
       try {
-        const result = await sidecar.call({ requestId: call.requestId, method: call.method, params: call.params });
+        const principal = identity.resolvePrincipal(identityPolicy, authInfo);
+        if (principal) {
+          if (Object.hasOwn(call.params, 'agentId')) call.params.agentId = principal.agent_id;
+          if (Object.hasOwn(call.params, 'agent_id')) call.params.agent_id = principal.agent_id;
+        }
+        const rpc = identity.signRequest({ requestId: call.requestId, method: call.method, params: call.params }, principal, identityPolicy);
+        const authorization = identity.verifyRequest(rpc, identityPolicy);
+        if (!authorization.ok) throw new ToolInputError(authorization.code);
+        const result = await sidecar.call(rpc);
         const visible = call.readOnly ? removeLeaseTokens(result) : result;
         const text = JSON.stringify(visible);
         if (Buffer.byteLength(text) > MAX_RESPONSE_BYTES) {
@@ -537,6 +546,7 @@ async function registerCoordMcp(httpApp, options = {}) {
   });
   const sidecar = options.sidecar || new SidecarClient(options.sidecarOptions);
   const loadSdk = options.loadSdk || defaultSdkLoader(options.sdkResolutionBase);
+  const identityPolicy = options.identityPolicy ?? await identity.loadPolicy(options.identityPolicyFile || process.env.COORD_MCP_IDENTITY_POLICY);
   if (typeof oauth.init === 'function' && options.skipOAuthInit !== true) {
     const privateDirectories = new Set([
       path.dirname(config.oauthStatePath),
@@ -605,6 +615,12 @@ async function registerCoordMcp(httpApp, options = {}) {
       return;
     }
     req.coordMcpAuthInfo = authInfo;
+    try {
+      identity.resolvePrincipal(identityPolicy, authInfo);
+    } catch {
+      res.status(403).json({ error: 'identity_binding_missing_or_expired' });
+      return;
+    }
     next();
   };
 
@@ -622,7 +638,7 @@ async function registerCoordMcp(httpApp, options = {}) {
     let transport;
     try {
       const sdk = await loadSdk();
-      server = await createCoordMcpServer(req.coordMcpAuthInfo, sidecar, async () => sdk);
+      server = await createCoordMcpServer(req.coordMcpAuthInfo, sidecar, async () => sdk, identityPolicy);
       transport = new sdk.transport.StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
       await server.connect(transport);
       await transport.handleRequest(req, res, req.body);

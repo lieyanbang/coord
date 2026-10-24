@@ -1,0 +1,50 @@
+[
+  {
+    "claim_end_to_end_ms_p50": 1.274,
+    "claim_end_to_end_ms_p95": 4.394699999999999,
+    "daemon_peak_working_set_bytes": 14721024,
+    "enqueue_seconds": 0.0105169,
+    "idle_wait_ms": 214.50379999999998,
+    "receipts": 100,
+    "seconds": 0.1613036,
+    "sqlite_busy_log_lines": 0,
+    "sum_worker_peak_working_set_bytes": 90873856,
+    "tasks": 100,
+    "tasks_per_second": 619.9489658011353,
+    "terminal_consistent": true,
+    "unique_completed": 100,
+    "workers": 6
+  },
+  {
+    "claim_end_to_end_ms_p50": 2.1438,
+    "claim_end_to_end_ms_p95": 8.065299999999999,
+    "daemon_peak_working_set_bytes": 19304448,
+    "enqueue_seconds": 0.0929028,
+    "idle_wait_ms": 208.8045,
+    "receipts": 1000,
+    "seconds": 2.2091302,
+    "sqlite_busy_log_lines": 0,
+    "sum_worker_peak_working_set_bytes": 91402240,
+    "tasks": 1000,
+    "tasks_per_second": 452.6668459830932,
+    "terminal_consistent": true,
+    "unique_completed": 1000,
+    "workers": 6
+  },
+  {
+    "claim_end_to_end_ms_p50": 15.971699999999998,
+    "claim_end_to_end_ms_p95": 47.3632,
+    "daemon_peak_working_set_bytes": 22089728,
+    "enqueue_seconds": 1.0594279,
+    "idle_wait_ms": 216.767,
+    "receipts": 10000,
+    "seconds": 94.4820385,
+    "sqlite_busy_log_lines": 0,
+    "sum_worker_peak_working_set_bytes": 92348416,
+    "tasks": 10000,
+    "tasks_per_second": 105.84022274244221,
+    "terminal_consistent": true,
+    "unique_completed": 10000,
+    "workers": 6
+  }
+]

@@ -11,6 +11,8 @@ import { createAgent } from './agent.mjs';
 import { createSidecar } from './server.mjs';
 import { reservePort } from './test-ports.mjs';
 import { COORD_AGENT_ID, RELAY_AGENT_ID } from './protocol.mjs';
+import identity from './identity.cjs';
+import identityFixture from './identity-test-fixture.cjs';
 
 const agentSecret = '55'.repeat(32);
 const clientSecret = '66'.repeat(32);
@@ -159,6 +161,107 @@ test('isolated coord lease fencing and submit replay across the authenticated re
       coord.kill();
       await new Promise(resolveExit => coord.once('exit', resolveExit));
     }
+    await rm(folder, { recursive: true, force: true });
+  }
+});
+
+test('synthetic OAuth-bound relay exercises progress, extend, submit, next claim and disconnect reclaim against a real isolated coord', async () => {
+  const folder = await mkdtemp(join(tmpdir(), 'coord-g6-bound-live-'));
+  const coordPort = await reservePort(); const agentPort = await reservePort(); const clientPort = await reservePort();
+  const coordUrl = `http://127.0.0.1:${coordPort}/`;
+  const child = spawn(coordExe, ['serve', '--addr', `127.0.0.1:${coordPort}`, '--db', join(folder, 'coord.db')], { stdio: 'ignore' });
+  let sidecar; let agent;
+  try {
+    let ready = false;
+    for (let i = 0; i < 100; i++) {
+      if (child.exitCode !== null) throw new Error('isolated G6 daemon exited');
+      try { await directRpc(coordUrl, 'tasks/list', { skip_reclaim: true, limit: 1 }); ready = true; break; } catch { await delay(100); }
+    }
+    assert.equal(ready, true);
+    const batch = await directRpc(coordUrl, 'batches/create', { name: 'G6 synthetic identity lease test only', config: { require_progress: true, max_attempts: 3 } });
+    await directRpc(coordUrl, 'batches/add_tasks', { batch_id: batch.id, tasks: [0, 1, 2].map(i => ({ key: `isolated-${i}`, name: `isolated-${i}`, payload: { synthetic: true } })) });
+    const policy = identityFixture.fixturePolicy(batch.id);
+    sidecar = await createSidecar({ agentHost: '127.0.0.1', agentPort, clientHost: '127.0.0.1', clientPort,
+      allowedPeerIp: '127.0.0.1', agentSecret, clientSecret, journalFile: join(folder, 'requests.ndjson'), identityPolicy: policy });
+    await sidecar.start();
+    agent = await createAgent({ serverHost: '127.0.0.1', serverPort: agentPort, coordUrl, secret: agentSecret,
+      heartbeatMs: 50, reconnectMinMs: 50, reconnectMaxMs: 100, identityPolicy: policy });
+    agent.start(); assert.equal(await agent.waitUntilConnected(2_000), true);
+    const invoke = async (index, method, params, requestId = randomUUID()) => {
+      const principal = identity.resolvePrincipal(policy, identityFixture.fixtureAuth(index));
+      const request = identity.signRequest({ requestId, method, params }, principal, policy);
+      const response = await fetch(`http://127.0.0.1:${clientPort}/v1/rpc`, { method: 'POST', headers: { authorization: `Bearer ${clientSecret}`, 'content-type': 'application/json' }, body: JSON.stringify(request) });
+      return { status: response.status, body: await response.json() };
+    };
+    const claim = async (index, seconds = 600) => {
+      const response = await invoke(index, 'scheduler/claim', { agent_id: `A${index}`, batch_id: batch.id, lease_seconds: seconds });
+      assert.equal(response.status, 200); return response.body.result.task;
+    };
+    const globalLegacy = await relayRpc(`http://127.0.0.1:${clientPort}`, randomUUID(), 'scheduler/claim', { agent_id: COORD_AGENT_ID });
+    assert.equal(globalLegacy.body.code, 'identity_batch_required');
+    assert.equal(globalLegacy.body.state, 'not_dispatched');
+    assert.doesNotMatch(JSON.stringify(globalLegacy.body), /lease_token|payload|synthetic/);
+    const untouched = await directRpc(coordUrl, 'tasks/list', { skip_reclaim: true, limit: 100 });
+    assert.equal(untouched.length, 3);
+    assert.ok(untouched.every(task => task.state === 'pending' && task.lease_token === null && task.claimed_by === null));
+    const old = await claim(0, 1);
+    const progressId = randomUUID();
+    const checkpoint = await invoke(0, 'scheduler/progress', { id: old.id, agent_id: 'A0', lease_token: old.lease_token, attempt_no: old.attempt_no, sequence: 1, request_id: progressId, checkpoint: 'Synthetic checkpoint; not liveness evidence.' }, progressId);
+    assert.equal(checkpoint.status, 200);
+    const beforeExpiry = await directRpc(coordUrl, 'tasks/get', { id: old.id });
+    assert.equal(beforeExpiry.lease_until, old.lease_until, 'progress must not extend a lease by itself');
+    await delay(1_150);
+    await directRpc(coordUrl, 'tasks/list', { skip_reclaim: false, limit: 100 });
+    const reclaimed = await directRpc(coordUrl, 'tasks/get', { id: old.id });
+    assert.equal(reclaimed.state, 'pending');
+    if (reclaimed.available_at) await delay(Math.max(0, Date.parse(reclaimed.available_at) - Date.now()) + 25);
+    // Exact-ID claim keeps this assertion independent of queue ordering.
+    const claimed = await invoke(1, 'tasks/claim', { id: old.id, agentId: 'A1', leaseSeconds: 600 });
+    assert.equal(claimed.status, 200); const current = claimed.body.result;
+    assert.equal(current.attempt_no, old.attempt_no + 1);
+    const staleId = randomUUID();
+    const stale = await invoke(0, 'scheduler/progress', { id: old.id, agent_id: 'A0', lease_token: old.lease_token, attempt_no: old.attempt_no, sequence: 2, request_id: staleId, checkpoint: 'Old attempt must fail.' }, staleId);
+    assert.equal(stale.body.error.code, -32001);
+    const cross = await invoke(0, 'tasks/complete', { id: current.id, agentId: 'A0', leaseToken: current.lease_token, result: { cross_identity: true } });
+    assert.equal(cross.body.error.code, -32001);
+    const checkpointId = randomUUID();
+    assert.equal((await invoke(1, 'scheduler/progress', { id: current.id, agent_id: 'A1', lease_token: current.lease_token, attempt_no: current.attempt_no, sequence: 1, request_id: checkpointId, checkpoint: 'Synthetic image adapter step completed.' }, checkpointId)).status, 200);
+    const extensionId = randomUUID();
+    const extensionParams = { id: current.id, agent_id: 'A1', lease_token: current.lease_token, attempt_no: current.attempt_no, progress_sequence: 1, request_id: extensionId, lease_seconds: 600 };
+    assert.equal((await invoke(1, 'scheduler/extend_progress', extensionParams, extensionId)).status, 200);
+    const reuseId = randomUUID();
+    const reused = await invoke(1, 'scheduler/extend_progress', { ...extensionParams, request_id: reuseId }, reuseId);
+    assert.equal(reused.body.error.code, -32001);
+    const submitParams = { id: current.id, agentId: 'A1', leaseToken: current.lease_token, result: { synthetic: true, completed: 1 }, postAck: false };
+    const submitId = randomUUID();
+    const submit = await invoke(1, 'tasks/complete', submitParams, submitId);
+    assert.equal(submit.status, 200);
+    const exactReadback = await invoke(1, 'tasks/get', { id: current.id });
+    assert.equal(exactReadback.body.result.state, 'completed');
+    assert.equal(JSON.stringify(exactReadback.body.result).includes('lease_token'), false);
+    assert.equal((await invoke(1, 'tasks/complete', submitParams, submitId)).status, 504, 'relay request-id replay must never dispatch again');
+    assert.equal((await invoke(1, 'tasks/complete', submitParams)).status, 200, 'same fenced receipt can reconcile an accepted result without changing it');
+    const next = await claim(1, 1);
+    assert.notEqual(next.id, current.id, 'successful submit must allow another claim');
+    const failing = await claim(0, 600);
+    const failed = await invoke(0, 'scheduler/failure', { id: failing.id, agent_id: 'A0', lease_token: failing.lease_token, error: 'Synthetic bounded retry test.' });
+    assert.equal(failed.status, 200);
+    const staleFailureSubmit = await invoke(0, 'tasks/complete', { id: failing.id, agentId: 'A0', leaseToken: failing.lease_token, result: { invalid_after_failure: true } });
+    assert.equal(staleFailureSubmit.body.error.code, -32001);
+    await agent.stop();
+    const unavailable = await invoke(1, 'tasks/get', { id: next.id });
+    assert.equal(unavailable.body.state, 'not_dispatched');
+    await delay(1_200);
+    await directRpc(coordUrl, 'tasks/list', { skip_reclaim: false, limit: 100 });
+    const disconnected = await directRpc(coordUrl, 'tasks/get', { id: next.id });
+    assert.equal(disconnected.state, 'pending');
+    assert.equal(disconnected.lease_token, null);
+    const final = await directRpc(coordUrl, 'tasks/get', { id: current.id });
+    assert.equal(final.result.completed, 1);
+    assert.equal(final.state, 'completed');
+  } finally {
+    await agent?.stop(); await sidecar?.stop();
+    if (child.exitCode === null) { child.kill(); await new Promise(done => child.once('exit', done)); }
     await rm(folder, { recursive: true, force: true });
   }
 });

@@ -1,4 +1,5 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
+import identity from './identity.cjs';
 
 export const PROTOCOL_VERSION = 1;
 export const RELAY_AGENT_ID = 'arasaka-coord-agent';
@@ -57,7 +58,7 @@ function validAck(params, postAckKey, ackNameKey, ackPriorityKey) {
     && (params[ackPriorityKey] === undefined || PRIORITIES.has(params[ackPriorityKey]));
 }
 
-function validParams(method, params) {
+function validParams(method, params, agentId = COORD_AGENT_ID) {
   switch (method) {
     case 'tasks/list':
       return exactKeys(params, ['limit', 'kind', 'priority', 'state', 'skip_reclaim'], ['skip_reclaim'])
@@ -70,44 +71,44 @@ function validParams(method, params) {
       return exactKeys(params, ['id'], ['id']) && validUuid(params.id);
     case 'agents/heartbeat':
       return exactKeys(params, ['id', 'name'], ['id', 'name'])
-        && params.id === COORD_AGENT_ID
+        && params.id === agentId
         && typeof params.name === 'string'
         && params.name.length > 0
         && params.name.length <= 64;
     case 'tasks/claim':
       return exactKeys(params, ['id', 'agentId', 'leaseSeconds'], ['id', 'agentId'])
         && validUuid(params.id)
-        && params.agentId === COORD_AGENT_ID
+        && params.agentId === agentId
         && validLeaseSeconds(params.leaseSeconds);
     case 'tasks/extend':
       return exactKeys(params, ['id', 'agentId', 'leaseToken', 'leaseSeconds'], ['id', 'agentId', 'leaseToken'])
         && validUuid(params.id)
-        && params.agentId === COORD_AGENT_ID
+        && params.agentId === agentId
         && validLeaseToken(params.leaseToken)
         && validLeaseSeconds(params.leaseSeconds);
     case 'tasks/complete':
       return exactKeys(params, ['id', 'agentId', 'leaseToken', 'result', 'postAck', 'ackName', 'ackPriority', 'ackPayload'], ['id', 'agentId', 'leaseToken', 'result'])
         && validUuid(params.id)
-        && params.agentId === COORD_AGENT_ID
+        && params.agentId === agentId
         && validLeaseToken(params.leaseToken)
         && validTaskResult(params.result)
         && validAck(params, 'postAck', 'ackName', 'ackPriority')
         && (params.ackPayload === undefined || (isRecord(params.ackPayload) && boundedJson(params.ackPayload, 16 * 1024)));
     case 'scheduler/claim':
       return exactKeys(params, ['agent_id', 'batch_id', 'lease_seconds'], ['agent_id'])
-        && params.agent_id === COORD_AGENT_ID
+        && params.agent_id === agentId
         && (params.batch_id === undefined || validUuid(params.batch_id))
         && validLeaseSeconds(params.lease_seconds);
     case 'scheduler/extend':
       return exactKeys(params, ['id', 'agent_id', 'lease_token', 'lease_seconds'], ['id', 'agent_id', 'lease_token'])
         && validUuid(params.id)
-        && params.agent_id === COORD_AGENT_ID
+        && params.agent_id === agentId
         && validLeaseToken(params.lease_token)
         && validLeaseSeconds(params.lease_seconds);
     case 'scheduler/progress':
       return exactKeys(params, ['id', 'agent_id', 'lease_token', 'attempt_no', 'sequence', 'request_id', 'checkpoint'], ['id', 'agent_id', 'lease_token', 'attempt_no', 'sequence', 'request_id', 'checkpoint'])
         && validUuid(params.id)
-        && params.agent_id === COORD_AGENT_ID
+        && params.agent_id === agentId
         && validLeaseToken(params.lease_token)
         && Number.isInteger(params.attempt_no) && params.attempt_no >= 1 && params.attempt_no <= 1_000_000_000
         && Number.isInteger(params.sequence) && params.sequence >= 1 && params.sequence <= 1_000_000_000
@@ -116,7 +117,7 @@ function validParams(method, params) {
     case 'scheduler/extend_progress':
       return exactKeys(params, ['id', 'agent_id', 'lease_token', 'attempt_no', 'progress_sequence', 'request_id', 'lease_seconds'], ['id', 'agent_id', 'lease_token', 'attempt_no', 'progress_sequence', 'request_id', 'lease_seconds'])
         && validUuid(params.id)
-        && params.agent_id === COORD_AGENT_ID
+        && params.agent_id === agentId
         && validLeaseToken(params.lease_token)
         && Number.isInteger(params.attempt_no) && params.attempt_no >= 1 && params.attempt_no <= 1_000_000_000
         && Number.isInteger(params.progress_sequence) && params.progress_sequence >= 1 && params.progress_sequence <= 1_000_000_000
@@ -124,12 +125,12 @@ function validParams(method, params) {
         && validLeaseSeconds(params.lease_seconds);
     case 'scheduler/agent_status':
       return exactKeys(params, ['agent_id', 'batch_id'], ['agent_id', 'batch_id'])
-        && params.agent_id === COORD_AGENT_ID
+        && params.agent_id === agentId
         && validUuid(params.batch_id);
     case 'scheduler/submit':
       return exactKeys(params, ['id', 'agent_id', 'lease_token', 'result', 'post_ack', 'ack_name', 'ack_priority', 'ack_payload'], ['id', 'agent_id', 'lease_token', 'result'])
         && validUuid(params.id)
-        && params.agent_id === COORD_AGENT_ID
+        && params.agent_id === agentId
         && validLeaseToken(params.lease_token)
         && validTaskResult(params.result)
         && validAck(params, 'post_ack', 'ack_name', 'ack_priority')
@@ -137,7 +138,7 @@ function validParams(method, params) {
     case 'scheduler/failure':
       return exactKeys(params, ['id', 'agent_id', 'lease_token', 'error'], ['id', 'agent_id', 'lease_token', 'error'])
         && validUuid(params.id)
-        && params.agent_id === COORD_AGENT_ID
+        && params.agent_id === agentId
         && validLeaseToken(params.lease_token)
         && typeof params.error === 'string'
         && params.error.length > 0
@@ -147,14 +148,17 @@ function validParams(method, params) {
   }
 }
 
-export function validateRpcRequest(request) {
-  if (!exactKeys(request, ['requestId', 'method', 'params'], ['requestId', 'method', 'params'])) {
+export function validateRpcRequest(request, identityPolicy = null) {
+  if (!exactKeys(request, ['requestId', 'method', 'params', 'identity'], ['requestId', 'method', 'params'])) {
     return { ok: false, code: 'invalid_request' };
   }
   if (!validUuid(request.requestId) || typeof request.method !== 'string') {
     return { ok: false, code: 'invalid_request' };
   }
-  if (!validParams(request.method, request.params)) {
+  if (request.identity !== undefined && !isRecord(request.identity)) return { ok: false, code: 'identity_invalid' };
+  const authorization = identity.verifyRequest(request, identityPolicy);
+  if (!authorization.ok) return authorization;
+  if (!validParams(request.method, request.params, authorization.agentId)) {
     return { ok: false, code: 'method_or_params_denied' };
   }
   if (['scheduler/progress', 'scheduler/extend_progress'].includes(request.method)
@@ -184,13 +188,13 @@ export function normalizeIp(address) {
   return address.startsWith('::ffff:') ? address.slice(7) : address;
 }
 
-export function redactForeignLeaseTokens(value) {
-  if (Array.isArray(value)) return value.map(redactForeignLeaseTokens);
+export function redactForeignLeaseTokens(value, agentId = COORD_AGENT_ID, allowOwnToken = true) {
+  if (Array.isArray(value)) return value.map(item => redactForeignLeaseTokens(item, agentId, allowOwnToken));
   if (!isRecord(value)) return value;
   const result = {};
   for (const [key, item] of Object.entries(value)) {
-    if (key === 'lease_token' && value.claimed_by !== COORD_AGENT_ID) continue;
-    result[key] = redactForeignLeaseTokens(item);
+    if (['lease_token', 'leaseToken'].includes(key) && (!allowOwnToken || value.claimed_by !== agentId)) continue;
+    result[key] = redactForeignLeaseTokens(item, agentId, allowOwnToken);
   }
   return result;
 }

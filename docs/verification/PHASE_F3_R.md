@@ -663,3 +663,27 @@ completed `success` for closeout commit
 including fmt, clippy, tests, release build, relay protocol/lease tests,
 CoordMCP OAuth/HTTP tests and artifact upload. This is source/CI verification;
 it does not close the production non-owner denial or callback-source-hash gaps.
+
+## G6 read-only reconciliation and browser reauthorization (2026-10-24)
+
+The live OAuth module SHA-256 was rechecked by direct SSH (exit 0):
+`0dcc483bd3d6afd5f4625885aed70f5cdf1b30f6a44ced739549d382ce049c53`.
+It matches the pre-G6 local module and the inspected production CSP code adds
+only the validated callback origin to `form-action 'self'`. The historical
+unresolved production-source-hash gap is closed for this current observation;
+the earlier hashes remain historical records.
+
+Normal same-account ChatGPT reauthorization returned the connector to its
+connected state. A subsequent read-only server audit at 10:16:48Z exited 0 and
+confirmed authorize POST 302, two token POST 200 responses and four completed
+Sidecar `tasks/list` requests since 09:50Z. See
+`stage-g6-linux-csp-readonly.log`, `stage-g6-browser-server-audit.json` and
+`PHASE_G6_A.md`. Only stripped paths, counts, hashes, field names and times were
+retained. OAuth grant/token state changed through this normal UI flow;
+production source, services, policies and task state did not change.
+
+Successful token exchange now has independent server evidence. Individual
+`initialize`/`tools/list` responses remain unrecorded, and real non-owner
+Access rejection remains NOT_RUN. F3-R is still **PARTIAL**. The shared OAuth
+client observed across access records does not establish per-chat isolation
+and does not close the separate G6-A security gate.

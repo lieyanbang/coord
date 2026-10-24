@@ -24,7 +24,7 @@ try {
         Write-Output "$Stage $($check.Name): exit=$code"
         if ($code -ne 0) { throw "$($check.Name) failed; inspect $log" }
     }
-    if ($Stage -eq 'f1' -and $env:OS -eq 'Windows_NT') {
+    if (($Stage -eq 'f1' -or $Stage -match '^g6(?:-[a-z0-9]+)?$') -and $env:OS -eq 'Windows_NT') {
         $log = "docs/verification/stage-$Stage-health-monitor.log"
         $started = [DateTime]::UtcNow
         $windowsPowerShell = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
@@ -71,7 +71,7 @@ try {
         Write-Output "$Stage coord-mcp-tests: exit=$code"
         if ($code -ne 0) { throw "Coord MCP tests failed; inspect $log" }
     }
-    if ($Stage -match '^g[0-5]$' -and $env:OS -eq 'Windows_NT') {
+    if ($Stage -match '^g(?:[0-5]|6(?:-[a-z0-9]+)?)$' -and $env:OS -eq 'Windows_NT') {
         $node = (Get-Command node.exe -ErrorAction Stop).Source
         $previousCoordTestBin = $env:COORD_TEST_BIN
         $env:COORD_TEST_BIN = (Resolve-Path -LiteralPath 'target/release/coord.exe').Path

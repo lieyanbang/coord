@@ -39,6 +39,10 @@ jobs:
         run: cargo test --all-features --locked
       - name: release build
         run: cargo build --release --locked
+      - name: health monitor authentication and recovery
+        run: pwsh -NoProfile -File scripts/windows/test-coord-health-monitor.ps1 -CoordExe target/release/coord.exe
+      - name: Dedicated low-privilege Action Runner rehearsal
+        run: pwsh -NoProfile -File scripts/windows/test-action-runner.ps1 -BinaryDirectory target/release -EvidenceDirectory docs/verification/stage-g6-low-privilege
       - name: relay protocol and lease-fencing tests
         env:
           COORD_TEST_BIN: target/release/coord.exe
@@ -52,9 +56,17 @@ jobs:
           PYTHONDONTWRITEBYTECODE: '1'
         run: python -m unittest discover -s scripts/phase_g -p test_phase_g_tools.py -v
       - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: g6-low-privilege-evidence
+          path: docs/verification/stage-g6-low-privilege/
+          if-no-files-found: warn
+      - uses: actions/upload-artifact@v4
         with:
           name: coord-${{ matrix.os }}
           path: |
             target/release/coord
             target/release/coord.exe
+            target/release/coord-action-runner.exe
+            target/release/coord-emote-action.exe
           if-no-files-found: error

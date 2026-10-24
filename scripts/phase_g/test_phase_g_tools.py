@@ -132,6 +132,20 @@ class PhaseGToolsTests(unittest.TestCase):
         self.assertEqual(index["missing_groups"], ["01"])
         self.assertEqual(review["missing_groups"], ["01"])
 
+    def test_aggregator_includes_three_digit_groups(self) -> None:
+        request = {"tasks": [{"payload": {"group_id": group, "source_image_ids": [image_id]}}
+                             for group, image_id in (("99", "99"), ("100", "100"), ("120", "120"))]}
+        request_path = self.root / "request.json"
+        request_path.write_text(json.dumps(request), encoding="utf-8")
+        for group, image_id in (("99", "99"), ("100", "100"), ("120", "120")):
+            (self.results / f"{group}.json").write_text(
+                json.dumps(self.result(group, image_id)), encoding="utf-8"
+            )
+        index, _ = build_indexes(request_path, self.results, self.refs)
+        self.assertEqual(index["state"], "STRUCTURALLY_COMPLETE")
+        self.assertEqual(index["available_results"], 3)
+        self.assertEqual(index["missing_groups"], [])
+
 
 if __name__ == "__main__":
     unittest.main()

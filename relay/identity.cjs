@@ -1,0 +1,103 @@
+const crypto = require('node:crypto');
+const fs = require('node:fs/promises');
+const path = require('node:path');
+
+const HASH = /^[a-f0-9]{64}$/;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const SCOPES = Object.freeze({
+  'tasks/get': 'coord:read', 'scheduler/agent_status': 'coord:read',
+  'tasks/claim': 'coord:claim', 'scheduler/claim': 'coord:claim',
+  'scheduler/progress': 'coord:progress',
+  'tasks/extend': 'coord:extend', 'scheduler/extend': 'coord:extend', 'scheduler/extend_progress': 'coord:extend',
+  'tasks/complete': 'coord:submit', 'scheduler/submit': 'coord:submit', 'scheduler/failure': 'coord:failure',
+});
+const VALID_SCOPES = new Set(Object.values(SCOPES));
+const hash = value => crypto.createHash('sha256').update(value).digest('hex');
+const record = value => value && typeof value === 'object' && !Array.isArray(value);
+const exact = (value, keys) => record(value) && Object.keys(value).every(k => keys.includes(k)) && keys.every(k => Object.hasOwn(value, k));
+
+function validatePolicy(config, key) {
+  if (!exact(config, ['version', 'enabled', 'signing_key_file', 'legacy_client_sha256', 'bindings'])
+      || config.version !== 1 || typeof config.enabled !== 'boolean'
+      || typeof config.signing_key_file !== 'string' || !path.isAbsolute(config.signing_key_file)
+      || !Array.isArray(config.bindings) || !Array.isArray(config.legacy_client_sha256)
+      || !config.legacy_client_sha256.every(v => typeof v === 'string' && HASH.test(v))) throw new Error('identity_policy_invalid');
+  if (!config.enabled) return null;
+  if (!HASH.test(key || '')) throw new Error('identity_signing_key_invalid');
+  const ids = new Set(); const clients = new Set(); const agents = new Set(); const tokens = new Set();
+  for (const b of config.bindings) {
+    if (!exact(b, ['id', 'client_sha256', 'token_sha256', 'agent_id', 'batch_id', 'scopes', 'not_before', 'expires_at'])
+        || typeof b.id !== 'string' || !/^[a-zA-Z0-9_-]{1,64}$/.test(b.id)
+        || typeof b.client_sha256 !== 'string' || !HASH.test(b.client_sha256)
+        || typeof b.token_sha256 !== 'string' || !HASH.test(b.token_sha256)
+        || typeof b.agent_id !== 'string' || !/^A[0-5]$/.test(b.agent_id)
+        || typeof b.batch_id !== 'string' || !UUID.test(b.batch_id) || !Array.isArray(b.scopes) || b.scopes.length === 0
+        || !b.scopes.every(s => VALID_SCOPES.has(s)) || new Set(b.scopes).size !== b.scopes.length
+        || !Number.isSafeInteger(b.not_before) || !Number.isSafeInteger(b.expires_at)
+        || b.not_before < 0 || b.expires_at <= b.not_before || b.expires_at - b.not_before > 86_400_000
+        || ids.has(b.id) || clients.has(b.client_sha256) || agents.has(b.agent_id) || tokens.has(b.token_sha256)
+        || config.legacy_client_sha256.includes(b.client_sha256)) throw new Error('identity_binding_invalid_or_shared');
+    ids.add(b.id); clients.add(b.client_sha256); agents.add(b.agent_id); tokens.add(b.token_sha256);
+  }
+  return { ...config, key };
+}
+
+async function loadPolicy(file) {
+  if (!file) return null;
+  if (!path.isAbsolute(file)) throw new Error('identity_policy_path_not_absolute');
+  const raw = JSON.parse(await fs.readFile(file, 'utf8'));
+  const key = raw.enabled ? (await fs.readFile(raw.signing_key_file, 'utf8')).trim() : '';
+  return validatePolicy(raw, key);
+}
+
+function resolvePrincipal(policy, authInfo, now = Date.now()) {
+  if (!policy) return null;
+  if (!record(authInfo) || typeof authInfo.clientId !== 'string') throw new Error('identity_binding_missing');
+  const client = hash(authInfo.clientId);
+  if (policy.legacy_client_sha256.includes(client)) return null;
+  const b = policy.bindings.find(item => item.client_sha256 === client && item.token_sha256 === authInfo.tokenSha256);
+  if (!b || now < b.not_before || now >= b.expires_at || !Number.isSafeInteger(authInfo.expiresAt) || authInfo.expiresAt <= now) {
+    throw new Error('identity_binding_missing_or_expired');
+  }
+  return { binding_id: b.id, agent_id: b.agent_id, batch_id: b.batch_id,
+    scopes: [...b.scopes], issued_at: now, expires_at: Math.min(b.expires_at, authInfo.expiresAt, now + 60_000) };
+}
+
+function signature(request, context, key) {
+  return crypto.createHmac('sha256', Buffer.from(key, 'hex')).update(JSON.stringify([
+    'coord-identity-v1', request.requestId, request.method, request.params, context,
+  ])).digest('hex');
+}
+
+function signRequest(request, principal, policy) {
+  if (!principal) return request;
+  return { ...request, identity: { ...principal, proof: signature(request, principal, policy.key) } };
+}
+
+function verifyRequest(request, policy, now = Date.now()) {
+  if (!request.identity) return { ok: true, agentId: 'coord-relay-agent' };
+  if (!policy) return { ok: false, code: 'identity_disabled' };
+  const { proof, ...p } = request.identity;
+  if (!exact(p, ['binding_id', 'agent_id', 'batch_id', 'scopes', 'issued_at', 'expires_at']) || typeof proof !== 'string' || !HASH.test(proof)) return { ok: false, code: 'identity_invalid' };
+  const b = policy.bindings.find(item => item.id === p.binding_id);
+  const expected = signature(request, p, policy.key);
+  if (!crypto.timingSafeEqual(Buffer.from(expected, 'hex'), Buffer.from(proof, 'hex'))
+      || !b || b.agent_id !== p.agent_id || b.batch_id !== p.batch_id
+      || JSON.stringify(b.scopes) !== JSON.stringify(p.scopes)
+      || !Number.isSafeInteger(p.issued_at) || !Number.isSafeInteger(p.expires_at)
+      || p.issued_at > now || p.issued_at < b.not_before || p.expires_at > b.expires_at
+      || p.expires_at - p.issued_at > 60_000 || p.expires_at <= now || p.expires_at <= p.issued_at) return { ok: false, code: 'identity_invalid_or_expired' };
+  const scope = SCOPES[request.method];
+  if (!scope || !b.scopes.includes(scope)) return { ok: false, code: 'identity_scope_denied' };
+  const agent = request.params.agentId ?? request.params.agent_id;
+  if (agent !== undefined && agent !== p.agent_id) return { ok: false, code: 'identity_agent_mismatch' };
+  if (['scheduler/claim', 'scheduler/agent_status'].includes(request.method) && request.params.batch_id !== p.batch_id) return { ok: false, code: 'identity_batch_mismatch' };
+  if (request.params.batch_id !== undefined && request.params.batch_id !== p.batch_id) return { ok: false, code: 'identity_batch_mismatch' };
+  return { ok: true, agentId: p.agent_id, batchId: p.batch_id };
+}
+
+function protectedBatch(policy, batchId) {
+  return Boolean(policy && policy.bindings.some(b => b.batch_id === batchId));
+}
+
+module.exports = { SCOPES, hash, loadPolicy, validatePolicy, resolvePrincipal, signRequest, verifyRequest, protectedBatch };

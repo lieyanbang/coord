@@ -44,7 +44,8 @@ def build_indexes(request_path: Path, results_dir: Path, refs_root: Path) -> tup
 
     results_root = results_dir.resolve(strict=True)
     refs_root = refs_root.resolve(strict=True)
-    result_files = sorted(results_root.glob("[0-9][0-9].json"))
+    result_files = sorted(path for path in results_root.glob("*.json")
+                          if path.stem.isascii() and path.stem.isdecimal())
     seen_groups: set[str] = set()
     result_entries: list[dict[str, Any]] = []
     reference_index: dict[tuple[str, str], dict[str, list[dict[str, Any]]]] = defaultdict(lambda: defaultdict(list))

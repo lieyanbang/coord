@@ -45,7 +45,24 @@ pub async fn serve(
         actions.clone(),
     )?);
     let bus = a2a::ChangeBus::new();
-    let app = a2a::router_with_bus(store.clone(), bus.clone());
+    if actions
+        .as_ref()
+        .is_some_and(|registry| registry.external_runner.is_none() && !registry.isolated_in_process)
+    {
+        tracing::warn!(
+            "completion actions are queue-only: configure external_runner for production execution"
+        );
+    }
+    let mut app = a2a::router_with_bus(store.clone(), bus.clone());
+    if let Some(config) = store
+        .action_registry()
+        .and_then(|registry| registry.external_runner.clone())
+    {
+        app = coord::core::action_runner::protect_management_rpc(
+            app,
+            coord::core::action_runner::management_key(&config)?,
+        );
+    }
     // Bounded independent validation queue. The stored job fence prevents a
     // cancelled/retried task or a restarted consumer accepting stale verdicts.
     let validation_store = store.clone();
@@ -81,7 +98,10 @@ pub async fn serve(
         }
     });
 
-    if let Some(registry) = actions {
+    if let Some(registry) = actions.filter(|registry| registry.isolated_in_process) {
+        tracing::warn!(
+            "isolated in-process action executor enabled; never use this mode in production"
+        );
         let action_store = store.clone();
         tokio::spawn(async move {
             let capacity = Arc::new(tokio::sync::Semaphore::new(ACTION_CONCURRENCY));
@@ -139,6 +159,23 @@ pub async fn serve(
                         drop(permit);
                     });
                 }
+            }
+        });
+    }
+
+    if let Some(config) = store
+        .action_registry()
+        .and_then(|registry| registry.external_runner.clone())
+    {
+        // Binding/config errors stop startup, never fall back to inherited-token execution.
+        if coord::core::windows_security::process_identity()?.sid != config.daemon_sid {
+            anyhow::bail!("Action Broker daemon identity mismatch");
+        }
+        let listener = tokio::net::TcpListener::bind(config.broker_addr).await?;
+        let router = coord::core::action_runner::broker_router(store.clone(), config)?;
+        tokio::spawn(async move {
+            if let Err(error) = axum::serve(listener, router).await {
+                tracing::error!(%error,"Action Broker stopped; actions remain queued");
             }
         });
     }

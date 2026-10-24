@@ -21,13 +21,14 @@ loopback only.
   `scheduler/agent_status`. `tasks/list` requires `skip_reclaim: true`; the
   relay denies task creation, cancellation, arbitrary methods, unknown
   parameters, and caller-selected agent identities.
-- The MCP facade maps all connected clients to the fixed
-  `coord-relay-agent`. Cloudflare Access authenticates the same owner account;
-  it does not bind an A0-A5 label to an individual ChatGPT conversation. The
-  current route therefore provides shared logical identity plus lease fencing,
-  not six independently authenticated workers. Do not use it for the six
-  production workers until a conversation-bound capability is implemented and
-  verified.
+- The default MCP facade keeps the fixed `coord-relay-agent`. An opt-in,
+  administrator-owned policy can bind an authenticated OAuth client and token
+  digest to one A0-A5 role, batch, scope set and expiry. Each Relay hop verifies
+  the exact signed request independently. See
+  [`IDENTITY_BINDINGS.md`](../docs/phase-g/IDENTITY_BINDINGS.md). Cloudflare
+  Access, the OAuth owner and a prompt label do not identify a conversation.
+  Real ChatGPT conversation isolation remains BLOCKED; production identity
+  bindings and the six classification workers remain disabled.
 - Progress-required batches can call `scheduler/progress` with the current
   task, lease token, attempt number, next sequence and a short checkpoint, then
   `scheduler/extend_progress` with that unconsumed sequence. The batch's
@@ -41,13 +42,33 @@ loopback only.
   A repeated ID returns `uncertain` rather than being replayed. Calls that time
   out or lose their connector return `outcome_unknown`; coord's lease token
   fencing remains authoritative for claims and submissions.
-- The append-only journal contains only request IDs, keyed HMAC-SHA256 of method and
-  parameters, method name, state, and time. It never stores parameters, results,
+- The append-only journal contains only request IDs, keyed HMAC-SHA256 of method,
+  parameters and authenticated identity, method name, state, and time. It never
+  stores parameters, results,
   bearer secrets, or lease tokens. Journal corruption or its 100,000 unique-ID
   ceiling fails closed; no automatic pruning can reopen an old request ID.
-- Responses redact `lease_token` for tasks not claimed by
-  `coord-relay-agent`. Logs contain request ID, method, state, duration, and
-  bounded reason codes only.
+- Legacy responses redact `lease_token` for tasks not claimed by
+  `coord-relay-agent`; bound reads strip all lease-token fields and bound claims
+  expose only that worker's lease. Logs contain request ID, method, state,
+  duration, and bounded reason codes only.
+
+## Protected main coord RPC
+
+When the daemon enables the external Action Runner, its ordinary RPC endpoint
+requires an independent private bearer credential from
+`external_runner.daemon_rpc_key_file`. Set the Windows Relay Agent's optional
+`coordAuthKeyFile` to the absolute path of that same protected key file. The
+trimmed UTF-8 file must contain exactly 64 hexadecimal characters (256 bits)
+and must differ from the Action Runner broker key. The Agent supplies it on
+every core RPC, including immutable task-scope preflight. Without this option,
+the legacy Agent sends no bearer header.
+
+Only the daemon, trusted operator/CLI and Relay Agent may read the main RPC key;
+the Action Runner account must be denied access. Keep it outside task and Agent
+workspaces, prompts, logs and Git. The Agent accepts only an IPv4 loopback core
+URL (`http://127.0.0.1:<port>/`) and refuses HTTP redirects, so it cannot forward
+the private credential to a redirect destination. Production ACLs and the
+protected main-RPC path still require the G6-B/D host acceptance checks.
 
 ## Local test
 
@@ -57,7 +78,7 @@ Node.js 22 or newer is required. No npm install is needed.
 node --check relay/protocol.mjs
 node --check relay/server.mjs
 node --check relay/agent.mjs
-node --test relay/relay.test.mjs
+node --test relay/relay.test.mjs relay/live-coord.test.mjs
 ```
 
 The tests use loopback listeners and temporary state; they do not reach the

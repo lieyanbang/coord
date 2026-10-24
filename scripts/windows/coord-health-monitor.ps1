@@ -6,6 +6,7 @@ param(
     [string]$StatusPath = 'C:\ProgramData\coord\health\status.json',
     [string]$RecoveryPath = 'C:\ProgramData\coord\health\recovery.json',
     [string]$ServyCli = 'C:\Program Files\Servy\servy-cli.exe',
+    [string]$RpcAuthKeyFile,
     [int]$RestartThreshold = 3,
     [int]$MaxRestartsPerHour = 3,
     [int]$RestartCooldownMinutes = 10,
@@ -19,6 +20,38 @@ if ($RestartThreshold -lt 1 -or $MaxRestartsPerHour -lt 1 -or $RestartCooldownMi
 if (-not (Test-Path -LiteralPath $CoordExe -PathType Leaf)) {
     exit 2
 }
+$rpcAuthKey = $null
+$hasRpcAuthKeyFile = $PSBoundParameters.ContainsKey('RpcAuthKeyFile')
+if ($hasRpcAuthKeyFile) {
+    try {
+        # Invalid or insufficiently protected configuration is an operator
+        # configuration error, never evidence that coord needs restarting.
+        if ($RpcAuthKeyFile -notmatch '^[A-Za-z]:[\\/]') { exit 2 }
+        $keyItem = Get-Item -LiteralPath $RpcAuthKeyFile -Force -ErrorAction Stop
+        if ($keyItem.PSIsContainer -or $keyItem.Length -gt 128) { exit 2 }
+        $componentPath = $keyItem.FullName
+        while ($componentPath) {
+            $component = Get-Item -LiteralPath $componentPath -Force -ErrorAction Stop
+            if (($component.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) { exit 2 }
+            $componentPath = [IO.Path]::GetDirectoryName($componentPath)
+        }
+        $trustedSids = @('S-1-5-18', 'S-1-5-32-544', [Security.Principal.WindowsIdentity]::GetCurrent().User.Value)
+        $keyAcl = Get-Acl -LiteralPath $keyItem.FullName -ErrorAction Stop
+        if ($trustedSids -notcontains $keyAcl.GetOwner([Security.Principal.SecurityIdentifier]).Value) { exit 2 }
+        foreach ($rule in $keyAcl.GetAccessRules($true, $true, [Security.Principal.SecurityIdentifier])) {
+            if ($rule.AccessControlType -eq [Security.AccessControl.AccessControlType]::Allow -and
+                ($rule.PropagationFlags -band [Security.AccessControl.PropagationFlags]::InheritOnly) -eq 0 -and
+                $trustedSids -notcontains $rule.IdentityReference.Value) { exit 2 }
+        }
+        $rpcAuthKey = [IO.File]::ReadAllText($keyItem.FullName).Trim()
+        if ($rpcAuthKey -cnotmatch '\A[0-9a-fA-F]{64}\z') { exit 2 }
+        $parsedUrl = $null
+        if (-not [Uri]::TryCreate($CoordUrl, [UriKind]::Absolute, [ref]$parsedUrl) -or
+            $parsedUrl.Scheme -ne 'http' -or $parsedUrl.Host -notin @('127.0.0.1', 'localhost', '[::1]', '::1')) { exit 2 }
+    } catch {
+        exit 2
+    }
+}
 $healthArgs = @(
     '--url', $CoordUrl,
     'health',
@@ -27,10 +60,12 @@ $healthArgs = @(
     '--timeout-ms', '2000',
     '--degraded-after-ms', '2000'
 )
+$previousRpcAuthKey = [Environment]::GetEnvironmentVariable('COORD_RPC_AUTH_KEY', 'Process')
+$previousErrorActionPreference = $ErrorActionPreference
 try {
+    if ($hasRpcAuthKeyFile) { [Environment]::SetEnvironmentVariable('COORD_RPC_AUTH_KEY', $rpcAuthKey, 'Process') }
     # Windows PowerShell 5.1 can promote native stderr to a terminating error.
     $probeStartedAt = [DateTimeOffset]::UtcNow
-    $previousErrorActionPreference = $ErrorActionPreference
     $ErrorActionPreference = 'Continue'
     $null = & $CoordExe @healthArgs 2>&1 | Out-Null
     $healthExit = $LASTEXITCODE
@@ -38,6 +73,8 @@ try {
     $healthExit = 1
 } finally {
     $ErrorActionPreference = $previousErrorActionPreference
+    [Environment]::SetEnvironmentVariable('COORD_RPC_AUTH_KEY', $previousRpcAuthKey, 'Process')
+    $rpcAuthKey = $null
 }
 
 if (-not (Test-Path -LiteralPath $StatusPath -PathType Leaf)) {

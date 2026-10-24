@@ -1,0 +1,51 @@
+[
+  {
+    "exit": 0,
+    "log": "docs/verification/stage-g6-fmt.log",
+    "seconds": 0.4063048,
+    "command": "cargo fmt --all -- --check",
+    "started": "2026-10-24T10:19:34.5600181Z"
+  },
+  {
+    "exit": 0,
+    "log": "docs/verification/stage-g6-clippy.log",
+    "seconds": 0.7417889,
+    "command": "cargo clippy --all-targets --all-features --locked -- -D warnings",
+    "started": "2026-10-24T10:19:35.0208256Z"
+  },
+  {
+    "exit": 0,
+    "log": "docs/verification/stage-g6-test.log",
+    "seconds": 60.5221441,
+    "command": "cargo test --all-features --locked",
+    "started": "2026-10-24T10:19:35.7652207Z"
+  },
+  {
+    "exit": 0,
+    "log": "docs/verification/stage-g6-build.log",
+    "seconds": 108.2815411,
+    "command": "cargo build --release --locked",
+    "started": "2026-10-24T10:20:36.2912316Z"
+  },
+  {
+    "exit": 0,
+    "log": "docs/verification/stage-g6-relay-tests.log",
+    "seconds": 5.0943461,
+    "command": "node --test relay/relay.test.mjs relay/live-coord.test.mjs",
+    "started": "2026-10-24T10:22:24.5913327Z"
+  },
+  {
+    "exit": 0,
+    "log": "docs/verification/stage-g6-coord-mcp-tests.log",
+    "seconds": 1.7377352,
+    "command": "npm test --prefix relay/coord-mcp",
+    "started": "2026-10-24T10:22:29.6876841Z"
+  },
+  {
+    "exit": 0,
+    "log": "docs/verification/stage-g6-phase-g-tools.log",
+    "seconds": 0.2098101,
+    "command": "python -m unittest discover -s scripts/phase_g -p test_phase_g_tools.py -v",
+    "started": "2026-10-24T10:22:31.4272055Z"
+  }
+]

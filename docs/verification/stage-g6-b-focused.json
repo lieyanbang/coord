@@ -1,0 +1,6 @@
+{
+  "started_utc": "2026-10-24T10:17:48.2087074Z",
+  "command": "cargo test --locked --test action_runner --test agent_actions",
+  "exit_code": 0,
+  "environment": "local Windows; protocol/native fixtures under current user, dedicated CI token test separately gated"
+}

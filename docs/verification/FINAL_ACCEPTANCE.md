@@ -94,3 +94,22 @@ an all-clear audit or enable rmcp HTTP without revisiting this exclusion.
 No shared coordination service was available during bootstrap; no task or ack
 UUIDs were fabricated. The stage commits and verification documents form the
 work ledger. TASK.md remains byte-for-byte unchanged and outside these commits.
+
+## Phase G6 extension (2026-10-24)
+
+The MVP PASS above remains scoped to its original trusted-local-client
+contract. Phase G6 is **PARTIAL**, not production acceptance. Authenticated
+connector bindings and an independent low-privilege native Action Runner are
+implemented with isolated regression coverage; external-runner mode also
+requires an independent management bearer on the main RPC. Default legacy RPC
+still assumes trusted loopback callers.
+
+Real ChatGPT per-conversation credential isolation remains **BLOCKED**. Two
+real read-only probe chats and server logs confirm calls but do not prove
+independent protected credentials. Real Arasaka Runner account/ACL validation
+and the two-chat write/renewal cycle are **NOT_RUN**. Production deployment,
+canary, formal emote task creation and classification Agent startup were not
+performed. F3-R remains **PARTIAL** despite current CSP/hash and token-exchange
+evidence. Full local, Fork Actions, downloaded-artifact and remaining-gate
+details are in `PHASE_G6_A.md` through `PHASE_G6_D.md`; deployment and rollback
+conditions are in `../phase-g/G6-DEPLOYMENT.md`.

@@ -136,7 +136,7 @@ Windows 本机及 Windows Actions 的真实测试、构建与产物为准。
 | F0 | PASS | `docs/verification/PHASE_F0.md`；Servy、远端基线及 Windows Actions 二进制哈希已核验 |
 | F1 | PASS | Servy 主机与 Windows 重启恢复、服务健康、loopback、SYSTEM 监护、WAL/租约及 coord 备份通过；Servy DB 已用对应官方 10.2.0 源码语义 + `System.Data.SQLite` 2.0.4 进行 Online Backup、quick_check/integrity_check，均 PASS；本机 F1 门禁 PASS，Fork Windows Actions run `39600633448` 通过，见 `docs/verification/PHASE_F1.md` |
 | F2 | PASS | 独立 sidecar 与早期 nftables 主机过滤已部署；真实网络正反向、RPC、既有服务回归及本机 F2 gate 通过。修复 Fetch 禁用端口 10080 的测试夹具后，Fork Windows Actions `39635980349` 全步骤成功并上传 artifact `12360789368`；详见 `docs/verification/PHASE_F2.md` |
-| F3 | PARTIAL | CoordMCP 与精确路由已部署；Cloudflare Access owner consent、真实 ChatGPT Web `Coord tasks/list`、隔离任务 `a0aefa7d-aed2-4287-9f30-4a30421e8c7a` 的单次领取/提交/精确读回均有证据。生产 non-owner 拒绝未验证，OAuth callback CSP 修正后的生产源码哈希未复核，token exchange 与 MCP initialize/tools/list 未单独留证，故不升 PASS。本机及 Fork Windows Actions 证据见 `docs/verification/PHASE_F3_R.md` |
+| F3 | PARTIAL | CoordMCP 与精确路由已部署；Cloudflare Access owner consent、真实 ChatGPT Web `Coord tasks/list`、隔离任务 `a0aefa7d-aed2-4287-9f30-4a30421e8c7a` 的单次领取/提交/精确读回均有证据。2026-10-24 已复核生产 callback CSP 源码哈希并补 token exchange 服务端证据；生产 non-owner 拒绝与独立 MCP initialize/tools/list 仍未验证，故不升 PASS。见 `docs/verification/PHASE_F3_R.md` |
 
 - Gate F0：远端/本地服务状态、Servy 功能与部署/回滚路径基线记录；构建产物哈希匹配。
 - Gate F1：Servy 托管服务、自启动、健康检测、重启/杀进程恢复、数据库一致性、备份恢复 PASS。
@@ -144,7 +144,7 @@ Windows 本机及 Windows Actions 的真实测试、构建与产物为准。
 - Gate F3：新增 OAuth/MCP 公网入口及旧 DesktopCommander 所有入口回归 PASS；ChatGPT Web 手动完成工具发现和只读/隔离写任务 E2E 方可标记完整 PASS。
 - 每个 Gate 完成后同步 `docs/verification/` 证据、更新本节进度、生成独立 Git commit 并通过 Fork 的 Windows Actions；部署不擅自创建 Release/tag、不推送上游。
 - 最终输出：Arasaka 服务名/运行账户、二进制 SHA、Servy 参数/健康路径、备份/恢复程序、故障演练记录、中转公网 URL、OAuth/连接器验收与残余风险。敏感信息绝不写文档/日志。
-- 当前状态：F0/F1/F2 均 PASS，证据见各阶段验收文档。F3 当前为 PARTIAL：真实 ChatGPT Web 只读调用与隔离测试任务写入/读回通过；生产 non-owner Access 拒绝、CSP 修复版本的线上源码哈希、独立 token exchange 及 MCP `initialize`/`tools/list` 留证尚缺。早期 F3 记录中的 ChatGPT `NOT_RUN` 与隔离写入 `NOT_RUN` 已被后续实测取代，不得沿用为当前状态。`TASK.md` 保持只读。详见 `verification/PHASE_F3_R.md`。
+- 当前状态：F0/F1/F2 均 PASS，证据见各阶段验收文档。F3 当前为 PARTIAL：真实 ChatGPT Web 只读调用与隔离测试任务写入/读回通过；2026-10-24 生产 CSP/hash 和独立 token exchange 已补证，生产 non-owner Access 拒绝及 MCP `initialize`/`tools/list` 留证尚缺。早期 F3 记录中的 ChatGPT `NOT_RUN` 与隔离写入 `NOT_RUN` 已被后续实测取代，不得沿用为当前状态。`TASK.md` 保持只读。详见 `verification/PHASE_F3_R.md`。
 
 
 ### F3-R — 强制修正：Cloudflare Access 用户身份认证（2026-10-22，用户新授权）
@@ -166,12 +166,12 @@ Windows 本机及 Windows Actions 的真实测试、构建与产物为准。
 - R1：PASS（本地实现）。CoordMCP 改为签名 Access JWT + AUD/Issuer/exp/nbf/owner-email 校验、无密码确认、CSRF/OAuth 参数绑定及原子一次性授权码消费；配置缺失时 authorize 返回 503。没有修改 RemoteControl 或共享 OAuth 实现。
 - R2：PASS。`npm test` 12/12；真实 Desktop Commander OAuth 父类哈希匹配生产文件的主机集成通过。ChatGPT Web 首次真实授权请求发现 `ui_locales=zh-CN` 被严格参数白名单拒绝；现已最小兼容该单一展示参数，并新增重复/未知参数仍拒绝的回归。`scripts/verify.ps1 -Stage f3-r` 于 2026-10-22T02:17Z 与 02:53Z 两次五项全通过；本次精确命令/日志见 `stage-f3-r-checks.json` 和对应日志。兼容修正提交 `c54084e1d784a8108436396b2b58ae878b9580f8` 已推送，Fork Windows Actions run `39710903473` 成功。
 - R3：PARTIAL。已部署 CoordMCP OAuth 修正；最后记录的生产 `oauth.cjs` SHA-256 为 `1f9e4f8aff7c2dd823fd7b79e8832131b37143e7d94891ae4d39f3ed54fac464`。之后的回调 CSP 修复已提交并通过本机/Actions，但没有复核该修复版本是否已部署。仅向既有 `lieyanbang-auth` 添加精确 authorize 路径；owner 可到达无密码 consent。生产 non-owner 拒绝仍未验证。
-- R4：ChatGPT Web `Coord tasks/list` 真实调用成功；隔离 task `a0aefa7d-aed2-4287-9f30-4a30421e8c7a` 在 `2026-10-22T13:29:03.953Z` 精确领取 attempt 1、单次提交（`post_ack=false`）并读回 completed，测试标记匹配。授权提交失败根因及修正记录在 `PHASE_F3_R.md`；该项回调 CSP 源码修正的生产部署哈希仍待只读复核。
-- F3-R 总体及 F3：PARTIAL。独立生产身份拒绝验证、CSP 修复源码线上哈希以及分开的 OAuth/token 和 MCP `initialize`/`tools/list` 证据尚缺。详见 `verification/PHASE_F3_R.md`。
+- R4：ChatGPT Web `Coord tasks/list` 真实调用成功；隔离 task `a0aefa7d-aed2-4287-9f30-4a30421e8c7a` 在 `2026-10-22T13:29:03.953Z` 精确领取 attempt 1、单次提交（`post_ack=false`）并读回 completed，测试标记匹配。授权提交失败根因及修正记录在 `PHASE_F3_R.md`；2026-10-24 已只读复核线上 CSP/hash 并补 token exchange 日志。
+- F3-R 总体及 F3：PARTIAL。独立生产非 owner 拒绝验证和 MCP `initialize`/`tools/list` 证据尚缺；线上 CSP/hash 与 token exchange 当前观察已补证。详见 `verification/PHASE_F3_R.md`。
 
 
 ## 11. Phase G — 六 ChatGPT Agent 并发识别与 Completion Actions（2026-10-23）
-> 本阶段为新增通用调度能力及其首个业务应用。当前总体 **PARTIAL**：G0 审计与 G4 材料准备 PASS；G1/G2/G3/G5 尚有身份、活性证明或生产执行边界。F0–F2 已通过的生产边界不重做；F3-R 尚存非 owner 拒绝、生产 CSP 哈希、独立 OAuth/MCP 流程证据，仍保持 PARTIAL，不能借 Phase G 宣称 F3 PASS。具体执行入口为根目录 TASK.md。
+> 本阶段为新增通用调度能力及其首个业务应用。当前总体 **PARTIAL**：G0 审计与 G4 材料准备 PASS；G1/G2/G3/G5 尚有身份、活性证明或生产执行边界。F0–F2 已通过的生产边界不重做；F3-R 尚存非 owner 拒绝与独立 MCP 初始化/工具发现证据，仍保持 PARTIAL，不能借 Phase G 宣称 F3 PASS。2026-10-24 线上 CSP/hash 与 token exchange 补证见 §12。具体执行入口为根目录 TASK.md。
 ### G0 范围与基线（PASS）
 - 目标：六个**独立 ChatGPT Web 对话**共用 Cloudflare Access + CoordMCP 接入，各自绑定 A0–A5，动态领取相同 Batch 的任务；使用 Remote Control 4 读取本地图片及 refs，并通过 Coord MCP 领取、续租与提交。可在工具调用期间连续领取，但 ChatGPT 对话不保证无定时器的 24h 后台自行唤醒；不得声称已实现严格无人值守持续唤醒。
 - 首轮仅初步分类：D:\ChatGPT_Emote_Work 根目录源图片 1218、SHA-256 完全相同的冗余 12、唯一 1206；task/00–119 各 10 张，120 六张，121–122 空（不入队）；A0–A5、refs/operators.csv（463 条，arknights 图标 431，endfield 图标 32）、image_manifest.csv、task_inventory.csv 已准备。图片 ID 原有缺 622/1170，新增非数字文件已赋 ID 1216–1219，不重新编排或删除源图。
@@ -200,3 +200,41 @@ Windows 本机及 Windows Actions 的真实测试、构建与产物为准。
 - 本地/隔离库先完成分层回归、六身份 canary、completion hook 崩溃复测，再经 fork Windows Actions 编译 release 并核验 artifact 哈希；备份现有 Arasaka coord DB/WAL/EXE、Sidecar、Feathers；仅最小受控服务重启，验证原 F1/F2/F3 读写/OAuth 与 13011/13012 路由不受影响。
 - Windows 全量门 `pwsh -NoProfile -File scripts/verify.ps1 -Stage g5` 最新重跑于 2026-10-22T17:03:25Z，fmt/clippy/tests/release/Relay/MCP/Python 均 exit 0。Fork Actions run `39818335937` 对提交 `8a71b0c7ae9d32491cde525640426b28069dccf0` 于 `2026-10-22T17:01:32Z` 完成，Windows 2022 job 全部 success；artifact `12444295367` 内 `coord.exe` SHA-256 为 `15fcf44c...72885327f`，ZIP SHA-256 为 `8b31dc86...7682f9b5`。CI/artifact 子门 PASS，但因 G1 独立身份及 G3 低权限执行/发布门未通过，G5 总体仍 PARTIAL、生产部署 NOT_RUN；没有备份、服务重启、正式队列初始化或生产 Agent 启动。详见 `verification/PHASE_G5.md`。
 - 分阶段验收文档 docs/verification/PHASE_G0..G5.md；不得删历史、force-push、修改其他项目 Access 策略或重启 Arasaka 整机。G1/G2/G3/G5 未通过项标记 PARTIAL，不能据此将 F3-R 提升为 PASS。
+
+
+## 12. Phase G6 — ChatGPT 六会话生产就绪与隔离执行（2026-10-24）
+> **状态 PARTIAL：源码与本机隔离验证通过，生产部署 NOT_RUN。** 以 §11 G0/G4 的现有成果为基线，G1/G2/G3/G5 的 PARTIAL 为本阶段入口。权威执行文件为根目录 TASK.md；保留 F3-R 的 PARTIAL，不能混同为本阶段 PASS。任务目标是完成通用功能、隔离验证及有证据的受控部署，不授权创建正式 121 个表情包任务或启动六个生产对话。
+
+### G6-A：ChatGPT Web 身份可行性与绑定（P0）
+- 先只读审计真实 Feathers OAuth token store（仅输出脱敏统计）、MCP `authInfo` 可见字段、DCR client_id、公开连接器配置能力、Relay 固定 `coord-relay-agent` 映射。由两条真实独立 ChatGPT 对话进行最小隔离探针，并验证跨对话重连后标识稳定性。**禁止假定 DCR client_id 等于单一对话**；同一用户/OAuth 客户端/连接器可能被多个对话共享。
+- 若提供方无不可伪造的对话标识，则研究**六个独立 MCP 连接器注册/授权实例**，每个实例有服务端可认证的独立 OAuth client binding、专属 A0–A5 固定角色、按 batch/scopes 限权；以实际 ChatGPT Web 工具与 token 主体观测为准。必要时评估管理员预绑定的 bearer capability，但不得向共享提示词、公共工作区、日志或其他 Agent 暴露；客户端自填 `agent_id` 只能作为标签，不能视为认证。两条对话若使用相同 token/client，安全隔离 Gate FAIL。
+- 只有被保护且不可被其他对话重用的身份上下文经真实正反向验证后，允许将 claim/extend/submit/failure 从固定身份切换为 A0–A5。精确保护旧生产 `coord-relay-agent` 任务与租约；G6 尚未完成时不部署不兼容更改。
+- Gate A：六个真实 ChatGPT Web 连接上下文的稳定区分、跨身份/跨 batch/重放/过期和重连负向，以及端到端 Relay/Coord 租约审计通过。无法在平台上证明隔离时如实标 BLOCKED/PARTIAL，不使用模拟客户端冒充真实验证。
+
+### G6-B：Completion Actions 低权限执行与发布（P0，可与 A 并行）
+- 保留 G3 事务 outbox、action fencing、Job Object、超时/输出限制和 uncertain 结果语义。最小改造为独立 Windows 低权限 Action Runner（独立 Servy 服务或受控进程），明确其服务身份、ACL、环境变量、只读输入、仅能写指定暂存及发布目录，绝不继承高权限 coord daemon 用户令牌。
+- 构建并审查真实结果发布器/索引器（替换当前示例里的占位 `.exe`），实施 digest/hash-pin、路径与命令白名单、无 shell、固定参数模板、禁止 payload 注入、原子文件发布、现有文件冲突保护；发布前同时校验 task/attempt/fence 与合法提交收据。外部动作最多至少一次语义，非幂等/不确定事件必须等待核对，绝不自动重放。
+- 测试重复完成、动作执行期间 daemon/runner 崩溃、故障恢复、目录穿越、符号链接/重解析点、恶意 JSON/命令参数、错误 ACL、权限提升失败、不同 Agent 工作区隔离。生产独立低权限账户与 NTFS ACL 需现场实际验证，不能把隔离测试 PASS 写为生产 PASS。
+- Gate B：独立低权限身份、ACL、真实二进制哈希、单任务发布/聚合、失败和恢复路径具可重现证据，且不影响 coord 任务终态。
+
+### G6-C：长任务活性与续租（P1）
+- 继承 G2 原始 `<=600s` 单次租约与最大三次尝试，端到端校验绑定 worker/attempt/token 的进度与续租；仅可信、近期有效且未消耗的进度序号可触发有界续期；总时限默认 60 分钟。虚构心跳、页面仍在线、聊天内容存在均不等于存活证据。
+- 两条真实 ChatGPT 对话完成 `claim→查看图片→报告进度→续租→提交→再次 claim`；测试断线、浏览器关闭、会话刷新、超时与旧 token 拒绝。无平台级后台自主唤醒时不能承诺无人值守连续 24h，记录需人工重启对话的限制；不无限续租。
+- Gate C：真实 ChatGPT Web 测试与回收证据齐备；若自动唤醒不可实现只将该细项 PARTIAL，不掩盖任务租约安全性。
+
+### G6-D：部署前和生产 Canary 门禁（P1，依赖 A/B）
+- 先审计 F3-R production `oauth.cjs` hash 和 callback CSP 实际版本、非 owner Access 拒绝与独立 token/initialize/tools/list 证据，维持 F3-R 原状态直至相关证据真通过；禁止为了 G6 偷换认证边界。
+- Windows Rust fmt/clippy/test/release、Node relay/MCP、Python Phase G 工具、真实身份/Actions 测试全部 PASS 后，优先经 Fork Windows GitHub Actions 制作发布 artifact、比对 commit 与下载 SHA。哈希不同不得声称 reproducible。生产部署前备份 Arasaka DB/WAL/EXE、Servy 配置、Linux sidecar/Feathers/OpenResty 相关文件，确保最小停机和可执行回滚。
+- 先在隔离数据库/测试 Batch 验证六个身份；有批准且 A/B 门禁 PASS 后方能以受控方式部署，生产只创建 **canary 隔离测试任务**，不创建 `emote-000…120`，不启动六个实际图片分类 Agent。验证生产 13011/13012、Cloudflare Access/OAuth、CoordMCP legacy、coord service/health、旧任务与数据库回归。
+- 产出 `docs/verification/PHASE_G6_{A,B,C,D}.md` 和最终收口；每阶段保留 PASS/PARTIAL/BLOCKED/NOT_RUN 的真实退出码、日志、hash、回滚与残余风险；只推 Fork 工作分支，不修改旧 Git 历史/主分支。
+
+### G6 执行进度（2026-10-24）
+
+| 子阶段 | 当前状态 | 证据与剩余门槛 |
+| --- | --- | --- |
+| A | PARTIAL / 真实隔离 BLOCKED | 管理员身份预绑定、两跳签名及跨 batch 防护已实现；两条真实聊天的只读调用有服务端日志，但平台账户可跨对话复用，访问记录共用一个 client 且无 conversation 字段，不能证明六个受保护上下文。见 `verification/PHASE_G6_A.md` |
+| B | PARTIAL | 独立 native Runner、发布器及主 RPC 独立鉴权已实现；真实 Arasaka 专用账户与 NTFS ACL 尚未执行。CI 低权限结果只验机制。见 `verification/PHASE_G6_B.md` |
+| C | PARTIAL | progress/extend receipt 重放身份与 attempt 漏洞已先红后绿修复；隔离真实 daemon 续租/断线/过期回收通过，真实两聊天写生命周期依赖 A，未执行。见 `verification/PHASE_G6_C.md` |
+| D | PARTIAL / 部署 NOT_RUN | 生产 CSP 版本和 token exchange 已补证，F3-R 仍缺 non-owner 和独立 initialize/tools/list；最终本机/Fork/产物门禁见 `verification/PHASE_G6_D.md`。A/B 未过不部署、不创建 canary |
+
+所有生产源码、服务、Access 策略、任务队列保持原状；本轮浏览器进行了同账户正常 OAuth 重新授权，OAuth grant/token 记录因此改变。没有正式任务或分类 Agent。备份/回滚与放行条件见 `phase-g/G6-DEPLOYMENT.md`。旧 G0 的 OAuth hash 差异现已现场调和；不据此提升 F3-R 或 G6 为 PASS。

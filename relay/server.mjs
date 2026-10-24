@@ -16,6 +16,7 @@ import {
   timingSafeHexEqual,
   validateRpcRequest,
 } from './protocol.mjs';
+import identity from './identity.cjs';
 
 const MAX_JOURNAL_ENTRIES = 100_000;
 const MAX_JOURNAL_LINES = 250_000;
@@ -152,6 +153,7 @@ export async function createSidecar(options = {}) {
     journalFile: options.journalFile ?? './coord-relay-state/requests.ndjson',
     agentSecret: options.agentSecret,
     clientSecret: options.clientSecret,
+    identityPolicy: options.identityPolicy ?? await identity.loadPolicy(options.identityPolicyFile),
   };
   if (options.agentSecretFile) config.agentSecret = await loadSecret(options.agentSecretFile, 'agent secret');
   if (options.clientSecretFile) config.clientSecret = await loadSecret(options.clientSecretFile, 'client secret');
@@ -358,7 +360,7 @@ class Sidecar {
     if (!this.isAgentReady()) return { state: 'not_dispatched', code: 'agent_unavailable' };
     if (this.pending.size >= this.config.maxPending) return { state: 'not_dispatched', code: 'concurrency_limit' };
     const requestHash = createHmac('sha256', Buffer.from(this.config.clientSecret, 'hex'))
-      .update(JSON.stringify({ method: request.method, params: request.params }))
+      .update(JSON.stringify({ method: request.method, params: request.params, identity: request.identity }))
       .digest('hex');
     const previous = this.records.get(request.requestId);
     if (previous) {
@@ -383,6 +385,7 @@ class Sidecar {
     }, this.config.requestTimeoutMs);
     if (!this.agent || !this.isAgentReady() || !writeFrame(this.agent.socket, {
       type: 'call', requestId: request.requestId, method: request.method, params: request.params,
+      ...(request.identity ? { identity: request.identity } : {}),
     })) {
       await this.finishPending(request.requestId, { state: 'uncertain', code: 'dispatch_failed' });
     }
@@ -433,7 +436,7 @@ class Sidecar {
       reply(response, 400, { state: 'error', code: 'invalid_json' });
       return;
     }
-    const validation = validateRpcRequest(rpc);
+    const validation = validateRpcRequest(rpc, this.config.identityPolicy);
     if (!validation.ok) {
       reply(response, validation.code === 'request_too_large' ? 413 : 400, { state: 'error', code: validation.code });
       log('request_rejected', { code: validation.code });

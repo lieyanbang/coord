@@ -1,0 +1,7 @@
+{
+  "command": "cargo fmt --all -- --check",
+  "seconds": 0.6227016,
+  "log": "docs/verification/stage-g6-baseline-fmt.log",
+  "started": "2026-10-24T09:59:13.6824910Z",
+  "exit": 1
+}

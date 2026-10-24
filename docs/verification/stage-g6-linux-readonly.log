@@ -1,0 +1,190 @@
+observed_at=2026-10-24T09:56:28Z
+manual=openresty-web-architecture
+OPENRESTY-WEB-ARCHITECTURE(7)         System Administration         OPENRESTY-WEB-ARCHITECTURE(7)
+
+NAME
+       openresty-web-architecture - OpenResty and NodeJS web stack notes for this server
+
+SYNOPSIS
+       man openresty-web-architecture
+       sudo openresty -t
+       sudo systemctl reload openresty
+
+OVERVIEW
+       This  server  uses  OpenResty  as  the public HTTP/HTTPS edge and NodeJS services as local
+       backends. Public web traffic is intended to enter through Cloudflare  edge  IPs  and  then
+       reach OpenResty on ports 80 and 443. OpenResty terminates TLS, applies Lua-based controls,
+       serves  static  assets,  and  reverse  proxies  selected  paths to local services bound to
+       127.0.0.1.
+
+MAIN COMPONENTS
+       OpenResty
+              Service:  openresty.service.   Main   config:   /usr/local/openresty/nginx/conf/ng‐
+              inx.conf.  Site configs are included from /etc/openresty/conf.d/*.conf.
+
+       Feathers host
+              Service:   feathersjsapp.service.  Entry:  /opt/app/feathers/index.js.  Listens  on
+              127.0.0.1:13010 and serves /app/notifier/api/, /app/realtimetext/api/, and /app/up‐
+              dater/api/health through OpenResty.
+
+       Admin auth service
+              Service: lieyanbang-auth.service. Entry: /opt/lieyanbang-auth/src/server.js.   Lis‐
+              tens on 127.0.0.1:3001 and handles /auth/ plus admin session introspection.
+
+       ttyd WebSSH
+              Service:  ttyd.service.  Listens on 127.0.0.1:7681 and is exposed below /tty/ after
+              admin session validation.
+
+OPENRESTY CONFIGURATION
+       The active site file is /etc/openresty/conf.d/lieyanbang.conf. It  defines  upstreams  for
+       lieyanbang_auth  and  lieyanbang_ttyd, redirects HTTP to HTTPS for lieyanbang.com, config‐
+       ures certificates from /etc/letsencrypt/live/lieyanbang.com, and includes  additional  up‐
+       dater app locations from /etc/openresty/conf.d/updater-apps/*.conf.
+
+       The  global  nginx.conf  enables  gzip,  TLS  policy, Cloudflare-aware log fields, and Lua
+       shared dictionaries named rate_limit_store and updater_token_cache. Lua files used by  the
+       stack live in /usr/local/openresty/nginx/lua and /etc/openresty/lua.
+
+REQUEST FLOW
+       Static site
+              / is served from /var/www/lieyanbang/html and returns 404 when a file is not found.
+
+       Admin and ttyd
+              /admin/,  /api/admin/,  and  /tty/  run /etc/openresty/lua/check_admin_session.lua.
+              That script calls  the  internal  /__auth_introspect  location,  which  proxies  to
+              lieyanbang_auth  /auth/introspect.  WebSocket  upgrade  traffic under /tty/ is kept
+              open with long read/send timeouts and proxy buffering disabled.
+
+       Application APIs
+              /app/notifier/api/, /app/realtimetext/api/, and  /app/updater/api/health  proxy  to
+              127.0.0.1:13010.  RealtimeText  also  forwards Cloudflare identity headers and sup‐
+              ports WebSocket upgrade.
+
+       Updater apps
+              Updater endpoints are loaded from /etc/openresty/conf.d/updater-apps/*.conf and use
+              Lua token helpers from /etc/openresty/lua where configured.
+
+ROUTINE OPERATIONS
+       Test configuration
+              Run sudo openresty -t before reloads. A  successful  test  currently  reports  that
+              /usr/local/openresty/nginx/conf/nginx.conf syntax is ok.
+
+       Reload edge config
+              Run sudo systemctl reload openresty after a passing config test.
+
+       Inspect logs
+              OpenResty  logs are under /usr/local/openresty/nginx/logs/. Service logs are avail‐
+              able with journalctl -u openresty, journalctl -u feathersjsapp, and  journalctl  -u
+              lieyanbang-auth.
+
+       Add a new app path
+              Prefer adding a location under /etc/openresty/conf.d/lieyanbang.conf or a small in‐
+              cluded file when the app belongs to an include directory. Bind new Node services to
+              127.0.0.1, add a systemd service, proxy only the needed paths, and run openresty -t
+              before reload.
+
+SECURITY NOTES
+       UFW  is active with default deny incoming. Web ports 80 and 443 are allowed for Cloudflare
+       IP ranges by /usr/local/bin/update-cloudflare-ips.sh, scheduled in root crontab  at  03:00
+       daily.  Public  SSH on port 22 is denied, SSH on port 13027 is allowed, and tailnet SSH on
+       tailscale0 port 22 is allowed.
+
+       Fail2Ban is enabled with the sshd jail. Use sudo fail2ban-client status  sshd  to  inspect
+       banned IPs and jail health.
+
+FILES
+       /etc/openresty/README.txt
+              Short pointer for operators working in the OpenResty config directory.
+
+       /etc/openresty/conf.d/lieyanbang.conf
+              Primary site routing file.
+
+       /usr/local/openresty/nginx/conf/nginx.conf
+              OpenResty global config and include root.
+
+SEE ALSO
+       openresty(8), nginx(8), systemctl(1), journalctl(1), ufw(8), fail2ban-client(1), feathers-
+       host(7)
+
+Lieyanbang Web Stack                        2026-05-23              OPENRESTY-WEB-ARCHITECTURE(7)
+manual=feathers-host
+FEATHERS-HOST(7)                      System Administration                      FEATHERS-HOST(7)
+
+NAME
+       feathers-host - host layout for FeathersJS microservices under /opt/app/feathers
+
+SYNOPSIS
+       man feathers-host
+       systemctl status feathersjsapp.service
+       journalctl -u feathersjsapp.service -f
+
+DESCRIPTION
+       /opt/app/feathers is the host layer for FeathersJS-based microservices.  It keeps a shared
+       host  entry  at  /opt/app/feathers/index.js, mounts service projects under this directory,
+       and leaves room for additional microservices.
+
+CURRENT LAYOUT
+       /opt/app/feathers/index.js
+              Host process entry started by feathersjsapp.service.
+
+       /opt/app/feathers/realtimetext/
+              Current FeathersJS app project.
+
+       /opt/app/feathers/data/
+              Runtime database files used by the host and application.
+
+       /opt/app/feathers/logs/
+              Runtime log files.
+
+MOUNT RULE
+       New service projects should be placed under /opt/app/feathers/<service-name>/ and  mounted
+       by  the host layer instead of running as unrelated standalone paths.  The current app path
+       is /opt/app/feathers/realtimetext/ and the current service entry is  /opt/app/feathers/in‐
+       dex.js.
+
+NOTES
+       The external path /app/realtimetext/* is still kept as-is. The current host code registers
+       realtimetext  through  registerRealtimeText(...) on the shared host app.  If more services
+       are added later, extend /opt/app/feathers/index.js.
+
+FILES
+       /etc/systemd/system/feathersjsapp.service
+              Production systemd service for the host.
+
+       /opt/app/feathers/README.txt
+              Pointer file replacing the former README.md.
+
+SEE ALSO
+       systemctl(1), journalctl(1), openresty-web-architecture(7)
+
+Feathers Host                               2026-05-23                           FEATHERS-HOST(7)
+active
+active
+active
+active
+active
+MainPID=113349
+NRestarts=0
+User=
+Group=
+Id=feathersjsapp.service
+ActiveState=active
+SubState=running
+
+MainPID=90506
+NRestarts=0
+User=coord-relay
+Group=coord-relay
+Id=coord-relay.service
+ActiveState=active
+SubState=running
+LISTEN 0      511                      127.0.0.1:13013      0.0.0.0:*    users:(("node",pid=90506,fd=22))                                                        
+LISTEN 0      511                      127.0.0.1:13010      0.0.0.0:*    users:(("node",pid=113349,fd=24))                                                       
+LISTEN 0      511                100.116.134.114:13011      0.0.0.0:*    users:(("nginx",pid=109400,fd=11),("nginx",pid=109399,fd=11),("nginx",pid=109204,fd=11))
+LISTEN 0      511                100.116.134.114:13012      0.0.0.0:*    users:(("node",pid=90506,fd=21))                                                        
+{"state":"READY","agentConnected":true,"lastHeartbeat":"2026-10-24T09:56:29.306Z","pending":0}e2a4c125f6742f915662707ff123f3eb0a3e3ec6b64ae2818baf1c3ea7cd5db3  /opt/app/feathers/realtimetext/lib/coord-mcp/index.cjs
+0dcc483bd3d6afd5f4625885aed70f5cdf1b30f6a44ced739549d382ce049c53  /opt/app/feathers/realtimetext/lib/coord-mcp/oauth.cjs
+{"callback_csp_dynamic_origin": false, "has_form_action": true}
+Traceback (most recent call last):
+  File "<stdin>", line 4, in <module>
+NameError: name 'PY' is not defined

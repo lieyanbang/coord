@@ -1,0 +1,33 @@
+{
+  "observed_at": "2026-10-24T09:58:17.408668+00:00",
+  "source_hashes": {
+    "oauth.cjs": "0dcc483bd3d6afd5f4625885aed70f5cdf1b30f6a44ced739549d382ce049c53",
+    "index.cjs": "e2a4c125f6742f915662707ff123f3eb0a3e3ec6b64ae2818baf1c3ea7cd5db3"
+  },
+  "csp_code_excerpt": [
+    "      res.setHeader('Referrer-Policy', 'no-referrer');",
+    "      res.setHeader('X-Content-Type-Options', 'nosniff');",
+    "      let formAction = \"'self'\";",
+    "      if (redirectUri) {",
+    "        const target = new URL(redirectUri);",
+    "        if (target.origin !== this.accessAuthorizationOrigin) {",
+    "          formAction += ` ${target.origin}`;",
+    "        }",
+    "      }",
+    "      res.setHeader('Content-Security-Policy', `default-src 'none'; style-src 'unsafe-inline'; form-action ${formAction}; base-uri 'none'; frame-ancestors 'none'`);",
+    "    }"
+  ],
+  "services": [
+    "active",
+    "active",
+    "active",
+    "active",
+    "active"
+  ],
+  "health": {
+    "state": "READY",
+    "agentConnected": true,
+    "lastHeartbeat": "2026-10-24T09:58:09.319Z",
+    "pending": 0
+  }
+}

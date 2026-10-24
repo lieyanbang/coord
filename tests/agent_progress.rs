@@ -244,3 +244,119 @@ fn six_simulated_agents_claim_distinct_tasks_without_cross_identity_fences() {
     assert_eq!(status["active_claims"], 1);
     assert!(!status.to_string().contains("lease_token"));
 }
+
+fn progress_claim(daemon: &Daemon) -> (Value, Value) {
+    let batch = daemon.rpc(
+        "batches/create",
+        json!({"name":"g6 recovery","config":{"require_progress":true,"retry_backoff_ms":0}}),
+    );
+    daemon.rpc(
+        "batches/add_tasks",
+        json!({"batch_id":batch["id"],"tasks":[{"key":"one","name":"one"},{"key":"two","name":"two"}]}),
+    );
+    let task = daemon.rpc(
+        "scheduler/claim",
+        json!({"agent_id":"A0","batch_id":batch["id"],"lease_seconds":600}),
+    )["task"]
+        .clone();
+    (batch, task)
+}
+
+#[test]
+fn progress_receipt_replay_cannot_change_attempt() {
+    let daemon = Daemon::new();
+    let (_, task) = progress_claim(&daemon);
+    let request = progress_params(&task, "A0", 1, Uuid::new_v4());
+    let accepted = daemon.rpc("scheduler/progress", request.clone());
+    let mut wrong_attempt = request.clone();
+    wrong_attempt["attempt_no"] = json!(99);
+    assert!(daemon
+        .request("scheduler/progress", wrong_attempt)
+        .get("error")
+        .is_some());
+    assert_eq!(daemon.rpc("scheduler/progress", request), accepted);
+}
+
+#[test]
+fn extension_receipt_replay_cannot_change_identity_or_attempt() {
+    let daemon = Daemon::new();
+    let (_, task) = progress_claim(&daemon);
+    daemon.rpc(
+        "scheduler/progress",
+        progress_params(&task, "A0", 1, Uuid::new_v4()),
+    );
+    let request = json!({"id":task["id"],"agent_id":"A0","lease_token":task["lease_token"],
+        "attempt_no":task["attempt_no"],"progress_sequence":1,"request_id":Uuid::new_v4(),"lease_seconds":600});
+    let accepted = daemon.rpc("scheduler/extend_progress", request.clone());
+    for (key, value) in [("agent_id", json!("A1")), ("attempt_no", json!(99))] {
+        let mut forged = request.clone();
+        forged[key] = value;
+        assert!(daemon
+            .request("scheduler/extend_progress", forged)
+            .get("error")
+            .is_some());
+    }
+    assert_eq!(daemon.rpc("scheduler/extend_progress", request), accepted);
+}
+
+#[test]
+fn stale_progress_and_disconnected_attempt_cannot_renew_or_submit() {
+    let daemon = Daemon::new();
+    let (batch, task) = progress_claim(&daemon);
+    daemon.rpc(
+        "scheduler/progress",
+        progress_params(&task, "A0", 1, Uuid::new_v4()),
+    );
+    let connection = rusqlite::Connection::open(daemon.root.join("state.db")).unwrap();
+    connection.busy_timeout(Duration::from_secs(5)).unwrap();
+    connection
+        .execute(
+            "UPDATE task_progress SET progress_at=?1 WHERE task_id=?2",
+            rusqlite::params![
+                (chrono::Utc::now() - chrono::Duration::seconds(601)).to_rfc3339(),
+                task["id"].as_str().unwrap()
+            ],
+        )
+        .unwrap();
+    let extension = json!({"id":task["id"],"agent_id":"A0","lease_token":task["lease_token"],
+        "attempt_no":task["attempt_no"],"progress_sequence":1,"request_id":Uuid::new_v4(),"lease_seconds":600});
+    assert!(daemon
+        .request("scheduler/extend_progress", extension.clone())
+        .get("error")
+        .is_some());
+    // Only the disposable daemon's database is adjusted to model a disconnect.
+    connection
+        .execute(
+            "UPDATE tasks SET lease_until=?1 WHERE id=?2",
+            rusqlite::params![
+                (chrono::Utc::now() - chrono::Duration::seconds(2)).to_rfc3339(),
+                task["id"].as_str().unwrap()
+            ],
+        )
+        .unwrap();
+    daemon.rpc("tasks/reclaim", json!({}));
+    thread::sleep(Duration::from_millis(20));
+    let replacement = daemon.rpc(
+        "tasks/claim",
+        json!({"id":task["id"],"agentId":"A1","leaseSeconds":60}),
+    );
+    assert_eq!(replacement["attempt_no"], 2);
+    assert!(daemon
+        .request("scheduler/extend_progress", extension)
+        .get("error")
+        .is_some());
+    assert!(daemon
+        .request("scheduler/submit", json!({"id":task["id"],"agent_id":"A0","lease_token":task["lease_token"],"result":{"stale":true}}))
+        .get("error")
+        .is_some());
+    let submit = json!({"id":replacement["id"],"agent_id":"A1","lease_token":replacement["lease_token"],"result":{"verified":true}});
+    let accepted = daemon.rpc("scheduler/submit", submit.clone());
+    assert_eq!(accepted["ok"], true);
+    assert_eq!(daemon.rpc("scheduler/submit", submit), accepted);
+    let next = daemon.rpc(
+        "scheduler/claim",
+        json!({"agent_id":"A1","batch_id":batch["id"],"lease_seconds":60}),
+    );
+    assert_eq!(next["empty"], false);
+    assert_ne!(next["task"]["id"], task["id"]);
+}

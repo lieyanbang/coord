@@ -1,0 +1,14 @@
+   Compiling coord v0.4.1 (D:\project\coord)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.99s
+     Running tests\agent_progress.rs (target\debug\deps\agent_progress-b2f04fa9f2149719.exe)
+
+running 6 tests
+test extension_receipt_replay_cannot_change_identity_or_attempt ... ok
+test progress_receipt_replay_cannot_change_attempt ... ok
+test stale_progress_and_disconnected_attempt_cannot_renew_or_submit ... ok
+test six_simulated_agents_claim_distinct_tasks_without_cross_identity_fences ... ok
+test progress_fences_attempts_and_requires_fresh_unconsumed_checkpoints ... ok
+test progress_lease_budget_is_a_hard_total_cap ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.64s
+

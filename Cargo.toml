@@ -2,8 +2,9 @@
 name = "coord"
 version = "0.4.1"
 edition = "2021"
+default-run = "coord"
 authors = ["Denis Tu <dmarshaltu@gmail.com>"]
-description = "Local coordinator for parallel AI coding agents. Long-poll watch, leased atomic claims, MCP + A2A-subset JSON-RPC. One binary."
+description = "Local coordinator for parallel AI coding agents. Long-poll watch, leased atomic claims, MCP + A2A-subset JSON-RPC."
 license = "MIT"
 repository = "https://github.com/DmarshalTU/coord"
 homepage = "https://github.com/DmarshalTU/coord"
@@ -36,7 +37,7 @@ rmcp = { version = "0.16", features = ["server", "macros", "transport-io"] }
 schemars = "1.0"
 
 [target.'cfg(windows)'.dependencies]
-windows-sys = { version = "0.61.2", features = ["Win32_Foundation", "Win32_System_JobObjects", "Win32_System_Threading"] }
+windows-sys = { version = "0.61.2", features = ["Win32_Foundation", "Win32_System_JobObjects", "Win32_System_Threading", "Win32_System_Diagnostics_ToolHelp", "Win32_Security", "Win32_Security_Authorization", "Win32_Security_Cryptography"] }
 
 [profile.release]
 opt-level = 3

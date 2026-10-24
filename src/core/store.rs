@@ -416,15 +416,15 @@ impl Store {
         }
         let mut conn = self.conn.lock();
         let tx = conn.transaction_with_behavior(rusqlite::TransactionBehavior::Immediate)?;
-        if let Some((owner, prior_sequence, prior_checkpoint, at)) = tx
+        if let Some((owner, prior_attempt, prior_sequence, prior_checkpoint, at)) = tx
             .query_row(
-                "SELECT agent_id,sequence,checkpoint,progress_at FROM task_progress_receipts WHERE task_id=?1 AND lease_token=?2 AND request_id=?3",
+                "SELECT r.agent_id,p.attempt_no,r.sequence,r.checkpoint,r.progress_at FROM task_progress_receipts r JOIN task_progress p ON p.task_id=r.task_id AND p.lease_token=r.lease_token WHERE r.task_id=?1 AND r.lease_token=?2 AND r.request_id=?3",
                 params![id.to_string(), lease_token, request_id.to_string()],
-                |row| Ok((row.get::<_, String>(0)?, row.get::<_, u64>(1)?, row.get::<_, String>(2)?, row.get::<_, String>(3)?)),
+                |row| Ok((row.get::<_, String>(0)?, row.get::<_, u64>(1)?, row.get::<_, u64>(2)?, row.get::<_, String>(3)?, row.get::<_, String>(4)?)),
             )
             .optional()?
         {
-            if owner != agent_id || prior_sequence != sequence || prior_checkpoint != checkpoint {
+            if owner != agent_id || prior_attempt != attempt_no || prior_sequence != sequence || prior_checkpoint != checkpoint {
                 return Ok(None);
             }
             return Ok(Some(DateTime::parse_from_rfc3339(&at)?.with_timezone(&Utc)));
@@ -481,15 +481,15 @@ impl Store {
         }
         let mut conn = self.conn.lock();
         let tx = conn.transaction_with_behavior(rusqlite::TransactionBehavior::Immediate)?;
-        if let Some((sequence, at)) = tx
+        if let Some((owner, prior_attempt, sequence, at)) = tx
             .query_row(
-                "SELECT progress_sequence,lease_until FROM task_progress_extend_receipts WHERE task_id=?1 AND lease_token=?2 AND request_id=?3",
+                "SELECT p.agent_id,p.attempt_no,r.progress_sequence,r.lease_until FROM task_progress_extend_receipts r JOIN task_progress p ON p.task_id=r.task_id AND p.lease_token=r.lease_token WHERE r.task_id=?1 AND r.lease_token=?2 AND r.request_id=?3",
                 params![id.to_string(), lease_token, request_id.to_string()],
-                |row| Ok((row.get::<_, u64>(0)?, row.get::<_, String>(1)?)),
+                |row| Ok((row.get::<_, String>(0)?, row.get::<_, u64>(1)?, row.get::<_, u64>(2)?, row.get::<_, String>(3)?)),
             )
             .optional()?
         {
-            if sequence != progress_sequence {
+            if owner != agent_id || prior_attempt != attempt_no || sequence != progress_sequence {
                 return Ok(None);
             }
             return Ok(Some(DateTime::parse_from_rfc3339(&at)?.with_timezone(&Utc)));
@@ -1468,6 +1468,15 @@ impl Store {
                AND julianday(lease_until)<=julianday('now')",
             params![now.to_rfc3339()],
         )?;
+        let running: u32 = tx.query_row(
+            "SELECT count(*) FROM completion_actions WHERE state='running'",
+            [],
+            |row| row.get(0),
+        )?;
+        if running >= 2 {
+            tx.commit()?;
+            return Ok(None);
+        }
         let candidate = tx
             .query_row(
                 "SELECT id,event_id,profile_id,profile_version,action_kind,payload,
@@ -1475,6 +1484,10 @@ impl Store {
                  FROM completion_actions
                  WHERE state='pending'
                    AND (available_at IS NULL OR julianday(available_at)<=julianday('now'))
+                   AND (action_kind!='on_batch_completed' OR NOT EXISTS(
+                     SELECT 1 FROM completion_actions task_action
+                     WHERE task_action.batch_id=completion_actions.batch_id
+                       AND task_action.action_kind='on_task_completed' AND task_action.state!='succeeded'))
                  ORDER BY created_at,id LIMIT 1",
                 [],
                 |row| {
@@ -1530,6 +1543,154 @@ impl Store {
             action_kind,
             payload: serde_json::from_str(&payload)?,
             lease_token: token,
+            attempt_count,
+            max_attempts,
+            idempotent,
+        }))
+    }
+
+    /// Dedicated broker lookup. Client-supplied payload/profile data is never used.
+    pub fn runner_action(
+        &self,
+        id: &str,
+        token: &str,
+        owner: &str,
+        authorize: bool,
+    ) -> Result<Option<super::actions::ActionJob>> {
+        let conn = self.conn.lock();
+        let sql = "SELECT event_id,profile_id,profile_version,action_kind,payload,attempt_count,max_attempts,idempotent
+            FROM completion_actions WHERE id=?1 AND lease_token=?2 AND lease_owner=?3 AND state='running'
+              AND julianday(lease_until)>julianday('now',?4)";
+        let row = conn
+            .query_row(
+                sql,
+                params![
+                    id,
+                    token,
+                    owner,
+                    if authorize {
+                        "+305 seconds"
+                    } else {
+                        "+0 seconds"
+                    }
+                ],
+                |row| {
+                    Ok((
+                        row.get::<_, String>(0)?,
+                        row.get::<_, String>(1)?,
+                        row.get::<_, u32>(2)?,
+                        row.get::<_, String>(3)?,
+                        row.get::<_, String>(4)?,
+                        row.get::<_, u32>(5)?,
+                        row.get::<_, u32>(6)?,
+                        row.get::<_, bool>(7)?,
+                    ))
+                },
+            )
+            .optional()?;
+        let Some((
+            event_id,
+            profile_id,
+            profile_version,
+            action_kind,
+            payload,
+            attempt_count,
+            max_attempts,
+            idempotent,
+        )) = row
+        else {
+            return Ok(None);
+        };
+        let mut payload: serde_json::Value = serde_json::from_str(&payload)?;
+        if authorize {
+            let batch = payload["batch_id"]
+                .as_str()
+                .context("action batch missing")?;
+            let mut proofs = Vec::new();
+            let task_ids: Vec<String> = if let Some(id) = payload["task_id"].as_str() {
+                vec![id.to_string()]
+            } else {
+                let mut statement =
+                    conn.prepare("SELECT id FROM tasks WHERE batch_id=?1 ORDER BY task_key,id")?;
+                let rows = statement
+                    .query_map([batch], |row| row.get(0))?
+                    .collect::<rusqlite::Result<Vec<String>>>()?;
+                rows
+            };
+            if task_ids.is_empty() || task_ids.len() > 10_000 {
+                anyhow::bail!("invalid action task set");
+            }
+            for task_id in task_ids {
+                let task = conn.query_row(
+                    &format!("SELECT {TASK_COLUMNS} FROM tasks WHERE id=?1"),
+                    [&task_id],
+                    row_to_task,
+                )?;
+                if task.state != TaskState::Completed
+                    || task.batch_id.map(|id| id.to_string()).as_deref() != Some(batch)
+                {
+                    anyhow::bail!("action task no longer completed in batch");
+                }
+                let result = task
+                    .result
+                    .clone()
+                    .context("completed task has no result")?;
+                let owner = task
+                    .claimed_by
+                    .as_deref()
+                    .context("completed task has no owner")?;
+                let mut receipts=conn.prepare("SELECT lease_token,request,response FROM task_receipts WHERE task_id=?1 AND agent_id=?2 AND operation='complete'")?;
+                let receipt_rows = receipts
+                    .query_map(params![task_id, owner], |row| {
+                        Ok((
+                            row.get::<_, String>(0)?,
+                            row.get::<_, String>(1)?,
+                            row.get::<_, String>(2)?,
+                        ))
+                    })?
+                    .collect::<rusqlite::Result<Vec<_>>>()?;
+                let accepted = receipt_rows.iter().any(|(token, request, response)| {
+                    let request = serde_json::from_str::<serde_json::Value>(request).ok();
+                    let response = serde_json::from_str::<serde_json::Value>(response).ok();
+                    let current = if let Some(current) = task.lease_token.as_deref() {
+                        token == current
+                    } else {
+                        task.submission_id.as_deref().is_some_and(|submission| {
+                            response
+                                .as_ref()
+                                .and_then(|value| value["submitted"].as_str())
+                                == Some(submission)
+                        })
+                    };
+                    current && request.as_ref().map(|value| &value["result"]) == Some(&result)
+                });
+                if !accepted {
+                    anyhow::bail!("completed task lacks matching current submit receipt");
+                }
+                if payload["task_id"].is_string()
+                    && (payload["attempt_no"].as_u64() != Some(task.attempt_no)
+                        || payload.get("result").is_some_and(|event_result| {
+                            *event_result != redact_action_secrets(result.clone())
+                        }))
+                {
+                    anyhow::bail!("completion event does not match current attempt/result");
+                }
+                proofs.push(serde_json::json!({"task_id":task.id,"batch_id":task.batch_id,"agent_id":owner,
+                    "attempt_no":task.attempt_no,"input":redact_action_secrets(serde_json::json!({"group_id":task.payload.get("group_id"),"source_image_ids":task.payload.get("source_image_ids")})),"receipt_confirmed":true,
+                    "result_sha256":super::windows_security::sha256(&serde_json::to_vec(&redact_action_secrets(result))?)?}));
+            }
+            payload["authorization"] =
+                serde_json::json!({"schema_version":1,"event_id":event_id,"tasks":proofs});
+        }
+        Ok(Some(super::actions::ActionJob {
+            id: id.into(),
+            event_id,
+            lease_owner: owner.into(),
+            profile_id,
+            profile_version,
+            action_kind,
+            payload,
+            lease_token: token.into(),
             attempt_count,
             max_attempts,
             idempotent,

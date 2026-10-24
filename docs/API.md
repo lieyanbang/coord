@@ -209,11 +209,22 @@ The Windows executor accepts only regular native `.exe`/`.com` files and a
 working directory canonicalized beneath the registry's `allowed_root`. It uses
 at most two concurrent actions. Each action is limited to 1–300 seconds, 64 KiB
 combined stdout/stderr, 4 MiB event input, eight processes and 256 MiB Job
-Object memory. The Job Object kills descendants on timeout, output overflow or
-worker exit. The child inherits the coord daemon's Windows account and file
-ACLs; the registry is **not** a filesystem sandbox and does not switch users.
-Production must use a dedicated least-privilege daemon account and verify ACLs
-before enabling actions.
+Object memory. The child starts suspended, is placed in its Job Object, then
+resumes; descendants are killed on timeout, output overflow or worker exit.
+Production execution requires `external_runner` with a dedicated independent
+standard Windows account and verified ACLs, plus SHA-256 pins on every command.
+The daemon runs only the authenticated queue broker and never spawns an action
+in that mode. Without an execution mode it explicitly logs queue-only operation;
+`isolated_in_process: true` is reserved for disposable regression tests.
+
+The external configuration contains `broker_addr` (loopback only), `key_file`
+(32 random bytes as 64 hex characters), `runner_sid`, `daemon_sid` and a separate
+administrator-protected `daemon_rpc_key_file`. The latter enables bearer
+authentication on all daemon RPC POSTs; the runner cannot read that key, and its
+broker key cannot call management RPC. CLI/MCP can use `COORD_RPC_AUTH_KEY` for
+loopback HTTP. Existing deployments without external mode retain their current
+trusted-localhost behavior. Actual production identity/ACL/RPC-denial acceptance
+is required before activation; see [ACTION_RUNNER.md](ACTION_RUNNER.md).
 
 Completion and the outbox row commit in one SQLite transaction, both for direct
 completion and validator `PASS`. Task actions are queued once per task/profile
@@ -234,3 +245,12 @@ profile's limit (1–5); non-idempotent profiles are limited to one attempt. If 
 worker disappears after an external side effect may have happened, a
 non-idempotent action becomes `uncertain`, not `succeeded`; idempotent replay is
 at-least-once, not exactly-once. Action failure never reopens a completed task.
+Batch actions wait for task actions to succeed. The queue-only broker exposes
+`POST /claim`, `/authorize` and `/finish` behind its independent bearer secret;
+these are service endpoints, not MCP tools or generic JSON-RPC methods.
+Authorization reconstructs the stored event and rechecks current action fence,
+completed task attempt and matching accepted-result receipt immediately before
+spawn. Its publisher context contains only group/ID input fields and known
+secrets are redacted. Native publication uses the accepted inline database
+result rather than an Agent-selected staged path, atomically refuses conflicting
+existing results, and writes receipt-checked preliminary indexes.

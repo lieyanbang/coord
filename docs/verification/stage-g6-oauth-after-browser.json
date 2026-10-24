@@ -1,0 +1,14 @@
+{
+  "observed_at": "2026-10-24T10:06:08.715492+00:00",
+  "method": "direct SSH read-only; after ChatGPT UI attempts; no credential/token refresh",
+  "counts": {
+    "clients": 2,
+    "accessTokens": 15,
+    "refreshTokens": 15
+  },
+  "token_client_sha256": [
+    "eeb595ffaeec3cc157243f766c320f4133f1d9a6af05ad21ee8fb373850122ba"
+  ],
+  "live_access_tokens": 1,
+  "conversation_id_field_present": false
+}

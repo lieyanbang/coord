@@ -1,0 +1,137 @@
+# Phase G6-D — build and controlled-deployment gates
+
+Date: 2026-10-24 Australia/Brisbane. Overall Phase G6: **PARTIAL**.
+Production deployment and canary: **NOT_RUN**, blocked by the real identity
+gate in G6-A and the unexercised production account/ACL gate in G6-B.
+The user authorized deployment after the gates pass; permission does not
+substitute for acceptance evidence.
+
+## Protected baseline and scope
+
+Work uses `codex/phase-g6-production-readiness`, starting at
+`9e1543e9bddef06c6009edf09b8056b63fdff852`. The verified user Fork is
+`lieyanbang/coord`; upstream `DmarshalTU/coord`, main/release branches and
+history are protected. Pre-existing `.gitignore` changes and unrelated
+untracked files are excluded from staging. `TASK.md` is read-only, SHA-256
+`25afd40a7fc6ce9c552dcf3c36f9d64cf0e1abeea48db0fffb54878c90c188c9`.
+No formal emote task, classification Agent or production canary was created.
+
+The known production daemon was inspected without acquiring production
+engineering leases or writing a ledger task. Stage commits and these reports
+form the engineering ledger; no task/ack identifiers are invented. All
+automated lifecycle and fault tests use disposable databases and processes.
+
+## Current production observations
+
+Direct SSH was used; Remote Control 4 was not used. At 09:56:11Z Arasaka
+coord and CoordRelayAgent were Running under LocalService; Servy was Running
+under LocalSystem. coord listened only at `127.0.0.1:7777`, installed binary
+SHA-256 `b58d3620b1b6de8035bfcb97e99f2e4fe654f48b1cb5719ef9fca013f5652e0d`.
+Read-only urgent/high counts were both zero. No actions configuration was
+found in the inspected ProgramData coord top-level layout. Evidence:
+`stage-g6-arasaka-readonly.log`, SSH exit 0.
+
+At 09:58:17Z Feathers, OpenResty, Sidecar, relay ACL and Tailscale were active;
+Sidecar reported READY, agent connected, zero pending. Existing 13011/13012
+listeners remained present. Evidence: `stage-g6-linux-csp-readonly.log`, SSH
+exit 0. The earlier `stage-g6-linux-readonly.log` contains useful observations
+but its combined command exited 1 because of a CRLF heredoc terminator error;
+it is retained as failed command evidence and not labelled PASS.
+
+Public route probes each exited 0: CoordMCP root 401, both metadata routes
+200, authorize 302, RemoteControlMCP/2 302, RemoteControlMCP3 and `/mcp` 401.
+See `stage-g6-public-readonly.json`. These are route/challenge observations.
+
+Production source, service configuration, Access policies, task database and
+queues were not changed. Browser verification did perform normal same-account
+OAuth reauthorization, changing OAuth grant/token records. That exception is
+explicit; it was not a read-only credential-store operation. The subsequent
+server audit itself was read-only.
+
+## F3-R evidence reconciliation
+
+Production `oauth.cjs` SHA-256 is
+`0dcc483bd3d6afd5f4625885aed70f5cdf1b30f6a44ced739549d382ce049c53`, matching
+the local pre-G6 module. The source excerpt confirms `form-action 'self'`
+plus only the validated callback origin. Production `index.cjs` SHA-256 is
+`e2a4c125f6742f915662707ff123f3eb0a3e3ec6b64ae2818baf1c3ea7cd5db3`.
+The old G0 hash discrepancy is reconciled for this observation.
+
+At 10:16:48Z a read-only journal/access-log audit exited 0. Since 09:50Z,
+Sidecar recorded four dispatched and four completed `tasks/list` calls and no
+other method; OpenResty recorded authorize POST 302 once, token POST 200 twice,
+and CoordMCP POST 200 four times. Only method, stripped path, status, counts and
+times were emitted. OAuth state had two clients, 16 access and 16 refresh
+records; all access records shared one client digest and had no conversation
+field. See `stage-g6-browser-server-audit.json` and G6-A for UI details.
+These observations establish real read calls and successful token exchange,
+but do not attribute individual credentials to the two chats. Separate
+`initialize`/`tools/list` responses and real non-owner Access rejection remain
+**UNVERIFIED / NOT_RUN**. F3-R remains **PARTIAL**.
+
+## Verification ledger
+
+`pwsh -NoLogo -NoProfile -File scripts/verify.ps1 -Stage g6` ran from
+10:19:34Z through 10:22:31Z and exited **0**. All seven checks exited 0:
+fmt, strict all-target/all-feature locked clippy, all-feature locked tests,
+locked release build, Relay/live-daemon tests, CoordMCP tests and Python tools.
+Rust reported 64 passed, zero failed and eight ignored (seven explicit child
+helpers plus the opt-in capacity test); Relay 20/20, CoordMCP 14/14 and Python
+7/7. Commands, durations and raw logs are in `stage-g6-checks.json` and the
+matching logs. These are local Windows source/isolated acceptance results.
+
+After integration, `scripts/verify.ps1 -Stage g6-final` ran from 10:29:59Z to
+10:31:18Z, exit **0**, with all **eight** checks passing. It adds the real
+Windows PowerShell 5.1 health-monitor test: protected key -> authenticated CLI
+READY; missing/malformed/oversized/relative/unprotected keys -> configuration
+exit 2 with no recovery; previous environment restored before the fake Servy
+recovery call. The fixture initially inherited broad TEMP permissions and was
+correctly rejected; only its new random directory ACL was tightened for the
+successful test. Actual SYSTEM task configuration and key-copy rotation remain
+production gates. No real Servy call or existing ACL was changed by the test.
+The release hashes below remained identical after integration.
+
+Existing action-runner tests accept explicit `COORD_TEST_PUBLISHER_BIN` and
+`COORD_TEST_RUNNER_BIN` overrides for later downloaded-artifact verification;
+their defaults remain Cargo's own test executables. `cargo run --locked --
+--version` also exited 0 after preserving `default-run = "coord"` alongside
+the new auxiliary binaries. Raw log whitespace is retained; source/doc diff
+whitespace checks pass with the raw `stage-g6*.log` evidence excluded.
+
+Local release SHA-256 values:
+
+| Binary | SHA-256 |
+| --- | --- |
+| coord.exe | `0386e67717694f59e066b542254f873340ca787fda72727beff2454dceeee875` |
+| coord-action-runner.exe | `5dd0bcc04b37be5c46a39f6543f54f797a01839858dd572c5ce426fef85b4909` |
+| coord-emote-action.exe | `0461bc1fb7007824099689214de74c21dfcf74ae3bc261d8dd1fbfff18f73a1f` |
+
+The capacity harness was explicitly invoked with `COORD_TEST_BIN` pointing to
+the release executable above and `--ignored --nocapture` (exit **0**). The
+compiled harness from the full test gate ran in a separate temporary report
+directory so historical Stage E evidence was not overwritten. Raw output and
+JSON are `stage-g6-capacity.log` / `stage-g6-capacity.json`. Six independent MCP
+processes completed 100, 1,000 and 10,000 generic tasks with equal unique task,
+receipt and terminal totals, and zero busy/locked log lines in all sizes.
+At 10,000 tasks: 94.482 seconds, 105.84 tasks/s, claim P95 47.36 ms and daemon
+peak working set 22,089,728 bytes. These are bounded local observations, not a
+controlled comparison with historical runs or a production performance promise.
+
+Fork Actions and downloaded-artifact results are appended after execution;
+pending runs are not PASS.
+
+The initial parallel-edit `g6-baseline` invocation failed at fmt because an
+in-progress module declaration preceded creation of its source file. Its
+`stage-g6-baseline-checks.json`/fmt log are retained as intermediate failure
+evidence, not a clean baseline. Focused before/after regression evidence is
+documented by G6-B/C and the Python aggregate regression logs.
+
+## Deployment disposition
+
+The backup/rollback sequence is in `docs/phase-g/G6-DEPLOYMENT.md`. No production
+backup, binary replacement, account/ACL provisioning, restart, identity-policy
+enablement or canary was performed while A/B remain open. A dedicated CI
+Windows account and disposable ACL fixtures can validate the mechanism but
+cannot prove Arasaka ACLs. G6-C's real two-chat lifecycle is blocked by A.
+ChatGPT background autonomous wake and 24-hour unattended operation remain
+unverified. The 121 formal tasks and classification agents remain prohibited.

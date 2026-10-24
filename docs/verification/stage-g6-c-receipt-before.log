@@ -1,0 +1,25 @@
+    Blocking waiting for file lock on artifact directory
+   Compiling coord v0.4.1 (D:\project\coord)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 28.16s
+     Running tests\agent_progress.rs (target\debug\deps\agent_progress-b2f04fa9f2149719.exe)
+
+running 2 tests
+
+thread 'progress_receipt_replay_cannot_change_attempt' (39216) panicked at tests\agent_progress.rs:273:5:
+assertion failed: daemon.request("scheduler/progress", wrong_attempt).get("error").is_some()
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+thread 'extension_receipt_replay_cannot_change_identity_or_attempt' (16044) panicked at tests\agent_progress.rs:294:9:
+assertion failed: daemon.request("scheduler/extend_progress", forged).get("error").is_some()
+test extension_receipt_replay_cannot_change_identity_or_attempt ... FAILED
+test progress_receipt_replay_cannot_change_attempt ... FAILED
+
+failures:
+
+failures:
+    extension_receipt_replay_cannot_change_identity_or_attempt
+    progress_receipt_replay_cannot_change_attempt
+
+test result: FAILED. 0 passed; 2 failed; 0 ignored; 0 measured; 4 filtered out; finished in 0.54s
+
+error: test failed, to rerun pass `--test agent_progress`

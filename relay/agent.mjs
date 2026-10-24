@@ -1,6 +1,6 @@
 import { createConnection, isIP } from 'node:net';
-import { readFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
+import { readFile, stat } from 'node:fs/promises';
+import { isAbsolute, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   MAX_FRAME_BYTES,
@@ -12,6 +12,7 @@ import {
   redactForeignLeaseTokens,
   validateRpcRequest,
 } from './protocol.mjs';
+import identity from './identity.cjs';
 
 function log(event, fields = {}) {
   process.stdout.write(`${JSON.stringify({ time: new Date().toISOString(), component: 'coord-relay-agent', event, ...fields })}\n`);
@@ -90,6 +91,7 @@ export async function createAgent(options = {}) {
     reconnectMaxMs: options.reconnectMaxMs ?? 30_000,
     coordTimeoutMs: options.coordTimeoutMs ?? 8_000,
     maxInflight: options.maxInflight ?? 4,
+    identityPolicy: options.identityPolicy ?? await identity.loadPolicy(options.identityPolicyFile),
   };
   if (options.secretFile) config.secret = (await readFile(options.secretFile, 'utf8')).trim();
   if (typeof config.secret !== 'string' || !/^[0-9a-f]{64}$/i.test(config.secret)) {
@@ -101,6 +103,14 @@ export async function createAgent(options = {}) {
   const coordUrl = new URL(config.coordUrl);
   if (coordUrl.protocol !== 'http:' || coordUrl.hostname !== '127.0.0.1' || coordUrl.pathname !== '/') {
     throw new Error('coordUrl must use the local IPv4 JSON-RPC endpoint');
+  }
+  if (options.coordAuthKeyFile !== undefined) {
+    if (typeof options.coordAuthKeyFile !== 'string' || !isAbsolute(options.coordAuthKeyFile)) {
+      throw new Error('coordAuthKeyFile must be an absolute protected file path');
+    }
+    if ((await stat(options.coordAuthKeyFile)).size > 128) throw new Error('coord RPC key file is too large');
+    config.coordAuthKey = (await readFile(options.coordAuthKeyFile, 'utf8')).trim();
+    if (!/^[0-9a-f]{64}$/i.test(config.coordAuthKey)) throw new Error('coord RPC key must be a 32-byte hex secret');
   }
   if (!Number.isInteger(config.maxInflight) || config.maxInflight < 1 || config.maxInflight > 4) throw new Error('maxInflight must be 1..4');
   if (!Number.isInteger(config.coordTimeoutMs) || config.coordTimeoutMs < 100 || config.coordTimeoutMs > 60_000) throw new Error('coordTimeoutMs must be 100..60000');
@@ -231,8 +241,9 @@ class RelayAgent {
   }
 
   async handleCall(socket, message) {
-    const request = { requestId: message.requestId, method: message.method, params: message.params };
-    const validation = validateRpcRequest(request);
+    const request = { requestId: message.requestId, method: message.method, params: message.params,
+      ...(message.identity ? { identity: message.identity } : {}) };
+    const validation = validateRpcRequest(request, this.config.identityPolicy);
     if (!validation.ok) {
       writeFrame(socket, { type: 'result', requestId: message.requestId, outcome: { state: 'not_dispatched', code: validation.code } });
       return;
@@ -261,6 +272,40 @@ class RelayAgent {
   }
 
   async callCoord(request, shutdownSignal) {
+    const policy = this.config.identityPolicy;
+    const auth = identity.verifyRequest(request, policy);
+    if (!auth.ok) return { state: 'not_dispatched', code: auth.code };
+    if (policy) {
+      if (!request.identity && request.method === 'scheduler/claim' && !request.params.batch_id) {
+        return { state: 'not_dispatched', code: 'identity_batch_required' };
+      }
+      if (!request.identity && identity.protectedBatch(policy, request.params.batch_id)) {
+        return { state: 'not_dispatched', code: 'identity_batch_denied' };
+      }
+      if (request.params.id && request.method !== 'agents/heartbeat') {
+        // batch_id is immutable in coord. Resolve the exact task on the trusted
+        // loopback endpoint before allowing a scoped read or fenced mutation.
+        const checked = await this.dispatchCoord({ requestId: request.requestId, method: 'tasks/get', params: { id: request.params.id } }, shutdownSignal);
+        if (checked.state !== 'ok') return { state: 'not_dispatched', code: 'identity_task_lookup_failed' };
+        const task = checked.response.result;
+        if ((request.identity && task?.batch_id !== auth.batchId)
+            || (!request.identity && identity.protectedBatch(policy, task?.batch_id))) {
+          return { state: 'not_dispatched', code: 'identity_batch_denied' };
+        }
+      }
+      const fresh = identity.verifyRequest(request, policy);
+      if (!fresh.ok) return { state: 'not_dispatched', code: fresh.code };
+    }
+    const outcome = await this.dispatchCoord(request, shutdownSignal);
+    if (policy && !request.identity && request.method === 'tasks/list' && outcome.state === 'ok') {
+      const result = outcome.response.result;
+      if (!Array.isArray(result)) return { state: 'uncertain', code: 'invalid_coord_response' };
+      outcome.response.result = result.filter(task => !identity.protectedBatch(policy, task.batch_id));
+    }
+    return outcome;
+  }
+
+  async dispatchCoord(request, shutdownSignal) {
     const body = JSON.stringify({ jsonrpc: '2.0', id: request.requestId, method: request.method, params: request.params });
     if (Buffer.byteLength(body) > MAX_REQUEST_BYTES) return { state: 'not_dispatched', code: 'request_too_large' };
     const abort = AbortSignal.any([AbortSignal.timeout(this.config.coordTimeoutMs), shutdownSignal]);
@@ -268,9 +313,11 @@ class RelayAgent {
     try {
       response = await fetch(this.config.coordUrl, {
         method: 'POST',
-        headers: { 'content-type': 'application/json' },
+        headers: { 'content-type': 'application/json',
+          ...(this.config.coordAuthKey ? { authorization: `Bearer ${this.config.coordAuthKey}` } : {}) },
         body,
         signal: abort,
+        redirect: 'error',
       });
     } catch {
       return { state: 'uncertain', code: 'coord_outcome_unknown' };
@@ -290,7 +337,8 @@ class RelayAgent {
     if (Object.hasOwn(payload, 'error')) {
       return { state: 'rpc_error', error: { code: payload.error.code, message: String(payload.error.message).slice(0, 512) } };
     }
-    const sanitized = redactForeignLeaseTokens(payload.result);
+    const readOnlyBound = request.identity && ['tasks/get', 'scheduler/agent_status'].includes(request.method);
+    const sanitized = redactForeignLeaseTokens(payload.result, request.identity?.agent_id, !readOnlyBound);
     if (Buffer.byteLength(JSON.stringify(sanitized)) > MAX_RESPONSE_BYTES) {
       return { state: 'uncertain', code: 'coord_response_too_large' };
     }

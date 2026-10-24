@@ -35,12 +35,16 @@ impl Client {
             method,
             params,
         };
-        let resp: Resp = self
-            .http
-            .post(&self.url)
+        let mut request = self.http.post(&self.url);
+        if let Some(key) = coord::core::action_runner::client_management_key(&self.url)? {
+            request = request.bearer_auth(key);
+        }
+        let resp: Resp = request
             .json(&body)
             .send()
             .with_context(|| format!("POST {}", self.url))?
+            .error_for_status()
+            .context("management RPC HTTP status")?
             .json()
             .context("decode response")?;
         if resp.jsonrpc.as_deref() != Some("2.0") || resp.id.as_ref() != Some(&Value::from(1)) {

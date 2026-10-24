@@ -1,0 +1,66 @@
+{
+    "processes":  {
+                      "ProcessId":  5368,
+                      "ExecutablePath":  "C:\\ProgramData\\coord\\bin\\coord.exe"
+                  },
+    "servy":  [
+                  {
+                      "status":  "Service status for \u0027coord\u0027: Running",
+                      "name":  "coord",
+                      "exit":  0
+                  },
+                  {
+                      "status":  "Service status for \u0027CoordRelayAgent\u0027: Running",
+                      "name":  "CoordRelayAgent",
+                      "exit":  0
+                  }
+              ],
+    "services":  [
+                     {
+                         "Name":  "coord",
+                         "State":  "Running",
+                         "StartMode":  "Auto",
+                         "StartName":  "NT AUTHORITY\\LocalService",
+                         "ProcessId":  5072
+                     },
+                     {
+                         "Name":  "Servy",
+                         "State":  "Running",
+                         "StartMode":  "Auto",
+                         "StartName":  "LocalSystem",
+                         "ProcessId":  3224
+                     },
+                     {
+                         "Name":  "CoordRelayAgent",
+                         "State":  "Running",
+                         "StartMode":  "Auto",
+                         "StartName":  "NT AUTHORITY\\LocalService",
+                         "ProcessId":  3084
+                     }
+                 ],
+    "pending_priority_counts":  [
+                                    {
+                                        "priority":  "urgent",
+                                        "count":  0,
+                                        "rpc_error":  false
+                                    },
+                                    {
+                                        "priority":  "high",
+                                        "count":  0,
+                                        "rpc_error":  false
+                                    }
+                                ],
+    "actions_config_names_present":  [
+
+                                     ],
+    "observed_at":  "2026-10-24T09:56:11.3982344Z",
+    "listeners":  {
+                      "LocalAddress":  "127.0.0.1",
+                      "LocalPort":  7777,
+                      "OwningProcess":  5368
+                  },
+    "hashes":  {
+                   "Path":  "C:\\ProgramData\\coord\\bin\\coord.exe",
+                   "Hash":  "B58D3620B1B6DE8035BFCB97E99F2E4FE654F48B1CB5719EF9FCA013F5652E0D"
+               }
+}

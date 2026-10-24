@@ -63,6 +63,25 @@ fn action_child_hang() {
     std::thread::sleep(std::time::Duration::from_secs(10));
 }
 
+#[test]
+#[ignore = "invoked by the isolated completion-action canary"]
+fn action_child_requires_kernel_job_before_first_effect() {
+    use windows_sys::Win32::System::JobObjects::IsProcessInJob;
+    use windows_sys::Win32::System::Threading::GetCurrentProcess;
+    let mut contained = 0;
+    unsafe {
+        assert_ne!(
+            IsProcessInJob(GetCurrentProcess(), std::ptr::null_mut(), &mut contained),
+            0
+        );
+    }
+    assert_ne!(
+        contained, 0,
+        "action began executing before Job Object containment"
+    );
+    fs::write("contained-first-effect.txt", b"contained").unwrap();
+}
+
 struct Harness {
     root: PathBuf,
     db_path: PathBuf,
@@ -112,6 +131,7 @@ impl Harness {
             &registry_path,
             serde_json::to_vec(&json!({
                 "version": 1,
+                "isolated_in_process": true,
                 "allowed_root": trusted,
                 "profiles": { "canary": profile },
             }))
@@ -696,4 +716,32 @@ fn isolated_daemon_runs_background_completion_action_end_to_end() {
     }
     let task = daemon.rpc("tasks/get", json!({"id":task["id"]}));
     assert_eq!(task["state"], "completed");
+}
+
+#[test]
+fn native_child_is_contained_before_its_first_effect() {
+    let harness = Harness::new(
+        "action_child_requires_kernel_job_before_first_effect",
+        true,
+        1,
+        2000,
+        32768,
+        false,
+        false,
+    );
+    let batch = harness.create_batch(None);
+    harness.add_task(batch, "one");
+    let task = harness.claim(batch, "A0");
+    harness.complete(&task, json!({"ok":true}));
+    let job = harness
+        .store()
+        .begin_action("contained-worker")
+        .unwrap()
+        .unwrap();
+    let outcome = harness.registry.execute(&job);
+    assert_eq!(outcome.state, ActionState::Succeeded);
+    assert_eq!(
+        fs::read(harness.root.join("trusted/contained-first-effect.txt")).unwrap(),
+        b"contained"
+    );
 }

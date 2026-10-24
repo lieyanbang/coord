@@ -1,0 +1,7 @@
+{
+  "version": 1,
+  "enabled": false,
+  "signing_key_file": "C:\\ProgramData\\coord\\identity\\request-signing.key",
+  "legacy_client_sha256": [],
+  "bindings": []
+}

@@ -17,6 +17,8 @@ const {
   validateToolInput,
 } = require('./index.cjs');
 const { createCoordOAuthServer } = require('./oauth.cjs');
+const identity = require('../identity.cjs');
+const { fixturePolicy, fixtureAuth } = require('../identity-test-fixture.cjs');
 
 const ACCESS_TOKEN = 'coord-test-access-token';
 const TASK_ID = '123e4567-e89b-42d3-a456-426614174000';
@@ -31,7 +33,7 @@ after(async () => {
   await Promise.all([...tempDirs].map((dir) => fs.rm(dir, { recursive: true, force: true })));
 });
 
-function fakeOAuth() {
+function fakeOAuth(authInfo) {
   return {
     async init() {},
     setCors(res) {
@@ -45,7 +47,7 @@ function fakeOAuth() {
     },
     async authenticateRequest(req) {
       return req.get('authorization') === `Bearer ${ACCESS_TOKEN}`
-        ? { scope: 'coord', resource: 'https://example.test/coord/' }
+        ? authInfo || { scope: 'coord', resource: 'https://example.test/coord/' }
         : null;
     },
   };
@@ -54,7 +56,7 @@ function fakeOAuth() {
 async function createFixture(t, options = {}) {
   const app = express();
   const calls = [];
-  const oauth = fakeOAuth();
+  const oauth = fakeOAuth(options.authInfo);
   const sidecar = {
     async call(rpc) {
       calls.push(rpc);
@@ -76,6 +78,7 @@ async function createFixture(t, options = {}) {
     oauthModule: { installOAuthRoutes() {} },
     sidecar,
     skipOAuthInit: true,
+    identityPolicy: options.identityPolicy,
   });
   const server = http.createServer(app);
   await new Promise((resolve, reject) => {
@@ -415,4 +418,45 @@ test('SidecarClient caps in-flight calls and rejects oversized requests before d
 
   await assert.rejects(client.client.call(sidecarRpc({ filler: 'x'.repeat(MAX_BODY_BYTES) })), (error) => error.state === 'not_dispatched' && error.code === 'request_too_large');
   assert.equal(dispatched, 1);
+});
+
+test('administrator-pinned OAuth binding supplies identity; MCP inputs cannot choose another agent or batch', async t => {
+  const policy = fixturePolicy(BATCH_ID);
+  const fixturesByAgent = await Promise.all([0, 1].map(i => createFixture(t, {
+    authInfo: fixtureAuth(i), identityPolicy: policy,
+    onCall: call => ({ claimed_by: call.params.agent_id, lease_token: LEASE_TOKEN }),
+  })));
+  for (let i = 0; i < fixturesByAgent.length; i++) {
+    const f = fixturesByAgent[i];
+    const request = rpc('tools/call', 1, { name: 'coord_claim_next', arguments: { batch_id: BATCH_ID, request_id: crypto.randomUUID() } });
+    const accepted = parseJsonResponse((await postMcp(f, request)).text).result;
+    assert.equal(accepted.isError, undefined);
+    assert.equal(JSON.parse(accepted.content[0].text).claimed_by, `A${i}`);
+    assert.equal(identity.verifyRequest(f.calls[0], policy).ok, true);
+    const visible = accepted.content[0].text;
+    assert.doesNotMatch(visible, /tokenSha256|proof|binding_id|clientId/);
+    const count = f.calls.length;
+    const wrongBatch = await postMcp(f, rpc('tools/call', 2, { name: 'coord_claim_next', arguments: { batch_id: TASK_ID, request_id: crypto.randomUUID() } }));
+    assert.equal(parseJsonResponse(wrongBatch.text).result.isError, true);
+    const wrongAgent = await postMcp(f, rpc('tools/call', 3, { name: 'coord_claim_next', arguments: { batch_id: BATCH_ID, request_id: crypto.randomUUID(), agent_id: `A${1-i}` } }));
+    assert.equal(parseJsonResponse(wrongAgent.text).result.isError, true);
+    const globalList = await postMcp(f, rpc('tools/call', 4, { name: 'coord_tasks_list', arguments: {} }));
+    assert.equal(parseJsonResponse(globalList.text).result.isError, true);
+    assert.equal(f.calls.length, count);
+  }
+});
+
+test('enabled identity policy rejects unknown, expired and cross-token OAuth contexts while preserving pinned legacy', async t => {
+  const policy = fixturePolicy(BATCH_ID);
+  for (const authInfo of [{ clientId: 'unknown' }, { ...fixtureAuth(0), tokenSha256: identity.hash('token-1') }, { ...fixtureAuth(0), expiresAt: Date.now() - 1 }]) {
+    const f = await createFixture(t, { authInfo, identityPolicy: policy });
+    const response = await postMcp(f, rpc('tools/list', 1));
+    assert.equal(response.response.status, 403);
+    assert.equal(f.calls.length, 0);
+  }
+  const legacy = await createFixture(t, { authInfo: { clientId: 'legacy-client' }, identityPolicy: policy });
+  const response = await postMcp(legacy, rpc('tools/call', 1, { name: 'coord_claim_task', arguments: { id: TASK_ID, request_id: crypto.randomUUID() } }));
+  assert.equal(parseJsonResponse(response.text).result.isError, undefined);
+  assert.equal(legacy.calls[0].params.agentId, 'coord-relay-agent');
+  assert.equal(legacy.calls[0].identity, undefined);
 });

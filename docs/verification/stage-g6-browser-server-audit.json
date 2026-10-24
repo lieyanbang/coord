@@ -1,0 +1,102 @@
+{
+  "observed_at": "2026-10-24T10:16:48.024898+00:00",
+  "mode": "direct SSH read-only; no token values, request bodies, ids or query strings emitted",
+  "relay_journal": {
+    "rows_by_method_state_code": [
+      {
+        "method": "tasks/list",
+        "state": "completed",
+        "code": "",
+        "count": 4
+      },
+      {
+        "method": "tasks/list",
+        "state": "dispatched",
+        "code": "",
+        "count": 4
+      }
+    ],
+    "first_at": "2026-10-24T10:01:35.584Z",
+    "last_at": "2026-10-24T10:09:31.032Z",
+    "malformed_lines": 0
+  },
+  "oauth_store_keys": [
+    "accessTokens",
+    "authorizationRequests",
+    "clients",
+    "codes",
+    "refreshTokens",
+    "version"
+  ],
+  "clients_count": 2,
+  "accessTokens_count": 16,
+  "access_token_client_digests": [
+    "eeb595ffaeec3cc157243f766c320f4133f1d9a6af05ad21ee8fb373850122ba"
+  ],
+  "access_record_fields": [
+    "audience",
+    "clientId",
+    "expiresAt",
+    "issuedAt",
+    "issuer",
+    "resource",
+    "scope"
+  ],
+  "refreshTokens_count": 16,
+  "openresty": [
+    {
+      "source": "/usr/local/openresty/nginx/logs/access.log",
+      "counts": [
+        {
+          "method": "GET",
+          "path": "/app/CoordMCP/",
+          "status": 401,
+          "count": 1
+        },
+        {
+          "method": "GET",
+          "path": "/app/CoordMCP/.well-known/oauth-authorization-server",
+          "status": 200,
+          "count": 1
+        },
+        {
+          "method": "GET",
+          "path": "/app/CoordMCP/.well-known/oauth-protected-resource/mcp",
+          "status": 200,
+          "count": 1
+        },
+        {
+          "method": "GET",
+          "path": "/app/CoordMCP/oauth/authorize",
+          "status": 200,
+          "count": 1
+        },
+        {
+          "method": "POST",
+          "path": "/app/CoordMCP",
+          "status": 308,
+          "count": 4
+        },
+        {
+          "method": "POST",
+          "path": "/app/CoordMCP/",
+          "status": 200,
+          "count": 4
+        },
+        {
+          "method": "POST",
+          "path": "/app/CoordMCP/oauth/authorize",
+          "status": 302,
+          "count": 1
+        },
+        {
+          "method": "POST",
+          "path": "/app/CoordMCP/oauth/token",
+          "status": 200,
+          "count": 2
+        }
+      ],
+      "rows": 15
+    }
+  ]
+}

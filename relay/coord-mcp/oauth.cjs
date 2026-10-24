@@ -441,7 +441,7 @@ function createCoordOAuthServer(BaseOAuthServer, config, options = {}) {
     async validateAccessToken(rawToken, requiredScope = COORD_SCOPE) {
       if (requiredScope !== COORD_SCOPE) return null;
       const record = await super.validateAccessToken(rawToken, INTERNAL_SCOPE);
-      return record ? { ...record, scope: toPublicScope(record.scope) } : null;
+      return record ? { ...record, scope: toPublicScope(record.scope), tokenSha256: crypto.createHash('sha256').update(rawToken).digest('hex') } : null;
     }
 
     async authenticateRequest(req) {

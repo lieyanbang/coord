@@ -16,6 +16,7 @@ pub struct Daemon {
     pub http: reqwest::blocking::Client,
     port: u16,
     actions_config: Option<std::path::PathBuf>,
+    rpc_key: Option<String>,
 }
 impl Daemon {
     pub fn new() -> Self {
@@ -31,6 +32,16 @@ impl Daemon {
         let root = std::env::temp_dir().join(format!("coord-e2e-{}", uuid::Uuid::new_v4()));
         std::fs::create_dir_all(&root).unwrap();
         let child = Self::spawn(port, &root, actions_config.as_deref());
+        let rpc_key = actions_config
+            .as_ref()
+            .and_then(|path| std::fs::read(path).ok())
+            .and_then(|bytes| serde_json::from_slice::<Value>(&bytes).ok())
+            .and_then(|registry| {
+                registry["external_runner"]["daemon_rpc_key_file"]
+                    .as_str()
+                    .map(str::to_string)
+            })
+            .map(|path| std::fs::read_to_string(path).unwrap().trim().to_string());
         let d = Self {
             root,
             url: format!("http://127.0.0.1:{port}"),
@@ -41,6 +52,7 @@ impl Daemon {
                 .unwrap(),
             port,
             actions_config,
+            rpc_key,
         };
         d.ready();
         d
@@ -91,8 +103,11 @@ impl Daemon {
         self.ready();
     }
     pub fn request(&self, method: &str, params: Value) -> Value {
-        self.http
-            .post(&self.url)
+        let mut request = self.http.post(&self.url);
+        if let Some(key) = &self.rpc_key {
+            request = request.bearer_auth(key);
+        }
+        request
             .json(&json!({"jsonrpc":"2.0","id":1,"method":method,"params":params}))
             .send()
             .unwrap()
@@ -105,7 +120,11 @@ impl Daemon {
         v["result"].clone()
     }
     pub fn cli(&self, args: &[&str]) -> Value {
-        let out = Command::new(binary())
+        let mut command = Command::new(binary());
+        if let Some(key) = &self.rpc_key {
+            command.env("COORD_RPC_AUTH_KEY", key);
+        }
+        let out = command
             .args(["--url", &self.url])
             .args(args)
             .output()
