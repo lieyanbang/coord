@@ -1,0 +1,58 @@
+[
+  {
+    "log": "docs/verification/stage-g6-cihard-fmt.log",
+    "exit": 0,
+    "started": "2026-10-24T10:56:46.6527470Z",
+    "seconds": 0.4101967,
+    "command": "cargo fmt --all -- --check"
+  },
+  {
+    "log": "docs/verification/stage-g6-cihard-clippy.log",
+    "exit": 0,
+    "started": "2026-10-24T10:56:47.1149063Z",
+    "seconds": 0.7114739,
+    "command": "cargo clippy --all-targets --all-features --locked -- -D warnings"
+  },
+  {
+    "log": "docs/verification/stage-g6-cihard-test.log",
+    "exit": 0,
+    "started": "2026-10-24T10:56:47.8291417Z",
+    "seconds": 38.2024571,
+    "command": "cargo test --all-features --locked"
+  },
+  {
+    "log": "docs/verification/stage-g6-cihard-build.log",
+    "exit": 0,
+    "started": "2026-10-24T10:57:26.0339072Z",
+    "seconds": 0.4771326,
+    "command": "cargo build --release --locked"
+  },
+  {
+    "log": "docs/verification/stage-g6-cihard-health-monitor.log",
+    "exit": 0,
+    "started": "2026-10-24T10:57:26.5155899Z",
+    "seconds": 21.7236722,
+    "command": "powershell.exe -NoLogo -NoProfile -File scripts/windows/test-coord-health-monitor.ps1"
+  },
+  {
+    "log": "docs/verification/stage-g6-cihard-relay-tests.log",
+    "exit": 0,
+    "started": "2026-10-24T10:57:48.2513371Z",
+    "seconds": 4.7715263,
+    "command": "node --test relay/relay.test.mjs relay/live-coord.test.mjs"
+  },
+  {
+    "log": "docs/verification/stage-g6-cihard-coord-mcp-tests.log",
+    "exit": 0,
+    "started": "2026-10-24T10:57:53.0251151Z",
+    "seconds": 1.3484631,
+    "command": "npm test --prefix relay/coord-mcp"
+  },
+  {
+    "log": "docs/verification/stage-g6-cihard-phase-g-tools.log",
+    "exit": 0,
+    "started": "2026-10-24T10:57:54.3750643Z",
+    "seconds": 0.1820318,
+    "command": "python -m unittest discover -s scripts/phase_g -p test_phase_g_tools.py -v"
+  }
+]

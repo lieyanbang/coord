@@ -1,0 +1,65 @@
+Command: pwsh -NoProfile -Command <parse script AST; assert all three Stop-Process sites use -Force -Confirm:$false; execute extracted catch/finally against eight mocked scenarios>
+
+PowerShell: 7.6.7
+
+Script SHA256: 503fdcff91dff4f5bf367d90471c952a1610e56a6362cc68e2389f5a08c3b6a9
+
+Exit code: 0
+
+AST: PASS (three forced noninteractive stop sites, no suppressed stop errors)
+
+Extracted original catch: PASS (exception type, message, stage preserved)
+
+Extracted finally scenarios:
+
+case           result summary_state cleanup_error_count job_failed stop_calls
+----           ------ ------------- ------------------- ---------- ----------
+success        PASS   PASS                            0      False          0
+forced-process PASS   PASS                            0      False          1
+account        PASS   FAIL                            1       True          0
+log            PASS   FAIL                            1       True          0
+directory      PASS   FAIL                            1       True          0
+process        PASS   FAIL                            1       True          1
+all            PASS   FAIL                            3       True          0
+prior-failure  PASS   FAIL                            1       True          0
+
+Official source excerpt:
+
+1233:                     if (Platform.IsWindows && !Force)
+1234:                     {
+1235:                         if (!IsProcessOwnedByCurrentUser(process))
+1236:                         {
+1237:                             string message = StringUtil.Format(
+1238:                                         ProcessResources.ConfirmStopProcess,
+1239:                                         SafeGetProcessName(process),
+1240:                                         SafeGetProcessId(process));
+1241: 
+1242:                             // caption: null = default caption
+1243:                             if (!ShouldContinue(message, null, ref _yesToAll, ref _noToAll))
+1244:                                 continue;
+1245:                         }
+1246:                     }
+1247: 
+1248:                     // If the process is svchost stop all the dependent services before killing process
+1249:                     if (string.Equals(SafeGetProcessName(process), "SVCHOST", StringComparison.OrdinalIgnoreCase))
+1250:                     {
+1251:                         StopDependentService(process);
+1252:                     }
+1253: 
+1254:                     if (!process.HasExited)
+1255:                     {
+1256:                         process.Kill();
+1257:                     }
+
+Official documentation excerpt:
+
+> ### -Force
+  
+  Stops the specified processes without prompting for confirmation. By default, `Stop-Process` prompts
+  for confirmation before stopping any process that is not owned by the current user.
+  
+  To find the owner of a process, use the `Get-CimInstance` cmdlet to get a **Win32_Process** object
+
+Earlier cloud result remains FAIL: run 40087182174, artifact 12557307856, nine files. No original crash error or crash cleanup evidence is recoverable from that artifact.
+
+No real account, process, fixture, publication, or production operations were performed. The only writes are this focused verification JSON and log.

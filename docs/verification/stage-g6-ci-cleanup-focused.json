@@ -1,0 +1,110 @@
+{
+  "state": "PASS",
+  "scope": "AST and extracted catch/finally with in-memory mocks; no real account, process, fixture, or publication operation",
+  "command": "pwsh -NoProfile -Command <parse script AST; assert all three Stop-Process sites use -Force -Confirm:$false; execute extracted catch/finally against eight mocked scenarios>",
+  "powershell_version": "7.6.7",
+  "script_sha256": "503fdcff91dff4f5bf367d90471c952a1610e56a6362cc68e2389f5a08c3b6a9",
+  "ast": {
+    "forced_stop_sites": 3,
+    "state": "PASS",
+    "hidden_stop_errors": false
+  },
+  "original_failure_preserved": true,
+  "mocks": [
+    {
+      "case": "success",
+      "result": "PASS",
+      "summary_state": "PASS",
+      "cleanup_error_count": 0,
+      "job_failed": false,
+      "stop_calls": 0
+    },
+    {
+      "case": "forced-process",
+      "result": "PASS",
+      "summary_state": "PASS",
+      "cleanup_error_count": 0,
+      "job_failed": false,
+      "stop_calls": 1
+    },
+    {
+      "case": "account",
+      "result": "PASS",
+      "summary_state": "FAIL",
+      "cleanup_error_count": 1,
+      "job_failed": true,
+      "stop_calls": 0
+    },
+    {
+      "case": "log",
+      "result": "PASS",
+      "summary_state": "FAIL",
+      "cleanup_error_count": 1,
+      "job_failed": true,
+      "stop_calls": 0
+    },
+    {
+      "case": "directory",
+      "result": "PASS",
+      "summary_state": "FAIL",
+      "cleanup_error_count": 1,
+      "job_failed": true,
+      "stop_calls": 0
+    },
+    {
+      "case": "process",
+      "result": "PASS",
+      "summary_state": "FAIL",
+      "cleanup_error_count": 1,
+      "job_failed": true,
+      "stop_calls": 1
+    },
+    {
+      "case": "all",
+      "result": "PASS",
+      "summary_state": "FAIL",
+      "cleanup_error_count": 3,
+      "job_failed": true,
+      "stop_calls": 0
+    },
+    {
+      "case": "prior-failure",
+      "result": "PASS",
+      "summary_state": "FAIL",
+      "cleanup_error_count": 1,
+      "job_failed": true,
+      "stop_calls": 0
+    }
+  ],
+  "source": {
+    "url": "https://raw.githubusercontent.com/PowerShell/PowerShell/v7.4.13/src/Microsoft.PowerShell.Commands.Management/commands/management/Process.cs",
+    "lines": "1233-1257",
+    "behavior": "Windows !Force performs ownership and ShouldContinue checks; Force bypasses those checks and still reaches Process.Kill."
+  },
+  "documentation": {
+    "url": "https://raw.githubusercontent.com/MicrosoftDocs/PowerShell-Docs/main/reference/7.5/Microsoft.PowerShell.Management/Stop-Process.md",
+    "section": "-Force",
+    "behavior": "By default Stop-Process prompts for processes not owned by the current user; Force suppresses that prompt."
+  },
+  "previous_cloud_run": {
+    "artifact_id": "12557307856",
+    "unverified": [
+      "runner-crash",
+      "Job-child-termination",
+      "crash-recovery",
+      "cleanup"
+    ],
+    "state": "FAIL",
+    "verified": [
+      "identity",
+      "acl-policy",
+      "management-RPC-401",
+      "publish-task",
+      "publish-index"
+    ],
+    "run_id": "40087182174",
+    "failure": "Unforced Stop-Process in old finally threw NullReferenceException and masked the original crash error; no summary or crash stderr survived.",
+    "evidence_files": 9
+  },
+  "limitation": "Exact original second-run crash error is unavailable. Actual cross-user stopping and Job cleanup require a new disposable hosted Windows run; no production gate is implied."
+}

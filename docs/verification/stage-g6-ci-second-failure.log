@@ -1,0 +1,22 @@
+Run pwsh -NoProfile -File scripts/windows/test-action-runner.ps1 -BinaryDirectory target/release -EvidenceDirectory docs/verification/stage-g6-low-privilege
+2026-10-24T10:51:55.2678911Z pwsh -NoProfile -File scripts/windows/test-action-runner.ps1 -BinaryDirectory target/release -EvidenceDirectory docs/verification/stage-g6-low-privilege
+2026-10-24T10:51:55.2719964Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+2026-10-24T10:51:55.2720369Z env:
+2026-10-24T10:51:55.2720630Z   CARGO_TERM_COLOR: always
+2026-10-24T10:51:55.2720915Z   RUSTFLAGS: -D warnings
+2026-10-24T10:51:55.2721222Z   CARGO_HOME: C:\Users\runneradmin\.cargo
+2026-10-24T10:51:55.2721541Z   CARGO_INCREMENTAL: 0
+2026-10-24T10:51:55.2721812Z   CACHE_ON_FAILURE: false
+2026-10-24T10:51:55.2722193Z   pythonLocation: C:\hostedtoolcache\windows\Python\3.12.10\x64
+2026-10-24T10:51:55.2722714Z   PKG_CONFIG_PATH: C:\hostedtoolcache\windows\Python\3.12.10\x64/lib/pkgconfig
+2026-10-24T10:51:55.2723299Z   Python_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.12.10\x64
+2026-10-24T10:51:55.2723763Z   Python2_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.12.10\x64
+2026-10-24T10:51:55.2724221Z   Python3_ROOT_DIR: C:\hostedtoolcache\windows\Python\3.12.10\x64
+2026-10-24T10:51:55.2724591Z ##[endgroup]
+2026-10-24T10:52:13.6539483Z Stop-Process: D:\a\coord\coord\scripts\windows\test-action-runner.ps1:169
+2026-10-24T10:52:13.6540662Z Line |
+2026-10-24T10:52:13.6541938Z  169 |  … asExited) { Stop-Process -Id $runnerProcess.Id -ErrorAction SilentlyC …
+2026-10-24T10:52:13.6542883Z      |                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+2026-10-24T10:52:13.6543726Z      | Object reference not set to an instance of an object.
+2026-10-24T10:52:18.7795156Z ##[error]Process completed with exit code 1.
+2026-10-24T10:52:18.7968531Z

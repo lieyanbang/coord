@@ -48,7 +48,11 @@ function Run-AsRunner([string]$Label, [string]$ExtraArguments, [int]$ExpectedExi
     $stderrPath = Assert-LocalTarget (Join-Path $testRoot ('logs/' + $Label + '.stderr.log'))
     $arguments = '--registry "' + $registryPath + '" ' + $ExtraArguments
     $process = Start-Process -FilePath $runnerExe -ArgumentList $arguments -WorkingDirectory $testRoot -Credential $credential -WindowStyle Hidden -PassThru -RedirectStandardOutput $stdoutPath -RedirectStandardError $stderrPath
-    if (-not $process.WaitForExit(45000)) { Stop-Process -Id $process.Id; throw 'Disposable runner process timeout.' }
+    if (-not $process.WaitForExit(45000)) {
+        Stop-Process -Id $process.Id -Force -Confirm:$false
+        if (-not $process.WaitForExit(10000)) { throw 'Disposable timed-out runner did not exit.' }
+        throw 'Disposable runner process timeout.'
+    }
     $process.Refresh()
     Copy-Item -LiteralPath $stderrPath -Destination (Join-Path $evidenceRoot ($Label + '.stderr.log'))
     $script:summary.checks += @{ name = $Label; exit_code = $process.ExitCode; expected_exit_code = $ExpectedExit }
@@ -142,8 +146,10 @@ try {
     if (-not $childProcess) { throw 'Pinned non-idempotent child never started.' }
     $crashAction = (Rpc 'actions/status' @{ batch_id = $crashBatch.id }).actions | Select-Object -First 1
     if ($crashAction.state -ne 'running') { throw 'Crash fixture action is not running.' }
-    Stop-Process -Id $runnerProcess.Id
-    $runnerProcess.WaitForExit()
+    # -Credential made this exact owned PID a different user's process. Force
+    # skips PowerShell's owner/interactive-confirmation path; Kill still runs.
+    Stop-Process -Id $runnerProcess.Id -Force -Confirm:$false
+    if (-not $runnerProcess.WaitForExit(10000)) { throw 'Disposable crash runner did not exit.' }
     foreach ($attempt in 1..50) { if (-not (Get-Process -Id $childProcess.ProcessId -ErrorAction SilentlyContinue)) { break }; Start-Sleep -Milliseconds 100 }
     if (Get-Process -Id $childProcess.ProcessId -ErrorAction SilentlyContinue) { throw 'Runner crash failed to kill its Job Object child.' }
     $expirePath = Join-Path $testRoot 'config/expire-fixture-lease.py'
@@ -164,24 +170,54 @@ with sqlite3.connect(sys.argv[1]) as db:
     $summary.phase = 'completed'
 } catch {
     $summary.failed_phase = $summary.phase
+    $summary.failure = @{ phase = $summary.phase; error = $_.Exception.Message; exception_type = $_.Exception.GetType().FullName }
     throw
 } finally {
-    if ($runnerProcess -and -not $runnerProcess.HasExited) { Stop-Process -Id $runnerProcess.Id -ErrorAction SilentlyContinue }
-    if ($daemonProcess -and -not $daemonProcess.HasExited) { Stop-Process -Id $daemonProcess.Id -ErrorAction SilentlyContinue; $daemonProcess.WaitForExit() }
-    if ($createdSid) {
-        $currentUser = Get-LocalUser -Name $userName -ErrorAction SilentlyContinue
-        if ($currentUser -and $currentUser.SID.Value -eq $createdSid -and $userName.StartsWith('coordT')) { Remove-LocalUser -Name $userName; $summary.disposable_account_removed = -not (Get-LocalUser -Name $userName -ErrorAction SilentlyContinue) }
+    $cleanupFailures = [Collections.Generic.List[object]]::new()
+    function Add-CleanupFailure([string]$Phase, [System.Management.Automation.ErrorRecord]$Failure) {
+        $script:cleanupFailures.Add(@{ phase = $Phase; error = $Failure.Exception.Message })
+        $script:summary.state = 'FAIL'
+        if (-not $script:summary.failed_phase) { $script:summary.failed_phase = $Phase }
     }
-    # Preserve evidence outside fixture before removing only this exact random
-    # directory. Never enumerate and pass paths to another shell for deletion.
-    if (Test-Path -LiteralPath (Join-Path $testRoot 'logs/daemon.stderr.log')) { Copy-Item -LiteralPath (Join-Path $testRoot 'logs/daemon.stderr.log') -Destination (Join-Path $evidenceRoot 'daemon.stderr.log') }
-    $resolvedRoot = [IO.Path]::GetFullPath($testRoot)
-    $resolvedParent = [IO.Path]::GetDirectoryName($resolvedRoot)
     try {
-        if (-not $resolvedParent.Equals($systemVolumeRoot, [StringComparison]::OrdinalIgnoreCase) -or [IO.Path]::GetFileName($resolvedRoot) -notmatch '^coord-g6-[0-9a-f]{32}$') { throw 'Refusing cleanup outside the exact verified system-volume fixture root.' }
-        if (Test-Path -LiteralPath $resolvedRoot) { Remove-Item -LiteralPath $resolvedRoot -Recurse -Force }
-        $summary.disposable_fixture_removed = -not (Test-Path -LiteralPath $resolvedRoot)
+        foreach ($ownedProcess in @($runnerProcess, $daemonProcess)) {
+            try {
+                if ($ownedProcess -and -not $ownedProcess.HasExited) {
+                    Stop-Process -Id $ownedProcess.Id -Force -Confirm:$false
+                    if (-not $ownedProcess.WaitForExit(10000)) { throw 'Disposable process did not exit during cleanup.' }
+                }
+            } catch { Add-CleanupFailure 'cleanup-stop-process' $_ }
+        }
+        if ($createdSid) {
+            try {
+                $currentUser = Get-LocalUser -Name $userName -ErrorAction SilentlyContinue
+                if ($currentUser) {
+                    if ($currentUser.SID.Value -ne $createdSid -or $userName -notmatch '^coordT[0-9a-f]{10}$') { throw 'Refusing account cleanup after disposable identity mismatch.' }
+                    Remove-LocalUser -SID $createdSid
+                }
+                $summary.disposable_account_removed = -not (Get-LocalUser -SID $createdSid -ErrorAction SilentlyContinue)
+                if (-not $summary.disposable_account_removed) { throw 'Disposable account remains after cleanup.' }
+            } catch { Add-CleanupFailure 'cleanup-remove-account' $_ }
+        }
+        # Preserve both failure sources before deleting the exact fixture. Each
+        # cleanup step remains independent so one error cannot suppress summary.
+        foreach ($logName in @('daemon.stderr.log', 'crash-runner.stderr.log')) {
+            try {
+                $source = Join-Path $testRoot ('logs/' + $logName)
+                if (Test-Path -LiteralPath $source) { Copy-Item -LiteralPath $source -Destination (Join-Path $evidenceRoot $logName) }
+            } catch { Add-CleanupFailure ('cleanup-save-' + $logName) $_ }
+        }
+        try {
+            $resolvedRoot = [IO.Path]::GetFullPath($testRoot)
+            $resolvedParent = [IO.Path]::GetDirectoryName($resolvedRoot)
+            if (-not $resolvedParent.Equals($systemVolumeRoot, [StringComparison]::OrdinalIgnoreCase) -or [IO.Path]::GetFileName($resolvedRoot) -notmatch '^coord-g6-[0-9a-f]{32}$') { throw 'Refusing cleanup outside the exact verified system-volume fixture root.' }
+            if (Test-Path -LiteralPath $resolvedRoot) { Remove-Item -LiteralPath $resolvedRoot -Recurse -Force }
+            $summary.disposable_fixture_removed = -not (Test-Path -LiteralPath $resolvedRoot)
+            if (-not $summary.disposable_fixture_removed) { throw 'Disposable fixture remains after cleanup.' }
+        } catch { Add-CleanupFailure 'cleanup-remove-fixture' $_ }
     } finally {
+        $summary.cleanup_errors = @($cleanupFailures.ToArray())
         $summary | ConvertTo-Json -Depth 30 | Set-Content -LiteralPath (Join-Path $evidenceRoot 'summary.json') -Encoding utf8NoBOM
     }
+    if ($cleanupFailures.Count -gt 0) { throw ('Disposable cleanup failed: ' + (($cleanupFailures | ForEach-Object { $_.phase }) -join ', ')) }
 }

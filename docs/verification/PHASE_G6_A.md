@@ -44,6 +44,12 @@ The existing plugin settings exposed one primary connected account and a
 "connect another account" option; a globally selectable account is not a
 protected per-conversation credential.
 
+The retained probe conversations are
+[A](https://chatgpt.com/c/6adc81f8-d6fc-83ec-a347-1f5e22910047) and
+[B](https://chatgpt.com/c/6adc82c9-4b6c-83ec-b273-477e77ade133).
+They are read-only acceptance probes, not classification workers; their UI
+text must be assessed together with the server audit below.
+
 A second read-only SSH snapshot at 2026-10-24T10:06:08Z exited 0:
 `stage-g6-oauth-after-browser.json` reports two clients, 15 access-token and 15
 refresh-token records, one live access token, and the same single client hash
