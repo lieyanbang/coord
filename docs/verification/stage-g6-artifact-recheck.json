@@ -1,0 +1,25 @@
+[
+  {
+    "exit": 0,
+    "command": "coord.exe --version"
+  },
+  {
+    "exit": 0,
+    "command": "coord-action-runner.exe --help"
+  },
+  {
+    "exit": 0,
+    "command": "coord-emote-action.exe --help"
+  },
+  {
+    "binary_overrides": [
+      "COORD_TEST_RUNNER_BIN",
+      "COORD_TEST_BIN",
+      "COORD_TEST_PUBLISHER_BIN"
+    ],
+    "command": "cargo test --locked --test action_runner --test agent_actions --test agent_progress",
+    "started": "2026-10-24T16:39:00.2285313Z",
+    "seconds": 5.4384973,
+    "exit": 0
+  }
+]

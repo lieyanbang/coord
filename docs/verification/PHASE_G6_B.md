@@ -1,7 +1,7 @@
 # Phase G6-B — Independent Action Runner and native publication
 
-Result: **PARTIAL**. Local Windows source/protocol/native tests pass. The
-dedicated-account acceptance script is ready for disposable Windows Actions;
+Result: **PARTIAL**. Local Windows source/protocol/native tests and the real
+dedicated-standard-account rehearsal on disposable Windows Actions pass;
 actual production service identity, effective ACLs and RPC denial are **NOT_RUN**.
 Production completion execution remains disabled. No production account, ACL,
 service, database, Canary or formal classification task was changed.
@@ -109,8 +109,20 @@ It preserves redacted identity/ACL/process/action evidence in the given output
 directory, removes its exact random account by verified SID and cleans only its
 verified temporary root. This test does not establish six production Agent
 workspace principals or the real Servy service-logon policy. At this report's
-local-source checkpoint the cloud run is **NOT_RUN**; a pending run must not be
-reported as PASS. The final G6-D evidence records any later actual run.
+final cloud checkpoint, run
+[40088013915](https://github.com/lieyanbang/coord/actions/runs/40088013915)
+on `7d08012a171f804edf3b8588b77c72720e76393d` is **PASS**. The downloaded,
+hash-verified `stage-g6-ci-success/summary.json` records five zero-exit checks:
+identity, ACL policy, task publish, batch index and crash recovery. The actual
+runner SID differs from the daemon SID and reports `privileged: false`;
+management RPC rejects missing/broker credentials with 401/401. Both publish
+actions succeed at attempt 1. Killing the cross-user runner terminates its Job
+child; after fixture-only forced expiry the action is `uncertain`, attempt 1,
+and the task remains completed. Account and directory removal are both true
+with no cleanup errors. The first two failed runs and their limitations remain
+in G6-D; the final script preserves primary errors and both stderr sources,
+uses explicit forced stopping only for fixture-owned PIDs and fails on cleanup
+errors. This is real disposable-host evidence, not Arasaka production acceptance.
 
 ## Production release gate and recovery
 

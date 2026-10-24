@@ -1,0 +1,67 @@
+coord 0.4.1
+Usage: coord-action-runner.exe [OPTIONS] --registry <REGISTRY>
+
+Options:
+      --registry <REGISTRY>    
+      --once                   
+      --check-identity         
+      --probe-acl <PROBE_ACL>  
+  -h, --help                   Print help
+Usage: coord-emote-action.exe --root <ROOT>
+
+Options:
+      --root <ROOT>  
+  -h, --help         Print help
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.10s
+     Running tests\action_runner.rs (target\debug\deps\action_runner-efe9248bdb25c11b.exe)
+
+running 10 tests
+test malicious_result_paths_and_unknown_fields_never_publish ... ok
+test broker_never_forwards_arbitrary_task_payload_or_secret_sentinels ... ok
+test hash_pin_is_rechecked_after_registry_load ... ok
+test native_runner_rejects_the_daemon_identity_before_network_access ... ok
+test broker_rechecks_current_receipt_attempt_and_action_fence ... ok
+test simultaneous_publications_never_replace_conflicting_results ... ok
+test junction_in_reference_ancestor_and_existing_output_are_rejected ... ok
+test native_publisher_and_index_are_receipt_checked_atomic_and_idempotent ... ok
+test native_aggregator_includes_group_120_and_emits_only_review_candidates ... ok
+test external_daemon_only_exposes_authenticated_queue_broker_and_never_spawns ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.99s
+
+     Running tests\agent_actions.rs (target\debug\deps\agent_actions-a16720e22f07a8c9.exe)
+
+running 18 tests
+test action_child_append_effect_marker ... ignored, invoked by the isolated completion-action canary
+test action_child_append_effect_then_wait ... ignored, invoked by the isolated completion-action canary
+test action_child_echo_stdin ... ignored, invoked by the isolated completion-action canary
+test action_child_fail ... ignored, invoked by the isolated completion-action canary
+test action_child_hang ... ignored, invoked by the isolated completion-action canary
+test action_child_overflow ... ignored, invoked by the isolated completion-action canary
+test action_child_requires_kernel_job_before_first_effect ... ignored, invoked by the isolated completion-action canary
+test action_registry_rejects_untrusted_paths_dynamic_placeholders_and_shell_fields ... ok
+test completion_and_outbox_are_atomic_and_replay_does_not_duplicate_events ... ok
+test validator_pass_enqueues_the_task_action_and_batch_action_once ... ok
+test outbox_insert_failure_rolls_back_task_completion ... ok
+test non_idempotent_expired_action_becomes_uncertain_without_replay ... ok
+test idempotent_action_lease_recovers_after_restart_and_fences_stale_worker ... ok
+test native_child_is_contained_before_its_first_effect ... ok
+test idempotent_failures_retry_with_a_new_fence_without_reopening_the_task ... ok
+test timeout_and_output_overflow_are_bounded_action_failures ... ok
+test isolated_daemon_runs_background_completion_action_end_to_end ... ok
+test daemon_crash_after_action_side_effect_recovers_as_uncertain_without_replay ... ok
+
+test result: ok. 11 passed; 0 failed; 7 ignored; 0 measured; 0 filtered out; finished in 1.39s
+
+     Running tests\agent_progress.rs (target\debug\deps\agent_progress-a442691a187b1846.exe)
+
+running 6 tests
+test progress_receipt_replay_cannot_change_attempt ... ok
+test extension_receipt_replay_cannot_change_identity_or_attempt ... ok
+test six_simulated_agents_claim_distinct_tasks_without_cross_identity_fences ... ok
+test stale_progress_and_disconnected_attempt_cannot_renew_or_submit ... ok
+test progress_fences_attempts_and_requires_fresh_unconsumed_checkpoints ... ok
+test progress_lease_budget_is_a_hard_total_cap ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.66s
+

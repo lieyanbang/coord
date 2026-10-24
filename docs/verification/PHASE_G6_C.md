@@ -27,8 +27,9 @@ synthetic, not ChatGPT identity evidence.
 
 ## End-to-end identity binding
 
-All progress, extend, failure and submit tools use the authenticated binding
-added by G6-A. Callers cannot supply a different worker. Both Relay hops verify
+In the enabled isolated-policy tests, all progress, extend, failure and submit
+tools use the authenticated binding added by G6-A. Callers cannot supply a
+different worker. Both Relay hops verify
 the signed request and the core still enforces current agent, token, attempt,
 state and unexpired lease. The Relay never automatically retries an uncertain
 mutation. A same request UUID never redispatches; inspect the exact task and

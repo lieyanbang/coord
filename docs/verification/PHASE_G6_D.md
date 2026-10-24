@@ -1,6 +1,7 @@
 # Phase G6-D — build and controlled-deployment gates
 
 Date: 2026-10-24 Australia/Brisbane. Overall Phase G6: **PARTIAL**.
+Evidence closeout: 2026-10-25 Australia/Brisbane.
 Production deployment and canary: **NOT_RUN**, blocked by the real identity
 gate in G6-A and the unexercised production account/ACL gate in G6-B.
 The user authorized deployment after the gates pass; permission does not
@@ -55,6 +56,13 @@ The installed hashes, loopback daemon PID 5368 and Linux Feathers/Sidecar PIDs
 services stayed active and Sidecar stayed READY with no pending request.
 Arasaka urgent/high pending counts remained zero. The service wrapper PID is
 distinct from the daemon listener PID and is not used as daemon liveness proof.
+
+A final read-only preservation check at 11:00:03Z also returned SSH exit 0 on
+both hosts (`stage-g6-arasaka-final.json`, `stage-g6-linux-final.json`). Installed
+hashes and the daemon/Feathers/Sidecar PIDs above still matched; services were
+active, Linux restart counters remained zero, Sidecar was READY with zero
+pending requests, and Arasaka urgent/high pending counts were still zero.
+The task-count queries explicitly used `skip_reclaim: true`.
 
 ## F3-R evidence reconciliation
 
@@ -184,6 +192,58 @@ cross-user process-stop or crash-recovery run.
 Before committing the final stop/cleanup repair, `scripts/verify.ps1 -Stage
 g6-cihard` completed with exit **0** and all eight checks passing. Commands,
 times and logs are in `stage-g6-cihard-checks.json` and its referenced files.
+
+### Accepted Fork run and downloaded binaries
+
+The third run [40088013915](https://github.com/lieyanbang/coord/actions/runs/40088013915)
+on `7d08012a171f804edf3b8588b77c72720e76393d` completed **success** at
+2026-10-24T11:06:14Z. All Windows job steps succeeded: fmt, clippy, 64 Rust
+tests (eight intentional ignores), release build, health monitor, dedicated
+low-privilege rehearsal, Relay 20/20, CoordMCP 14/14 and Python 7/7.
+`stage-g6-ci-success-run.json`, `stage-g6-ci-success-metadata.json` and the
+extracted `stage-g6-ci-success-tests.log` retain the commit, step outcomes,
+artifact linkage, actual test counts and upload digests.
+
+Both artifacts were downloaded and their ZIP SHA-256 matched GitHub metadata:
+
+| Artifact | ID | Bytes | ZIP SHA-256 |
+| --- | --- | ---: | --- |
+| coord-windows-2022 | 12558245794 | 6,449,718 | `5ed14f0501b8bc59c47837c06f7d12a1eda37195b63ba82c6006658ce40c88b9` |
+| g6-low-privilege-evidence | 12557333701 | 4,698 | `73985f6e870c745d448898e1e1fb4f4e6f7f7aebdd751df629542572231f0c4e` |
+
+All 13 real low-privilege evidence files, including the summary, are retained
+in `stage-g6-ci-success/`. Its five checks exit 0; actual runner identity is
+nonprivileged and differs from the daemon; ACL/RPC denials and both native
+publications pass. The interrupted runner's child dies, the non-idempotent
+action recovers as `uncertain` without replay (attempt 1), and its task remains
+completed. Both temporary account and fixture removal are verified true,
+`cleanup_errors` is empty and `production_gate` remains `NOT_RUN`.
+
+Downloaded executable SHA-256 values:
+
+| Binary | SHA-256 |
+| --- | --- |
+| coord.exe | `50577ece7d072b026f053905afb74a9012c086dc2120e3e40cec450c28e50618` |
+| coord-action-runner.exe | `4655168f1fe3a0e60cf178736858d445fe5dc7d0962a3f92d01dcff7d13b09a9` |
+| coord-emote-action.exe | `ff539b0fb8777764440d0cade76be028ff6506d64f8c0687120651a32aa43884` |
+
+All three differ from the local release hashes above, so byte reproducibility
+is **NOT_CLAIMED**. Their downloaded entry points (`--version` / `--help`)
+exit 0. With `COORD_TEST_BIN`, `COORD_TEST_RUNNER_BIN` and
+`COORD_TEST_PUBLISHER_BIN` pointing to those exact downloaded files, the focused
+`cargo test --locked --test action_runner --test agent_actions --test
+agent_progress` exits 0: **27 passed**, zero failed, seven explicit child-helper
+ignores. The harness still links the local Rust library; this is executable
+integration validation, not a second standalone cloud build. Commands, exits,
+logs and local/cloud hash comparison are in `stage-g6-artifact-recheck.json`,
+`.log` and `stage-g6-artifacts.json`. The checked binaries remain under
+`target/g6-artifacts/third-windows/`; they were not installed on production.
+
+The final local `scripts/verify.ps1 -Stage g6-close` also exits **0**, all eight
+checks passing. `stage-g6-close-checks.json` and its raw logs retain the result.
+The evidence-only closeout commit uses `[skip ci]`; its unchanged implementation
+is the exact cloud-tested source commit above. No claim is made that the
+documentation commit itself produced another Actions artifact.
 
 The initial parallel-edit `g6-baseline` invocation failed at fmt because an
 in-progress module declaration preceded creation of its source file. Its

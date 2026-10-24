@@ -1,0 +1,34 @@
+{
+    "services":  [
+                     {
+                         "Name":  "coord",
+                         "State":  "Running",
+                         "StartName":  "NT AUTHORITY\\LocalService",
+                         "ProcessId":  5072
+                     },
+                     {
+                         "Name":  "Servy",
+                         "State":  "Running",
+                         "StartName":  "LocalSystem",
+                         "ProcessId":  3224
+                     },
+                     {
+                         "Name":  "CoordRelayAgent",
+                         "State":  "Running",
+                         "StartName":  "NT AUTHORITY\\LocalService",
+                         "ProcessId":  3084
+                     }
+                 ],
+    "listeners":  [
+                      {
+                          "LocalAddress":  "127.0.0.1",
+                          "LocalPort":  7777,
+                          "OwningProcess":  5368
+                      }
+                  ],
+    "coord_sha256":  "b58d3620b1b6de8035bfcb97e99f2e4fe654f48b1cb5719ef9fca013f5652e0d",
+    "observed_at":  "2026-10-24T11:00:03.3808898Z",
+    "pending_urgent":  0,
+    "pending_high":  0,
+    "mode":  "read-only service/hash/listener and skip_reclaim task counts"
+}

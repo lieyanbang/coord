@@ -1,0 +1,82 @@
+{
+  "state": "PASS",
+  "phase": "completed",
+  "failed_phase": null,
+  "disposable_ci": true,
+  "fixture_layout": "system-volume-root",
+  "production_gate": "NOT_RUN",
+  "checks": [
+    {
+      "expected_exit_code": 0,
+      "name": "identity",
+      "exit_code": 0
+    },
+    {
+      "expected_exit_code": 0,
+      "name": "acl-policy",
+      "exit_code": 0
+    },
+    {
+      "expected_exit_code": 0,
+      "name": "publish-task",
+      "exit_code": 0
+    },
+    {
+      "expected_exit_code": 0,
+      "name": "publish-index",
+      "exit_code": 0
+    },
+    {
+      "expected_exit_code": 0,
+      "name": "crash-recovery",
+      "exit_code": 0
+    }
+  ],
+  "runner_sid": "S-1-5-21-399838505-1430754676-1685527644-1003",
+  "daemon_sid": "S-1-5-21-399838505-1430754676-1685527644-500",
+  "actions": {
+    "actions": [
+      {
+        "action_kind": "on_task_completed",
+        "attempt_count": 1,
+        "available_at": null,
+        "event_id": "75445dfc-a7da-4888-be46-b521b4ed1928",
+        "exit_code": 0,
+        "id": "01c7c007-4994-4bab-a4ed-5e883ab1400f",
+        "last_error": null,
+        "max_attempts": 2,
+        "output_bytes": 0,
+        "profile_id": "emote",
+        "profile_version": 1,
+        "state": "succeeded",
+        "task_id": "26a92223-1884-4c5a-a54b-b12ddd7d1332"
+      },
+      {
+        "action_kind": "on_batch_completed",
+        "attempt_count": 1,
+        "available_at": null,
+        "event_id": "041a5cd5-1a8e-4c1f-a6dc-2301abcfd361",
+        "exit_code": 0,
+        "id": "fc88799f-56ca-4b9a-af4f-116cb2726c9d",
+        "last_error": null,
+        "max_attempts": 2,
+        "output_bytes": 0,
+        "profile_id": "emote",
+        "profile_version": 1,
+        "state": "succeeded",
+        "task_id": null
+      }
+    ],
+    "batch_id": "f1a00196-e131-4821-a147-4dc98b317bd5",
+    "truncated": false
+  },
+  "crash_recovery": {
+    "child_killed_on_runner_exit": true,
+    "isolated_forced_lease_expiry": true,
+    "state": "uncertain",
+    "attempt_count": 1
+  },
+  "disposable_account_removed": true,
+  "disposable_fixture_removed": true,
+  "cleanup_errors": []
+}

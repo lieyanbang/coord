@@ -1,0 +1,119 @@
+C:\coord-g6-6d659236a8524df2855fe914891c049b runnervma5ucf\coordT6fdc4708af:(OI)(CI)(RX)
+                                             NT AUTHORITY\SYSTEM:(OI)(CI)(F)
+                                             BUILTIN\Administrators:(OI)(CI)(F)
+
+C:\coord-g6-6d659236a8524df2855fe914891c049b\bin runnervma5ucf\coordT6fdc4708af:(I)(OI)(CI)(RX)
+                                                 NT AUTHORITY\SYSTEM:(I)(OI)(CI)(F)
+                                                 BUILTIN\Administrators:(I)(OI)(CI)(F)
+
+C:\coord-g6-6d659236a8524df2855fe914891c049b\business runnervma5ucf\coordT6fdc4708af:(I)(OI)(CI)(RX)
+                                                      NT AUTHORITY\SYSTEM:(I)(OI)(CI)(F)
+                                                      BUILTIN\Administrators:(I)(OI)(CI)(F)
+
+C:\coord-g6-6d659236a8524df2855fe914891c049b\config runnervma5ucf\coordT6fdc4708af:(I)(OI)(CI)(RX)
+                                                    NT AUTHORITY\SYSTEM:(I)(OI)(CI)(F)
+                                                    BUILTIN\Administrators:(I)(OI)(CI)(F)
+
+C:\coord-g6-6d659236a8524df2855fe914891c049b\logs runnervma5ucf\coordT6fdc4708af:(OI)(CI)(M)
+                                                  NT AUTHORITY\SYSTEM:(OI)(CI)(F)
+                                                  BUILTIN\Administrators:(OI)(CI)(F)
+
+C:\coord-g6-6d659236a8524df2855fe914891c049b\protected NT AUTHORITY\SYSTEM:(OI)(CI)(F)
+                                                       BUILTIN\Administrators:(OI)(CI)(F)
+
+C:\coord-g6-6d659236a8524df2855fe914891c049b\scratch runnervma5ucf\coordT6fdc4708af:(OI)(CI)(M)
+                                                     NT AUTHORITY\SYSTEM:(OI)(CI)(F)
+                                                     BUILTIN\Administrators:(OI)(CI)(F)
+
+C:\coord-g6-6d659236a8524df2855fe914891c049b\bin\coord-action-runner.exe runnervma5ucf\coordT6fdc4708af:(I)(RX)
+                                                                         NT AUTHORITY\SYSTEM:(I)(F)
+                                                                         BUILTIN\Administrators:(I)(F)
+
+C:\coord-g6-6d659236a8524df2855fe914891c049b\bin\coord-emote-action.exe runnervma5ucf\coordT6fdc4708af:(I)(RX)
+                                                                        NT AUTHORITY\SYSTEM:(I)(F)
+                                                                        BUILTIN\Administrators:(I)(F)
+
+C:\coord-g6-6d659236a8524df2855fe914891c049b\bin\coord.exe runnervma5ucf\coordT6fdc4708af:(I)(RX)
+                                                           NT AUTHORITY\SYSTEM:(I)(F)
+                                                           BUILTIN\Administrators:(I)(F)
+
+C:\coord-g6-6d659236a8524df2855fe914891c049b\bin\ping-fixture.exe runnervma5ucf\coordT6fdc4708af:(I)(RX)
+                                                                  NT AUTHORITY\SYSTEM:(I)(F)
+                                                                  BUILTIN\Administrators:(I)(F)
+
+C:\coord-g6-6d659236a8524df2855fe914891c049b\business\A1 NT AUTHORITY\SYSTEM:(OI)(CI)(F)
+                                                         BUILTIN\Administrators:(OI)(CI)(F)
+
+C:\coord-g6-6d659236a8524df2855fe914891c049b\business\refs runnervma5ucf\coordT6fdc4708af:(I)(OI)(CI)(RX)
+                                                           NT AUTHORITY\SYSTEM:(I)(OI)(CI)(F)
+                                                           BUILTIN\Administrators:(I)(OI)(CI)(F)
+
+C:\coord-g6-6d659236a8524df2855fe914891c049b\business\results runnervma5ucf\coordT6fdc4708af:(OI)(CI)(M)
+                                                              NT AUTHORITY\SYSTEM:(OI)(CI)(F)
+                                                              BUILTIN\Administrators:(OI)(CI)(F)
+
+C:\coord-g6-6d659236a8524df2855fe914891c049b\business\task runnervma5ucf\coordT6fdc4708af:(I)(OI)(CI)(RX)
+                                                           NT AUTHORITY\SYSTEM:(I)(OI)(CI)(F)
+                                                           BUILTIN\Administrators:(I)(OI)(CI)(F)
+
+C:\coord-g6-6d659236a8524df2855fe914891c049b\business\A1\private-attempt NT AUTHORITY\SYSTEM:(I)(OI)(CI)(F)
+                                                                         BUILTIN\Administrators:(I)(OI)(CI)(F)
+
+C:\coord-g6-6d659236a8524df2855fe914891c049b\business\A1\private-attempt\secret.json NT AUTHORITY\SYSTEM:(I)(F)
+                                                                                     BUILTIN\Administrators:(I)(F)
+
+C:\coord-g6-6d659236a8524df2855fe914891c049b\business\refs\arknights runnervma5ucf\coordT6fdc4708af:(I)(OI)(CI)(RX)
+                                                                     NT AUTHORITY\SYSTEM:(I)(OI)(CI)(F)
+                                                                     BUILTIN\Administrators:(I)(OI)(CI)(F)
+
+C:\coord-g6-6d659236a8524df2855fe914891c049b\business\refs\arknights\icons runnervma5ucf\coordT6fdc4708af:(I)(OI)(CI)(RX)
+                                                                           NT AUTHORITY\SYSTEM:(I)(OI)(CI)(F)
+                                                                           BUILTIN\Administrators:(I)(OI)(CI)(F)
+
+C:\coord-g6-6d659236a8524df2855fe914891c049b\business\refs\arknights\icons\one.png runnervma5ucf\coordT6fdc4708af:(I)(RX)
+                                                                                   NT AUTHORITY\SYSTEM:(I)(F)
+                                                                                   BUILTIN\Administrators:(I)(F)
+
+C:\coord-g6-6d659236a8524df2855fe914891c049b\business\results\.receipts runnervma5ucf\coordT6fdc4708af:(I)(OI)(CI)(M)
+                                                                        NT AUTHORITY\SYSTEM:(I)(OI)(CI)(F)
+                                                                        BUILTIN\Administrators:(I)(OI)(CI)(F)
+
+C:\coord-g6-6d659236a8524df2855fe914891c049b\business\results\review_queue runnervma5ucf\coordT6fdc4708af:(I)(OI)(CI)(M)
+                                                                           NT AUTHORITY\SYSTEM:(I)(OI)(CI)(F)
+                                                                           BUILTIN\Administrators:(I)(OI)(CI)(F)
+
+C:\coord-g6-6d659236a8524df2855fe914891c049b\business\task\00 runnervma5ucf\coordT6fdc4708af:(I)(OI)(CI)(RX)
+                                                              NT AUTHORITY\SYSTEM:(I)(OI)(CI)(F)
+                                                              BUILTIN\Administrators:(I)(OI)(CI)(F)
+
+C:\coord-g6-6d659236a8524df2855fe914891c049b\business\task\00\1.png runnervma5ucf\coordT6fdc4708af:(I)(RX)
+                                                                    NT AUTHORITY\SYSTEM:(I)(F)
+                                                                    BUILTIN\Administrators:(I)(F)
+
+C:\coord-g6-6d659236a8524df2855fe914891c049b\config\acl-probe.json runnervma5ucf\coordT6fdc4708af:(I)(RX)
+                                                                   NT AUTHORITY\SYSTEM:(I)(F)
+                                                                   BUILTIN\Administrators:(I)(F)
+
+C:\coord-g6-6d659236a8524df2855fe914891c049b\config\broker.key runnervma5ucf\coordT6fdc4708af:(I)(RX)
+                                                               NT AUTHORITY\SYSTEM:(I)(F)
+                                                               BUILTIN\Administrators:(I)(F)
+
+C:\coord-g6-6d659236a8524df2855fe914891c049b\config\registry.json runnervma5ucf\coordT6fdc4708af:(I)(RX)
+                                                                  NT AUTHORITY\SYSTEM:(I)(F)
+                                                                  BUILTIN\Administrators:(I)(F)
+
+C:\coord-g6-6d659236a8524df2855fe914891c049b\logs\identity.stderr.log runnervma5ucf\coordT6fdc4708af:(I)(M)
+                                                                      NT AUTHORITY\SYSTEM:(I)(F)
+                                                                      BUILTIN\Administrators:(I)(F)
+
+C:\coord-g6-6d659236a8524df2855fe914891c049b\logs\identity.stdout.log runnervma5ucf\coordT6fdc4708af:(I)(M)
+                                                                      NT AUTHORITY\SYSTEM:(I)(F)
+                                                                      BUILTIN\Administrators:(I)(F)
+
+C:\coord-g6-6d659236a8524df2855fe914891c049b\protected\management.key NT AUTHORITY\SYSTEM:(I)(F)
+                                                                      BUILTIN\Administrators:(I)(F)
+
+C:\coord-g6-6d659236a8524df2855fe914891c049b\protected\state.db NT AUTHORITY\SYSTEM:(I)(F)
+                                                                BUILTIN\Administrators:(I)(F)
+
+Successfully processed 31 files; Failed processing 0 files

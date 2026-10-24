@@ -203,7 +203,7 @@ Windows 本机及 Windows Actions 的真实测试、构建与产物为准。
 
 
 ## 12. Phase G6 — ChatGPT 六会话生产就绪与隔离执行（2026-10-24）
-> **状态 PARTIAL：源码与本机隔离验证通过，生产部署 NOT_RUN。** 以 §11 G0/G4 的现有成果为基线，G1/G2/G3/G5 的 PARTIAL 为本阶段入口。权威执行文件为根目录 TASK.md；保留 F3-R 的 PARTIAL，不能混同为本阶段 PASS。任务目标是完成通用功能、隔离验证及有证据的受控部署，不授权创建正式 121 个表情包任务或启动六个生产对话。
+> **状态 PARTIAL：源码、本机隔离、Fork Windows 与云端真实低权限验证通过，生产部署 NOT_RUN。** 以 §11 G0/G4 的现有成果为基线，G1/G2/G3/G5 的 PARTIAL 为本阶段入口。权威执行文件为根目录 TASK.md；保留 F3-R 的 PARTIAL，不能混同为本阶段 PASS。任务目标是完成通用功能、隔离验证及有证据的受控部署，不授权创建正式 121 个表情包任务或启动六个生产对话。
 
 ### G6-A：ChatGPT Web 身份可行性与绑定（P0）
 - 先只读审计真实 Feathers OAuth token store（仅输出脱敏统计）、MCP `authInfo` 可见字段、DCR client_id、公开连接器配置能力、Relay 固定 `coord-relay-agent` 映射。由两条真实独立 ChatGPT 对话进行最小隔离探针，并验证跨对话重连后标识稳定性。**禁止假定 DCR client_id 等于单一对话**；同一用户/OAuth 客户端/连接器可能被多个对话共享。
@@ -228,13 +228,13 @@ Windows 本机及 Windows Actions 的真实测试、构建与产物为准。
 - 先在隔离数据库/测试 Batch 验证六个身份；有批准且 A/B 门禁 PASS 后方能以受控方式部署，生产只创建 **canary 隔离测试任务**，不创建 `emote-000…120`，不启动六个实际图片分类 Agent。验证生产 13011/13012、Cloudflare Access/OAuth、CoordMCP legacy、coord service/health、旧任务与数据库回归。
 - 产出 `docs/verification/PHASE_G6_{A,B,C,D}.md` 和最终收口；每阶段保留 PASS/PARTIAL/BLOCKED/NOT_RUN 的真实退出码、日志、hash、回滚与残余风险；只推 Fork 工作分支，不修改旧 Git 历史/主分支。
 
-### G6 执行进度（2026-10-24）
+### G6 执行进度（2026-10-25 收口）
 
 | 子阶段 | 当前状态 | 证据与剩余门槛 |
 | --- | --- | --- |
-| A | PARTIAL / 真实隔离 BLOCKED | 管理员身份预绑定、两跳签名及跨 batch 防护已实现；两条真实聊天的只读调用有服务端日志，但平台账户可跨对话复用，访问记录共用一个 client 且无 conversation 字段，不能证明六个受保护上下文。见 `verification/PHASE_G6_A.md` |
-| B | PARTIAL | 独立 native Runner、发布器及主 RPC 独立鉴权已实现；真实 Arasaka 专用账户与 NTFS ACL 尚未执行。CI 低权限结果只验机制。见 `verification/PHASE_G6_B.md` |
+| A | PARTIAL / 真实隔离 BLOCKED | 管理员身份预绑定、两跳签名及跨 batch 防护已实现；两条真实聊天的只读调用有服务端日志，但账户入口全局可选，尚无凭据不可互用的证据；访问记录共用一个 client 且无 conversation 字段，不能证明六个受保护上下文。见 `verification/PHASE_G6_A.md` |
+| B | PARTIAL / 云端低权限 PASS | 独立 native Runner、发布器及主 RPC 独立鉴权已实现；真实 Windows CI 标准用户的身份、ACL/RPC 拒绝、发布/索引、崩溃后 uncertain 及账户/目录清理全部通过。真实 Arasaka 专用账户与 NTFS ACL 尚未执行。见 `verification/PHASE_G6_B.md` |
 | C | PARTIAL | progress/extend receipt 重放身份与 attempt 漏洞已先红后绿修复；隔离真实 daemon 续租/断线/过期回收通过，真实两聊天写生命周期依赖 A，未执行。见 `verification/PHASE_G6_C.md` |
-| D | PARTIAL / 部署 NOT_RUN | 生产 CSP 版本和 token exchange 已补证，F3-R 仍缺 non-owner 和独立 initialize/tools/list；最终本机/Fork/产物门禁见 `verification/PHASE_G6_D.md`。A/B 未过不部署、不创建 canary |
+| D | PARTIAL / 部署 NOT_RUN | Fork run `40088013915` 对 `7d08012a171f804edf3b8588b77c72720e76393d` 全绿；下载三个 EXE 并核对 ZIP/hash，27 项执行集成复验通过。生产 CSP 和 token exchange 已补证，F3-R 仍缺 non-owner 和独立 initialize/tools/list。见 `verification/PHASE_G6_D.md`；真实 A/B 未过不部署、不创建 canary |
 
 所有生产源码、服务、Access 策略、任务队列保持原状；本轮浏览器进行了同账户正常 OAuth 重新授权，OAuth grant/token 记录因此改变。没有正式任务或分类 Agent。备份/回滚与放行条件见 `phase-g/G6-DEPLOYMENT.md`。旧 G0 的 OAuth hash 差异现已现场调和；不据此提升 F3-R 或 G6 为 PASS。

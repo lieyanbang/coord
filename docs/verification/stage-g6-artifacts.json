@@ -1,0 +1,39 @@
+{
+  "zip_sha256": {
+    "binary": "5ed14f0501b8bc59c47837c06f7d12a1eda37195b63ba82c6006658ce40c88b9",
+    "evidence": "73985f6e870c745d448898e1e1fb4f4e6f7f7aebdd751df629542572231f0c4e"
+  },
+  "files": [
+    {
+      "bytes": 3666944,
+      "downloaded_sha256": "4655168f1fe3a0e60cf178736858d445fe5dc7d0962a3f92d01dcff7d13b09a9",
+      "name": "coord-action-runner.exe",
+      "identical": false,
+      "local_release_sha256": "5dd0bcc04b37be5c46a39f6543f54f797a01839858dd572c5ce426fef85b4909"
+    },
+    {
+      "bytes": 1082368,
+      "downloaded_sha256": "ff539b0fb8777764440d0cade76be028ff6506d64f8c0687120651a32aa43884",
+      "name": "coord-emote-action.exe",
+      "identical": false,
+      "local_release_sha256": "0461bc1fb7007824099689214de74c21dfcf74ae3bc261d8dd1fbfff18f73a1f"
+    },
+    {
+      "bytes": 11055616,
+      "downloaded_sha256": "50577ece7d072b026f053905afb74a9012c086dc2120e3e40cec450c28e50618",
+      "name": "coord.exe",
+      "identical": false,
+      "local_release_sha256": "0386e67717694f59e066b542254f873340ca787fda72727beff2454dceeee875"
+    }
+  ],
+  "state": "PASS",
+  "production_deployment": "NOT_RUN",
+  "commit": "7d08012a171f804edf3b8588b77c72720e76393d",
+  "artifact_ids": [
+    12558245794,
+    12557333701
+  ],
+  "run_id": 40088013915,
+  "verification": "downloaded digests match GitHub artifact metadata; three executable entry points and focused tests exit 0",
+  "reproducibility": "NOT_CLAIMED"
+}

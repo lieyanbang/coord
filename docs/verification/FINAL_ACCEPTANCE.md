@@ -113,3 +113,17 @@ performed. F3-R remains **PARTIAL** despite current CSP/hash and token-exchange
 evidence. Full local, Fork Actions, downloaded-artifact and remaining-gate
 details are in `PHASE_G6_A.md` through `PHASE_G6_D.md`; deployment and rollback
 conditions are in `../phase-g/G6-DEPLOYMENT.md`.
+
+The 2026-10-25 evidence closeout verifies Fork Windows run
+[40088013915](https://github.com/lieyanbang/coord/actions/runs/40088013915)
+on implementation commit `7d08012a171f804edf3b8588b77c72720e76393d`: all steps
+succeeded, including actual dedicated-standard-user identity, ACL/RPC denials,
+native publish/index, runner-crash Job cleanup, `uncertain` recovery without
+replay and disposable account/directory removal. Both downloaded artifact ZIP
+hashes match GitHub metadata. The three downloaded executable entry points and
+27 focused integration tests pass; all three executable hashes differ from
+the local build, so reproducibility is not claimed. The final local eight-check
+`g6-close` gate also exits 0. These results close the isolated build/runner
+mechanism gates; the real ChatGPT, real Arasaka account/ACL, F3-R and deployment
+boundaries above remain unchanged. The first two cloud failures are retained
+in G6-D rather than relabelled PASS.

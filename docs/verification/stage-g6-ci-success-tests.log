@@ -1,0 +1,40 @@
+2026-10-24T11:02:06.3194455Z test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+2026-10-24T11:02:06.3260254Z test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+2026-10-24T11:02:06.3320627Z test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+2026-10-24T11:02:06.3378958Z test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+2026-10-24T11:02:07.6622583Z test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.32s
+2026-10-24T11:02:09.5632003Z test result: ok. 11 passed; 0 failed; 7 ignored; 0 measured; 0 filtered out; finished in 1.89s
+2026-10-24T11:02:11.1966898Z test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.62s
+2026-10-24T11:02:13.8319181Z test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.63s
+2026-10-24T11:02:13.9025333Z test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+2026-10-24T11:02:13.9109281Z test result: ok. 0 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.00s
+2026-10-24T11:02:16.3754705Z test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.46s
+2026-10-24T11:02:18.8273468Z test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.44s
+2026-10-24T11:02:21.1754561Z test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.34s
+2026-10-24T11:02:22.9185299Z test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.73s
+2026-10-24T11:02:27.6106924Z test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.68s
+2026-10-24T11:02:27.7191277Z test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.10s
+2026-10-24T11:02:29.0190401Z test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.29s
+2026-10-24T11:02:29.9085949Z test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.87s
+2026-10-24T11:02:30.6089452Z test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.69s
+2026-10-24T11:02:30.9896603Z test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.37s
+2026-10-24T11:02:31.5182621Z test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.52s
+2026-10-24T11:02:31.7622772Z test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.24s
+2026-10-24T11:02:39.3935995Z test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.62s
+2026-10-24T11:02:39.8132345Z test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.41s
+2026-10-24T11:02:55.8810386Z test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 16.06s
+2026-10-24T11:02:57.4973594Z test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+2026-10-24T11:05:38.7191721Z # tests 20
+2026-10-24T11:05:38.7192308Z # pass 20
+2026-10-24T11:05:38.7192537Z # fail 0
+2026-10-24T11:05:38.7193187Z # skipped 0
+2026-10-24T11:05:48.7818148Z # tests 14
+2026-10-24T11:05:48.7818446Z # pass 14
+2026-10-24T11:05:48.7818682Z # fail 0
+2026-10-24T11:05:48.7819148Z # skipped 0
+2026-10-24T11:05:49.4799575Z Ran 7 tests in 0.068s
+2026-10-24T11:05:49.4799724Z OK
+2026-10-24T11:05:50.2956534Z SHA256 digest of uploaded artifact zip is 73985f6e870c745d448898e1e1fb4f4e6f7f7aebdd751df629542572231f0c4e
+2026-10-24T11:05:50.7928702Z Artifact g6-low-privilege-evidence.zip successfully finalized. Artifact ID 12557333701
+2026-10-24T11:05:52.6421652Z SHA256 digest of uploaded artifact zip is 5ed14f0501b8bc59c47837c06f7d12a1eda37195b63ba82c6006658ce40c88b9
+2026-10-24T11:05:53.1040499Z Artifact coord-windows-2022.zip successfully finalized. Artifact ID 12558245794
