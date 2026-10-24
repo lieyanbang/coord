@@ -1,0 +1,168 @@
+{
+  "repo": "lieyanbang/coord",
+  "commit": "2fccbd3dc853af07cc3a439914f87d4bd5602d79",
+  "run_id": 40086336362,
+  "run_url": "https://github.com/lieyanbang/coord/actions/runs/40086336362",
+  "observed_result": "FAIL",
+  "jobs": [
+    {
+      "id": 120849933721,
+      "name": "test (windows-2022)",
+      "status": "completed",
+      "conclusion": "failure",
+      "run_id": 40086336362,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run dtolnay/rust-toolchain@stable",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run Swatinem/rust-cache@v2",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "fmt",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "clippy",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "test",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "release build",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10
+        },
+        {
+          "name": "health monitor authentication and recovery",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        },
+        {
+          "name": "Dedicated low-privilege Action Runner rehearsal",
+          "status": "completed",
+          "conclusion": "failure",
+          "number": 12
+        },
+        {
+          "name": "relay protocol and lease-fencing tests",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 13
+        },
+        {
+          "name": "Coord MCP test dependencies",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 14
+        },
+        {
+          "name": "Coord MCP OAuth and HTTP tests",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 15
+        },
+        {
+          "name": "Phase G request and result utility tests",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 16
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 18
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 33
+        },
+        {
+          "name": "Post Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 34
+        },
+        {
+          "name": "Post Run Swatinem/rust-cache@v2",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 35
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 36
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 37
+        }
+      ]
+    }
+  ],
+  "artifact": {
+    "id": 12557665426,
+    "name": "g6-low-privilege-evidence",
+    "bytes": 517,
+    "sha256": "3088ece0f354a99de3bacd899ad5d28aa97b7c9daa8d256641867d1ae9ad3468"
+  },
+  "failure": {
+    "phase": "identity",
+    "exit_code": 1,
+    "reason": "Administrator-profile TEMP ancestor is inaccessible to standard user; no safety check relaxed."
+  }
+}

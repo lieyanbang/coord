@@ -1,0 +1,30 @@
+{
+  "observed_at": "2026-10-24T10:33:17.646130+00:00",
+  "mode": "read-only preservation snapshot",
+  "hashes": {
+    "oauth.cjs": "0dcc483bd3d6afd5f4625885aed70f5cdf1b30f6a44ced739549d382ce049c53",
+    "index.cjs": "e2a4c125f6742f915662707ff123f3eb0a3e3ec6b64ae2818baf1c3ea7cd5db3"
+  },
+  "services": {
+    "feathersjsapp.service": "active",
+    "openresty.service": "active",
+    "coord-relay.service": "active",
+    "coord-relay-acl.service": "active",
+    "tailscaled.service": "active"
+  },
+  "processes": {
+    "feathersjsapp.service": [
+      "MainPID=113349",
+      "NRestarts=0"
+    ],
+    "coord-relay.service": [
+      "MainPID=90506",
+      "NRestarts=0"
+    ]
+  },
+  "health": {
+    "state": "READY",
+    "agentConnected": true,
+    "pending": 0
+  }
+}

@@ -1,0 +1,4 @@
+Error: inspect trusted path component
+
+Caused by:
+    Access is denied. (os error 5)

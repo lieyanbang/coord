@@ -10,13 +10,18 @@ if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdenti
 $binaryRoot = (Resolve-Path -LiteralPath $BinaryDirectory).Path
 $evidenceRoot = [IO.Path]::GetFullPath($EvidenceDirectory)
 New-Item -ItemType Directory -Path $evidenceRoot -Force | Out-Null
-$testRoot = Join-Path ([IO.Path]::GetTempPath()) ('coord-g6-' + [guid]::NewGuid().ToString('N'))
+# A standard user must be able to inspect every trusted path ancestor. Hosted
+# administrator-profile TEMP ancestors deny that metadata access, so use an
+# exact random child of the system volume root (never a shared writable parent).
+$systemVolumeRoot = [IO.Path]::GetPathRoot([IO.Path]::GetFullPath($env:SystemRoot))
+if ($systemVolumeRoot -notmatch '^[A-Za-z]:\\$') { throw 'Expected a local system-volume root for the disposable fixture.' }
+$testRoot = Join-Path $systemVolumeRoot ('coord-g6-' + [guid]::NewGuid().ToString('N'))
 $testRoot = [IO.Path]::GetFullPath($testRoot)
 $userName = 'coordT' + [guid]::NewGuid().ToString('N').Substring(0, 10)
 $createdSid = $null
 $daemonProcess = $null
 $runnerProcess = $null
-$summary = [ordered]@{ state = 'FAIL'; disposable_ci = $true; production_gate = 'NOT_RUN'; checks = @() }
+$summary = [ordered]@{ state = 'FAIL'; phase = 'initialize'; failed_phase = $null; disposable_ci = $true; fixture_layout = 'system-volume-root'; production_gate = 'NOT_RUN'; checks = @() }
 function Assert-LocalTarget([string]$Target) {
     $resolved = [IO.Path]::GetFullPath($Target)
     if (-not $resolved.StartsWith($testRoot + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) { throw 'Fixture path escapes exact disposable test root.' }
@@ -38,6 +43,7 @@ function Rpc([string]$Method, $Params) {
     return $response.result
 }
 function Run-AsRunner([string]$Label, [string]$ExtraArguments, [int]$ExpectedExit = 0) {
+    $script:summary.phase = $Label
     $stdoutPath = Assert-LocalTarget (Join-Path $testRoot ('logs/' + $Label + '.stdout.log'))
     $stderrPath = Assert-LocalTarget (Join-Path $testRoot ('logs/' + $Label + '.stderr.log'))
     $arguments = '--registry "' + $registryPath + '" ' + $ExtraArguments
@@ -45,10 +51,11 @@ function Run-AsRunner([string]$Label, [string]$ExtraArguments, [int]$ExpectedExi
     if (-not $process.WaitForExit(45000)) { Stop-Process -Id $process.Id; throw 'Disposable runner process timeout.' }
     $process.Refresh()
     Copy-Item -LiteralPath $stderrPath -Destination (Join-Path $evidenceRoot ($Label + '.stderr.log'))
+    $script:summary.checks += @{ name = $Label; exit_code = $process.ExitCode; expected_exit_code = $ExpectedExit }
     if ($process.ExitCode -ne $ExpectedExit) { throw ($Label + ' exit ' + $process.ExitCode) }
-    $script:summary.checks += @{ name = $Label; exit_code = $process.ExitCode }
 }
 try {
+    $summary.phase = 'create-disposable-fixture'
     New-Item -ItemType Directory -Path $testRoot | Out-Null
     $passwordText = [Convert]::ToBase64String([Security.Cryptography.RandomNumberGenerator]::GetBytes(24)) + 'aA1!'
     $securePassword = ConvertTo-SecureString -String $passwordText -AsPlainText -Force
@@ -97,11 +104,13 @@ try {
     Run-AsRunner 'identity' '--check-identity'
     & icacls.exe $testRoot /T | Set-Content -LiteralPath (Join-Path $evidenceRoot 'fixture-acls.log')
     if ($LASTEXITCODE -ne 0) { throw 'ACL evidence capture failed.' }
+    $summary.phase = 'start-isolated-daemon'
     $daemonProcess = Start-Process -FilePath (Join-Path $testRoot 'bin/coord.exe') -ArgumentList @('serve', '--addr', ('127.0.0.1:' + $daemonPort), '--db', ('"' + (Join-Path $testRoot 'protected/state.db') + '"'), '--actions-config', ('"' + $registryPath + '"')) -WorkingDirectory $testRoot -WindowStyle Hidden -PassThru -RedirectStandardError (Join-Path $testRoot 'logs/daemon.stderr.log') -RedirectStandardOutput (Join-Path $testRoot 'logs/daemon.stdout.log')
     $ready = $false
     foreach ($attempt in 1..100) { try { Invoke-RestMethod ($daemonUrl + '/.well-known/agent.json') -TimeoutSec 1 | Out-Null; $ready = $true; break } catch { Start-Sleep -Milliseconds 100 } }
     if (-not $ready) { throw 'Isolated daemon readiness failed.' }
     Run-AsRunner 'acl-policy' ('--probe-acl "' + $probePath + '"')
+    $summary.phase = 'create-isolated-publish-task'
     $batch = Rpc 'batches/create' @{ name = 'G6 disposable low privilege runner'; config = @{ action_profile = 'emote' } }
     Rpc 'batches/add_tasks' @{ batch_id = $batch.id; tasks = @(@{ key = '00'; name = 'disposable test'; payload = @{ group_id = '00'; source_image_ids = @('1') } }) } | Out-Null
     $task = (Rpc 'scheduler/claim' @{ batch_id = $batch.id; agent_id = 'A0'; lease_seconds = 30 }).task
@@ -119,6 +128,7 @@ try {
     $summary.actions = $actions
     # Kill exactly our independently authenticated runner while its pinned native
     # child is active. No production process or live lease is involved.
+    $summary.phase = 'runner-crash-fixture'
     $crashBatch = Rpc 'batches/create' @{ name = 'G6 disposable non-idempotent crash'; config = @{ action_profile = 'crash' } }
     Rpc 'batches/add_tasks' @{ batch_id = $crashBatch.id; tasks = @(@{ key = 'one'; name = 'crash fixture'; payload = @{} }) } | Out-Null
     $crashTask = (Rpc 'scheduler/claim' @{ batch_id = $crashBatch.id; agent_id = 'A0'; lease_seconds = 30 }).task
@@ -151,6 +161,10 @@ with sqlite3.connect(sys.argv[1]) as db:
     if ((Rpc 'tasks/get' @{ id = $crashTask.id }).state -ne 'completed') { throw 'Action crash reopened task state.' }
     $summary.crash_recovery = @{ state = $recovered.state; attempt_count = $recovered.attempt_count; child_killed_on_runner_exit = $true; isolated_forced_lease_expiry = $true }
     $summary.state = 'PASS'
+    $summary.phase = 'completed'
+} catch {
+    $summary.failed_phase = $summary.phase
+    throw
 } finally {
     if ($runnerProcess -and -not $runnerProcess.HasExited) { Stop-Process -Id $runnerProcess.Id -ErrorAction SilentlyContinue }
     if ($daemonProcess -and -not $daemonProcess.HasExited) { Stop-Process -Id $daemonProcess.Id -ErrorAction SilentlyContinue; $daemonProcess.WaitForExit() }
@@ -160,9 +174,14 @@ with sqlite3.connect(sys.argv[1]) as db:
     }
     # Preserve evidence outside fixture before removing only this exact random
     # directory. Never enumerate and pass paths to another shell for deletion.
-    $summary | ConvertTo-Json -Depth 30 | Set-Content -LiteralPath (Join-Path $evidenceRoot 'summary.json') -Encoding utf8NoBOM
     if (Test-Path -LiteralPath (Join-Path $testRoot 'logs/daemon.stderr.log')) { Copy-Item -LiteralPath (Join-Path $testRoot 'logs/daemon.stderr.log') -Destination (Join-Path $evidenceRoot 'daemon.stderr.log') }
     $resolvedRoot = [IO.Path]::GetFullPath($testRoot)
-    $expectedParent = [IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd('\') + '\'
-    if ($resolvedRoot.StartsWith($expectedParent, [StringComparison]::OrdinalIgnoreCase) -and [IO.Path]::GetFileName($resolvedRoot) -match '^coord-g6-[0-9a-f]{32}$') { Remove-Item -LiteralPath $resolvedRoot -Recurse -Force }
+    $resolvedParent = [IO.Path]::GetDirectoryName($resolvedRoot)
+    try {
+        if (-not $resolvedParent.Equals($systemVolumeRoot, [StringComparison]::OrdinalIgnoreCase) -or [IO.Path]::GetFileName($resolvedRoot) -notmatch '^coord-g6-[0-9a-f]{32}$') { throw 'Refusing cleanup outside the exact verified system-volume fixture root.' }
+        if (Test-Path -LiteralPath $resolvedRoot) { Remove-Item -LiteralPath $resolvedRoot -Recurse -Force }
+        $summary.disposable_fixture_removed = -not (Test-Path -LiteralPath $resolvedRoot)
+    } finally {
+        $summary | ConvertTo-Json -Depth 30 | Set-Content -LiteralPath (Join-Path $evidenceRoot 'summary.json') -Encoding utf8NoBOM
+    }
 }

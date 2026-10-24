@@ -1,0 +1,12 @@
+test_aggregator_emits_review_candidates_without_global_merge (test_phase_g_tools.PhaseGToolsTests) ... ok
+test_aggregator_includes_three_digit_groups (test_phase_g_tools.PhaseGToolsTests) ... ok
+test_initializer_rejects_incomplete_manifest_before_preparing_tasks (test_phase_g_tools.PhaseGToolsTests) ... ok
+test_malformed_untrusted_json_returns_errors_instead_of_raising (test_phase_g_tools.PhaseGToolsTests) ... ok
+test_result_rejects_missing_image_coverage_and_stale_attempt (test_phase_g_tools.PhaseGToolsTests) ... ok
+test_result_requires_exact_coverage_and_existing_refs_paths (test_phase_g_tools.PhaseGToolsTests) ... ok
+test_source_path_rejects_traversal (test_phase_g_tools.PhaseGToolsTests) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.047s
+
+OK

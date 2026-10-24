@@ -48,6 +48,14 @@ OAuth reauthorization, changing OAuth grant/token records. That exception is
 explicit; it was not a read-only credential-store operation. The subsequent
 server audit itself was read-only.
 
+At 10:33:17Z both direct SSH preservation snapshots exited 0:
+`stage-g6-arasaka-preservation.json` and `stage-g6-linux-preservation.json`.
+The installed hashes, loopback daemon PID 5368 and Linux Feathers/Sidecar PIDs
+113349/90506 were unchanged; Linux restart counters stayed zero, all inspected
+services stayed active and Sidecar stayed READY with no pending request.
+Arasaka urgent/high pending counts remained zero. The service wrapper PID is
+distinct from the daemon listener PID and is not used as daemon liveness proof.
+
 ## F3-R evidence reconciliation
 
 Production `oauth.cjs` SHA-256 is
@@ -119,6 +127,31 @@ controlled comparison with historical runs or a production performance promise.
 
 Fork Actions and downloaded-artifact results are appended after execution;
 pending runs are not PASS.
+
+The first Fork run [40086336362](https://github.com/lieyanbang/coord/actions/runs/40086336362)
+on implementation commit `2fccbd3dc853af07cc3a439914f87d4bd5602d79`
+finished **FAIL**. Fmt, clippy, Rust tests, release build and health-monitor
+checks succeeded; the dedicated-account rehearsal exited 1 during identity
+validation. Its standard user could not inspect a trusted path ancestor under
+runneradmin's private TEMP directory (`Access is denied`, OS error 5). Later
+Relay/MCP/Python steps were skipped and no binary artifact was produced.
+The failure artifact `12557665426` was downloaded: ZIP SHA-256
+`3088ece0f354a99de3bacd899ad5d28aa97b7c9daa8d256641867d1ae9ad3468`,
+517 bytes. Its summary and stderr are retained as `stage-g6-ci-first-summary.json`
+and `stage-g6-ci-first-identity.log`; the disposable account was removed.
+
+The rehearsal fixture now uses a random `coord-g6-<32hex>` directory directly
+under the system volume root. Cleanup requires that exact volume-root parent
+and fixed GUID leaf pattern. Rust ancestor/reparse validation, account token
+checks, ACL denials, RPC authentication and crash gates remain unchanged.
+This repairs a disposable fixture layout and does not establish a production
+permission result. The replacement run remains pending until observed.
+
+Before the fixture-fix commit, `scripts/verify.ps1 -Stage g6-cifix` exited
+**0**, with all eight local checks passing. The full commands, timestamps,
+durations and raw logs are retained in `stage-g6-cifix-checks.json` and its
+referenced logs. The account-creating rehearsal is restricted to disposable
+Actions hosts and was not run on the operator's workstation.
 
 The initial parallel-edit `g6-baseline` invocation failed at fmt because an
 in-progress module declaration preceded creation of its source file. Its
