@@ -1,0 +1,475 @@
+{
+  "counts": [
+    {
+      "offset": 0,
+      "total": 50,
+      "denied": [
+        {
+          "offset": 0,
+          "local": {
+            "ok": true,
+            "agentId": "emote-0000",
+            "batchId": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e"
+          },
+          "remote_state": "not_dispatched",
+          "remote_code": "identity_invalid_or_expired"
+        },
+        {
+          "offset": 0,
+          "local": {
+            "ok": true,
+            "agentId": "emote-0000",
+            "batchId": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e"
+          },
+          "remote_state": "not_dispatched",
+          "remote_code": "identity_invalid_or_expired"
+        },
+        {
+          "offset": 0,
+          "local": {
+            "ok": true,
+            "agentId": "emote-0000",
+            "batchId": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e"
+          },
+          "remote_state": "not_dispatched",
+          "remote_code": "identity_invalid_or_expired"
+        },
+        {
+          "offset": 0,
+          "local": {
+            "ok": true,
+            "agentId": "emote-0000",
+            "batchId": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e"
+          },
+          "remote_state": "not_dispatched",
+          "remote_code": "identity_invalid_or_expired"
+        },
+        {
+          "offset": 0,
+          "local": {
+            "ok": true,
+            "agentId": "emote-0000",
+            "batchId": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e"
+          },
+          "remote_state": "not_dispatched",
+          "remote_code": "identity_invalid_or_expired"
+        },
+        {
+          "offset": 0,
+          "local": {
+            "ok": true,
+            "agentId": "emote-0000",
+            "batchId": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e"
+          },
+          "remote_state": "not_dispatched",
+          "remote_code": "identity_invalid_or_expired"
+        },
+        {
+          "offset": 0,
+          "local": {
+            "ok": true,
+            "agentId": "emote-0000",
+            "batchId": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e"
+          },
+          "remote_state": "not_dispatched",
+          "remote_code": "identity_invalid_or_expired"
+        },
+        {
+          "offset": 0,
+          "local": {
+            "ok": true,
+            "agentId": "emote-0000",
+            "batchId": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e"
+          },
+          "remote_state": "not_dispatched",
+          "remote_code": "identity_invalid_or_expired"
+        },
+        {
+          "offset": 0,
+          "local": {
+            "ok": true,
+            "agentId": "emote-0000",
+            "batchId": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e"
+          },
+          "remote_state": "not_dispatched",
+          "remote_code": "identity_invalid_or_expired"
+        },
+        {
+          "offset": 0,
+          "local": {
+            "ok": true,
+            "agentId": "emote-0000",
+            "batchId": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e"
+          },
+          "remote_state": "not_dispatched",
+          "remote_code": "identity_invalid_or_expired"
+        },
+        {
+          "offset": 0,
+          "local": {
+            "ok": true,
+            "agentId": "emote-0000",
+            "batchId": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e"
+          },
+          "remote_state": "not_dispatched",
+          "remote_code": "identity_invalid_or_expired"
+        },
+        {
+          "offset": 0,
+          "local": {
+            "ok": true,
+            "agentId": "emote-0000",
+            "batchId": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e"
+          },
+          "remote_state": "not_dispatched",
+          "remote_code": "identity_invalid_or_expired"
+        },
+        {
+          "offset": 0,
+          "local": {
+            "ok": true,
+            "agentId": "emote-0000",
+            "batchId": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e"
+          },
+          "remote_state": "not_dispatched",
+          "remote_code": "identity_invalid_or_expired"
+        },
+        {
+          "offset": 0,
+          "local": {
+            "ok": true,
+            "agentId": "emote-0000",
+            "batchId": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e"
+          },
+          "remote_state": "not_dispatched",
+          "remote_code": "identity_invalid_or_expired"
+        },
+        {
+          "offset": 0,
+          "local": {
+            "ok": true,
+            "agentId": "emote-0000",
+            "batchId": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e"
+          },
+          "remote_state": "not_dispatched",
+          "remote_code": "identity_invalid_or_expired"
+        },
+        {
+          "offset": 0,
+          "local": {
+            "ok": true,
+            "agentId": "emote-0000",
+            "batchId": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e"
+          },
+          "remote_state": "not_dispatched",
+          "remote_code": "identity_invalid_or_expired"
+        },
+        {
+          "offset": 0,
+          "local": {
+            "ok": true,
+            "agentId": "emote-0000",
+            "batchId": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e"
+          },
+          "remote_state": "not_dispatched",
+          "remote_code": "identity_invalid_or_expired"
+        },
+        {
+          "offset": 0,
+          "local": {
+            "ok": true,
+            "agentId": "emote-0000",
+            "batchId": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e"
+          },
+          "remote_state": "not_dispatched",
+          "remote_code": "identity_invalid_or_expired"
+        },
+        {
+          "offset": 0,
+          "local": {
+            "ok": true,
+            "agentId": "emote-0000",
+            "batchId": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e"
+          },
+          "remote_state": "not_dispatched",
+          "remote_code": "identity_invalid_or_expired"
+        },
+        {
+          "offset": 0,
+          "local": {
+            "ok": true,
+            "agentId": "emote-0000",
+            "batchId": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e"
+          },
+          "remote_state": "not_dispatched",
+          "remote_code": "identity_invalid_or_expired"
+        },
+        {
+          "offset": 0,
+          "local": {
+            "ok": true,
+            "agentId": "emote-0000",
+            "batchId": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e"
+          },
+          "remote_state": "not_dispatched",
+          "remote_code": "identity_invalid_or_expired"
+        },
+        {
+          "offset": 0,
+          "local": {
+            "ok": true,
+            "agentId": "emote-0000",
+            "batchId": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e"
+          },
+          "remote_state": "not_dispatched",
+          "remote_code": "identity_invalid_or_expired"
+        },
+        {
+          "offset": 0,
+          "local": {
+            "ok": true,
+            "agentId": "emote-0000",
+            "batchId": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e"
+          },
+          "remote_state": "not_dispatched",
+          "remote_code": "identity_invalid_or_expired"
+        },
+        {
+          "offset": 0,
+          "local": {
+            "ok": true,
+            "agentId": "emote-0000",
+            "batchId": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e"
+          },
+          "remote_state": "not_dispatched",
+          "remote_code": "identity_invalid_or_expired"
+        },
+        {
+          "offset": 0,
+          "local": {
+            "ok": true,
+            "agentId": "emote-0000",
+            "batchId": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e"
+          },
+          "remote_state": "not_dispatched",
+          "remote_code": "identity_invalid_or_expired"
+        },
+        {
+          "offset": 0,
+          "local": {
+            "ok": true,
+            "agentId": "emote-0000",
+            "batchId": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e"
+          },
+          "remote_state": "not_dispatched",
+          "remote_code": "identity_invalid_or_expired"
+        },
+        {
+          "offset": 0,
+          "local": {
+            "ok": true,
+            "agentId": "emote-0000",
+            "batchId": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e"
+          },
+          "remote_state": "not_dispatched",
+          "remote_code": "identity_invalid_or_expired"
+        },
+        {
+          "offset": 0,
+          "local": {
+            "ok": true,
+            "agentId": "emote-0000",
+            "batchId": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e"
+          },
+          "remote_state": "not_dispatched",
+          "remote_code": "identity_invalid_or_expired"
+        },
+        {
+          "offset": 0,
+          "local": {
+            "ok": true,
+            "agentId": "emote-0000",
+            "batchId": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e"
+          },
+          "remote_state": "not_dispatched",
+          "remote_code": "identity_invalid_or_expired"
+        },
+        {
+          "offset": 0,
+          "local": {
+            "ok": true,
+            "agentId": "emote-0000",
+            "batchId": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e"
+          },
+          "remote_state": "not_dispatched",
+          "remote_code": "identity_invalid_or_expired"
+        },
+        {
+          "offset": 0,
+          "local": {
+            "ok": true,
+            "agentId": "emote-0000",
+            "batchId": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e"
+          },
+          "remote_state": "not_dispatched",
+          "remote_code": "identity_invalid_or_expired"
+        },
+        {
+          "offset": 0,
+          "local": {
+            "ok": true,
+            "agentId": "emote-0000",
+            "batchId": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e"
+          },
+          "remote_state": "not_dispatched",
+          "remote_code": "identity_invalid_or_expired"
+        },
+        {
+          "offset": 0,
+          "local": {
+            "ok": true,
+            "agentId": "emote-0000",
+            "batchId": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e"
+          },
+          "remote_state": "not_dispatched",
+          "remote_code": "identity_invalid_or_expired"
+        },
+        {
+          "offset": 0,
+          "local": {
+            "ok": true,
+            "agentId": "emote-0000",
+            "batchId": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e"
+          },
+          "remote_state": "not_dispatched",
+          "remote_code": "identity_invalid_or_expired"
+        },
+        {
+          "offset": 0,
+          "local": {
+            "ok": true,
+            "agentId": "emote-0000",
+            "batchId": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e"
+          },
+          "remote_state": "not_dispatched",
+          "remote_code": "identity_invalid_or_expired"
+        },
+        {
+          "offset": 0,
+          "local": {
+            "ok": true,
+            "agentId": "emote-0000",
+            "batchId": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e"
+          },
+          "remote_state": "not_dispatched",
+          "remote_code": "identity_invalid_or_expired"
+        },
+        {
+          "offset": 0,
+          "local": {
+            "ok": true,
+            "agentId": "emote-0000",
+            "batchId": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e"
+          },
+          "remote_state": "not_dispatched",
+          "remote_code": "identity_invalid_or_expired"
+        },
+        {
+          "offset": 0,
+          "local": {
+            "ok": true,
+            "agentId": "emote-0000",
+            "batchId": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e"
+          },
+          "remote_state": "not_dispatched",
+          "remote_code": "identity_invalid_or_expired"
+        },
+        {
+          "offset": 0,
+          "local": {
+            "ok": true,
+            "agentId": "emote-0000",
+            "batchId": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e"
+          },
+          "remote_state": "not_dispatched",
+          "remote_code": "identity_invalid_or_expired"
+        },
+        {
+          "offset": 0,
+          "local": {
+            "ok": true,
+            "agentId": "emote-0000",
+            "batchId": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e"
+          },
+          "remote_state": "not_dispatched",
+          "remote_code": "identity_invalid_or_expired"
+        },
+        {
+          "offset": 0,
+          "local": {
+            "ok": true,
+            "agentId": "emote-0000",
+            "batchId": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e"
+          },
+          "remote_state": "not_dispatched",
+          "remote_code": "identity_invalid_or_expired"
+        },
+        {
+          "offset": 0,
+          "local": {
+            "ok": true,
+            "agentId": "emote-0000",
+            "batchId": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e"
+          },
+          "remote_state": "not_dispatched",
+          "remote_code": "identity_invalid_or_expired"
+        },
+        {
+          "offset": 0,
+          "local": {
+            "ok": true,
+            "agentId": "emote-0000",
+            "batchId": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e"
+          },
+          "remote_state": "not_dispatched",
+          "remote_code": "identity_invalid_or_expired"
+        },
+        {
+          "offset": 0,
+          "local": {
+            "ok": true,
+            "agentId": "emote-0000",
+            "batchId": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e"
+          },
+          "remote_state": "not_dispatched",
+          "remote_code": "identity_invalid_or_expired"
+        },
+        {
+          "offset": 0,
+          "local": {
+            "ok": true,
+            "agentId": "emote-0000",
+            "batchId": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e"
+          },
+          "remote_state": "not_dispatched",
+          "remote_code": "identity_invalid_or_expired"
+        },
+        {
+          "offset": 0,
+          "local": {
+            "ok": true,
+            "agentId": "emote-0000",
+            "batchId": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e"
+          },
+          "remote_state": "not_dispatched",
+          "remote_code": "identity_invalid_or_expired"
+        }
+      ]
+    },
+    {
+      "offset": -1000,
+      "total": 50,
+      "denied": []
+    }
+  ]
+}

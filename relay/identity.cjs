@@ -12,6 +12,9 @@ const SCOPES = Object.freeze({
   'tasks/complete': 'coord:submit', 'scheduler/submit': 'coord:submit', 'scheduler/failure': 'coord:failure',
 });
 const VALID_SCOPES = new Set(Object.values(SCOPES));
+// Linux facade and Windows Relay use separate wall clocks. Keep the signed
+// lifetime and hard expiry unchanged while tolerating a bounded future issue.
+const MAX_FUTURE_ISSUE_SKEW_MS = 5_000;
 const hash = value => crypto.createHash('sha256').update(value).digest('hex');
 const record = value => value && typeof value === 'object' && !Array.isArray(value);
 const exact = (value, keys) => record(value) && Object.keys(value).every(k => keys.includes(k)) && keys.every(k => Object.hasOwn(value, k));
@@ -113,7 +116,7 @@ function verifyRequest(request, policy, now = Date.now()) {
       || (logical ? !b.worker_ids.includes(p.worker_id) || p.agent_id !== `emote-${p.worker_id}` : b.agent_id !== p.agent_id)
       || JSON.stringify(b.scopes) !== JSON.stringify(p.scopes)
       || !Number.isSafeInteger(p.issued_at) || !Number.isSafeInteger(p.expires_at)
-      || p.issued_at > now || p.issued_at < b.not_before || p.expires_at > b.expires_at
+      || p.issued_at > now + MAX_FUTURE_ISSUE_SKEW_MS || p.issued_at < b.not_before || p.expires_at > b.expires_at
       || p.expires_at - p.issued_at > 60_000 || p.expires_at <= now || p.expires_at <= p.issued_at) return { ok: false, code: 'identity_invalid_or_expired' };
   const scope = SCOPES[request.method];
   if (!scope || !b.scopes.includes(scope)) return { ok: false, code: 'identity_scope_denied' };

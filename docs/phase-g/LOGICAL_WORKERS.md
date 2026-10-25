@@ -31,7 +31,9 @@ The optional version-2 policy has mode=logical and top-level enabled,
 signing_key_file, legacy_client_sha256 and bindings. Each binding contains id,
 client_sha256, worker_ids, batch_id, scopes, not_before and expires_at. Times are
 Unix milliseconds, binding TTL is at most 24 hours and signed request TTL at most
-60 seconds. The client hash comes from validated OAuth context, not a tool
+60 seconds. Cross-host verification allows at most five seconds of future
+issued_at clock skew; expiration and the 60-second signed lifetime stay strict.
+The client hash comes from validated OAuth context, not a tool
 argument. Token rotation does not require six independently pinned credentials.
 Version-1 strong token policies remain unchanged. Without an enabled logical
 policy, logical declarations fail closed. Policy/key files are administrator

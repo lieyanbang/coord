@@ -113,3 +113,46 @@ the new facade sibling identity module did not previously exist. Evidence:
 Before the source commit, `scripts/verify.ps1 -Stage g7-source` again passes all
 eight checks. The reports retain both full local gates. CI and actual production
 Runner/canary verification remain pending, not PASS.
+
+## Deployment checkpoint and clock-skew correction
+
+Initial matching source `229d423b003a88bf2d49cca96502dfb803a482f1` passed Fork
+Windows run 40164606057; both downloaded artifacts, all three executable hashes,
+28 focused executable integrations and 24 Relay tests were verified. Actual
+Arasaka dedicated SID/ACL/RPC and SYSTEM gates passed (`stage-g7-site-result.json`),
+as did real Runner crash/uncertain recovery and old-binary readback of all 27
+original fields in all eight original tasks (`stage-g7-site-recovery.json`).
+Windows deployment completed at 05:43Z with authenticated READY and 401 on
+unauthenticated management RPC. Linux deployment passed at 05:46Z after a helper
+checked the wrong health port; its automatic component rollback preserved live
+OAuth state and the corrected helper uses the configured loopback client port.
+Both failure and success evidence are retained. Access policy and oauth.cjs are
+unchanged. The signing key was handed off using ephemeral RSA-OAEP-SHA256;
+plaintext stayed on protected remote hosts and the ephemeral private key and
+transfer plaintext were removed. An earlier local plaintext transfer command
+was rejected by automatic approval review without a detailed reason and was
+not executed.
+
+Only synthetic Canary batches were created: operator
+`ddb65e62-2847-4dbb-a188-40f2c20c9c8e` (eight tasks), browser
+`d2313c78-22da-4cb8-bcd7-ece9897e0db1` (four tasks). The browser runtime fails before
+JavaScript initialization with `failed to write kernel assets`, os error 3;
+the two real ChatGPT conversation lifecycle gate remains NEEDS_USER_ACTION.
+An actual installed Coord OAuth legacy tasks_list succeeds and excludes protected
+Canaries. No original task was closed and no classification agent was started.
+
+The first operator run passed six concurrent unique claims, foreign-token denial,
+progress and renewal, but a later submit was not dispatched because the Windows
+clock can lag the Linux issuer. A 100-request read-only stress probe reproduced
+intermittent rejection with current issuance and none with issuance one second
+earlier (`stage-g7-signature-stress.json`). New regression first fails on the
+old verifier. The correction permits at most 5,000ms future issuance skew while
+retaining strict expiration, policy bounds, scope, signature and 60,000ms lifetime.
+Boundary tests cover 5,000/5,001ms, exact expiration and excessive TTL. All eight
+`scripts/verify.ps1 -Stage g7-clock` checks pass. A second matching Fork build and
+download recheck are required before replacing the corrected Relay module.
+
+Explicit downloaded-release capacity verification also passes 100/1,000/10,000
+tasks with six independent MCP processes, exact unique completions/receipts,
+consistent terminal counts and zero SQLite busy log lines. Raw measurements are
+in `stage-g7-capacity.json`; this is local capacity evidence, not remote throughput.

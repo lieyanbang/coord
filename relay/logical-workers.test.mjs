@@ -72,6 +72,17 @@ test('logical worker, agent, batch, scope and expiration are signed and reverifi
   assert.equal(identity.protectedBatch(policy, batch), true);
 });
 
+test('signed logical requests allow bounded host clock skew without extending expiration', () => {
+  const policy = logicalPolicy(batch, now);
+  const principal = identity.resolvePrincipal(policy, auth, now, { worker_id: '0000', batch_id: batch });
+  const request = identity.signRequest({ requestId: randomUUID(), method: 'scheduler/claim', params: { agent_id: principal.agent_id, batch_id: batch } }, principal, policy);
+  assert.equal(identity.verifyRequest(request, policy, now - 5000).ok, true);
+  assert.equal(identity.verifyRequest(request, policy, now - 5001).ok, false);
+  assert.equal(identity.verifyRequest(request, policy, principal.expires_at).ok, false);
+  const excessiveTtl = { ...principal, expires_at: now + 60001 };
+  assert.equal(identity.verifyRequest(identity.signRequest({ ...request, identity: undefined }, excessiveTtl, policy), policy, now).ok, false);
+});
+
 test('six synthetic logical clients run fenced lifecycles through both relay hops and a real daemon', { timeout: 30_000 }, async () => {
   const folder = await mkdtemp(join(tmpdir(), 'coord-g7-logical-'));
   const port = await reservePort();
