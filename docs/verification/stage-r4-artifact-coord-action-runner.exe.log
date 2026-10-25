@@ -1,0 +1,9 @@
+Usage: coord-action-runner.exe [OPTIONS] --registry <REGISTRY>
+
+Options:
+      --registry <REGISTRY>
+      --once
+      --check-identity
+      --probe-acl <PROBE_ACL>
+  -h, --help                   Print help
+EXIT_CODE=0

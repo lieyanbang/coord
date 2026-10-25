@@ -1,0 +1,6 @@
+Usage: coord-emote-action.exe --root <ROOT>
+
+Options:
+      --root <ROOT>
+  -h, --help         Print help
+EXIT_CODE=0

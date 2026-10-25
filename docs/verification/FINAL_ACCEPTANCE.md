@@ -213,15 +213,25 @@ limits are in [PHASE_R0_ARCHITECTURE.md](PHASE_R0_ARCHITECTURE.md),
 `codex/phase-r-execution-2026-10-25` was pushed only to the verified Fork
 `lieyanbang/coord`; no push was made to `origin`.
 
-The Windows Actions run for implementation commit
-`004b93a79cacac95bf04601c34c64a2a8558cb95` is
-[40194822262](https://github.com/lieyanbang/coord/actions/runs/40194822262).
-It failed when Relay tests loaded before `npm ci`, leaving Express unavailable
-on the clean runner. Rust gates, Release build, health monitor and low-privilege
-Runner rehearsal passed; later MCP/Python tests and the matching executable
-artifact were skipped. The workflow now installs Coord MCP dependencies before
-Relay tests; a fresh Fork run is pending. See [PHASE_R4.md](PHASE_R4.md). The
-R3 local release build is not used as a replacement for the CI artifact.
+The first Fork run
+[40194822262](https://github.com/lieyanbang/coord/actions/runs/40194822262)
+failed because Relay tests loaded before `npm ci`, leaving Express unavailable
+on the clean runner. The dependency install was moved before Relay tests. The
+corrected Windows Actions run
+[40195567861](https://github.com/lieyanbang/coord/actions/runs/40195567861)
+for `4e308edd2f8cd7c9852eb4a1eefd7e4bc935c7ed` passed every workflow step,
+including fmt/clippy/tests/Release, health monitor, low-privilege Runner,
+Relay/lease tests, MCP OAuth/HTTP, Python utility checks, and artifact uploads.
+
+Artifact `coord-windows-2022` ID `12600096932` (6,571,823 bytes) matches that
+commit; ZIP SHA-256 is
+`a54d3c62af79b148aaa1f2563e13ffa3f47b51c855b341aa83b93f9f65b641d7`. The
+downloaded `coord.exe` SHA-256 is
+`e7c3695a21f88274cb84992f99a4ce9ce5b2f2bfb229a2768b3c6ccd85bdd13d` and reports
+version 0.4.1. The downloaded Runner and publisher executables' hashes and
+help checks, plus the 27/27 isolated Relay/Core test run using this exact
+downloaded Core, are recorded in [PHASE_R4.md](PHASE_R4.md). No production
+deployment or real ChatGPT session was performed.
 
 Phase R overall remains **PARTIAL**. No real ChatGPT OAuth refresh or
 conversation/context-loss run was attempted because Phase R is not deployed;

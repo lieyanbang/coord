@@ -1,0 +1,55 @@
+{
+  "repository": "lieyanbang/coord",
+  "branch": "codex/phase-r-execution-2026-10-25",
+  "commit": "4e308edd2f8cd7c9852eb4a1eefd7e4bc935c7ed",
+  "workflow_run": {
+    "id": 40195567861,
+    "url": "https://github.com/lieyanbang/coord/actions/runs/40195567861",
+    "event": "push",
+    "status": "completed",
+    "conclusion": "success",
+    "job": "test (windows-2022)",
+    "all_steps_conclusion": "success"
+  },
+  "artifact": {
+    "name": "coord-windows-2022",
+    "id": 12600096932,
+    "size_bytes": 6571823,
+    "sha256": "a54d3c62af79b148aaa1f2563e13ffa3f47b51c855b341aa83b93f9f65b641d7",
+    "head_sha": "4e308edd2f8cd7c9852eb4a1eefd7e4bc935c7ed",
+    "expires_at": "2027-01-23T12:59:29Z"
+  },
+  "executables": [
+    {
+      "name": "coord.exe",
+      "size_bytes": 11459072,
+      "sha256": "e7c3695a21f88274cb84992f99a4ce9ce5b2f2bfb229a2768b3c6ccd85bdd13d",
+      "command": "coord.exe version",
+      "exit_code": 0,
+      "result": "coord 0.4.1"
+    },
+    {
+      "name": "coord-action-runner.exe",
+      "size_bytes": 3666944,
+      "sha256": "114347d7024e08e4451745526023c750c6517d3a5d07f34065906ec63770566e",
+      "command": "coord-action-runner.exe --help",
+      "exit_code": 0
+    },
+    {
+      "name": "coord-emote-action.exe",
+      "size_bytes": 1082880,
+      "sha256": "4a61b9efa529a383c04fb66d5efabaa3e7364526b7eb4212d4321dbf132db7b5",
+      "command": "coord-emote-action.exe --help",
+      "exit_code": 0
+    }
+  ],
+  "artifact_acceptance": {
+    "command": "node --test relay/relay.test.mjs relay/live-coord.test.mjs relay/logical-workers.test.mjs",
+    "coord_test_bin": "exact downloaded artifact coord.exe",
+    "exit_code": 0,
+    "tests": 27,
+    "passed": 27,
+    "failed": 0,
+    "log": "docs/verification/stage-r4-artifact-relay.log"
+  }
+}

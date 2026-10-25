@@ -1,0 +1,9 @@
+coord 0.4.1
+a2a   subset (tasks/send, tasks/get, tasks/cancel)
+ext   tasks/claim, tasks/extend, tasks/reclaim, tasks/complete, tasks/list (long-poll)
+mcp   bridge   (use `coord mcp` for stdio)
+vault markdown (use `coord serve --vault PATH` to enable)
+kinds task | bug | feature | decision | ack | knowledge | build
+prio  low | normal | high | urgent
+lease 300s default · 3600s max · auto-reclaim every 30s
+EXIT_CODE=0
