@@ -1,0 +1,145 @@
+{
+  "state": "PASS",
+  "source": "Actual connected Coord MCP tools; read-only status calls; no browser classification prompts",
+  "results": [
+    {
+      "worker_id": "0000",
+      "result": {
+        "active_claims": 0,
+        "agent_id": "emote-0000",
+        "batch_id": "90ce2ca7-184e-4c3d-9d87-56386db25419",
+        "batch_progress": {
+          "active": 121,
+          "total": 121,
+          "states": {
+            "pending": 121,
+            "claimed": 0,
+            "submitted": 0
+          }
+        },
+        "tasks": []
+      }
+    },
+    {
+      "worker_id": "0001",
+      "result": {
+        "active_claims": 0,
+        "agent_id": "emote-0001",
+        "batch_id": "90ce2ca7-184e-4c3d-9d87-56386db25419",
+        "batch_progress": {
+          "active": 121,
+          "id": "90ce2ca7-184e-4c3d-9d87-56386db25419",
+          "states": {
+            "cancelled": 0,
+            "claimed": 0,
+            "completed": 0,
+            "failed": 0,
+            "pending": 121,
+            "submitted": 0
+          },
+          "status": "active",
+          "terminal": 0,
+          "total": 121
+        },
+        "tasks": []
+      }
+    },
+    {
+      "worker_id": "0002",
+      "result": {
+        "active_claims": 0,
+        "agent_id": "emote-0002",
+        "batch_id": "90ce2ca7-184e-4c3d-9d87-56386db25419",
+        "batch_progress": {
+          "active": 121,
+          "id": "90ce2ca7-184e-4c3d-9d87-56386db25419",
+          "states": {
+            "cancelled": 0,
+            "claimed": 0,
+            "completed": 0,
+            "failed": 0,
+            "pending": 121,
+            "submitted": 0
+          },
+          "status": "active",
+          "terminal": 0,
+          "total": 121
+        },
+        "tasks": []
+      }
+    },
+    {
+      "worker_id": "0003",
+      "result": {
+        "active_claims": 0,
+        "agent_id": "emote-0003",
+        "batch_id": "90ce2ca7-184e-4c3d-9d87-56386db25419",
+        "batch_progress": {
+          "active": 121,
+          "id": "90ce2ca7-184e-4c3d-9d87-56386db25419",
+          "states": {
+            "cancelled": 0,
+            "claimed": 0,
+            "completed": 0,
+            "failed": 0,
+            "pending": 121,
+            "submitted": 0
+          },
+          "status": "active",
+          "terminal": 0,
+          "total": 121
+        },
+        "tasks": []
+      }
+    },
+    {
+      "worker_id": "0004",
+      "result": {
+        "active_claims": 0,
+        "agent_id": "emote-0004",
+        "batch_id": "90ce2ca7-184e-4c3d-9d87-56386db25419",
+        "batch_progress": {
+          "active": 121,
+          "id": "90ce2ca7-184e-4c3d-9d87-56386db25419",
+          "states": {
+            "cancelled": 0,
+            "claimed": 0,
+            "completed": 0,
+            "failed": 0,
+            "pending": 121,
+            "submitted": 0
+          },
+          "status": "active",
+          "terminal": 0,
+          "total": 121
+        },
+        "tasks": []
+      }
+    },
+    {
+      "worker_id": "0005",
+      "result": {
+        "active_claims": 0,
+        "agent_id": "emote-0005",
+        "batch_id": "90ce2ca7-184e-4c3d-9d87-56386db25419",
+        "batch_progress": {
+          "active": 121,
+          "id": "90ce2ca7-184e-4c3d-9d87-56386db25419",
+          "states": {
+            "cancelled": 0,
+            "claimed": 0,
+            "completed": 0,
+            "failed": 0,
+            "pending": 121,
+            "submitted": 0
+          },
+          "status": "active",
+          "terminal": 0,
+          "total": 121
+        },
+        "tasks": []
+      }
+    }
+  ],
+  "claim_calls": 0
+}

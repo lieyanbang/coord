@@ -1,0 +1,14 @@
+{
+  "state": "PASS",
+  "batch_id": "90ce2ca7-184e-4c3d-9d87-56386db25419",
+  "files_rehashed": 1673,
+  "formal_results": 0,
+  "formal_action_events": 0,
+  "rollback_guards": {
+    "all_tasks_unclaimed_pending": true,
+    "no_action_or_publication_to_reconcile": true,
+    "preserve_live_database": true,
+    "expire_binding_in_place_to_keep_batch_protected": true
+  },
+  "backup_root": "C:\\ProgramData\\coord\\g7\\private\\initial-20261025T075241Z-1651573f"
+}

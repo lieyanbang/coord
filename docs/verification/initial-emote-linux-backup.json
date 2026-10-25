@@ -1,0 +1,7 @@
+{
+  "state": "PASS",
+  "backup_root": "/var/backups/coord-initial-20261025T075307Z-18128120",
+  "archive_sha256": "636ef8b6e23604d6eb1b1c171b95287eb7f8a28a9b9d0e8d49a204d4fb2ae3f3",
+  "both_consumers_policy": "/etc/coord-relay/identity.json",
+  "oauth_store_modified": false
+}

@@ -1,0 +1,42 @@
+{
+  "state": "RESOLVED_TEST_PRECONDITIONS",
+  "failures": [
+    {
+      "stage": "audit harness launch",
+      "error": "Python source accidentally passed to PowerShell-only legacy wrapper; ParserError before execution",
+      "resolution": "Dedicated Python/direct-SSH runner; no production mutation"
+    },
+    {
+      "stage": "local packaging",
+      "error": "Python 3.10 lacks Path.is_junction",
+      "resolution": "Use Windows reparse-point file attributes; package validated before transfer"
+    },
+    {
+      "stage": "six-worker read-only verifier",
+      "error": "No unexpired approved access-token metadata existed",
+      "resolution": "Actual connected Coord read-only call refreshed OAuth normally; six actual MCP queries and verifier pass. No token-store edits or claims"
+    },
+    {
+      "stage": "Windows broad service regression fixture",
+      "error": "OS demand-start AppXSvc changed Running to Stopped by itself",
+      "resolution": "Retain all 283 unrelated identities/start modes, record transient OS state; all seven protected application services retain state and PID"
+    },
+    {
+      "stage": "Linux port regression fixture",
+      "error": "Tried HTTP /healthz on raw TCP agent ports, first at wrong loopback address",
+      "resolution": "Inspect actual Tailscale binding/protocol; verify TCP reachability and six authenticated two-hop RPCs; no listener/config change"
+    },
+    {
+      "stage": "public route probe",
+      "error": "Default Python user agent received a different status than the baseline",
+      "resolution": "Standard browser User-Agent gives all eight exact baseline public statuses; no server change"
+    },
+    {
+      "stage": "Python unittest invocation",
+      "error": "Module invocation missing script-local import path",
+      "resolution": "python scripts/phase_g/test_phase_g_tools.py passes 8/8"
+    }
+  ],
+  "safety_or_integrity_checks_bypassed": false,
+  "production_mutations_after_first_verifier_failure": false
+}

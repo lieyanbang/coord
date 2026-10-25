@@ -263,3 +263,28 @@ Windows 本机及 Windows Actions 的真实测试、构建与产物为准。
 - C 现场 PASS：在线一致备份、真实标准账户 SID `…-1004`、ACL/RPC 拒绝、SYSTEM READY、native 发布/索引、Runner 崩溃后 uncertain 不重放及旧 EXE 读取迁移副本均实测。Fork run `40167256908` 对实现 `f0aa7da` 全绿；下载三 EXE 哈希核验并复验 28 项集成及 25 项 Relay 后已部署。哈希不同，不声称可复现构建。
 - D 合成生产 Canary PASS：operator batch `ddb65e62-2847-4dbb-a188-40f2c20c9c8e` 共 10 项完成，11 个动作全部 succeeded；六逻辑 ID 唯一领取、进度续租、自然过期/失败重试、旧 token 拒绝、索引及原 8 任务的 27 字段逐值不变均通过。原其他服务 PID、13011/13012、旧 OAuth/MCP 与公开路由回归通过；Access 策略未改。
 - 浏览器工具已恢复；修复重连产生的新 DCR client 缺少精确身份绑定导致的 OAuth 成功/MCP 403。仅新增 browser batch + workers 0000/0001，原 allowlist/key/到期时间不变。原两条 ChatGPT 对话各完成两项合成任务，均含实际 marker 附件查看、progress、extend、submit、精确读回及再次领取；管理端确认 **4/4 completed、active=0、5/5 actions succeeded**，四项均 attempt 1。B 首次最终回复渲染失败，追加只读核对成功，无重复写入。八项本地门及旧 8 任务 27 字段/服务/Runner/READY 回归 PASS。见 `verification/G7_DISCOVERY_REPAIR.md`、`phase-g/G7-CHATGPT-CANARY.md`；绑定仍于 2026-10-26T05:45:23.904Z 到期。F3-R 原缺口保持 PARTIAL；未创建新任务或启动正式分类 Agent。
+
+
+## 14. 正式初步分类 Batch 创建（2026-10-25）
+
+最新用户授权正式创建 121 个分组任务，但禁止领取和启动分类 Agent。
+**创建及授权验证 PASS，分类 NOT_RUN。** Batch
+`90ce2ca7-184e-4c3d-9d87-56386db25419`：121 个唯一键、1,206 张图片覆盖，
+pending=121，claimed/submitted=0，六个真实 MCP worker 查询 active_claims=0。
+原始 manager API 的 active=121 表示包含 pending 的非终态数，未改动该语义。
+
+1,218 原图记录、12 重复映射和 121 非空组逐文件验证；1,206 不同图片哈希。
+部署 1,673 个只读输入文件（464 refs），传输及最终逐文件 SHA-256、真实
+Runner ACL/RPC、原生 hash-pinned 专用 emote-publisher-v1 均通过。
+管理员分配空 Batch UUID 后，Windows 服务器在实际启用时现算 UTC，三处
+同步新 binding：2026-10-25T07:58:44.865Z 至 2026-10-25T19:58:44.865Z，12h，
+仅六 worker 和正式 Batch。旧绑定、任务、Canary、key 和 Access 保持。
+三次尝试、3600s attempt 预算、进度要求；600s 是原生硬上限，未来领取须显式
+lease_seconds=600（省略仍默认 300s），本轮未实际领取。
+
+全部旧 22 任务和 receipt/progress/actions/batches 逐字段未变；SYSTEM READY、
+七项受保护服务、283 项无关服务身份/启动方式、Linux/公开路由回归通过。
+四项本地 stage 门和 Python 8 测试通过。输入/配置/DB 先备份，回滚条件只读
+检查通过；实际故障回滚 NOT_RUN。撤销须保留已过期的正式 binding 保护批次，
+不能直接移除 binding 或覆盖 live DB。无新增云构建、无 EXE/实现替换。
+证据、探针条件纠正及限制见 [INITIAL_EMOTE_BATCH.md](verification/INITIAL_EMOTE_BATCH.md)。

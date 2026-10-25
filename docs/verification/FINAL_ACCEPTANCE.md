@@ -178,3 +178,26 @@ old-task closure, Access-policy change, release/tag, history rewrite or machine
 restart occurred. An accidental push to origin was denied; the verified Fork
 working branch was then pushed normally. Full evidence and preserved failures
 are in `PHASE_G7.md`.
+
+
+## Formal initial Batch creation (2026-10-25)
+
+**Creation/authorization PASS; classification NOT_RUN.** Explicit follow-on
+authorization creates Batch `90ce2ca7-184e-4c3d-9d87-56386db25419`, 121 unique
+group keys and 1,206 unique images. All tasks pending, zero claims/attempts,
+zero formal action events/results. Six actual MCP status calls return
+active_claims=0. Raw manager active=121 counts all nonterminal work, including
+pending. No claim was dispatched; claim permissions were checked separately.
+
+All 1,673 deployed input hashes and ACLs, actual non-admin Runner/RPC denials,
+fixed native profile, old 22-task/progress/receipt/action preservation, health,
+protected services and public routes pass. Server-UTC binding is valid exactly
+2026-10-25T07:58:44.865Z–2026-10-25T19:58:44.865Z for workers 0000–0005 and only
+this Batch. Three attempts, 3600s budget and progress required; the native 600s
+lease cap remains, and future claims must explicitly request 600s.
+
+Fresh backups and read-only rollback guards pass; no actual failure rollback,
+classification or unattended execution is claimed. Four local stage checks and
+eight Python tests pass. No binary/implementation, Access or Git history change.
+See [INITIAL_EMOTE_BATCH.md](INITIAL_EMOTE_BATCH.md) for exact evidence and
+safe rollback using an expired binding tombstone instead of removing protection.

@@ -1,0 +1,34 @@
+{
+  "state": "PASS",
+  "batch_id": "90ce2ca7-184e-4c3d-9d87-56386db25419",
+  "binding": {
+    "id": "emote-initial-v1",
+    "client_sha256": "2e12506a52763d439506792019e34debb54b912d2575c82c3ef275af5cd01ab1",
+    "batch_id": "90ce2ca7-184e-4c3d-9d87-56386db25419",
+    "worker_ids": [
+      "0000",
+      "0001",
+      "0002",
+      "0003",
+      "0004",
+      "0005"
+    ],
+    "scopes": [
+      "coord:read",
+      "coord:claim",
+      "coord:progress",
+      "coord:extend",
+      "coord:submit",
+      "coord:failure"
+    ],
+    "not_before": 1792915124865,
+    "expires_at": 1792958324865
+  },
+  "not_before_utc": "2026-10-25T07:58:44.865Z",
+  "expires_at_utc": "2026-10-25T19:58:44.865Z",
+  "clock_source": "Arasaka Windows server time.time_ns UTC at actual enable",
+  "duration_seconds": 43200,
+  "prior_bindings_unchanged": true,
+  "policy_sha256": "643b8ea5754b168d9e5bc698f023ab244db9f8d536734b435e3827a31ca7fa30",
+  "backup_root": "C:\\ProgramData\\coord\\g7\\private\\initial-20261025T075241Z-1651573f"
+}

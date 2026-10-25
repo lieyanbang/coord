@@ -116,3 +116,30 @@ verification are in `../verification/G7_DISCOVERY_REPAIR.md`. The site-specific
 repair helpers deliberately reject reapplication. Future reconnects must reuse
 the approved public OAuth client or undergo an exact binding review; never
 allow every DCR client automatically. Expiry remains 2026-10-26T05:45:23.904Z.
+
+
+## Authorized formal Batch creation follow-on (2026-10-25)
+
+The later explicit user instruction supersedes the synthetic-only scope for
+queue creation, while still prohibiting claims and classification agents.
+Formal Batch `90ce2ca7-184e-4c3d-9d87-56386db25419` now has 121 pending,
+unattempted tasks covering 1,206 unique images. Actual six-worker MCP queries
+return active_claims=0; manager active=121 includes pending by design.
+The emote-publisher-v1 profile pins the unchanged native publisher to
+`C:\ProgramData\coord\g7\initial\business`. No new binary was deployed.
+
+Binding timestamps were computed on Arasaka at activation:
+2026-10-25T07:58:44.865Z through 2026-10-25T19:58:44.865Z (12h), workers 0000–0005,
+only the formal Batch and the approved reconnect OAuth client. All three
+consumers agree; original bindings and their expiry remain unchanged.
+No claims, results or actions were executed. Claim authorization was tested
+with dispatch interception, with separate real read-only two-hop/MCP calls.
+
+New restore points are Windows private/initial-20261025T075241Z-1651573f beneath
+the G7 root and Linux /var/backups/coord-initial-20261025T075307Z-18128120.
+Rollback first expires the formal binding **in place**, retaining batch
+protection from legacy clients; do not remove its binding or disable identity.
+Reconcile tasks/actions before restoring the registry. Never overwrite live DB
+or OAuth grants. The old whole-site rollback is not a safe blind operation on
+this new formal queue. Detailed evidence, guards and lease/API semantics:
+[INITIAL_EMOTE_BATCH.md](../verification/INITIAL_EMOTE_BATCH.md).

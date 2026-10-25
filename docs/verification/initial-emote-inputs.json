@@ -1,0 +1,24 @@
+{
+  "state": "PASS",
+  "backup_root": "C:\\ProgramData\\coord\\g7\\private\\initial-20261025T075241Z-1651573f",
+  "summary": {
+    "manifest_rows": 1218,
+    "unique_images": 1206,
+    "duplicate_mappings": 12,
+    "groups": 121,
+    "task_image_count": 1206,
+    "empty_directories_verified": [
+      "A0",
+      "A1",
+      "A2",
+      "A3",
+      "A4",
+      "A5",
+      "task/121",
+      "task/122"
+    ]
+  },
+  "deployed_files": 1673,
+  "sha256_verified_files": 1673,
+  "originals_modified": false
+}

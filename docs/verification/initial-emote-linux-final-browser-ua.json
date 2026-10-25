@@ -1,0 +1,73 @@
+{
+  "state": "PASS",
+  "batch_id": "90ce2ca7-184e-4c3d-9d87-56386db25419",
+  "archived_files_unchanged": 13,
+  "prior_bindings_unchanged": true,
+  "units": {
+    "coord-relay.service": "active",
+    "feathersjsapp.service": "active",
+    "openresty.service": "active"
+  },
+  "protected_tailscale_routes": [
+    {
+      "port": 13011,
+      "tcp_connect": "PASS",
+      "http_health_not_applicable": true
+    },
+    {
+      "port": 13012,
+      "tcp_connect": "PASS",
+      "http_health_not_applicable": true
+    }
+  ],
+  "public_routes": [
+    {
+      "path": "/app/CoordMCP/",
+      "http_status": 401,
+      "expected": 401
+    },
+    {
+      "path": "/app/CoordMCP/.well-known/oauth-protected-resource/mcp",
+      "http_status": 200,
+      "expected": 200
+    },
+    {
+      "path": "/app/CoordMCP/.well-known/oauth-authorization-server",
+      "http_status": 200,
+      "expected": 200
+    },
+    {
+      "path": "/app/CoordMCP/oauth/authorize",
+      "http_status": 302,
+      "expected": 302
+    },
+    {
+      "path": "/app/RemoteControlMCP/",
+      "http_status": 302,
+      "expected": 302
+    },
+    {
+      "path": "/app/RemoteControlMCP2/",
+      "http_status": 302,
+      "expected": 302
+    },
+    {
+      "path": "/app/RemoteControlMCP3/",
+      "http_status": 401,
+      "expected": 401
+    },
+    {
+      "path": "/mcp",
+      "http_status": 401,
+      "expected": 401
+    }
+  ],
+  "health": {
+    "state": "READY",
+    "agentConnected": true,
+    "lastHeartbeat": "2026-10-25T08:06:27.937Z",
+    "pending": 0
+  },
+  "oauth_store_manually_modified": false,
+  "backup_root": "/var/backups/coord-initial-20261025T075307Z-18128120"
+}

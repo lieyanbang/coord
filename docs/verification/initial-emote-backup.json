@@ -1,0 +1,9 @@
+{
+  "state": "PASS",
+  "backup_root": "C:\\ProgramData\\coord\\g7\\private\\initial-20261025T075241Z-1651573f",
+  "business_root": "C:\\ProgramData\\coord\\g7\\initial\\business",
+  "inbound_package": "C:\\ProgramData\\coord\\g7\\private\\initial-20261025T075241Z-1651573f\\inputs.zip",
+  "db_sha256": "f3ef69f6c3dc491f6f92adcc3430b035a1fabb71ab1fa15fb390713d22f02a6a",
+  "prior_task_count": 22,
+  "rollback_condition": "Disable/remove only formal binding first. Preserve live DB, accepted rows, receipts and outputs; no automatic DB restore. Restore prior registry only after reconciling formal action states."
+}

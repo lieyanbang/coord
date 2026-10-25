@@ -1,0 +1,99 @@
+{
+  "state": "PASS",
+  "policy": {
+    "version": 2,
+    "mode": "logical",
+    "enabled": true,
+    "legacy_client_sha256": [
+      "eeb595ffaeec3cc157243f766c320f4133f1d9a6af05ad21ee8fb373850122ba"
+    ],
+    "bindings": [
+      {
+        "worker_ids": [
+          "0000",
+          "0001",
+          "0002",
+          "0003",
+          "0004",
+          "0005"
+        ],
+        "batch_id": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e",
+        "not_before": 1792907222904,
+        "expires_at": 1792993523904,
+        "id": "g7-operator",
+        "scopes": [
+          "coord:read",
+          "coord:claim",
+          "coord:progress",
+          "coord:extend",
+          "coord:submit",
+          "coord:failure"
+        ],
+        "client_sha256": "eeb595ffaeec3cc157243f766c320f4133f1d9a6af05ad21ee8fb373850122ba"
+      },
+      {
+        "worker_ids": [
+          "0000",
+          "0001",
+          "0002",
+          "0003",
+          "0004",
+          "0005"
+        ],
+        "batch_id": "d2313c78-22da-4cb8-bcd7-ece9897e0db1",
+        "not_before": 1792907222904,
+        "expires_at": 1792993523904,
+        "id": "g7-browser",
+        "scopes": [
+          "coord:read",
+          "coord:claim",
+          "coord:progress",
+          "coord:extend",
+          "coord:submit",
+          "coord:failure"
+        ],
+        "client_sha256": "eeb595ffaeec3cc157243f766c320f4133f1d9a6af05ad21ee8fb373850122ba"
+      },
+      {
+        "worker_ids": [
+          "0000",
+          "0001"
+        ],
+        "batch_id": "d2313c78-22da-4cb8-bcd7-ece9897e0db1",
+        "not_before": 1792907222904,
+        "expires_at": 1792993523904,
+        "id": "g7-browser-reconnect",
+        "scopes": [
+          "coord:read",
+          "coord:claim",
+          "coord:progress",
+          "coord:extend",
+          "coord:submit",
+          "coord:failure"
+        ],
+        "client_sha256": "2e12506a52763d439506792019e34debb54b912d2575c82c3ef275af5cd01ab1"
+      }
+    ]
+  },
+  "policy_sha256": "e356239e673e1a6d324d0c69504e3c8c0c2fda06b2de02ee9847c63f1e926f9b",
+  "units": {
+    "coord-relay.service": {
+      "active": true,
+      "uses_policy_path": false,
+      "pid": "MainPID=126610"
+    },
+    "feathersjsapp.service": {
+      "active": true,
+      "uses_policy_path": true,
+      "pid": "MainPID=126624"
+    }
+  },
+  "health": {
+    "state": "READY",
+    "agentConnected": true,
+    "lastHeartbeat": "2026-10-25T07:51:18.226Z",
+    "pending": 0
+  },
+  "approved_client_registered": true,
+  "signing_key_mode": "0o640"
+}

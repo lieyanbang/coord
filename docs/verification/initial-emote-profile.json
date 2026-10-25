@@ -1,0 +1,41 @@
+{
+  "backup_root": "C:\\ProgramData\\coord\\g7\\private\\initial-20261025T075241Z-1651573f",
+  "state": "PASS",
+  "acl_files_checked": 1673,
+  "profile": {
+    "on_batch_completed": {
+      "idempotent": true,
+      "max_output_bytes": 65536,
+      "sha256": "cac5496ed1dea50f837f28403feb62515de1ba1459ea2557abe6097ec07bec55",
+      "working_directory": "C:\\ProgramData\\coord\\g7\\runtime\\scratch",
+      "args": [
+        "--root",
+        "C:\\ProgramData\\coord\\g7\\initial\\business"
+      ],
+      "executable": "C:\\ProgramData\\coord\\g7\\bin\\coord-emote-action.exe",
+      "timeout_ms": 10000,
+      "max_attempts": 2,
+      "include_result": true
+    },
+    "version": 1,
+    "on_task_completed": {
+      "idempotent": true,
+      "max_output_bytes": 65536,
+      "sha256": "cac5496ed1dea50f837f28403feb62515de1ba1459ea2557abe6097ec07bec55",
+      "working_directory": "C:\\ProgramData\\coord\\g7\\runtime\\scratch",
+      "args": [
+        "--root",
+        "C:\\ProgramData\\coord\\g7\\initial\\business"
+      ],
+      "executable": "C:\\ProgramData\\coord\\g7\\bin\\coord-emote-action.exe",
+      "timeout_ms": 10000,
+      "max_attempts": 2,
+      "include_result": true
+    }
+  },
+  "root_acl": "O:BAG:S-1-5-21-3592388187-2353680085-815129118-513D:PAI(A;OICI;FA;;;SY)(A;OICI;0x1200a9;;;LS)(A;OICI;FA;;;BA)(A;OICI;0x1200a9;;;S-1-5-21-3592388187-2353680085-815129118-1004)",
+  "results_acl": "O:BAG:S-1-5-21-3592388187-2353680085-815129118-513D:PAI(A;OICI;FA;;;SY)(A;OICI;0x1200a9;;;LS)(A;OICI;FA;;;BA)(A;OICI;0x1301bf;;;S-1-5-21-3592388187-2353680085-815129118-1004)",
+  "profile_id": "emote-publisher-v1",
+  "registry_sha256": "78db6cc3b64977858acf399e02ce26fd2e044e10f4f2dfd3bab99dc8d288b194",
+  "actual_runner_probe": "{\"sid\":\"S-1-5-21-3592388187-2353680085-815129118-1004\",\"privileged\":false}\r\nmanagement RPC rejected missing and runner broker credentials: 401/401\r\n{\"acl_probe\":\"PASS\",\"denied_directories\":2,\"denied_reads\":3,\"denied_writes\":125,\"reads\":125,\"writable_directories\":3}\r\n"
+}

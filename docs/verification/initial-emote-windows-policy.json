@@ -1,0 +1,37 @@
+{
+  "state": "PASS",
+  "batch_id": "90ce2ca7-184e-4c3d-9d87-56386db25419",
+  "binding": {
+    "id": "emote-initial-v1",
+    "client_sha256": "2e12506a52763d439506792019e34debb54b912d2575c82c3ef275af5cd01ab1",
+    "batch_id": "90ce2ca7-184e-4c3d-9d87-56386db25419",
+    "worker_ids": [
+      "0000",
+      "0001",
+      "0002",
+      "0003",
+      "0004",
+      "0005"
+    ],
+    "scopes": [
+      "coord:read",
+      "coord:claim",
+      "coord:progress",
+      "coord:extend",
+      "coord:submit",
+      "coord:failure"
+    ],
+    "not_before": 1792915124865,
+    "expires_at": 1792958324865
+  },
+  "workers": [
+    "0000",
+    "0001",
+    "0002",
+    "0003",
+    "0004",
+    "0005"
+  ],
+  "windows_signature_scope_validation": "PASS",
+  "network_claim_calls": 0
+}

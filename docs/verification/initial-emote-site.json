@@ -1,0 +1,221 @@
+{
+  "state": "PASS",
+  "quick_check": "ok",
+  "tables": [
+    "tasks",
+    "agents",
+    "batches",
+    "task_receipts",
+    "task_progress",
+    "task_progress_receipts",
+    "task_progress_extend_receipts",
+    "completion_actions"
+  ],
+  "batches": [
+    {
+      "id": "ee52bcae-f269-498b-b7ed-d740e1b137ab",
+      "name": "f3-live-oauth-1792619306303",
+      "description": "Single isolated test task for the Phase F3 authenticated public MCP and live coord Sidecar path.",
+      "config": "{\"max_attempts\":3,\"retry_backoff_ms\":100,\"max_backoff_ms\":30000,\"validator\":null}",
+      "created_at": "2026-10-21T21:48:27.922926300+00:00",
+      "status": "active"
+    },
+    {
+      "id": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e",
+      "name": "G7 synthetic operator six-worker canary",
+      "description": "",
+      "config": "{\"max_attempts\":3,\"retry_backoff_ms\":100,\"max_backoff_ms\":30000,\"validator\":null,\"require_progress\":true,\"agent_lease_budget_seconds\":3600,\"action_profile\":\"g7-canary-v1\",\"action_profile_version\":1,\"action_profile_actions\":[\"on_task_completed\",\"on_batch_completed\"],\"action_policy\":{\"on_batch_completed\":{\"idempotent\":true,\"max_attempts\":2,\"include_result\":true},\"on_task_completed\":{\"idempotent\":true,\"max_attempts\":2,\"include_result\":true}}}",
+      "created_at": "2026-10-25T05:47:03.808684900+00:00",
+      "status": "active"
+    },
+    {
+      "id": "d2313c78-22da-4cb8-bcd7-ece9897e0db1",
+      "name": "G7 real ChatGPT two-conversation canary - awaiting tool recovery",
+      "description": "",
+      "config": "{\"max_attempts\":3,\"retry_backoff_ms\":100,\"max_backoff_ms\":30000,\"validator\":null,\"require_progress\":true,\"agent_lease_budget_seconds\":3600,\"action_profile\":\"g7-browser-v1\",\"action_profile_version\":1,\"action_profile_actions\":[\"on_task_completed\",\"on_batch_completed\"],\"action_policy\":{\"on_batch_completed\":{\"idempotent\":true,\"max_attempts\":2,\"include_result\":true},\"on_task_completed\":{\"idempotent\":true,\"max_attempts\":2,\"include_result\":true}}}",
+      "created_at": "2026-10-25T05:47:03.899765800+00:00",
+      "status": "active"
+    }
+  ],
+  "task_counts": [
+    {
+      "batch_id": null,
+      "state": "completed",
+      "n": 5
+    },
+    {
+      "batch_id": null,
+      "state": "pending",
+      "n": 2
+    },
+    {
+      "batch_id": "d2313c78-22da-4cb8-bcd7-ece9897e0db1",
+      "state": "completed",
+      "n": 4
+    },
+    {
+      "batch_id": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e",
+      "state": "completed",
+      "n": 10
+    },
+    {
+      "batch_id": "ee52bcae-f269-498b-b7ed-d740e1b137ab",
+      "state": "completed",
+      "n": 1
+    }
+  ],
+  "pending_high": [],
+  "policy": {
+    "bindings": [
+      {
+        "worker_ids": [
+          "0000",
+          "0001",
+          "0002",
+          "0003",
+          "0004",
+          "0005"
+        ],
+        "batch_id": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e",
+        "not_before": 1792907222904,
+        "expires_at": 1792993523904,
+        "id": "g7-operator",
+        "scopes": [
+          "coord:read",
+          "coord:claim",
+          "coord:progress",
+          "coord:extend",
+          "coord:submit",
+          "coord:failure"
+        ],
+        "client_sha256": "eeb595ffaeec3cc157243f766c320f4133f1d9a6af05ad21ee8fb373850122ba"
+      },
+      {
+        "worker_ids": [
+          "0000",
+          "0001",
+          "0002",
+          "0003",
+          "0004",
+          "0005"
+        ],
+        "batch_id": "d2313c78-22da-4cb8-bcd7-ece9897e0db1",
+        "not_before": 1792907222904,
+        "expires_at": 1792993523904,
+        "id": "g7-browser",
+        "scopes": [
+          "coord:read",
+          "coord:claim",
+          "coord:progress",
+          "coord:extend",
+          "coord:submit",
+          "coord:failure"
+        ],
+        "client_sha256": "eeb595ffaeec3cc157243f766c320f4133f1d9a6af05ad21ee8fb373850122ba"
+      },
+      {
+        "worker_ids": [
+          "0000",
+          "0001"
+        ],
+        "batch_id": "d2313c78-22da-4cb8-bcd7-ece9897e0db1",
+        "not_before": 1792907222904,
+        "expires_at": 1792993523904,
+        "id": "g7-browser-reconnect",
+        "scopes": [
+          "coord:read",
+          "coord:claim",
+          "coord:progress",
+          "coord:extend",
+          "coord:submit",
+          "coord:failure"
+        ],
+        "client_sha256": "2e12506a52763d439506792019e34debb54b912d2575c82c3ef275af5cd01ab1"
+      }
+    ],
+    "version": 2,
+    "mode": "logical",
+    "legacy_client_sha256": [
+      "eeb595ffaeec3cc157243f766c320f4133f1d9a6af05ad21ee8fb373850122ba"
+    ],
+    "enabled": true
+  },
+  "policy_sha256": "176e68004d6a846c92f8216c53c1ff166884e6beea982235770cc2293976734b",
+  "registry": {
+    "version": 1,
+    "external_runner": {
+      "runner_sid": "S-1-5-21-3592388187-2353680085-815129118-1004",
+      "daemon_rpc_key_file": "C:\\ProgramData\\coord\\g7\\daemon-private\\management.key",
+      "broker_addr": "127.0.0.1:7779",
+      "daemon_sid": "S-1-5-19",
+      "key_file": "C:\\ProgramData\\coord\\g7\\config\\broker.key"
+    },
+    "allowed_root": "C:\\ProgramData\\coord\\g7",
+    "profiles": {
+      "g7-canary-v1": {
+        "on_batch_completed": {
+          "idempotent": true,
+          "max_output_bytes": 65536,
+          "sha256": "cac5496ed1dea50f837f28403feb62515de1ba1459ea2557abe6097ec07bec55",
+          "working_directory": "C:\\ProgramData\\coord\\g7\\runtime\\scratch",
+          "args": [
+            "--root",
+            "C:\\ProgramData\\coord\\g7\\canary\\business"
+          ],
+          "executable": "C:\\ProgramData\\coord\\g7\\bin\\coord-emote-action.exe",
+          "timeout_ms": 10000,
+          "max_attempts": 2,
+          "include_result": true
+        },
+        "version": 1,
+        "on_task_completed": {
+          "idempotent": true,
+          "max_output_bytes": 65536,
+          "sha256": "cac5496ed1dea50f837f28403feb62515de1ba1459ea2557abe6097ec07bec55",
+          "working_directory": "C:\\ProgramData\\coord\\g7\\runtime\\scratch",
+          "args": [
+            "--root",
+            "C:\\ProgramData\\coord\\g7\\canary\\business"
+          ],
+          "executable": "C:\\ProgramData\\coord\\g7\\bin\\coord-emote-action.exe",
+          "timeout_ms": 10000,
+          "max_attempts": 2,
+          "include_result": true
+        }
+      },
+      "g7-browser-v1": {
+        "on_batch_completed": {
+          "idempotent": true,
+          "max_output_bytes": 65536,
+          "sha256": "cac5496ed1dea50f837f28403feb62515de1ba1459ea2557abe6097ec07bec55",
+          "working_directory": "C:\\ProgramData\\coord\\g7\\runtime\\scratch",
+          "args": [
+            "--root",
+            "C:\\ProgramData\\coord\\g7\\browser\\business"
+          ],
+          "executable": "C:\\ProgramData\\coord\\g7\\bin\\coord-emote-action.exe",
+          "timeout_ms": 10000,
+          "max_attempts": 2,
+          "include_result": true
+        },
+        "version": 1,
+        "on_task_completed": {
+          "idempotent": true,
+          "max_output_bytes": 65536,
+          "sha256": "cac5496ed1dea50f837f28403feb62515de1ba1459ea2557abe6097ec07bec55",
+          "working_directory": "C:\\ProgramData\\coord\\g7\\runtime\\scratch",
+          "args": [
+            "--root",
+            "C:\\ProgramData\\coord\\g7\\browser\\business"
+          ],
+          "executable": "C:\\ProgramData\\coord\\g7\\bin\\coord-emote-action.exe",
+          "timeout_ms": 10000,
+          "max_attempts": 2,
+          "include_result": true
+        }
+      }
+    }
+  },
+  "registry_sha256": "882c4579f167d57e6eff2d406f9cbdc7c1acb021fe20452d4052b741ae098ede",
+  "formal_directory_exists": false
+}

@@ -1,0 +1,77 @@
+{
+  "state": "PASS",
+  "stage": "add",
+  "batch_id": "90ce2ca7-184e-4c3d-9d87-56386db25419",
+  "progress": {
+    "active": 121,
+    "id": "90ce2ca7-184e-4c3d-9d87-56386db25419",
+    "states": {
+      "cancelled": 0,
+      "claimed": 0,
+      "completed": 0,
+      "failed": 0,
+      "pending": 121,
+      "submitted": 0
+    },
+    "status": "active",
+    "terminal": 0,
+    "total": 121
+  },
+  "task_count": 121,
+  "leased_or_submitted": 0,
+  "task_unique_keys": 121,
+  "image_coverage": 1206,
+  "prior_records_unchanged": {
+    "tasks": 22,
+    "batches": 3,
+    "task_receipts": 19,
+    "task_progress": 6,
+    "task_progress_receipts": 6,
+    "task_progress_extend_receipts": 6,
+    "completion_actions": 16
+  },
+  "config": {
+    "max_attempts": 3,
+    "retry_backoff_ms": 100,
+    "max_backoff_ms": 30000,
+    "validator": {
+      "required": [
+        "schema_version",
+        "group_id",
+        "agent_id",
+        "attempt_no",
+        "source_image_ids",
+        "characters",
+        "uncertain"
+      ],
+      "equals": null,
+      "delay_ms": 0,
+      "timeout_ms": 1000,
+      "max_error_attempts": 3
+    },
+    "require_progress": true,
+    "agent_lease_budget_seconds": 3600,
+    "action_profile": "emote-publisher-v1",
+    "action_profile_version": 1,
+    "action_profile_actions": [
+      "on_task_completed",
+      "on_batch_completed"
+    ],
+    "action_policy": {
+      "on_batch_completed": {
+        "idempotent": true,
+        "max_attempts": 2,
+        "include_result": true
+      },
+      "on_task_completed": {
+        "idempotent": true,
+        "max_attempts": 2,
+        "include_result": true
+      }
+    }
+  },
+  "completion_action_count": 0,
+  "backup_root": "C:\\ProgramData\\coord\\g7\\private\\initial-20261025T075241Z-1651573f",
+  "claim_invocations": 0,
+  "tokens_exported": false
+}

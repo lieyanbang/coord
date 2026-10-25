@@ -1,0 +1,80 @@
+{
+  "monitor": {
+    "principal": "SYSTEM",
+    "last_exit": 0
+  },
+  "loopback_only": true,
+  "runner_token": {
+    "sid": "S-1-5-21-3592388187-2353680085-815129118-1004",
+    "privileged": false
+  },
+  "batch_id": "90ce2ca7-184e-4c3d-9d87-56386db25419",
+  "owned_services": [
+    {
+      "Name": "coord",
+      "State": "Running",
+      "StartName": "NT AUTHORITY\\LocalService",
+      "ProcessId": 7444
+    },
+    {
+      "Name": "CoordRelayAgent",
+      "State": "Running",
+      "StartName": "NT AUTHORITY\\LocalService",
+      "ProcessId": 5892
+    },
+    {
+      "Name": "CoordActionRunnerG7",
+      "State": "Running",
+      "StartName": ".\\coord_action_g7",
+      "ProcessId": 9604
+    }
+  ],
+  "state": "PASS",
+  "prior_profiles_and_bindings_unchanged": true,
+  "protected_application_services_unchanged": [
+    "ArasakaDDNS",
+    "ArasakaFFmpegWatchdog",
+    "ArasakaFFmpegWorker",
+    "CodexProxy",
+    "MediaSTT",
+    "OCI-A1-Grabber",
+    "Servy"
+  ],
+  "unrelated_service_configurations_preserved": 283,
+  "health": {
+    "status": "READY",
+    "checked_at_utc": "2026-10-25T08:12:15.931Z",
+    "checked_at_unix_ms": 1792915935931,
+    "last_success_at_utc": "2026-10-25T08:12:15.931Z",
+    "consecutive_failures": 0,
+    "latency_ms": 4,
+    "tasks_list_latency_ms": 3,
+    "sqlite_latency_ms": 1,
+    "checks": {
+      "tasks_list": "PASS",
+      "sqlite_read_only": "PASS"
+    },
+    "failed_checks": []
+  },
+  "hashes": {
+    "coord-emote-action.exe": "cac5496ed1dea50f837f28403feb62515de1ba1459ea2557abe6097ec07bec55",
+    "coord-action-runner.exe": "72c2e72892405b16042f1e7a1066eb35493695d54de1183447ab771192fe14f8",
+    "coord.exe": "b23e43f30a076d3d3dc75e90a07a7a3f9de35ad33351bb2e9bf8938f9f220ed4"
+  },
+  "rollback_requires_expired_formal_binding_tombstone": true,
+  "observed_at": "2026-10-25T08:12:34.5774232Z",
+  "backup_acl_admin_system_only": true,
+  "os_transient_state_changes": [
+    {
+      "before_state": "Running",
+      "current_state": "Stopped",
+      "before_pid": 9808,
+      "current_pid": 0,
+      "name": "AppXSvc"
+    }
+  ],
+  "management_rejections": [
+    401,
+    401
+  ]
+}
