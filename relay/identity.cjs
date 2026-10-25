@@ -7,9 +7,13 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-
 const SCOPES = Object.freeze({
   'tasks/get': 'coord:read', 'scheduler/agent_status': 'coord:read',
   'tasks/claim': 'coord:claim', 'scheduler/claim': 'coord:claim',
+  'scheduler/trusted_claim': 'coord:claim',
   'scheduler/progress': 'coord:progress',
+  'scheduler/trusted_progress': 'coord:progress',
   'tasks/extend': 'coord:extend', 'scheduler/extend': 'coord:extend', 'scheduler/extend_progress': 'coord:extend',
   'tasks/complete': 'coord:submit', 'scheduler/submit': 'coord:submit', 'scheduler/failure': 'coord:failure',
+  'scheduler/trusted_complete': 'coord:submit', 'scheduler/trusted_release': 'coord:release',
+  'scheduler/trusted_resume': 'coord:read', 'scheduler/trusted_status': 'coord:read',
 });
 const VALID_SCOPES = new Set(Object.values(SCOPES));
 // Linux facade and Windows Relay use separate wall clocks. Keep the signed
@@ -41,7 +45,8 @@ function validatePolicy(config, key) {
     if (logical) {
       const pair = `${b.client_sha256}:${b.batch_id}`;
       if (!Array.isArray(b.worker_ids) || b.worker_ids.length < 1 || b.worker_ids.length > 64
-          || !b.worker_ids.every(w => typeof w === 'string' && /^[0-9A-F]{4}$/.test(w))
+          || !b.worker_ids.every(w => typeof w === 'string' && (w === '*' || /^[0-9A-F]{4}$/.test(w)))
+          || (b.worker_ids.includes('*') && b.worker_ids.length !== 1)
           || new Set(b.worker_ids).size !== b.worker_ids.length || pairs.has(pair)) throw new Error('logical_binding_invalid');
       pairs.add(pair);
     } else if (typeof b.token_sha256 !== 'string' || !HASH.test(b.token_sha256)
@@ -77,7 +82,8 @@ function resolvePrincipal(policy, authInfo, now = Date.now(), declaration) {
     if (!exact(declaration, ['worker_id', 'batch_id']) || typeof declaration.worker_id !== 'string'
         || !/^[0-9A-Fa-f]{4}$/.test(declaration.worker_id) || !UUID.test(declaration.batch_id)) throw new Error('logical_worker_invalid');
     const worker = declaration.worker_id.toUpperCase();
-    const b = policy.bindings.find(b => b.client_sha256 === client && b.batch_id === declaration.batch_id && b.worker_ids.includes(worker));
+    const b = policy.bindings.find(b => b.client_sha256 === client && b.batch_id === declaration.batch_id
+      && (b.worker_ids.includes(worker) || b.worker_ids.includes('*')));
     if (!b || now < b.not_before || now >= b.expires_at) throw new Error('logical_worker_or_batch_denied');
     return { binding_id: b.id, agent_id: `emote-${worker}`, worker_id: worker, batch_id: b.batch_id,
       scopes: [...b.scopes], issued_at: now, expires_at: Math.min(b.expires_at, authInfo.expiresAt, now + 60_000) };
@@ -113,7 +119,7 @@ function verifyRequest(request, policy, now = Date.now()) {
   const expected = signature(request, p, policy.key);
   if (!crypto.timingSafeEqual(Buffer.from(expected, 'hex'), Buffer.from(proof, 'hex'))
       || !b || b.batch_id !== p.batch_id
-      || (logical ? !b.worker_ids.includes(p.worker_id) || p.agent_id !== `emote-${p.worker_id}` : b.agent_id !== p.agent_id)
+      || (logical ? !(b.worker_ids.includes(p.worker_id) || b.worker_ids.includes('*')) || p.agent_id !== `emote-${p.worker_id}` : b.agent_id !== p.agent_id)
       || JSON.stringify(b.scopes) !== JSON.stringify(p.scopes)
       || !Number.isSafeInteger(p.issued_at) || !Number.isSafeInteger(p.expires_at)
       || p.issued_at > now + MAX_FUTURE_ISSUE_SKEW_MS || p.issued_at < b.not_before || p.expires_at > b.expires_at
@@ -122,7 +128,8 @@ function verifyRequest(request, policy, now = Date.now()) {
   if (!scope || !b.scopes.includes(scope)) return { ok: false, code: 'identity_scope_denied' };
   const agent = request.params.agentId ?? request.params.agent_id;
   if (agent !== undefined && agent !== p.agent_id) return { ok: false, code: 'identity_agent_mismatch' };
-  if (['scheduler/claim', 'scheduler/agent_status'].includes(request.method) && request.params.batch_id !== p.batch_id) return { ok: false, code: 'identity_batch_mismatch' };
+  if (logical && request.params.worker_id !== undefined && request.params.worker_id !== p.worker_id) return { ok: false, code: 'identity_worker_mismatch' };
+  if (['scheduler/claim', 'scheduler/agent_status', 'scheduler/trusted_claim', 'scheduler/trusted_progress', 'scheduler/trusted_complete', 'scheduler/trusted_release', 'scheduler/trusted_resume', 'scheduler/trusted_status'].includes(request.method) && request.params.batch_id !== p.batch_id) return { ok: false, code: 'identity_batch_mismatch' };
   if (request.params.batch_id !== undefined && request.params.batch_id !== p.batch_id) return { ok: false, code: 'identity_batch_mismatch' };
   return { ok: true, agentId: p.agent_id, batchId: p.batch_id };
 }

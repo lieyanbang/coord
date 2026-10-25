@@ -198,7 +198,7 @@ test('OAuth facade publishes coord scope and only accepts coord bearer tokens', 
 });
 
 test('strict tool allowlist maps only fixed coord RPCs and fences mutating inputs', () => {
-  assert.equal(TOOLS.length, 10);
+  assert.equal(TOOLS.length, 16);
   assert.ok(TOOLS.every((tool) => tool.inputSchema.additionalProperties === false));
   assert.ok(!TOOLS.some((tool) => /create|cancel|batch_status/i.test(tool.name)));
 
@@ -488,4 +488,108 @@ test('logical worker tools require OAuth, bind explicit worker and batch, and pr
   assert.equal(legacy.isError, undefined);
   assert.equal(f.calls.at(-1).identity, undefined);
   assert.equal(f.calls.at(-1).params.agentId, 'coord-relay-agent');
+});
+
+test('trusted tool schemas avoid caller-managed secrets and request sequencing', () => {
+  const base = { batch_id: BATCH_ID, worker_id: 'aBcD' };
+  const claim = validateToolInput('coord_claim', base);
+  assert.equal(claim.method, 'scheduler/trusted_claim');
+  assert.deepEqual(claim.logical, { worker_id: 'ABCD', batch_id: BATCH_ID });
+  assert.equal(claim.params.worker_id, 'ABCD');
+  assert.match(claim.requestId, /^[0-9a-f-]{36}$/i);
+  const progress = validateToolInput('coord_progress', {
+    ...base, task_id: TASK_ID, attempt_no: 2, checkpoint: 'Reviewed one page.',
+  });
+  assert.equal(progress.method, 'scheduler/trusted_progress');
+  assert.equal(progress.params.lease_seconds, 300);
+  assert.equal(progress.params.sequence, undefined);
+  assert.equal(progress.params.request_id, undefined);
+  const complete = validateToolInput('coord_complete', {
+    ...base, task_id: TASK_ID, attempt_no: 2, result: { ok: true }, ack: { name: 'done' },
+  });
+  assert.equal(complete.method, 'scheduler/trusted_complete');
+  assert.equal(complete.params.lease_token, undefined);
+  assert.equal(validateToolInput('coord_release', { ...base, task_id: TASK_ID, attempt_no: 2 }).method, 'scheduler/trusted_release');
+  assert.equal(validateToolInput('coord_resume', base).readOnly, true);
+  assert.equal(validateToolInput('coord_status', base).params.worker_id, undefined);
+  for (const extra of ['lease_token', 'request_id', 'sequence', 'progress_sequence']) {
+    assert.throws(() => validateToolInput('coord_progress', {
+      ...base, task_id: TASK_ID, attempt_no: 2, checkpoint: 'Denied.', [extra]: 'caller supplied',
+    }));
+  }
+  assert.throws(() => validateToolInput('coord_claim_next_managed', { ...base, request_id: TASK_ID }));
+});
+
+test('trusted RPCs use durable Core fences with OAuth owner, batch scope and a non-secret worker label', async t => {
+  const now = Date.now();
+  const authInfo = { clientId: 'trusted-owner-fixture', expiresAt: now + 600000 };
+  const policy = identity.validatePolicy({
+    version: 2, mode: 'logical', enabled: true,
+    signing_key_file: path.resolve('test-signing-key'),
+    legacy_client_sha256: [identity.hash(authInfo.clientId)],
+    bindings: [{
+      id: 'trusted-test', client_sha256: identity.hash(authInfo.clientId),
+      worker_ids: ['*'], batch_id: BATCH_ID,
+      scopes: ['coord:read', 'coord:claim', 'coord:progress', 'coord:submit', 'coord:release'],
+      not_before: now - 1000, expires_at: now + 600000,
+    }],
+  }, 'ae'.repeat(32));
+  const fixture = await createFixture(t, {
+    authInfo, identityPolicy: policy,
+    onCall(call) {
+      if (call.method === 'scheduler/trusted_claim') return { id: TASK_ID, attempt_no: 1, lease_token: LEASE_TOKEN };
+      if (call.method === 'scheduler/trusted_progress') return { task_id: TASK_ID, attempt_no: 1, checkpoint: call.params.checkpoint, lease_token: LEASE_TOKEN };
+      if (call.method === 'scheduler/trusted_complete') return { task_id: TASK_ID, attempt_no: 1, state: 'completed', lease_token: LEASE_TOKEN };
+      if (call.method === 'scheduler/trusted_release') return { task_id: TASK_ID, attempt_no: 1, state: 'pending', lease_token: LEASE_TOKEN };
+      if (call.method === 'scheduler/trusted_resume') return { state: 'active', task: { id: TASK_ID, lease_token: LEASE_TOKEN } };
+      return { states: { pending: 1, claimed: 0 }, active_claims: 0, lease_token: LEASE_TOKEN };
+    },
+  });
+  const tool = async (name, args) => parseJsonResponse((await postMcp(fixture, rpc('tools/call', 1,
+    { name, arguments: args }))).text).result;
+  const base = { batch_id: BATCH_ID, worker_id: '7a0f' };
+  const calls = [
+    ['coord_claim', base, 'scheduler/trusted_claim'],
+    ['coord_progress', { ...base, task_id: TASK_ID, attempt_no: 1, checkpoint: 'verified' }, 'scheduler/trusted_progress'],
+    ['coord_complete', { ...base, task_id: TASK_ID, attempt_no: 1, result: { ok: true } }, 'scheduler/trusted_complete'],
+    ['coord_release', { ...base, task_id: TASK_ID, attempt_no: 1 }, 'scheduler/trusted_release'],
+    ['coord_resume', base, 'scheduler/trusted_resume'],
+    ['coord_status', base, 'scheduler/trusted_status'],
+  ];
+  for (const [name, args, method] of calls) {
+    const response = await tool(name, args);
+    assert.equal(response.isError, undefined, `${name}: ${JSON.stringify(response)}`);
+    assert.doesNotMatch(response.content[0].text, new RegExp(LEASE_TOKEN));
+    const rpcCall = fixture.calls.at(-1);
+    assert.equal(rpcCall.method, method);
+    assert.equal(identity.verifyRequest(rpcCall, policy).ok, true);
+    assert.equal(rpcCall.identity.worker_id, '7A0F');
+    assert.equal(rpcCall.identity.batch_id, BATCH_ID);
+    assert.equal(rpcCall.params.lease_token, undefined);
+    assert.equal(rpcCall.params.request_id, undefined);
+  }
+  const count = fixture.calls.length;
+  for (const args of [
+    { ...base, batch_id: TASK_ID },
+    { ...base, worker_id: 'BAD!' },
+    { ...base, lease_token: LEASE_TOKEN },
+  ]) {
+    assert.equal((await tool('coord_claim', args)).isError, true);
+  }
+  assert.equal(fixture.calls.length, count);
+});
+
+test('trusted owner OAuth does not require a per-worker identity policy', async t => {
+  const fixture = await createFixture(t, {
+    onCall: call => ({ id: TASK_ID, attempt_no: 1, lease_token: LEASE_TOKEN, method: call.method }),
+  });
+  const response = parseJsonResponse((await postMcp(fixture, rpc('tools/call', 1, {
+    name: 'coord_claim',
+    arguments: { batch_id: BATCH_ID, worker_id: '0a10' },
+  }))).text).result;
+  assert.equal(response.isError, undefined);
+  assert.equal(fixture.calls[0].method, 'scheduler/trusted_claim');
+  assert.equal(fixture.calls[0].identity, undefined);
+  assert.equal(fixture.calls[0].params.worker_id, '0A10');
+  assert.doesNotMatch(response.content[0].text, new RegExp(LEASE_TOKEN));
 });

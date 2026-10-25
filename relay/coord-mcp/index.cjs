@@ -34,6 +34,7 @@ const TASK_ID_PROPERTY = stringSchema('coord task UUID.', 36);
 const LEASE_TOKEN_PROPERTY = stringSchema('The lease token returned by this agent claim. Never substitute a token from another task or attempt.', 36);
 const ATTEMPT_NO_PROPERTY = integerSchema('The attempt number returned by the exact current task claim.', 1, 1000000000);
 const PROGRESS_SEQUENCE_PROPERTY = integerSchema('The next monotonically increasing checkpoint number for this task attempt.', 1, 1000000000);
+const WORKER_ID_PROPERTY = { type: 'string', pattern: '^[0-9A-Fa-f]{4}$', description: 'Stable collaboration label, not a credential.' };
 
 const TOOLS = [
   {
@@ -72,6 +73,42 @@ const TOOLS = [
       lease_seconds: integerSchema('Requested lease duration.', 1, 600),
     }, ['batch_id', 'request_id']),
     annotations: { title: 'Claim next batch task', readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+  },
+  {
+    name: 'coord_claim',
+    description: 'Claim the next ready task from exactly one batch. Repeating the call returns the worker current live claim. The lease token remains inside coord; claim returns task_id and attempt_no.',
+    inputSchema: objectSchema({ batch_id: stringSchema('Required batch UUID; claims never spill into another batch.', 36), worker_id: WORKER_ID_PROPERTY, lease_seconds: integerSchema('Requested lease duration.', 1, 600) }, ['batch_id', 'worker_id']),
+    annotations: { title: 'Claim coord task', readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  },
+  {
+    name: 'coord_progress',
+    description: 'Persist a checkpoint for this exact attempt and renew its lease. Coord creates sequence and request IDs internally.',
+    inputSchema: objectSchema({ task_id: TASK_ID_PROPERTY, batch_id: stringSchema('Batch UUID.', 36), worker_id: WORKER_ID_PROPERTY, attempt_no: ATTEMPT_NO_PROPERTY, checkpoint: stringSchema('Short concrete work completed since the previous checkpoint.', 1024), lease_seconds: integerSchema('Requested lease duration.', 1, 600) }, ['task_id', 'batch_id', 'worker_id', 'attempt_no', 'checkpoint']),
+    annotations: { title: 'Save coord checkpoint', readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  },
+  {
+    name: 'coord_complete',
+    description: 'Complete this exact attempt. Exact result retries reconcile to the stored outcome; changed results conflict. External effects still need business idempotency.',
+    inputSchema: objectSchema({ task_id: TASK_ID_PROPERTY, batch_id: stringSchema('Batch UUID.', 36), worker_id: WORKER_ID_PROPERTY, attempt_no: ATTEMPT_NO_PROPERTY, result: {}, ack: { type: 'object', additionalProperties: false, properties: { name: stringSchema('Short acknowledgement title.', 256), priority: { type: 'string', enum: [...PRIORITIES] }, payload: { type: 'object', additionalProperties: true } }, required: ['name'] } }, ['task_id', 'batch_id', 'worker_id', 'attempt_no', 'result']),
+    annotations: { title: 'Complete coord task', readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
+  },
+  {
+    name: 'coord_release',
+    description: 'Release this exact live attempt without consuming business failure budget. Repeated interruption is backed off and surfaced for operator attention.',
+    inputSchema: objectSchema({ task_id: TASK_ID_PROPERTY, batch_id: stringSchema('Batch UUID.', 36), worker_id: WORKER_ID_PROPERTY, attempt_no: ATTEMPT_NO_PROPERTY, reason: stringSchema('Optional brief reason for the interruption.', 1024) }, ['task_id', 'batch_id', 'worker_id', 'attempt_no']),
+    annotations: { title: 'Release coord task', readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+  },
+  {
+    name: 'coord_resume',
+    description: 'Reconcile the worker latest attempt and durable checkpoint for this batch. This never claims or transfers a task.',
+    inputSchema: objectSchema({ batch_id: stringSchema('Batch UUID.', 36), worker_id: WORKER_ID_PROPERTY }, ['batch_id', 'worker_id']),
+    annotations: { title: 'Resume coord attempt', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  },
+  {
+    name: 'coord_status',
+    description: 'Read batch totals, pending/claimed state counts, live active claims and interruption alerts.',
+    inputSchema: objectSchema({ batch_id: stringSchema('Batch UUID.', 36), worker_id: WORKER_ID_PROPERTY }, ['batch_id', 'worker_id']),
+    annotations: { title: 'Read coord batch status', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
   },
   {
     name: 'coord_extend_lease',
@@ -156,6 +193,14 @@ for (const tool of TOOLS) {
 }
 
 const TOOL_NAMES = new Set(TOOLS.map(({ name }) => name));
+const TRUSTED_TOOL_METHODS = Object.freeze({
+  coord_claim: 'scheduler/trusted_claim',
+  coord_progress: 'scheduler/trusted_progress',
+  coord_complete: 'scheduler/trusted_complete',
+  coord_release: 'scheduler/trusted_release',
+  coord_resume: 'scheduler/trusted_resume',
+  coord_status: 'scheduler/trusted_status',
+});
 
 class RelayOutcomeError extends Error {
   constructor(state, code, requestId, statusCode = undefined) {
@@ -203,6 +248,46 @@ function boundedResult(value, maxBytes = MAX_RESULT_BYTES) {
 }
 
 function validateToolInput(name, args) {
+  if (TRUSTED_TOOL_METHODS[name]) {
+    const tool = TOOLS.find(item => item.name === name);
+    if (!hasExactKeys(args, Object.keys(tool.inputSchema.properties), tool.inputSchema.required)
+        || typeof args.worker_id !== 'string' || !/^[0-9A-Fa-f]{4}$/.test(args.worker_id)
+        || !validUuid(args.batch_id)) throw new ToolInputError('invalid_trusted_arguments');
+    const worker_id = args.worker_id.toUpperCase();
+    const batch_id = args.batch_id.toLowerCase();
+    const params = { ...args, worker_id, batch_id };
+    delete params.request_id;
+    if (name === 'coord_claim') {
+      if (params.lease_seconds !== undefined && (!Number.isInteger(params.lease_seconds) || params.lease_seconds < 1 || params.lease_seconds > 600)) throw new ToolInputError('invalid_lease_seconds');
+      params.lease_seconds ??= 300;
+    } else if (name === 'coord_progress' || name === 'coord_complete' || name === 'coord_release') {
+      if (!validUuid(params.task_id) || !Number.isInteger(params.attempt_no) || params.attempt_no < 1 || params.attempt_no > 1000000000) throw new ToolInputError('invalid_attempt');
+      if (name === 'coord_progress') {
+        if (typeof params.checkpoint !== 'string' || params.checkpoint.trim().length < 1 || params.checkpoint.length > 1024
+            || (params.lease_seconds !== undefined && (!Number.isInteger(params.lease_seconds) || params.lease_seconds < 1 || params.lease_seconds > 600))) throw new ToolInputError('invalid_checkpoint');
+        params.lease_seconds ??= 300;
+      } else if (name === 'coord_complete') {
+        if (!boundedResult(params.result)) throw new ToolInputError('invalid_result');
+        if (params.ack !== undefined) {
+          if (!hasExactKeys(params.ack, ['name', 'priority', 'payload'], ['name'])
+              || typeof params.ack.name !== 'string' || params.ack.name.length < 1 || params.ack.name.length > 256
+              || (params.ack.priority !== undefined && !PRIORITIES.has(params.ack.priority))
+              || (params.ack.payload !== undefined && (!isRecord(params.ack.payload) || jsonBytes(params.ack.payload) > MAX_ACK_PAYLOAD_BYTES))) throw new ToolInputError('invalid_ack');
+        }
+      } else if (params.reason !== undefined && (typeof params.reason !== 'string' || params.reason.length > 1024)) {
+        throw new ToolInputError('invalid_release_reason');
+      }
+    }
+    if (name === 'coord_status') delete params.worker_id;
+    return {
+      method: TRUSTED_TOOL_METHODS[name],
+      requestId: crypto.randomUUID(),
+      params,
+      readOnly: name === 'coord_resume' || name === 'coord_status',
+      trusted: true,
+      logical: { worker_id, batch_id },
+    };
+  }
   if (isRecord(args) && Object.hasOwn(args, 'worker_id')) {
     if (name === 'coord_tasks_list' || typeof args.worker_id !== 'string'
         || !/^[0-9A-Fa-f]{4}$/.test(args.worker_id) || !validUuid(args.batch_id)) throw new ToolInputError('invalid_logical_worker_or_batch');
@@ -516,7 +601,8 @@ function createCoordMcpServer(authInfo, sidecar, loadSdk, identityPolicy = null)
         return { isError: true, content: [{ type: 'text', text: toolErrorText(error) }] };
       }
       try {
-        const principal = identity.resolvePrincipal(identityPolicy, authInfo, Date.now(), call.logical);
+        const declaration = call.trusted && identityPolicy?.mode !== 'logical' ? null : call.logical;
+        const principal = identity.resolvePrincipal(identityPolicy, authInfo, Date.now(), declaration);
         if (identityPolicy?.mode === 'logical' && !call.logical
             && !identityPolicy.legacy_client_sha256.includes(identity.hash(authInfo.clientId))) throw new ToolInputError('logical_worker_required');
         if (principal) {
@@ -527,7 +613,7 @@ function createCoordMcpServer(authInfo, sidecar, loadSdk, identityPolicy = null)
         const authorization = identity.verifyRequest(rpc, identityPolicy);
         if (!authorization.ok) throw new ToolInputError(authorization.code);
         const result = await sidecar.call(rpc);
-        const visible = call.readOnly ? removeLeaseTokens(result) : result;
+        const visible = call.readOnly || call.trusted ? removeLeaseTokens(result) : result;
         const text = JSON.stringify(visible);
         if (Buffer.byteLength(text) > MAX_RESPONSE_BYTES) {
           return { isError: true, content: [{ type: 'text', text: 'Coord result exceeded the response limit.' }] };

@@ -13,6 +13,10 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-
 const LEASE_TOKEN_RE = UUID_RE;
 const STATES = new Set(['pending', 'claimed', 'submitted', 'completed', 'failed', 'cancelled']);
 const PRIORITIES = new Set(['low', 'normal', 'high', 'urgent']);
+const TRUSTED_METHODS = new Set([
+  'scheduler/trusted_claim', 'scheduler/trusted_progress', 'scheduler/trusted_complete',
+  'scheduler/trusted_release', 'scheduler/trusted_resume', 'scheduler/trusted_status',
+]);
 
 function isRecord(value) {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -56,6 +60,18 @@ function validAck(params, postAckKey, ackNameKey, ackPriorityKey) {
     && params[ackNameKey].length > 0
     && params[ackNameKey].length <= 256
     && (params[ackPriorityKey] === undefined || PRIORITIES.has(params[ackPriorityKey]));
+}
+
+function validTrustedAck(value) {
+  if (!isRecord(value)) return false;
+  return exactKeys(value, ['name', 'priority', 'payload'], ['name'])
+    && typeof value.name === 'string' && value.name.length > 0 && value.name.length <= 256
+    && (value.priority === undefined || PRIORITIES.has(value.priority))
+    && (value.payload === undefined || (isRecord(value.payload) && boundedJson(value.payload, 16 * 1024)));
+}
+
+function validWorkerId(value) {
+  return typeof value === 'string' && /^[0-9A-F]{4}$/.test(value);
 }
 
 function validParams(method, params, agentId = COORD_AGENT_ID) {
@@ -127,6 +143,30 @@ function validParams(method, params, agentId = COORD_AGENT_ID) {
       return exactKeys(params, ['agent_id', 'batch_id'], ['agent_id', 'batch_id'])
         && params.agent_id === agentId
         && validUuid(params.batch_id);
+    case 'scheduler/trusted_claim':
+      return exactKeys(params, ['batch_id', 'worker_id', 'lease_seconds'], ['batch_id', 'worker_id'])
+        && validUuid(params.batch_id) && validWorkerId(params.worker_id) && validLeaseSeconds(params.lease_seconds);
+    case 'scheduler/trusted_progress':
+      return exactKeys(params, ['task_id', 'batch_id', 'worker_id', 'attempt_no', 'checkpoint', 'lease_seconds'], ['task_id', 'batch_id', 'worker_id', 'attempt_no', 'checkpoint'])
+        && validUuid(params.task_id) && validUuid(params.batch_id) && validWorkerId(params.worker_id)
+        && Number.isInteger(params.attempt_no) && params.attempt_no >= 1 && params.attempt_no <= 1_000_000_000
+        && typeof params.checkpoint === 'string' && params.checkpoint.trim().length > 0 && params.checkpoint.length <= 1024
+        && validLeaseSeconds(params.lease_seconds);
+    case 'scheduler/trusted_complete':
+      return exactKeys(params, ['task_id', 'batch_id', 'worker_id', 'attempt_no', 'result', 'ack'], ['task_id', 'batch_id', 'worker_id', 'attempt_no', 'result'])
+        && validUuid(params.task_id) && validUuid(params.batch_id) && validWorkerId(params.worker_id)
+        && Number.isInteger(params.attempt_no) && params.attempt_no >= 1 && params.attempt_no <= 1_000_000_000
+        && validTaskResult(params.result) && (params.ack === undefined || validTrustedAck(params.ack));
+    case 'scheduler/trusted_release':
+      return exactKeys(params, ['task_id', 'batch_id', 'worker_id', 'attempt_no', 'reason'], ['task_id', 'batch_id', 'worker_id', 'attempt_no'])
+        && validUuid(params.task_id) && validUuid(params.batch_id) && validWorkerId(params.worker_id)
+        && Number.isInteger(params.attempt_no) && params.attempt_no >= 1 && params.attempt_no <= 1_000_000_000
+        && (params.reason === undefined || (typeof params.reason === 'string' && params.reason.length <= 1024));
+    case 'scheduler/trusted_resume':
+      return exactKeys(params, ['batch_id', 'worker_id'], ['batch_id', 'worker_id'])
+        && validUuid(params.batch_id) && validWorkerId(params.worker_id);
+    case 'scheduler/trusted_status':
+      return exactKeys(params, ['batch_id'], ['batch_id']) && validUuid(params.batch_id);
     case 'scheduler/submit':
       return exactKeys(params, ['id', 'agent_id', 'lease_token', 'result', 'post_ack', 'ack_name', 'ack_priority', 'ack_payload'], ['id', 'agent_id', 'lease_token', 'result'])
         && validUuid(params.id)
@@ -158,6 +198,9 @@ export function validateRpcRequest(request, identityPolicy = null) {
   if (request.identity !== undefined && !isRecord(request.identity)) return { ok: false, code: 'identity_invalid' };
   const authorization = identity.verifyRequest(request, identityPolicy);
   if (!authorization.ok) return authorization;
+  if (TRUSTED_METHODS.has(request.method) && identityPolicy?.mode === 'logical' && !request.identity) {
+    return { ok: false, code: 'trusted_owner_identity_required' };
+  }
   if (!validParams(request.method, request.params, authorization.agentId)) {
     return { ok: false, code: 'method_or_params_denied' };
   }

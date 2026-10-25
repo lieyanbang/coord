@@ -1,8 +1,10 @@
 # coord API and compatibility
 
 Windows is the default supported platform. JSON-RPC 2.0 is served at POST `/`;
-stdio MCP translates tools to the same daemon. No identity authentication is
-provided: agent IDs/tokens fence concurrent attempts, not hostile tenants.
+stdio MCP translates tools to the same daemon. Core A2A does not authenticate an
+owner; keep it on loopback or behind an authenticated local proxy. New trusted
+scheduler methods reject network peers that connect directly. Agent/worker IDs
+are collaboration labels; they do not authenticate separate conversations.
 
 ## Fenced single-task lifecycle (Stage B)
 
@@ -26,8 +28,9 @@ MCP uses snake_case argument names (`agent_id`, `lease_token`, `lease_seconds`,
 
 Claim, renew and completion use atomic conditional writes. Renew requires a
 live lease and never shortens it. Complete requires the same agent and token
-and database-time unexpired lease. Reclaim clears the fence and returns work
-to pending, or failed once its finite attempt budget (default 3) is exhausted.
+and database-time unexpired lease. Reclaim clears the fence and returns
+interrupted work to pending with bounded backoff. Only a reported execution
+failure or validator failure consumes the business failure budget (default 3).
 Cancelled tasks cannot complete. Cancelling an already completed/failed task
 does not rewrite its terminal outcome.
 
@@ -47,9 +50,19 @@ limit (back off), `-32000` storage/internal error. Oversized bodies return HTTP
 
 Stop the operator-owned daemon and take a SQLite backup (or copy a quiescent DB
 with its WAL/SHM handled correctly) before upgrade. Additive migrations are
-transactional. Existing valid tasks, agents and acks remain readable. Old active
-claims lack a token and are invalidated back to pending; clients must claim
-again. New claims cannot use the old tokenless write path.
+transactional. Existing tasks, results, receipts, acks, and action records remain
+readable. A claimed row without a lease token is invalidated back to pending; a
+fenced live claim is retained and backfilled into `task_attempts` with its
+checkpoint when one exists. Migration initializes the new `failure_count`
+conservatively: claimed/submitted tasks use `max(attempt_count - 1, 0)` because
+their current attempt has not yet failed; other states retain `attempt_count`.
+Older databases do not distinguish business failures from lease interruptions,
+so this preserves the old retry budget rather than trying to reconstruct
+unknown history. New interruptions after migration do not consume that budget.
+
+Legacy claim/write methods still require their lease token. The separate trusted
+scheduler methods keep that token inside Core; direct Core calls are loopback
+only, while remote clients use the authenticated Relay.
 
 Rollback means stop the upgraded daemon, restore the pre-upgrade backup and run
 the preserved old binary. Do not open the only upgraded database with an older
@@ -99,11 +112,16 @@ Agent MCP tools: `claim_task`, `submit_result`, `report_failure`, `extend_lease`
 available via HTTP; an IDE runtime does not need to implement manager tools.
 
 Batch config defaults: max_attempts=3, retry_backoff_ms=100, max_backoff_ms=30000.
-Budgets are 1..100 attempts and delay capped at one hour. On execution failure
-or lease expiry, attempt n backs off by min(base*2^(n-1),cap); once exhausted,
-the task fails. `attempt_no` is lifetime-monotonic even after explicit manager
-retry; `attempt_count` is the current budget. Expired attempts cannot submit.
-Failure replays cannot consume the retry budget twice; conflicting errors fail.
+Budgets are 1..100 failures and delay capped at one hour. `attempt_no` is the
+lifetime-monotonic execution generation; `attempt_count` remains the historical
+number of claims for compatibility. `failure_count` alone consumes the business
+retry budget. On migrated databases, historical interruption/failure events
+cannot be separated and are mapped conservatively from `attempt_count` as
+described above. Release and expiry increment a separate capped interruption streak
+and never consume `failure_count`. Eight consecutive interruptions set
+`needs_attention`; the existing capped backoff prevents a hot loop. Explicit
+manager retry preserves attempt history and failure count, granting one extra
+failure slot only when the business failure budget was exhausted.
 
 Enqueue is atomic, at most 1000 entries/request, keys 1..256 UTF-8 bytes. Reusing
 the same key and input returns its existing task; changed input conflicts and
@@ -182,6 +200,40 @@ progress-required batch rejects the legacy `scheduler/extend` method. The
 read-only `scheduler/agent_status` response contains current claims and recent
 checkpoints but never lease tokens. A timeout or uncertain write must be
 reconciled by reading the exact task and attempt; do not replay side effects.
+
+## Trusted scheduler API (Phase R)
+
+The trusted APIs keep the Core lease token private and allocate progress
+sequence/request IDs inside the daemon. They still carry the returned task ID
+and integer `attempt_no` on writes so an old conversation cannot write into a
+new generation that uses the same worker label.
+
+| Method | Parameters | Result |
+| --- | --- | --- |
+| `scheduler/trusted_claim` | `batch_id`, `worker_id`, optional `lease_seconds` | Current live claim for that worker or one ready task from exactly this batch; empty queue returns `{state:"empty"}`. |
+| `scheduler/trusted_progress` | `task_id`, `batch_id`, `worker_id`, `attempt_no`, `checkpoint`, optional `lease_seconds` | Durable checkpoint, generated sequence, accepted time and lease deadline. Identical latest checkpoint is idempotent. |
+| `scheduler/trusted_complete` | `task_id`, `batch_id`, `worker_id`, `attempt_no`, `result`, optional `ack` | `submitted` or `completed`; an exact retry returns the current task state and stored submission ID without re-enqueueing completion actions; changed content conflicts. |
+| `scheduler/trusted_release` | `task_id`, `batch_id`, `worker_id`, `attempt_no`, optional `reason` | Requeues only the exact live attempt with interruption backoff and no business failure. |
+| `scheduler/trusted_resume` | `batch_id`, `worker_id` | Read-only `active`, `released`, `expired`, `reassigned`, terminal state, or `none`, with latest durable checkpoint when available. |
+| `scheduler/trusted_status` | `batch_id` | Batch state totals plus distinct live `active_claims`, interruption alerts and total business `failure_count`. |
+
+These six methods are exposed as `coord_claim`, `coord_progress`,
+`coord_complete`, `coord_release`, `coord_resume`, and `coord_status` by the
+Coord MCP Relay. Relay OAuth/Cloudflare Access authenticates the owner. The
+default trusted-owner path uses the private local Relay bearer and authenticated
+connector; a v2 logical identity policy additionally signs and restricts each
+call to a batch, worker label, operation scopes and expiry. Set
+`worker_ids: ["*"]` for any four-hex collaboration label within that exact
+owner/batch/scope/expiry binding, or keep an explicit worker list for a stricter
+profile. The default trusted owner path does not treat the worker label as a
+credential. Direct Core trusted RPCs are loopback-only; a remote MCP client must
+use the authenticated Relay/proxy.
+
+`resume` never reclaims or transfers work. If the stored lease has expired but
+the background reclaimer has not run yet, it reports `expired` without changing
+the task. A later `claim` performs normal expiry reconciliation before claiming.
+Completion and acknowledgement still pass through the existing atomic receipt,
+validator and Completion Action outbox; external effects remain at least once.
 
 ## Trusted Completion Actions (Phase G)
 

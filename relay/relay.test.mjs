@@ -131,6 +131,47 @@ test('whitelist and strict schemas reject side effects and reclaiming list calls
   assert.equal(typeof COORD_AGENT_ID, 'string');
 });
 
+test('trusted scheduler RPCs require signed owner/batch identity and exact attempt fields', () => {
+  const now = Date.now();
+  const auth = { clientId: 'trusted-relay-owner', expiresAt: now + 300_000 };
+  const batch = randomUUID();
+  const policy = identity.validatePolicy({
+    version: 2, mode: 'logical', enabled: true, signing_key_file: '/test/identity.key',
+    legacy_client_sha256: [],
+    bindings: [{ id: 'trusted', client_sha256: identity.hash(auth.clientId), worker_ids: ['*'], batch_id: batch,
+      scopes: ['coord:read', 'coord:claim', 'coord:progress', 'coord:submit', 'coord:release'],
+      not_before: now - 1000, expires_at: now + 300_000 }],
+  }, 'cd'.repeat(32));
+  const principal = identity.resolvePrincipal(policy, auth, now, { worker_id: 'a1b2', batch_id: batch });
+  const params = { batch_id: batch, worker_id: 'A1B2', lease_seconds: 300 };
+  const request = identity.signRequest({ requestId: randomUUID(), method: 'scheduler/trusted_claim', params }, principal, policy);
+  assert.equal(validateRpcRequest(request, policy).ok, true);
+  assert.equal(validateRpcRequest({ ...request, identity: undefined }, policy).code, 'trusted_owner_identity_required');
+  assert.equal(validateRpcRequest({ ...request, params: { ...params, worker_id: 'B2C3' } }, policy).code, 'identity_invalid_or_expired');
+  const mismatchedWorker = identity.signRequest(
+    { ...request, requestId: randomUUID(), params: { ...params, worker_id: 'B2C3' } }, principal, policy,
+  );
+  assert.equal(validateRpcRequest(mismatchedWorker, policy).code, 'identity_worker_mismatch');
+  const crossBatch = identity.signRequest({ ...request, requestId: randomUUID(), params: { ...params, batch_id: randomUUID() } }, principal, policy);
+  assert.equal(validateRpcRequest(crossBatch, policy).code, 'identity_batch_mismatch');
+
+  const task = randomUUID();
+  const progressParams = { task_id: task, batch_id: batch, worker_id: 'A1B2', attempt_no: 7, checkpoint: 'verified' };
+  const progress = identity.signRequest({ requestId: randomUUID(), method: 'scheduler/trusted_progress', params: progressParams }, principal, policy);
+  assert.equal(validateRpcRequest(progress, policy).ok, true);
+  assert.equal(validateRpcRequest({ ...progress, params: { ...progressParams, lease_token: randomUUID() } }, policy).ok, false);
+  const completion = identity.signRequest({ requestId: randomUUID(), method: 'scheduler/trusted_complete', params: {
+    task_id: task, batch_id: batch, worker_id: 'A1B2', attempt_no: 7, result: { ok: true },
+  } }, principal, policy);
+  assert.equal(validateRpcRequest(completion, policy).ok, true);
+  const released = identity.signRequest({ requestId: randomUUID(), method: 'scheduler/trusted_release', params: { task_id: task, batch_id: batch, worker_id: 'A1B2', attempt_no: 7 } }, principal, policy);
+  assert.equal(validateRpcRequest(released, policy).ok, true);
+  const resume = identity.signRequest({ requestId: randomUUID(), method: 'scheduler/trusted_resume', params: { batch_id: batch, worker_id: 'A1B2' } }, principal, policy);
+  assert.equal(validateRpcRequest(resume, policy).ok, true);
+  const status = identity.signRequest({ requestId: randomUUID(), method: 'scheduler/trusted_status', params: { batch_id: batch } }, principal, policy);
+  assert.equal(validateRpcRequest(status, policy).ok, true);
+});
+
 test('HTTP test listeners avoid Fetch-blocked ports', async t => {
   assert.equal(isFetchBlockedPort(10080), true);
   const server = createHttpServer((request, response) => response.end('ok'));

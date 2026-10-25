@@ -18,17 +18,22 @@ loopback only.
   `agents/heartbeat`, `tasks/claim`, `tasks/extend`, `tasks/complete`,
   `scheduler/claim`, `scheduler/extend`, `scheduler/submit`, and
   `scheduler/failure`, `scheduler/progress`, `scheduler/extend_progress`, and
-  `scheduler/agent_status`. `tasks/list` requires `skip_reclaim: true`; the
-  relay denies task creation, cancellation, arbitrary methods, unknown
-  parameters, and caller-selected agent identities.
-- The default MCP facade keeps the fixed `coord-relay-agent`. An opt-in,
-  administrator-owned policy can bind an authenticated OAuth client and token
-  digest to one A0-A5 role, batch, scope set and expiry. Each Relay hop verifies
-  the exact signed request independently. See
-  [`IDENTITY_BINDINGS.md`](../docs/phase-g/IDENTITY_BINDINGS.md). Cloudflare
-  Access, the OAuth owner and a prompt label do not identify a conversation.
-  Real ChatGPT conversation isolation remains BLOCKED; production identity
-  bindings and the six classification workers remain disabled.
+  `scheduler/agent_status`, plus the six fixed `scheduler/trusted_*` methods.
+  `tasks/list` requires `skip_reclaim: true`; the relay denies task creation,
+  cancellation, arbitrary methods, unknown parameters, and caller-selected
+  authenticated agent identities.
+- The six `coord_claim`, `coord_progress`, `coord_complete`, `coord_release`,
+  `coord_resume`, and `coord_status` MCP tools use OAuth/Cloudflare Access as
+  the owner boundary. Core persists attempt/checkpoint state and never returns
+  a lease token to these tools. The default trusted-owner path relies on the
+  authenticated OAuth request, the private local Relay bearer and the
+  authenticated connector. If a v2 logical identity policy is enabled, each
+  call also carries a signed worker/batch/scope/expiry binding that the sidecar
+  verifies. Use `worker_ids: ["*"]` for any four-hex collaboration label within
+  that binding, or an explicit list for a stricter profile. The label does not
+  identify a separate conversation. See
+  [`IDENTITY_BINDINGS.md`](../docs/phase-g/IDENTITY_BINDINGS.md) for the legacy
+  strict policy. Real ChatGPT conversation isolation remains unavailable.
 - Progress-required batches can call `scheduler/progress` with the current
   task, lease token, attempt number, next sequence and a short checkpoint, then
   `scheduler/extend_progress` with that unconsumed sequence. The batch's
@@ -36,20 +41,29 @@ loopback only.
   not proof that a model is alive or will wake later; an idle conversation must
   be allowed to lose its lease. `scheduler/agent_status` returns no lease
   tokens.
+- Trusted batch calls use `scheduler/trusted_claim` to claim only from the
+  requested batch. `scheduler/trusted_progress` generates sequence/request IDs
+  and persists the checkpoint; `scheduler/trusted_complete` is fenced by
+  `task_id` and integer `attempt_no`; `scheduler/trusted_release` requeues a
+  live attempt without consuming business failure budget;
+  `scheduler/trusted_resume` reads durable checkpoint/disposition without
+  reclaiming; and `scheduler/trusted_status` distinguishes state totals from
+  live `active_claims`. Resume never wakes a model or transfers a task.
 - Requests, frames, and results are bounded at 64 KiB, concurrency is limited
   to four requests, and a dispatched call is never retried. The client must
   reuse the same UUID `requestId` when reconciling a transport interruption.
   A repeated ID returns `uncertain` rather than being replayed. Calls that time
   out or lose their connector return `outcome_unknown`; coord's lease token
   fencing remains authoritative for claims and submissions.
-- The append-only journal contains only request IDs, keyed HMAC-SHA256 of method,
+- The append-only journal contains only internally generated request IDs, keyed HMAC-SHA256 of method,
   parameters and authenticated identity, method name, state, and time. It never
   stores parameters, results,
   bearer secrets, or lease tokens. Journal corruption or its 100,000 unique-ID
   ceiling fails closed; no automatic pruning can reopen an old request ID.
 - Legacy responses redact `lease_token` for tasks not claimed by
-  `coord-relay-agent`; bound reads strip all lease-token fields and bound claims
-  expose only that worker's lease. Logs contain request ID, method, state,
+  `coord-relay-agent`; bound reads strip all lease-token fields and legacy
+  bound claims expose only that worker's lease. Trusted responses strip all
+  lease-token fields. Logs contain request ID, method, state,
   duration, and bounded reason codes only.
 
 ## Protected main coord RPC
