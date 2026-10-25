@@ -1,0 +1,31 @@
+
+> coord-mcp@1.0.0 test
+> node --test coord-mcp.test.cjs oauth-access.test.cjs
+
+✔ OAuth facade publishes coord scope and only accepts coord bearer tokens (4.198ms)
+✔ strict tool allowlist maps only fixed coord RPCs and fences mutating inputs (1.575ms)
+✔ lease tokens are removed recursively from read responses in either JSON casing (0.1824ms)
+✔ Streamable HTTP serves initialize, tools/list, and a token-redacted tasks/list (439.9254ms)
+✔ unauthorized, invalid content type, malformed and oversized HTTP requests are rejected (30.2267ms)
+✔ unknown tools and extra tool arguments never reach the sidecar (18.5994ms)
+✔ uncertain sidecar writes are MCP errors and are never retried (12.0623ms)
+✔ four active MCP calls are bounded and excess work receives 429 (182.1636ms)
+✔ SidecarClient marks timeouts and oversized replies uncertain without retrying (36.2639ms)
+✔ SidecarClient caps in-flight calls and rejects oversized requests before dispatch (2.0325ms)
+✔ administrator-pinned OAuth binding supplies identity; MCP inputs cannot choose another agent or batch (36.9749ms)
+✔ enabled identity policy rejects unknown, expired and cross-token OAuth contexts while preserving pinned legacy (20.8835ms)
+✔ logical worker tools require OAuth, bind explicit worker and batch, and preserve legacy calls (28.0564ms)
+✔ trusted tool schemas avoid caller-managed secrets and request sequencing (0.626ms)
+✔ trusted RPCs use durable Core fences with OAuth owner, batch scope and a non-secret worker label (45.0728ms)
+✔ trusted owner OAuth does not require a per-worker identity policy (8.0253ms)
+✔ Cloudflare Access is required for a password-free, CSRF-bound, one-time OAuth authorization (214.418ms)
+✔ missing Access configuration fails closed without taking down protocol metadata (0.4277ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 18
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1130.0138
+EXIT_CODE=0

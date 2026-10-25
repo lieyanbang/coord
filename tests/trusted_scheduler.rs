@@ -152,6 +152,83 @@ fn checkpoint_resume_complete_are_persistent_and_idempotent() {
 }
 
 #[test]
+fn sqlite_wal_online_backup_restores_active_attempt_and_checkpoint_snapshot() {
+    let root = tempdir("trusted-wal-backup");
+    let db = root.join("state.db");
+    let backup_db = root.join("state-backup.db");
+    let store = Store::open(&db).unwrap();
+    let batch_id = batch(&store, 3);
+    add(&store, batch_id, 1);
+    let claim = store
+        .claim_trusted(batch_id, "worker-a", Some(60))
+        .unwrap()
+        .unwrap();
+    store
+        .progress_trusted(
+            claim.id,
+            batch_id,
+            "worker-a",
+            claim.attempt_no,
+            "checkpoint included in online backup",
+            Some(60),
+        )
+        .unwrap()
+        .unwrap();
+
+    // Keep the Core store open while SQLite takes a consistent online snapshot.
+    // This confirms the active attempt and checkpoint are read from the WAL.
+    let source = rusqlite::Connection::open(&db).unwrap();
+    let mode: String = source
+        .query_row("PRAGMA journal_mode", [], |row| row.get(0))
+        .unwrap();
+    assert_eq!(mode.to_lowercase(), "wal");
+    let wal_path = std::path::PathBuf::from(format!("{}-wal", db.display()));
+    assert!(std::fs::metadata(wal_path).unwrap().len() > 32);
+    source
+        .backup(rusqlite::DatabaseName::Main, &backup_db, None)
+        .unwrap();
+    drop(source);
+
+    let backup_check = rusqlite::Connection::open(&backup_db).unwrap();
+    let integrity: String = backup_check
+        .query_row("PRAGMA integrity_check", [], |row| row.get(0))
+        .unwrap();
+    assert_eq!(integrity, "ok");
+    drop(backup_check);
+
+    let restored = Store::open(&backup_db).unwrap();
+    let resumed = restored.resume_trusted(batch_id, "worker-a").unwrap();
+    assert_eq!(resumed["state"], "active");
+    assert_eq!(resumed["task"]["id"], claim.id.to_string());
+    assert_eq!(
+        resumed["checkpoint"],
+        "checkpoint included in online backup"
+    );
+    assert_eq!(resumed["progress_sequence"], 1);
+
+    let completed = store
+        .complete_trusted(
+            claim.id,
+            batch_id,
+            "worker-a",
+            claim.attempt_no,
+            json!({"finished_after_backup":true}),
+            None,
+        )
+        .unwrap()
+        .unwrap();
+    assert_eq!(completed["state"], "completed");
+    assert_eq!(
+        restored.resume_trusted(batch_id, "worker-a").unwrap()["state"],
+        "active"
+    );
+    assert_eq!(
+        restored.get_task(claim.id).unwrap().unwrap().state,
+        TaskState::Claimed
+    );
+}
+
+#[test]
 fn release_and_expiration_preserve_failure_budget_and_old_fences() {
     let root = tempdir("trusted-release");
     let store = Store::open(&root.join("state.db")).unwrap();
@@ -458,12 +535,16 @@ fn trusted_http_rpc_redacts_token_and_keeps_legacy_api_available() {
 }
 
 #[test]
-fn old_database_migration_preserves_counts_results_and_checkpoints_idempotently() {
+fn old_database_migration_preserves_all_states_receipts_actions_and_checkpoints() {
     let root = tempdir("trusted-migration");
     let db = root.join("old-state.db");
     let active_id = uuid::Uuid::new_v4();
     let pending_id = uuid::Uuid::new_v4();
     let completed_id = uuid::Uuid::new_v4();
+    let submitted_id = uuid::Uuid::new_v4();
+    let failed_id = uuid::Uuid::new_v4();
+    let cancelled_id = uuid::Uuid::new_v4();
+    let unfenced_id = uuid::Uuid::new_v4();
     let batch_id = uuid::Uuid::new_v4();
     let now = chrono::Utc::now();
     let old = rusqlite::Connection::open(&db).unwrap();
@@ -484,6 +565,27 @@ fn old_database_migration_preserves_counts_results_and_checkpoints_idempotently(
             attempt_no INTEGER NOT NULL,sequence INTEGER NOT NULL,checkpoint TEXT NOT NULL,
             progress_at TEXT NOT NULL,last_extended_sequence INTEGER NOT NULL DEFAULT 0,
             PRIMARY KEY(task_id,lease_token)
+        );
+        CREATE TABLE task_progress_receipts(
+            task_id TEXT NOT NULL,lease_token TEXT NOT NULL,request_id TEXT NOT NULL,
+            agent_id TEXT NOT NULL,sequence INTEGER NOT NULL,checkpoint TEXT NOT NULL,
+            progress_at TEXT NOT NULL,PRIMARY KEY(task_id,lease_token,request_id),
+            UNIQUE(task_id,lease_token,sequence)
+        );
+        CREATE TABLE task_receipts(
+            task_id TEXT NOT NULL,lease_token TEXT NOT NULL,operation TEXT NOT NULL,
+            agent_id TEXT NOT NULL,request TEXT NOT NULL,response TEXT NOT NULL,
+            PRIMARY KEY(task_id,lease_token,operation)
+        );
+        CREATE TABLE completion_actions(
+            id TEXT PRIMARY KEY,event_id TEXT NOT NULL UNIQUE,event_key TEXT NOT NULL UNIQUE,
+            batch_id TEXT NOT NULL,task_id TEXT,profile_id TEXT NOT NULL,
+            profile_version INTEGER NOT NULL,action_kind TEXT NOT NULL,payload TEXT NOT NULL,
+            state TEXT NOT NULL DEFAULT 'pending',idempotent INTEGER NOT NULL,
+            max_attempts INTEGER NOT NULL,attempt_count INTEGER NOT NULL DEFAULT 0,
+            available_at TEXT,lease_owner TEXT,lease_token TEXT,lease_until TEXT,
+            last_error TEXT,exit_code INTEGER,output_bytes INTEGER,
+            created_at TEXT NOT NULL,updated_at TEXT NOT NULL
         );",
     )
     .unwrap();
@@ -491,22 +593,78 @@ fn old_database_migration_preserves_counts_results_and_checkpoints_idempotently(
         "INSERT INTO tasks(id,name,state,claimed_by,payload,created_at,updated_at,claimed_at,lease_until,lease_token,attempt_no,attempt_count,max_attempts,batch_id)
          VALUES(?1,'active','claimed','worker-old','{}',?2,?2,?3,?4,'opaque-legacy-token',4,4,5,?5)",
         rusqlite::params![active_id.to_string(), now.to_rfc3339(), (now-chrono::Duration::minutes(1)).to_rfc3339(), (now+chrono::Duration::minutes(10)).to_rfc3339(), batch_id.to_string()],
-    ).unwrap();
+    )
+    .unwrap();
     old.execute(
         "INSERT INTO tasks(id,name,state,payload,created_at,updated_at,attempt_no,attempt_count,max_attempts)
          VALUES(?1,'pending','pending','{}',?2,?2,7,7,10)",
         rusqlite::params![pending_id.to_string(), now.to_rfc3339()],
-    ).unwrap();
+    )
+    .unwrap();
     old.execute(
-        "INSERT INTO tasks(id,name,state,claimed_by,payload,result,created_at,updated_at,completed_at,attempt_no,attempt_count,max_attempts)
-         VALUES(?1,'completed','completed','worker-old','{}','{\"kept\":true}',?2,?2,?2,3,3,5)",
-        rusqlite::params![completed_id.to_string(), now.to_rfc3339()],
-    ).unwrap();
+        "INSERT INTO tasks(id,name,state,claimed_by,payload,result,created_at,updated_at,completed_at,attempt_no,attempt_count,max_attempts,batch_id)
+         VALUES(?1,'completed','completed','worker-old','{}','{\"kept\":true}',?2,?2,?2,3,3,5,?3)",
+        rusqlite::params![completed_id.to_string(), now.to_rfc3339(), batch_id.to_string()],
+    )
+    .unwrap();
+    for (id, name, state, worker, attempt_no, attempt_count, max_attempts) in [
+        (
+            submitted_id,
+            "submitted",
+            "submitted",
+            "worker-submitted",
+            2,
+            2,
+            5,
+        ),
+        (failed_id, "failed", "failed", "worker-failed", 5, 5, 5),
+        (
+            cancelled_id,
+            "cancelled",
+            "cancelled",
+            "worker-cancelled",
+            2,
+            2,
+            5,
+        ),
+    ] {
+        old.execute(
+            "INSERT INTO tasks(id,name,state,claimed_by,payload,result,created_at,updated_at,completed_at,attempt_no,attempt_count,max_attempts,batch_id)
+             VALUES(?1,?2,?3,?4,'{}','{\"historical\":true}',?5,?5,?5,?6,?7,?8,?9)",
+            rusqlite::params![id.to_string(), name, state, worker, now.to_rfc3339(), attempt_no, attempt_count, max_attempts, batch_id.to_string()],
+        )
+        .unwrap();
+    }
+    old.execute(
+        "INSERT INTO tasks(id,name,state,claimed_by,payload,created_at,updated_at,attempt_no,attempt_count,max_attempts,batch_id)
+         VALUES(?1,'unfenced','claimed','worker-unfenced','{}',?2,?2,8,8,10,?3)",
+        rusqlite::params![unfenced_id.to_string(), now.to_rfc3339(), batch_id.to_string()],
+    )
+    .unwrap();
     old.execute(
         "INSERT INTO task_progress(task_id,lease_token,agent_id,attempt_no,sequence,checkpoint,progress_at)
          VALUES(?1,'opaque-legacy-token','worker-old',4,2,'migrated checkpoint',?2)",
         rusqlite::params![active_id.to_string(), now.to_rfc3339()],
-    ).unwrap();
+    )
+    .unwrap();
+    old.execute(
+        "INSERT INTO task_progress_receipts(task_id,lease_token,request_id,agent_id,sequence,checkpoint,progress_at)
+         VALUES(?1,'opaque-legacy-token','progress-request','worker-old',2,'migrated checkpoint',?2)",
+        rusqlite::params![active_id.to_string(), now.to_rfc3339()],
+    )
+    .unwrap();
+    old.execute(
+        "INSERT INTO task_receipts(task_id,lease_token,operation,agent_id,request,response)
+         VALUES(?1,'completed-token','complete','worker-old','{\"result\":{\"kept\":true}}','{\"accepted\":true}')",
+        rusqlite::params![completed_id.to_string()],
+    )
+    .unwrap();
+    old.execute(
+        "INSERT INTO completion_actions(id,event_id,event_key,batch_id,task_id,profile_id,profile_version,action_kind,payload,state,idempotent,max_attempts,attempt_count,exit_code,output_bytes,created_at,updated_at)
+         VALUES('old-action','old-event','old-event-key',?1,?2,'legacy-profile',1,'on_task_completed','{\"preserve\":true}','succeeded',1,3,1,0,12,?3,?3)",
+        rusqlite::params![batch_id.to_string(), completed_id.to_string(), now.to_rfc3339()],
+    )
+    .unwrap();
     drop(old);
 
     let store = Store::open(&db).unwrap();
@@ -522,16 +680,72 @@ fn old_database_migration_preserves_counts_results_and_checkpoints_idempotently(
     assert_eq!(completed.attempt_no, 3);
     assert_eq!(completed.result, Some(json!({"kept":true})));
     assert_eq!(completed.failure_count, 3);
+    let submitted = store.get_task(submitted_id).unwrap().unwrap();
+    assert_eq!(submitted.state, TaskState::Submitted);
+    assert_eq!(submitted.failure_count, 1);
+    let failed = store.get_task(failed_id).unwrap().unwrap();
+    assert_eq!(failed.state, TaskState::Failed);
+    assert_eq!(failed.failure_count, 5);
+    let cancelled = store.get_task(cancelled_id).unwrap().unwrap();
+    assert_eq!(cancelled.state, TaskState::Cancelled);
+    assert_eq!(cancelled.failure_count, 2);
+    let unfenced = store.get_task(unfenced_id).unwrap().unwrap();
+    assert_eq!(unfenced.state, TaskState::Pending);
+    assert_eq!(unfenced.claimed_by, None);
+    assert_eq!(unfenced.failure_count, 7);
     let resumed = store.resume_trusted(batch_id, "worker-old").unwrap();
     assert_eq!(resumed["state"], "active");
     assert_eq!(resumed["checkpoint"], "migrated checkpoint");
     assert_eq!(resumed["progress_sequence"], 2);
+
+    let verification = rusqlite::Connection::open(&db).unwrap();
+    let progress_receipt_count: u64 = verification
+        .query_row(
+            "SELECT count(*) FROM task_progress_receipts WHERE task_id=?1",
+            rusqlite::params![active_id.to_string()],
+            |row| row.get(0),
+        )
+        .unwrap();
+    assert_eq!(progress_receipt_count, 1);
+    let complete_receipt: String = verification
+        .query_row(
+            "SELECT response FROM task_receipts WHERE task_id=?1 AND operation='complete'",
+            rusqlite::params![completed_id.to_string()],
+            |row| row.get(0),
+        )
+        .unwrap();
+    assert_eq!(complete_receipt, "{\"accepted\":true}");
+    let action_payload: String = verification
+        .query_row(
+            "SELECT payload FROM completion_actions WHERE id='old-action'",
+            [],
+            |row| row.get(0),
+        )
+        .unwrap();
+    assert_eq!(action_payload, "{\"preserve\":true}");
+    let migrated_attempts: u64 = verification
+        .query_row("SELECT count(*) FROM task_attempts", [], |row| row.get(0))
+        .unwrap();
+    assert_eq!(migrated_attempts, 5);
+    drop(verification);
     drop(store);
 
     let reopened = Store::open(&db).unwrap();
     assert_eq!(
         reopened.get_task(active_id).unwrap().unwrap().failure_count,
         3
+    );
+    assert_eq!(
+        reopened
+            .get_task(submitted_id)
+            .unwrap()
+            .unwrap()
+            .failure_count,
+        1
+    );
+    assert_eq!(
+        reopened.get_task(failed_id).unwrap().unwrap().failure_count,
+        5
     );
     assert_eq!(
         reopened.resume_trusted(batch_id, "worker-old").unwrap()["checkpoint"],

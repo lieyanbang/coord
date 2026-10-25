@@ -1,0 +1,11 @@
+   Compiling rusqlite v0.32.1
+   Compiling coord v0.4.1 (D:\project\coord)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 19.06s
+     Running tests\trusted_scheduler.rs (target\debug\deps\trusted_scheduler-f232dec32088c548.exe)
+
+running 1 test
+test sqlite_wal_online_backup_restores_active_attempt_and_checkpoint_snapshot ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 8 filtered out; finished in 0.06s
+
+EXIT_CODE=0

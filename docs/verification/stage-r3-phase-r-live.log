@@ -1,0 +1,57 @@
+{"time":"2026-10-25T12:38:06.361Z","component":"coord-relay","event":"started","agentAddress":"127.0.0.1:2045","clientAddress":"127.0.0.1:2046"}
+{"time":"2026-10-25T12:38:06.364Z","component":"coord-relay","event":"agent_connected","agentId":"arasaka-coord-agent"}
+{"time":"2026-10-25T12:38:06.365Z","component":"coord-relay-agent","event":"connected","serverHost":"127.0.0.1","serverPort":2045}
+{"time":"2026-10-25T12:38:06.593Z","component":"coord-relay","event":"rpc_finished","requestId":"2d9553f4-c021-45c2-aaf4-4d18a04c21ca","method":"scheduler/trusted_claim","state":"ok","durationMs":18}
+{"time":"2026-10-25T12:38:06.618Z","component":"coord-relay","event":"rpc_finished","requestId":"00a449b2-d4e7-4e75-ab07-df8db3de4336","method":"scheduler/trusted_progress","state":"ok","durationMs":12}
+{"time":"2026-10-25T12:38:06.620Z","component":"coord-relay","event":"agent_disconnected","reason":"socket_closed"}
+{"time":"2026-10-25T12:38:06.744Z","component":"coord-relay","event":"started","agentAddress":"127.0.0.1:2055","clientAddress":"127.0.0.1:2056"}
+{"time":"2026-10-25T12:38:06.745Z","component":"coord-relay","event":"agent_connected","agentId":"arasaka-coord-agent"}
+{"time":"2026-10-25T12:38:06.745Z","component":"coord-relay-agent","event":"connected","serverHost":"127.0.0.1","serverPort":2055}
+{"time":"2026-10-25T12:38:06.761Z","component":"coord-relay","event":"rpc_finished","requestId":"853628d3-4220-4519-b197-73b745eb0a4c","method":"scheduler/trusted_resume","state":"ok","durationMs":9}
+{"time":"2026-10-25T12:38:06.779Z","component":"coord-relay","event":"rpc_finished","requestId":"d3938240-945a-458e-b450-a32ff91ed9b4","method":"scheduler/trusted_claim","state":"ok","durationMs":10}
+{"time":"2026-10-25T12:38:06.796Z","component":"coord-relay","event":"rpc_finished","requestId":"5419ac02-b058-43a3-b10e-362932d439f5","method":"scheduler/trusted_complete","state":"ok","durationMs":8}
+{"time":"2026-10-25T12:38:06.810Z","component":"coord-relay","event":"rpc_finished","requestId":"6f1f0397-31bf-4593-9465-b9dff452962e","method":"scheduler/trusted_complete","state":"ok","durationMs":8}
+{"time":"2026-10-25T12:38:06.829Z","component":"coord-relay","event":"rpc_finished","requestId":"905ed173-25c7-4ac8-b8e4-d185229c261b","method":"scheduler/trusted_claim","state":"ok","durationMs":9}
+{"time":"2026-10-25T12:38:06.843Z","component":"coord-relay","event":"rpc_finished","requestId":"5c0ae627-96c8-4a24-b392-10917997f098","method":"scheduler/trusted_progress","state":"ok","durationMs":8}
+{"time":"2026-10-25T12:38:06.859Z","component":"coord-relay","event":"rpc_finished","requestId":"6c2fe11f-de3c-494e-a27c-287719f52c3b","method":"scheduler/trusted_release","state":"ok","durationMs":9}
+{"time":"2026-10-25T12:38:06.874Z","component":"coord-relay","event":"rpc_finished","requestId":"df802f8e-8b49-4d6a-9b6a-4d19579a14cd","method":"scheduler/trusted_resume","state":"ok","durationMs":9}
+{"time":"2026-10-25T12:38:06.922Z","component":"coord-relay","event":"rpc_finished","requestId":"7df524d8-1476-413e-ad96-0f1c17741c37","method":"scheduler/trusted_claim","state":"ok","durationMs":8}
+{"time":"2026-10-25T12:38:06.937Z","component":"coord-relay","event":"rpc_finished","requestId":"9498fdee-8ce0-42e3-8a86-004a7948bd11","method":"scheduler/trusted_resume","state":"ok","durationMs":9}
+{"time":"2026-10-25T12:38:06.951Z","component":"coord-relay","event":"rpc_finished","requestId":"45a8bd49-0cff-4a23-8b30-dfa9101ff949","method":"scheduler/trusted_complete","state":"rpc_error","durationMs":8}
+{"time":"2026-10-25T12:38:06.966Z","component":"coord-relay","event":"rpc_finished","requestId":"c93fd851-abc4-4b53-add6-8ba20157fe11","method":"scheduler/trusted_complete","state":"ok","durationMs":8}
+{"time":"2026-10-25T12:38:06.982Z","component":"coord-relay","event":"rpc_finished","requestId":"4c4ea1a7-7c3c-4c50-9fdf-c6722b485c48","method":"scheduler/trusted_claim","state":"ok","durationMs":10}
+{"time":"2026-10-25T12:38:08.158Z","component":"coord-relay","event":"rpc_finished","requestId":"d390686f-2b23-49ad-97ae-a86d0e5bde98","method":"scheduler/trusted_resume","state":"ok","durationMs":13}
+{"time":"2026-10-25T12:38:08.192Z","component":"coord-relay","event":"rpc_finished","requestId":"01943084-ac4b-4edb-a956-f3035b0ae194","method":"scheduler/trusted_claim","state":"ok","durationMs":10}
+{"time":"2026-10-25T12:38:08.196Z","component":"coord-relay","event":"agent_disconnected","reason":"socket_closed"}
+✖ Phase R trusted lifecycle survives stateless MCP calls and Core plus Relay restart (2020.7802ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2281.5722
+
+✖ failing tests:
+
+test at relay\live-coord.test.mjs:274:1
+✖ Phase R trusted lifecycle survives stateless MCP calls and Core plus Relay restart (2020.7802ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+
+  + undefined
+  - 'f2c672ae-290c-4ec9-b382-124fc2f5e5ac'
+
+      at TestContext.<anonymous> (file:///D:/project/coord/relay/live-coord.test.mjs:513:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: 'f2c672ae-290c-4ec9-b382-124fc2f5e5ac',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+exit=1

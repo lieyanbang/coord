@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { createServer as createHttpServer } from 'node:http';
-import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { randomUUID } from 'node:crypto';
@@ -13,6 +14,10 @@ import { reservePort } from './test-ports.mjs';
 import { COORD_AGENT_ID, RELAY_AGENT_ID } from './protocol.mjs';
 import identity from './identity.cjs';
 import identityFixture from './identity-test-fixture.cjs';
+
+const coordMcpRequire = createRequire(new URL('./coord-mcp/package.json', import.meta.url));
+const express = coordMcpRequire('express');
+const { registerCoordMcp, SidecarClient } = coordMcpRequire('./index.cjs');
 
 const agentSecret = '55'.repeat(32);
 const clientSecret = '66'.repeat(32);
@@ -262,6 +267,279 @@ test('synthetic OAuth-bound relay exercises progress, extend, submit, next claim
   } finally {
     await agent?.stop(); await sidecar?.stop();
     if (child.exitCode === null) { child.kill(); await new Promise(done => child.once('exit', done)); }
+    await rm(folder, { recursive: true, force: true });
+  }
+});
+
+test('Phase R trusted lifecycle survives stateless MCP calls and Core plus Relay restart', async () => {
+  const folder = await mkdtemp(join(tmpdir(), 'coord-phase-r-live-'));
+  const dbPath = join(folder, 'coord.db');
+  const relayJournal = join(folder, 'relay', 'requests.ndjson');
+  const secretFile = join(folder, 'client.secret');
+  const mcpToken = 'phase-r-isolated-owner-token';
+  await writeFile(secretFile, `${clientSecret}\n`, { mode: 0o600 });
+
+  let coord;
+  let coordUrl;
+  let sidecar;
+  let agent;
+  const sidecarClient = new SidecarClient({
+    url: 'http://127.0.0.1:1/v1/rpc',
+    secretFile,
+    timeoutMs: 6_000,
+  });
+  const oauth = {
+    setCors(response) { response.setHeader('Access-Control-Allow-Origin', '*'); },
+    challenge(response) { response.status(401).json({ error: 'unauthorized' }); },
+    async authenticateRequest(request) {
+      return request.get('authorization') === `Bearer ${mcpToken}`
+        ? { clientId: 'phase-r-isolated-owner', expiresAt: Date.now() + 600_000 }
+        : null;
+    },
+  };
+  const mcpApp = express();
+  const mcpHandle = await registerCoordMcp(mcpApp, {
+    express,
+    oauth,
+    oauthModule: { installOAuthRoutes() {} },
+    sidecar: sidecarClient,
+    skipOAuthInit: true,
+    identityPolicy: false,
+  });
+  const mcpPort = await reservePort();
+  const mcpServer = createHttpServer(mcpApp);
+  await new Promise((resolveListen, reject) => {
+    mcpServer.once('error', reject);
+    mcpServer.listen(mcpPort, '127.0.0.1', resolveListen);
+  });
+  const mcpUrl = `http://127.0.0.1:${mcpPort}/coord/mcp`;
+
+  async function startCoord() {
+    const port = await reservePort();
+    const child = spawn(coordExe, ['serve', '--addr', `127.0.0.1:${port}`, '--db', dbPath], { stdio: 'ignore' });
+    const url = `http://127.0.0.1:${port}/`;
+    let ready = false;
+    const deadline = Date.now() + 10_000;
+    while (Date.now() < deadline) {
+      if (child.exitCode !== null) throw new Error(`isolated Phase R Core exited with ${child.exitCode}`);
+      try {
+        await directRpc(url, 'tasks/list', { limit: 1, skip_reclaim: true });
+        ready = true;
+        break;
+      } catch {
+        await delay(100);
+      }
+    }
+    if (!ready) {
+      const exited = new Promise(resolveExit => child.once('exit', resolveExit));
+      child.kill();
+      await exited;
+      throw new Error('isolated Phase R Core did not become ready');
+    }
+    return { child, url };
+  }
+
+  async function startRelay(coordUrl) {
+    const currentSidecar = await createSidecar({
+      agentHost: '127.0.0.1', agentPort: 0,
+      clientHost: '127.0.0.1', clientPort: 0,
+      allowedPeerIp: '127.0.0.1', agentId: RELAY_AGENT_ID,
+      agentSecret, clientSecret,
+      journalFile: relayJournal,
+      requestTimeoutMs: 4_000, heartbeatTimeoutMs: 2_000,
+    });
+    const addresses = await currentSidecar.start();
+    let currentAgent;
+    try {
+      currentAgent = await createAgent({
+      serverHost: '127.0.0.1', serverPort: addresses.agentAddress.port,
+      agentId: RELAY_AGENT_ID, coordUrl, secret: agentSecret,
+      heartbeatMs: 50, reconnectMinMs: 50, reconnectMaxMs: 100, coordTimeoutMs: 3_000,
+      });
+      currentAgent.start();
+      assert.equal(await currentAgent.waitUntilConnected(2_000), true);
+    } catch (error) {
+      await currentAgent?.stop();
+      await currentSidecar.stop();
+      throw error;
+    }
+    const url = `http://127.0.0.1:${addresses.clientAddress.port}/v1/rpc`;
+    sidecarClient.url = url;
+    return { sidecar: currentSidecar, agent: currentAgent, url };
+  }
+
+  async function stopRelay() {
+    await agent?.stop();
+    await sidecar?.stop();
+    agent = undefined;
+    sidecar = undefined;
+  }
+
+  async function mcpTool(name, args) {
+    const response = await fetch(mcpUrl, {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${mcpToken}`,
+        accept: 'application/json, text/event-stream',
+        'content-type': 'application/json',
+        'mcp-protocol-version': '2025-03-26',
+      },
+      body: JSON.stringify({
+        jsonrpc: '2.0', id: randomUUID(), method: 'tools/call',
+        params: { name, arguments: args },
+      }),
+    });
+    const text = await response.text();
+    const dataLine = text.split(/\r?\n/).find(line => line.startsWith('data:'));
+    const payload = dataLine ? JSON.parse(dataLine.slice(5).trim()) : JSON.parse(text);
+    assert.equal(response.status, 200, `${name}: ${text}`);
+    assert.equal(payload.error, undefined, `${name}: ${text}`);
+    return payload.result;
+  }
+
+  async function toolJson(name, args) {
+    const result = await mcpTool(name, args);
+    assert.equal(result.isError, undefined, `${name}: ${JSON.stringify(result)}`);
+    return JSON.parse(result.content[0].text);
+  }
+
+  async function stopCoord() {
+    if (coord?.exitCode === null) {
+      const exited = new Promise(resolveExit => coord.once('exit', resolveExit));
+      coord.kill();
+      await exited;
+    }
+    coord = undefined;
+  }
+
+  try {
+    ({ child: coord, url: coordUrl } = await startCoord());
+    ({ sidecar, agent } = await startRelay(coordUrl));
+
+    const batch = await directRpc(coordUrl, 'batches/create', {
+      name: 'Phase R isolated lifecycle',
+      config: { max_attempts: 3, retry_backoff_ms: 1, max_backoff_ms: 2 },
+    });
+    await directRpc(coordUrl, 'batches/add_tasks', {
+      batch_id: batch.id,
+      tasks: [0, 1, 2].map(index => ({ key: `phase-r-${index}`, name: `Phase R ${index}`, payload: { fixture: true } })),
+    });
+
+    // Each call is a separate stateless MCP HTTP request. The OAuth identity is
+    // synthetic, but the production MCP/sidecar/Core code paths are real.
+    const first = await toolJson('coord_claim', { batch_id: batch.id, worker_id: '0001' });
+    const firstTaskId = first.id;
+    assert.equal(first.attempt_no, 1);
+    assert.doesNotMatch(JSON.stringify(first), /lease_token|leaseToken/);
+    const internalClaim = await directRpc(coordUrl, 'tasks/get', { id: firstTaskId });
+    assert.equal(typeof internalClaim.lease_token, 'string');
+    await toolJson('coord_progress', {
+      batch_id: batch.id, worker_id: '0001', task_id: firstTaskId,
+      attempt_no: first.attempt_no, checkpoint: 'Core and Relay integration checkpoint',
+    });
+
+    // Restart both persistent services after saving a checkpoint. The same DB
+    // and sidecar journal are reopened; the MCP HTTP listener remains stateless.
+    await stopRelay();
+    await stopCoord();
+    ({ child: coord, url: coordUrl } = await startCoord());
+    ({ sidecar, agent } = await startRelay(coordUrl));
+    const resumed = await toolJson('coord_resume', { batch_id: batch.id, worker_id: '0001' });
+    assert.equal(resumed.state, 'active');
+    assert.equal(resumed.checkpoint, 'Core and Relay integration checkpoint');
+    assert.equal(resumed.task.id, firstTaskId);
+    assert.doesNotMatch(JSON.stringify(resumed), /lease_token|leaseToken/);
+    const repeatedClaim = await toolJson('coord_claim', { batch_id: batch.id, worker_id: '0001' });
+    assert.equal(repeatedClaim.id, firstTaskId);
+    assert.equal(repeatedClaim.attempt_no, first.attempt_no);
+
+    const firstResult = { accepted_after_restart: true };
+    const completionArgs = {
+      batch_id: batch.id, worker_id: '0001', task_id: firstTaskId,
+      attempt_no: first.attempt_no, result: firstResult,
+      ack: { name: 'Phase R isolated lifecycle acknowledgement' },
+    };
+    const completed = await toolJson('coord_complete', completionArgs);
+    assert.equal(completed.state, 'completed');
+    const replayed = await toolJson('coord_complete', completionArgs);
+    assert.equal(replayed.state, 'completed');
+    assert.equal(replayed.replayed, true);
+    const storedFirst = await directRpc(coordUrl, 'tasks/get', { id: firstTaskId });
+    assert.equal(storedFirst.result.accepted_after_restart, true);
+    const acks = await directRpc(coordUrl, 'tasks/list', { kind: 'ack', limit: 100, skip_reclaim: true });
+    assert.equal(acks.filter(task => task.name === 'Phase R isolated lifecycle acknowledgement').length, 1);
+
+    const released = await toolJson('coord_claim', { batch_id: batch.id, worker_id: '0002' });
+    await toolJson('coord_progress', {
+      batch_id: batch.id, worker_id: '0002', task_id: released.id,
+      attempt_no: released.attempt_no, checkpoint: 'Checkpoint before worker handoff',
+    });
+    const releaseResult = await toolJson('coord_release', {
+      batch_id: batch.id, worker_id: '0002', task_id: released.id,
+      attempt_no: released.attempt_no, reason: 'synthetic context interruption',
+    });
+    assert.equal(releaseResult.state, 'pending');
+    const releasedResume = await toolJson('coord_resume', { batch_id: batch.id, worker_id: '0002' });
+    assert.equal(releasedResume.state, 'released');
+    assert.equal(releasedResume.checkpoint, 'Checkpoint before worker handoff');
+    await delay(10);
+    const handoff = await toolJson('coord_claim', { batch_id: batch.id, worker_id: '0003' });
+    assert.equal(handoff.id, released.id);
+    assert.equal(handoff.attempt_no, released.attempt_no + 1);
+    const handoffResume = await toolJson('coord_resume', { batch_id: batch.id, worker_id: '0003' });
+    assert.equal(handoffResume.state, 'active');
+    assert.equal(handoffResume.checkpoint, 'Checkpoint before worker handoff');
+    const staleCompletion = await mcpTool('coord_complete', {
+      batch_id: batch.id, worker_id: '0002', task_id: released.id,
+      attempt_no: released.attempt_no, result: { stale: true },
+    });
+    assert.equal(staleCompletion.isError, true);
+    const currentHandoffTask = await directRpc(coordUrl, 'tasks/get', { id: released.id });
+    assert.equal(currentHandoffTask.claimed_by, '0003');
+    assert.equal(currentHandoffTask.result, null);
+    await toolJson('coord_complete', {
+      batch_id: batch.id, worker_id: '0003', task_id: released.id,
+      attempt_no: handoff.attempt_no, result: { handoff_completed: true },
+    });
+
+    const expiring = await toolJson('coord_claim', {
+      batch_id: batch.id, worker_id: '0004', lease_seconds: 1,
+    });
+    await delay(1_150);
+    const expiredResume = await toolJson('coord_resume', { batch_id: batch.id, worker_id: '0004' });
+    assert.equal(expiredResume.state, 'expired');
+    let recovered;
+    const recoveryDeadline = Date.now() + 2_000;
+    while (Date.now() < recoveryDeadline) {
+      recovered = await toolJson('coord_claim', { batch_id: batch.id, worker_id: '0005' });
+      if (recovered.id) break;
+      await delay(50);
+    }
+    assert.ok(recovered?.id, 'recovered task should become claimable after interruption backoff');
+    assert.equal(recovered.id, expiring.id);
+    assert.equal(recovered.attempt_no, expiring.attempt_no + 1);
+    const recoveredStored = await directRpc(coordUrl, 'tasks/get', { id: recovered.id });
+    assert.equal(recoveredStored.failure_count, 0);
+    await toolJson('coord_complete', {
+      batch_id: batch.id, worker_id: '0005', task_id: recovered.id,
+      attempt_no: recovered.attempt_no, result: { recovered_after_expiry: true },
+    });
+    const status = await toolJson('coord_status', { batch_id: batch.id, worker_id: '0001' });
+    assert.equal(status.active_claims, 0);
+    assert.equal(status.failure_count, 0);
+
+    const journal = await readFile(relayJournal, 'utf8');
+    assert.equal(journal.includes(internalClaim.lease_token), false);
+    assert.equal(journal.includes(JSON.stringify(firstResult)), false);
+  } finally {
+    await stopRelay();
+    await stopCoord();
+    await new Promise(resolveClose => {
+      if (!mcpServer.listening) return resolveClose();
+      mcpServer.close(resolveClose);
+      mcpServer.closeAllConnections();
+    });
+    await mcpHandle.shutdown();
     await rm(folder, { recursive: true, force: true });
   }
 });

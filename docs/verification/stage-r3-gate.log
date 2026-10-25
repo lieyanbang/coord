@@ -1,0 +1,5 @@
+r3 fmt: exit=0
+r3 clippy: exit=0
+r3 test: exit=0
+r3 build: exit=0
+EXIT_CODE=0

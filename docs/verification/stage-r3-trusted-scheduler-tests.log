@@ -1,0 +1,16 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.49s
+     Running tests\trusted_scheduler.rs (target\debug\deps\trusted_scheduler-504440af9e987700.exe)
+
+running 8 tests
+test reassigned_worker_resumes_from_the_last_durable_checkpoint ... ok
+test release_and_complete_race_has_one_atomic_winner ... ok
+test release_and_expiration_preserve_failure_budget_and_old_fences ... ok
+test checkpoint_resume_complete_are_persistent_and_idempotent ... ok
+test concurrent_trusted_claims_have_unique_tasks_and_one_claim_per_worker ... ok
+test old_database_migration_preserves_all_states_receipts_actions_and_checkpoints ... ok
+test trusted_http_rpc_redacts_token_and_keeps_legacy_api_available ... ok
+test resume_reports_expiry_without_mutating_and_reclaimer_keeps_failure_budget ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.22s
+
+EXIT_CODE=0

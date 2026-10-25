@@ -1,0 +1,38 @@
+{"time":"2026-10-25T12:38:34.721Z","component":"coord-relay","event":"started","agentAddress":"127.0.0.1:2117","clientAddress":"127.0.0.1:2118"}
+{"time":"2026-10-25T12:38:34.725Z","component":"coord-relay","event":"agent_connected","agentId":"arasaka-coord-agent"}
+{"time":"2026-10-25T12:38:34.725Z","component":"coord-relay-agent","event":"connected","serverHost":"127.0.0.1","serverPort":2117}
+{"time":"2026-10-25T12:38:34.983Z","component":"coord-relay","event":"rpc_finished","requestId":"efff03e5-4684-4b10-9ff6-d96ccf225495","method":"scheduler/trusted_claim","state":"ok","durationMs":33}
+{"time":"2026-10-25T12:38:35.009Z","component":"coord-relay","event":"rpc_finished","requestId":"13203c37-3887-45f3-9373-a13fc384efa1","method":"scheduler/trusted_progress","state":"ok","durationMs":11}
+{"time":"2026-10-25T12:38:35.013Z","component":"coord-relay","event":"agent_disconnected","reason":"socket_closed"}
+{"time":"2026-10-25T12:38:35.144Z","component":"coord-relay","event":"started","agentAddress":"127.0.0.1:2127","clientAddress":"127.0.0.1:2128"}
+{"time":"2026-10-25T12:38:35.146Z","component":"coord-relay","event":"agent_connected","agentId":"arasaka-coord-agent"}
+{"time":"2026-10-25T12:38:35.146Z","component":"coord-relay-agent","event":"connected","serverHost":"127.0.0.1","serverPort":2127}
+{"time":"2026-10-25T12:38:35.160Z","component":"coord-relay","event":"rpc_finished","requestId":"90e83b06-56ba-4dac-95cf-e70178ed66ab","method":"scheduler/trusted_resume","state":"ok","durationMs":8}
+{"time":"2026-10-25T12:38:35.175Z","component":"coord-relay","event":"rpc_finished","requestId":"fdd52482-3753-477a-9a2e-f52d2b54b49e","method":"scheduler/trusted_claim","state":"ok","durationMs":9}
+{"time":"2026-10-25T12:38:35.192Z","component":"coord-relay","event":"rpc_finished","requestId":"5a0674c0-ca14-4ae6-b17e-102a0b0c2100","method":"scheduler/trusted_complete","state":"ok","durationMs":9}
+{"time":"2026-10-25T12:38:35.207Z","component":"coord-relay","event":"rpc_finished","requestId":"83b47ea9-e0d3-4f15-bd5f-a1cfe9cb5216","method":"scheduler/trusted_complete","state":"ok","durationMs":8}
+{"time":"2026-10-25T12:38:35.223Z","component":"coord-relay","event":"rpc_finished","requestId":"42220716-ef3c-4ca8-86b7-74ef5d6515a9","method":"scheduler/trusted_claim","state":"ok","durationMs":8}
+{"time":"2026-10-25T12:38:35.239Z","component":"coord-relay","event":"rpc_finished","requestId":"79c1439e-69e6-42af-8b95-473c53010e2e","method":"scheduler/trusted_progress","state":"ok","durationMs":9}
+{"time":"2026-10-25T12:38:35.254Z","component":"coord-relay","event":"rpc_finished","requestId":"e8e23e1b-a299-47a6-8ef4-82c97bbabf7a","method":"scheduler/trusted_release","state":"ok","durationMs":8}
+{"time":"2026-10-25T12:38:35.268Z","component":"coord-relay","event":"rpc_finished","requestId":"545f5b53-e18b-4154-8cab-abf06ce83534","method":"scheduler/trusted_resume","state":"ok","durationMs":8}
+{"time":"2026-10-25T12:38:35.298Z","component":"coord-relay","event":"rpc_finished","requestId":"367cfad4-4e06-4733-b2ac-6860c62f2c2f","method":"scheduler/trusted_claim","state":"ok","durationMs":8}
+{"time":"2026-10-25T12:38:35.314Z","component":"coord-relay","event":"rpc_finished","requestId":"7e659d63-875c-4cb7-8b39-263db2573cf8","method":"scheduler/trusted_resume","state":"ok","durationMs":9}
+{"time":"2026-10-25T12:38:35.328Z","component":"coord-relay","event":"rpc_finished","requestId":"79f45e2e-1770-4b04-bfdd-9a9e50b2ee40","method":"scheduler/trusted_complete","state":"rpc_error","durationMs":8}
+{"time":"2026-10-25T12:38:35.343Z","component":"coord-relay","event":"rpc_finished","requestId":"c251d1cc-af83-4f1f-88dd-0aa512be0130","method":"scheduler/trusted_complete","state":"ok","durationMs":8}
+{"time":"2026-10-25T12:38:35.360Z","component":"coord-relay","event":"rpc_finished","requestId":"570ac7a5-f052-4ab9-a49b-c1641e967db4","method":"scheduler/trusted_claim","state":"ok","durationMs":8}
+{"time":"2026-10-25T12:38:36.530Z","component":"coord-relay","event":"rpc_finished","requestId":"7f4d949d-8bae-4984-bff7-1f7aa336b36a","method":"scheduler/trusted_resume","state":"ok","durationMs":11}
+{"time":"2026-10-25T12:38:36.543Z","component":"coord-relay","event":"rpc_finished","requestId":"fd177191-267f-4a27-a499-c35e508d68d3","method":"scheduler/trusted_claim","state":"ok","durationMs":8}
+{"time":"2026-10-25T12:38:36.628Z","component":"coord-relay","event":"rpc_finished","requestId":"6195c9f0-619b-49fc-8201-ecd2f08c5a61","method":"scheduler/trusted_claim","state":"ok","durationMs":12}
+{"time":"2026-10-25T12:38:36.643Z","component":"coord-relay","event":"rpc_finished","requestId":"0fbfbbdf-e90e-4d79-b2ef-8be96afa435f","method":"scheduler/trusted_complete","state":"ok","durationMs":10}
+{"time":"2026-10-25T12:38:36.657Z","component":"coord-relay","event":"rpc_finished","requestId":"3162cd34-cfb5-4bc9-b6a0-baeabc033dc8","method":"scheduler/trusted_status","state":"ok","durationMs":7}
+{"time":"2026-10-25T12:38:36.659Z","component":"coord-relay","event":"agent_disconnected","reason":"socket_closed"}
+✔ Phase R trusted lifecycle survives stateless MCP calls and Core plus Relay restart (2119.1768ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2377.6497
+exit=0
