@@ -17,25 +17,33 @@ const record = value => value && typeof value === 'object' && !Array.isArray(val
 const exact = (value, keys) => record(value) && Object.keys(value).every(k => keys.includes(k)) && keys.every(k => Object.hasOwn(value, k));
 
 function validatePolicy(config, key) {
-  if (!exact(config, ['version', 'enabled', 'signing_key_file', 'legacy_client_sha256', 'bindings'])
-      || config.version !== 1 || typeof config.enabled !== 'boolean'
+  const logical = config?.version === 2 && config.mode === 'logical';
+  if (!exact(config, ['version', 'enabled', 'signing_key_file', 'legacy_client_sha256', 'bindings', ...(logical ? ['mode'] : [])])
+      || (!logical && config.version !== 1) || typeof config.enabled !== 'boolean'
       || typeof config.signing_key_file !== 'string' || !path.isAbsolute(config.signing_key_file)
       || !Array.isArray(config.bindings) || !Array.isArray(config.legacy_client_sha256)
       || !config.legacy_client_sha256.every(v => typeof v === 'string' && HASH.test(v))) throw new Error('identity_policy_invalid');
   if (!config.enabled) return null;
   if (!HASH.test(key || '')) throw new Error('identity_signing_key_invalid');
-  const ids = new Set(); const clients = new Set(); const agents = new Set(); const tokens = new Set();
+  const ids = new Set(); const clients = new Set(); const agents = new Set(); const tokens = new Set(); const pairs = new Set();
   for (const b of config.bindings) {
-    if (!exact(b, ['id', 'client_sha256', 'token_sha256', 'agent_id', 'batch_id', 'scopes', 'not_before', 'expires_at'])
+    if (!exact(b, ['id', 'client_sha256', 'batch_id', 'scopes', 'not_before', 'expires_at', ...(logical ? ['worker_ids'] : ['token_sha256', 'agent_id'])])
         || typeof b.id !== 'string' || !/^[a-zA-Z0-9_-]{1,64}$/.test(b.id)
         || typeof b.client_sha256 !== 'string' || !HASH.test(b.client_sha256)
-        || typeof b.token_sha256 !== 'string' || !HASH.test(b.token_sha256)
-        || typeof b.agent_id !== 'string' || !/^A[0-5]$/.test(b.agent_id)
         || typeof b.batch_id !== 'string' || !UUID.test(b.batch_id) || !Array.isArray(b.scopes) || b.scopes.length === 0
         || !b.scopes.every(s => VALID_SCOPES.has(s)) || new Set(b.scopes).size !== b.scopes.length
         || !Number.isSafeInteger(b.not_before) || !Number.isSafeInteger(b.expires_at)
         || b.not_before < 0 || b.expires_at <= b.not_before || b.expires_at - b.not_before > 86_400_000
-        || ids.has(b.id) || clients.has(b.client_sha256) || agents.has(b.agent_id) || tokens.has(b.token_sha256)
+        || ids.has(b.id)) throw new Error('identity_binding_invalid_or_shared');
+    if (logical) {
+      const pair = `${b.client_sha256}:${b.batch_id}`;
+      if (!Array.isArray(b.worker_ids) || b.worker_ids.length < 1 || b.worker_ids.length > 64
+          || !b.worker_ids.every(w => typeof w === 'string' && /^[0-9A-F]{4}$/.test(w))
+          || new Set(b.worker_ids).size !== b.worker_ids.length || pairs.has(pair)) throw new Error('logical_binding_invalid');
+      pairs.add(pair);
+    } else if (typeof b.token_sha256 !== 'string' || !HASH.test(b.token_sha256)
+        || typeof b.agent_id !== 'string' || !/^A[0-5]$/.test(b.agent_id)
+        || clients.has(b.client_sha256) || agents.has(b.agent_id) || tokens.has(b.token_sha256)
         || config.legacy_client_sha256.includes(b.client_sha256)) throw new Error('identity_binding_invalid_or_shared');
     ids.add(b.id); clients.add(b.client_sha256); agents.add(b.agent_id); tokens.add(b.token_sha256);
   }
@@ -50,10 +58,28 @@ async function loadPolicy(file) {
   return validatePolicy(raw, key);
 }
 
-function resolvePrincipal(policy, authInfo, now = Date.now()) {
-  if (!policy) return null;
+function resolvePrincipal(policy, authInfo, now = Date.now(), declaration) {
+  if (!policy) {
+    if (declaration) throw new Error('logical_worker_disabled');
+    return null;
+  }
   if (!record(authInfo) || typeof authInfo.clientId !== 'string') throw new Error('identity_binding_missing');
   const client = hash(authInfo.clientId);
+  if (policy.mode === 'logical') {
+    if (!Number.isSafeInteger(authInfo.expiresAt) || authInfo.expiresAt <= now) throw new Error('identity_binding_missing_or_expired');
+    if (!declaration) {
+      if (!policy.legacy_client_sha256.includes(client) && !policy.bindings.some(b => b.client_sha256 === client)) throw new Error('identity_binding_missing');
+      return null;
+    }
+    if (!exact(declaration, ['worker_id', 'batch_id']) || typeof declaration.worker_id !== 'string'
+        || !/^[0-9A-Fa-f]{4}$/.test(declaration.worker_id) || !UUID.test(declaration.batch_id)) throw new Error('logical_worker_invalid');
+    const worker = declaration.worker_id.toUpperCase();
+    const b = policy.bindings.find(b => b.client_sha256 === client && b.batch_id === declaration.batch_id && b.worker_ids.includes(worker));
+    if (!b || now < b.not_before || now >= b.expires_at) throw new Error('logical_worker_or_batch_denied');
+    return { binding_id: b.id, agent_id: `emote-${worker}`, worker_id: worker, batch_id: b.batch_id,
+      scopes: [...b.scopes], issued_at: now, expires_at: Math.min(b.expires_at, authInfo.expiresAt, now + 60_000) };
+  }
+  if (declaration) throw new Error('logical_worker_disabled');
   if (policy.legacy_client_sha256.includes(client)) return null;
   const b = policy.bindings.find(item => item.client_sha256 === client && item.token_sha256 === authInfo.tokenSha256);
   if (!b || now < b.not_before || now >= b.expires_at || !Number.isSafeInteger(authInfo.expiresAt) || authInfo.expiresAt <= now) {
@@ -78,11 +104,13 @@ function verifyRequest(request, policy, now = Date.now()) {
   if (!request.identity) return { ok: true, agentId: 'coord-relay-agent' };
   if (!policy) return { ok: false, code: 'identity_disabled' };
   const { proof, ...p } = request.identity;
-  if (!exact(p, ['binding_id', 'agent_id', 'batch_id', 'scopes', 'issued_at', 'expires_at']) || typeof proof !== 'string' || !HASH.test(proof)) return { ok: false, code: 'identity_invalid' };
+  const logical = policy.mode === 'logical';
+  if (!exact(p, ['binding_id', 'agent_id', 'batch_id', 'scopes', 'issued_at', 'expires_at', ...(logical ? ['worker_id'] : [])]) || typeof proof !== 'string' || !HASH.test(proof)) return { ok: false, code: 'identity_invalid' };
   const b = policy.bindings.find(item => item.id === p.binding_id);
   const expected = signature(request, p, policy.key);
   if (!crypto.timingSafeEqual(Buffer.from(expected, 'hex'), Buffer.from(proof, 'hex'))
-      || !b || b.agent_id !== p.agent_id || b.batch_id !== p.batch_id
+      || !b || b.batch_id !== p.batch_id
+      || (logical ? !b.worker_ids.includes(p.worker_id) || p.agent_id !== `emote-${p.worker_id}` : b.agent_id !== p.agent_id)
       || JSON.stringify(b.scopes) !== JSON.stringify(p.scopes)
       || !Number.isSafeInteger(p.issued_at) || !Number.isSafeInteger(p.expires_at)
       || p.issued_at > now || p.issued_at < b.not_before || p.expires_at > b.expires_at

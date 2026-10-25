@@ -460,3 +460,32 @@ test('enabled identity policy rejects unknown, expired and cross-token OAuth con
   assert.equal(legacy.calls[0].params.agentId, 'coord-relay-agent');
   assert.equal(legacy.calls[0].identity, undefined);
 });
+
+test('logical worker tools require OAuth, bind explicit worker and batch, and preserve legacy calls', async t => {
+  const time = Date.now();
+  const authInfo = { clientId: 'logical-owner-fixture', expiresAt: time + 300000 };
+  const policy = identity.validatePolicy({ version: 2, mode: 'logical', enabled: true,
+    signing_key_file: path.resolve('synthetic-key'), legacy_client_sha256: [identity.hash(authInfo.clientId)],
+    bindings: [{ id: 'logical-test', client_sha256: identity.hash(authInfo.clientId), worker_ids: ['0000', '0001'], batch_id: BATCH_ID,
+      scopes: ['coord:read', 'coord:claim'], not_before: time - 1000, expires_at: time + 300000 }] }, 'cd'.repeat(32));
+  const f = await createFixture(t, { authInfo, identityPolicy: policy,
+    onCall: call => ({ claimed_by: call.params.agent_id || call.params.agentId, lease_token: LEASE_TOKEN }) });
+  const tool = (worker, batch = BATCH_ID) => rpc('tools/call', 1, { name: 'coord_claim_next', arguments: { worker_id: worker, batch_id: batch, request_id: crypto.randomUUID() } });
+  assert.equal((await postMcp(f, tool('0000'), { token: null })).response.status, 401);
+  assert.equal(f.calls.length, 0);
+  for (const worker of ['0000', '0001']) {
+    const accepted = parseJsonResponse((await postMcp(f, tool(worker))).text).result;
+    assert.equal(accepted.isError, undefined);
+    assert.equal(JSON.parse(accepted.content[0].text).claimed_by, `emote-${worker}`);
+    assert.equal(identity.verifyRequest(f.calls.at(-1), policy).ok, true);
+  }
+  const count = f.calls.length;
+  for (const request of [tool('0002'), tool('0000', TASK_ID), tool('GGGG')]) {
+    assert.equal(parseJsonResponse((await postMcp(f, request)).text).result.isError, true);
+  }
+  assert.equal(f.calls.length, count);
+  const legacy = parseJsonResponse((await postMcp(f, rpc('tools/call', 2, { name: 'coord_claim_task', arguments: { id: TASK_ID, request_id: crypto.randomUUID() } }))).text).result;
+  assert.equal(legacy.isError, undefined);
+  assert.equal(f.calls.at(-1).identity, undefined);
+  assert.equal(f.calls.at(-1).params.agentId, 'coord-relay-agent');
+});

@@ -1,0 +1,1 @@
+self_test=PASS backup=SQLite Online Backup API read_only_checks=PASS collation=PASS overwrite_protection=PASS additional_service_and_row_tamper=PASS fixture=temporary

@@ -46,7 +46,7 @@ jobs:
       - name: relay protocol and lease-fencing tests
         env:
           COORD_TEST_BIN: target/release/coord.exe
-        run: node --test relay/relay.test.mjs relay/live-coord.test.mjs
+        run: node --test relay/relay.test.mjs relay/live-coord.test.mjs relay/logical-workers.test.mjs
       - name: Coord MCP test dependencies
         run: npm ci --prefix relay/coord-mcp --ignore-scripts --no-audit --no-fund
       - name: Coord MCP OAuth and HTTP tests

@@ -238,3 +238,26 @@ Windows 本机及 Windows Actions 的真实测试、构建与产物为准。
 | D | PARTIAL / 部署 NOT_RUN | Fork run `40088013915` 对 `7d08012a171f804edf3b8588b77c72720e76393d` 全绿；下载三个 EXE 并核对 ZIP/hash，27 项执行集成复验通过。生产 CSP 和 token exchange 已补证，F3-R 仍缺 non-owner 和独立 initialize/tools/list。见 `verification/PHASE_G6_D.md`；真实 A/B 未过不部署、不创建 canary |
 
 所有生产源码、服务、Access 策略、任务队列保持原状；本轮浏览器进行了同账户正常 OAuth 重新授权，OAuth grant/token 记录因此改变。没有正式任务或分类 Agent。备份/回滚与放行条件见 `phase-g/G6-DEPLOYMENT.md`。旧 G0 的 OAuth hash 差异现已现场调和；不据此提升 F3-R 或 G6 为 PASS。
+
+
+## 13. Phase G7 — 可信逻辑 Agent 身份与受控生产部署（2026-10-25）
+> 用户明确接受单一 ChatGPT OAuth owner 下六个对话**无法安全认证其独立对话身份**的风险。身份目标由 G6 的“不可冒用会话身份”调整为“单用户可信协作式声明身份”，每个 Agent 固定四位十六进制 worker_id；不允许将其声称为安全凭据。允许 G7 在这些放宽条件下进入受控部署，**但低权限 Runner/ACL、管理 RPC 鉴权、动作命令白名单、结果 fencing 仍是硬门槛**。尚不授权正式 emote-000…120 入队。
+### G7-A 逻辑身份协议与兼容
+- 通过经过既有 Cloudflare Access/OAuth 的 MCP 请求，新增用户主动声明的 `worker_id`（恰好 4 位十六进制，统一大写），在六个工作者间取六个不同的值；例如 A0=0000、A1=0001、A2=0002、A3=0003、A4=0004、A5=0005。声明值属于逻辑标签而非安全身份证明，同一 owner 的其他对话理论上可以冒名；这是用户接受的风险。
+- 绑定可为 MCP 工具每次显式传入 `worker_id`，或先声明后经可核实的会话句柄持续附带；绝不能假定 ChatGPT 同一 OAuth 连接携带独立会话 ID。建议每次有副作用 RPC 都显式传 worker_id，使断线/重连行为确定；核心 agentId 用 `emote-<4HEX>` 精确区分。仅针对配置许可的可信 owner、允许 batch 和工具生效，不把逻辑 worker_id 当作逃过授权的依据。
+- 更新 CoordMCP 严格 tool schema、relay 签名/context 校验、Sidecar/Windows Agent 的准入；保留 request_id 幂等、agent/attempt/lease_token fencing 与旧任务隔离，拒绝格式错误、未授权 batch、空 token、跨 agent 旧 token。保留 legacy 工具/真实 OAuth 连接行为及测试。不要使任何公众匿名端点获得队列写权限。
+- 用六个假客户端及至少两个真实 ChatGPT Web 对话测试不同 worker_id 领取和提交；**不要求对话级抗冒用**，但仍测试工作者相互租约 token 拒绝与全局队列唯一原子领取。
+### G7-B 连续领取与租约
+- Agent 在已有 ChatGPT 对话中完成一次任务后继续调用 Coord claim-next；用户接受不能自主启动/唤醒新对话。每次任务可显式 report progress、在实际活动期间续租；保留 <=600s、attempt 60min 预算、最多三次重试、无心跳则回收。不创建永续 supervisor 或虚假后台计时器。
+- 六个 Agent 的操作提示词、身份 ID、工作区与 batch 绑定，保留图像分类 JSON、低置信备注、refs 参考查阅要求；此阶段只为 canary 准备。
+### G7-C Arasaka 生产 Runner/发布器落地
+- 复用 G6 已通过的 Windows Actions 下载并哈希核验的 coord.exe、coord-action-runner.exe、coord-emote-action.exe；若 G7 源码改变核心/relay，必须重新生成 matching CI artifact、哈希和本地复验，严禁部署版本混合不兼容。
+- 在生产先完成 SQLite 在线一致备份、服务/配置/旧 EXE、Linux Feathers/Sidecar/agent 备份；建立真正独立、非管理员的 Runner 身份并经实际 SID、ACL、management RPC 401、broker key、refs 只读、results 受限写及其他 agent 工作区拒绝验证。启动前先备份现有 health monitor、设置其 SYSTEM 专用管理 key 副本并验证真实 authenticated READY。不能通过时停止部署。
+- 用管理员批准的固定 action profile、白名单与 hash-pinned 的 native publisher，不接受任务结果中的任意 shell。事务 outbox、receipt/fence 与防旧尝试覆盖必须原样保留。按需仅重启所属组件；守护原有 13011/13012、Feathers OAuth、Servy 与系统服务。
+### G7-D 真实隔离 Canary 与门禁
+- 先只创建隔离 Canary Batch 与人工合成的测试输入，无正式 121 项；检验六逻辑 ID 领取唯一性、续租、旧 token 拒绝、结果发布、action 状态、索引、遗留任务回归及回滚。若实际 ChatGPT 对话调用需要用户操作，保留 NEEDS_USER_ACTION，不编造。
+- 报告明确逻辑 worker_id 可被相同 owner 冒用、不能保证 ChatGPT 持续自动唤醒；这两项不再阻止用户批准的可信协作试验。其余安全/完整性失败仍禁止放行。每 Gate 在 docs/verification/PHASE_G7.md 留真实证据；新 TASK.md 执行期只读，保护 Git 及用户既有未提交改动。
+
+### G7 执行进度
+- A/B 本机源码与隔离机制门通过：四位逻辑 ID、批次/工具约束、两跳签名、轮转兼容、旧租约拒绝、权威批次状态与循环提示词已实现。`scripts/verify.ps1 -Stage g7` 八项 exit 0；Fork Actions/下载产物待验证。
+- C/D 进行中：现场一致备份、真实 Runner SID/ACL、SYSTEM 鉴权监护和生产 Canary 必须实测；不以 G6 disposable SID 代替。详细命令、退出码与当前状态见 `verification/PHASE_G7.md`。正式分类任务/Agent 仍禁止。

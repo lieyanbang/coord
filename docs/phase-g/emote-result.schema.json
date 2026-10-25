@@ -17,7 +17,7 @@
   "properties": {
     "schema_version": { "const": 1 },
     "group_id": { "type": "string", "pattern": "^(0[0-9]|[1-9][0-9]|1[01][0-9]|120)$" },
-    "agent_id": { "type": "string", "enum": ["A0", "A1", "A2", "A3", "A4", "A5"] },
+    "agent_id": { "type": "string", "anyOf": [{ "pattern": "^emote-[0-9A-F]{4}$" }, { "enum": ["A0", "A1", "A2", "A3", "A4", "A5"] }] },
     "attempt_no": { "type": "integer", "minimum": 1, "maximum": 1000000000 },
     "source_image_ids": {
       "type": "array",

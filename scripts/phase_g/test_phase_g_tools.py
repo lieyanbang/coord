@@ -70,6 +70,15 @@ class PhaseGToolsTests(unittest.TestCase):
         errors = validate_result(result, expected, self.refs)
         self.assertTrue(any("unsafe reference path" in error for error in errors))
 
+    def test_logical_worker_result_requires_canonical_and_matching_owner(self) -> None:
+        result = self.result("00", "7")
+        result["agent_id"] = "emote-ABCD"
+        expected = {"group_id": "00", "agent_id": "emote-ABCD", "attempt_no": 1, "source_image_ids": ["7"]}
+        self.assertEqual(validate_result(result, expected, self.refs), [])
+        for owner in ("emote-abcd", "emote-ABC", "emote-0000", "emote-GGGG"):
+            result["agent_id"] = owner
+            self.assertTrue(any("agent_id" in error for error in validate_result(result, expected, self.refs)))
+
     def test_result_rejects_missing_image_coverage_and_stale_attempt(self) -> None:
         result = self.result("00", "7")
         expected = {"group_id": "00", "agent_id": "A1", "attempt_no": 2, "source_image_ids": ["7", "8"]}

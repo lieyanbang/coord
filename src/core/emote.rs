@@ -130,6 +130,16 @@ fn paths(root: &Path, values: &[String]) -> Result<()> {
     Ok(())
 }
 
+fn valid_agent_id(id: &str) -> bool {
+    ["A0", "A1", "A2", "A3", "A4", "A5"].contains(&id)
+        || id.strip_prefix("emote-").is_some_and(|worker| {
+            worker.len() == 4
+                && worker
+                    .bytes()
+                    .all(|byte| byte.is_ascii_digit() || (b'A'..=b'F').contains(&byte))
+        })
+}
+
 /// Same required fields, coverage, evidence and bounds as G4's Python validator;
 /// additionally enforces the schema's candidate icon shape and all reparse ancestors.
 pub fn validate_result(root: &Path, value: &Value, proof: &Value) -> Result<()> {
@@ -140,7 +150,7 @@ pub fn validate_result(root: &Path, value: &Value, proof: &Value) -> Result<()> 
         || !group(&result.group_id)
         || value["group_id"] != input["group_id"]
         || value["source_image_ids"] != input["source_image_ids"]
-        || !["A0", "A1", "A2", "A3", "A4", "A5"].contains(&result.agent_id.as_str())
+        || !valid_agent_id(&result.agent_id)
         || value["agent_id"] != proof["agent_id"]
         || result.attempt_no == 0
         || result.attempt_no > 1_000_000_000

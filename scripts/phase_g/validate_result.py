@@ -12,6 +12,7 @@ from typing import Any
 
 
 AGENTS = {f"A{number}" for number in range(6)}
+LOGICAL_AGENT_RE = re.compile(r"^emote-[0-9A-F]{4}$")
 GROUP_RE = re.compile(r"^(0[0-9]|[1-9][0-9]|1[01][0-9]|120)$")
 IMAGE_RE = re.compile(r"^[0-9]+$")
 CHARACTER_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$")
@@ -133,8 +134,8 @@ def validate_result(result: Any, expected: dict[str, Any], refs_root: Path) -> l
     if group_id != expected.get("group_id"):
         errors.append("group_id: does not match the claimed task")
     agent_id = result["agent_id"]
-    if not isinstance(agent_id, str) or agent_id not in AGENTS:
-        errors.append("agent_id: expected A0 through A5")
+    if not isinstance(agent_id, str) or (agent_id not in AGENTS and not LOGICAL_AGENT_RE.fullmatch(agent_id)):
+        errors.append("agent_id: expected emote-<4 uppercase hex> or legacy A0 through A5")
     if expected.get("agent_id") is not None and agent_id != expected["agent_id"]:
         errors.append("agent_id: does not match the expected worker label")
     attempt_no = result["attempt_no"]

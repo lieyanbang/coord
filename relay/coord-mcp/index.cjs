@@ -112,7 +112,7 @@ const TOOLS = [
   },
   {
     name: 'coord_agent_status',
-    description: 'Read current tasks and last accepted progress for this relay identity within one batch. No lease tokens are returned.',
+    description: 'Read this worker current tasks/checkpoints and an authoritative batch progress snapshot. Empty claims do not prove completion: inspect batch_progress.status and active counts. No lease tokens are returned.',
     inputSchema: objectSchema({ batch_id: stringSchema('Batch UUID.', 36) }, ['batch_id']),
     annotations: { title: 'Read coord agent status', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
   },
@@ -143,6 +143,17 @@ const TOOLS = [
     annotations: { title: 'Report coord failure', readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: false },
   },
 ];
+
+// Optional declarations preserve legacy calls. Logical mode requires an exact
+// allowed batch on every worker operation; the label never authenticates a user.
+for (const tool of TOOLS) {
+  if (tool.name === 'coord_tasks_list') continue;
+  tool.inputSchema.properties.worker_id = { type: 'string', pattern: '^[0-9A-Fa-f]{4}$',
+    description: 'Optional four-hex logical worker label, not a credential. Requires batch_id; canonicalized to uppercase.' };
+  tool.inputSchema.properties.batch_id ??= stringSchema('Allowed batch UUID; required with worker_id.', 36);
+  tool.inputSchema.dependentRequired = { worker_id: ['batch_id'] };
+  tool.description += ' In trusted logical mode supply worker_id and batch_id on every call; another conversation of the same OAuth owner can impersonate this label.';
+}
 
 const TOOL_NAMES = new Set(TOOLS.map(({ name }) => name));
 
@@ -192,6 +203,19 @@ function boundedResult(value, maxBytes = MAX_RESULT_BYTES) {
 }
 
 function validateToolInput(name, args) {
+  if (isRecord(args) && Object.hasOwn(args, 'worker_id')) {
+    if (name === 'coord_tasks_list' || typeof args.worker_id !== 'string'
+        || !/^[0-9A-Fa-f]{4}$/.test(args.worker_id) || !validUuid(args.batch_id)) throw new ToolInputError('invalid_logical_worker_or_batch');
+    const clean = { ...args };
+    delete clean.worker_id;
+    if (!['coord_claim_next', 'coord_agent_status'].includes(name)) delete clean.batch_id;
+    const call = validateLegacyToolInput(name, clean);
+    return { ...call, logical: { worker_id: args.worker_id.toUpperCase(), batch_id: args.batch_id } };
+  }
+  return validateLegacyToolInput(name, args);
+}
+
+function validateLegacyToolInput(name, args) {
   if (!TOOL_NAMES.has(name) || !isRecord(args)) throw new ToolInputError('invalid_tool_or_arguments');
 
   switch (name) {
@@ -492,7 +516,9 @@ function createCoordMcpServer(authInfo, sidecar, loadSdk, identityPolicy = null)
         return { isError: true, content: [{ type: 'text', text: toolErrorText(error) }] };
       }
       try {
-        const principal = identity.resolvePrincipal(identityPolicy, authInfo);
+        const principal = identity.resolvePrincipal(identityPolicy, authInfo, Date.now(), call.logical);
+        if (identityPolicy?.mode === 'logical' && !call.logical
+            && !identityPolicy.legacy_client_sha256.includes(identity.hash(authInfo.clientId))) throw new ToolInputError('logical_worker_required');
         if (principal) {
           if (Object.hasOwn(call.params, 'agentId')) call.params.agentId = principal.agent_id;
           if (Object.hasOwn(call.params, 'agent_id')) call.params.agent_id = principal.agent_id;

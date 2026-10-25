@@ -19,6 +19,7 @@ public sealed class UnicodeNoCaseCollation : SQLiteFunction
 
 internal static class Program
 {
+    private sealed record ServiceInventory(int rows, List<string> serviceNames, List<string> recordSha256);
     private const int ExpectedSchemaVersion = 10;
 
     private static readonly string[] ExpectedServices =
@@ -55,12 +56,19 @@ internal static class Program
                 return 0;
             }
 
-            if (args.Length == 2 && args[0] == "--verify-snapshot")
+            if ((args.Length == 2 || (args.Length == 4 && args[2] == "--inventory")) && args[0] == "--verify-snapshot")
             {
                 var snapshot = Path.GetFullPath(args[1]);
                 if (!File.Exists(snapshot))
                     throw new FileNotFoundException("snapshot does not exist", snapshot);
-                var checkedSnapshot = ValidateSnapshot(snapshot);
+                ServiceInventory? inventory = null;
+                if (args.Length == 4)
+                {
+                    using var document = JsonDocument.Parse(File.ReadAllText(args[3]));
+                    inventory = document.RootElement.GetProperty("serviceInventory").Deserialize<ServiceInventory>()
+                        ?? throw new InvalidDataException("captured service inventory is missing");
+                }
+                var checkedSnapshot = ValidateSnapshot(snapshot, inventory);
                 var info = new FileInfo(snapshot);
                 Console.WriteLine(JsonSerializer.Serialize(new
                 {
@@ -80,13 +88,13 @@ internal static class Program
                 return 0;
             }
 
-            if (args.Length != 4 || args[0] != "--source" || args[2] != "--snapshot")
+            if ((args.Length != 4 && !(args.Length == 5 && args[4] == "--current-services")) || args[0] != "--source" || args[2] != "--snapshot")
             {
-                Console.Error.WriteLine("usage: servy-snapshot-check.exe --source <Servy.db> --snapshot <new-snapshot.db> | --verify-snapshot <existing-snapshot.db> | --self-test");
+                Console.Error.WriteLine("usage: servy-snapshot-check.exe --source <Servy.db> --snapshot <new-snapshot.db> [--current-services] | --verify-snapshot <existing-snapshot.db> [--inventory <create-report.json>] | --self-test");
                 return 2;
             }
 
-            var result = CreateSnapshotAndValidate(args[1], args[3]);
+            var result = CreateSnapshotAndValidate(args[1], args[3], args.Length == 5);
             Console.WriteLine(JsonSerializer.Serialize(result));
             return 0;
         }
@@ -97,7 +105,7 @@ internal static class Program
         }
     }
 
-    private static object CreateSnapshotAndValidate(string sourcePath, string snapshotPath)
+    private static object CreateSnapshotAndValidate(string sourcePath, string snapshotPath, bool currentServices = false)
     {
         var source = Path.GetFullPath(sourcePath);
         var snapshot = Path.GetFullPath(snapshotPath);
@@ -120,9 +128,12 @@ internal static class Program
             Pooling = false
         };
 
+        ServiceInventory? inventory = null;
         using (var sourceConnection = new SQLiteConnection(sourceBuilder.ConnectionString))
         {
             sourceConnection.Open();
+            if (currentServices)
+                inventory = VerifyServices(sourceConnection, enforceHistorical: false);
             using var createNew = new FileStream(snapshot, FileMode.CreateNew, FileAccess.Write, FileShare.None);
             createNew.Dispose();
 
@@ -139,7 +150,7 @@ internal static class Program
             sourceConnection.BackupDatabase(destinationConnection, "main", "main", -1, null, 0);
         }
 
-        var checkedSnapshot = ValidateSnapshot(snapshot);
+        var checkedSnapshot = ValidateSnapshot(snapshot, inventory);
         var info = new FileInfo(snapshot);
 
         return new
@@ -156,11 +167,12 @@ internal static class Program
             providerAssemblyVersion = typeof(SQLiteConnection).Assembly.GetName().Version?.ToString(),
             sqliteEngineVersion = SQLiteConnection.SQLiteVersion,
             collation = "StringComparison.OrdinalIgnoreCase",
+            serviceInventory = inventory,
             checkedSnapshot
         };
     }
 
-    private static object ValidateSnapshot(string snapshotPath)
+    private static object ValidateSnapshot(string snapshotPath, ServiceInventory? inventory = null)
     {
         var builder = new SQLiteConnectionStringBuilder
         {
@@ -184,7 +196,11 @@ internal static class Program
 
         var index = VerifyServicesIndex(connection);
         var schema = VerifySchemaInfo(connection);
-        var services = VerifyServices(connection);
+        var services = VerifyServices(connection, enforceHistorical: inventory is null);
+        if (inventory is not null && (services.rows != inventory.rows
+            || !services.serviceNames.SequenceEqual(inventory.serviceNames, StringComparer.Ordinal)
+            || !services.recordSha256.SequenceEqual(inventory.recordSha256, StringComparer.Ordinal)))
+            throw new InvalidDataException("snapshot service records do not match the captured source inventory");
 
         return new
         {
@@ -276,7 +292,7 @@ internal static class Program
         return new { rows = 1, id, version };
     }
 
-    private static object VerifyServices(SQLiteConnection connection)
+    private static ServiceInventory VerifyServices(SQLiteConnection connection, bool enforceHistorical = true)
     {
         using var command = connection.CreateCommand();
         command.CommandText = "SELECT * FROM Services ORDER BY Name COLLATE UNICODE_NOCASE;";
@@ -292,16 +308,11 @@ internal static class Program
             hashes.Add(HashRow(reader));
         }
 
-        if (names.Count != ExpectedServices.Length ||
-            !names.OrderBy(name => name, StringComparer.Ordinal).SequenceEqual(ExpectedServices.OrderBy(name => name, StringComparer.Ordinal), StringComparer.Ordinal))
+        if (enforceHistorical && (names.Count != ExpectedServices.Length ||
+            !names.OrderBy(name => name, StringComparer.Ordinal).SequenceEqual(ExpectedServices.OrderBy(name => name, StringComparer.Ordinal), StringComparer.Ordinal)))
             throw new InvalidDataException("Services rows do not match the expected seven managed service names");
-
-        return new
-        {
-            rows = names.Count,
-            serviceNames = names,
-            recordSha256 = hashes
-        };
+        if (names.Count == 0) throw new InvalidDataException("service inventory is empty");
+        return new ServiceInventory(names.Count, names, hashes);
     }
 
     private static int FindOrdinal(SQLiteDataReader reader, string name)
@@ -418,7 +429,29 @@ internal static class Program
             if (snapshotHash != Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(snapshot))))
                 throw new InvalidDataException("self-test failed: existing snapshot content changed");
 
-            Console.WriteLine("self_test=PASS backup=SQLite Online Backup API read_only_checks=PASS collation=PASS overwrite_protection=PASS fixture=temporary");
+            using (var connection = new SQLiteConnection(builder.ConnectionString))
+            {
+                connection.Open();
+                Execute(connection, "INSERT INTO Services(Id,Name,Config) VALUES('extra','CoordRelayAgent','synthetic-only');");
+            }
+            var currentSnapshot = Path.Combine(directory, "current.db");
+            var report = JsonSerializer.SerializeToElement(CreateSnapshotAndValidate(source, currentSnapshot, currentServices: true));
+            var inventory = report.GetProperty("serviceInventory").Deserialize<ServiceInventory>()!;
+            if (inventory.rows != ExpectedServices.Length + 1)
+                throw new InvalidDataException("self-test failed: additional service was not captured");
+            _ = ValidateSnapshot(currentSnapshot, inventory);
+            using (var connection = new SQLiteConnection(new SQLiteConnectionStringBuilder { DataSource = currentSnapshot, Version = 3, Pooling = false }.ConnectionString))
+            {
+                connection.Open();
+                Execute(connection, "UPDATE Services SET Config='tampered' WHERE Name='CoordRelayAgent';");
+            }
+            try
+            {
+                _ = ValidateSnapshot(currentSnapshot, inventory);
+                throw new InvalidOperationException("self-test failed: changed service record was accepted");
+            }
+            catch (InvalidDataException ex) when (ex.Message.Contains("captured source inventory", StringComparison.Ordinal)) { }
+            Console.WriteLine("self_test=PASS backup=SQLite Online Backup API read_only_checks=PASS collation=PASS overwrite_protection=PASS additional_service_and_row_tamper=PASS fixture=temporary");
         }
         finally
         {

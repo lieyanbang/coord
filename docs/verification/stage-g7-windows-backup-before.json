@@ -1,0 +1,8 @@
+{
+  "state": "FAIL",
+  "ssh_exit": 1,
+  "phase": "Servy collation-aware online backup",
+  "backup_root": "C:\\ProgramData\\coord\\backup\\g7-20261025T045907Z-b851c65a",
+  "production_service_replacement": "NOT_RUN",
+  "note": "Existing config exports and coord online snapshot retained; whole backup is not accepted until Servy snapshot verifies."
+}

@@ -37,6 +37,13 @@ fn progress_fences_attempts_and_requires_fresh_unconsumed_checkpoints() {
     )["task"]
         .clone();
     assert_eq!(claimed["attempt_no"], 1);
+    let status = daemon.rpc(
+        "scheduler/agent_status",
+        json!({"agent_id":"agent-a","batch_id":batch_id}),
+    );
+    assert_eq!(status["active_claims"], 1);
+    assert_eq!(status["batch_progress"]["total"], 1);
+    assert_eq!(status["batch_progress"]["status"], "active");
     let deadline = chrono::DateTime::parse_from_rfc3339(claimed["lease_until"].as_str().unwrap())
         .unwrap()
         .with_timezone(&chrono::Utc);

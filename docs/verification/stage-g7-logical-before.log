@@ -1,0 +1,51 @@
+✖ logical worker input is explicit, canonical, batch-scoped and legacy-compatible (3.2609ms)
+✖ one authenticated owner can declare different logical workers and rotate tokens (0.7111ms)
+✖ logical worker, agent, batch, scope and expiration are signed and reverified at both hops (0.1545ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 0
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 123.0014
+
+✖ failing tests:
+
+test at relay\logical-workers.test.mjs:24:1
+✖ logical worker input is explicit, canonical, batch-scoped and legacy-compatible (3.2609ms)
+  Error [ToolInputError]: invalid_claim_arguments
+      at Object.validateToolInput (D:\project\coord\relay\coord-mcp\index.cjs:224:15)
+      at TestContext.<anonymous> (file:///D:/project/coord/relay/logical-workers.test.mjs:25:20)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    code: 'invalid_claim_arguments'
+  }
+
+test at relay\logical-workers.test.mjs:37:1
+✖ one authenticated owner can declare different logical workers and rotate tokens (0.7111ms)
+  Error: identity_policy_invalid
+      at Object.validatePolicy (D:\project\coord\relay\identity.cjs:24:96)
+      at logicalPolicy (file:///D:/project/coord/relay/logical-workers.test.mjs:14:19)
+      at TestContext.<anonymous> (file:///D:/project/coord/relay/logical-workers.test.mjs:38:18)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+
+test at relay\logical-workers.test.mjs:51:1
+✖ logical worker, agent, batch, scope and expiration are signed and reverified at both hops (0.1545ms)
+  Error: identity_policy_invalid
+      at Object.validatePolicy (D:\project\coord\relay\identity.cjs:24:96)
+      at logicalPolicy (file:///D:/project/coord/relay/logical-workers.test.mjs:14:19)
+      at TestContext.<anonymous> (file:///D:/project/coord/relay/logical-workers.test.mjs:52:18)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)

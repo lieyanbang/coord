@@ -579,8 +579,11 @@ impl Store {
                 }))
             })?
             .collect::<rusqlite::Result<Vec<_>>>()?;
+        drop(stmt);
+        drop(conn);
+        let progress = self.get_batch_status(batch_id)?;
         Ok(
-            serde_json::json!({"agent_id":agent_id,"batch_id":batch_id,"active_claims":rows.len(),"tasks":rows}),
+            serde_json::json!({"agent_id":agent_id,"batch_id":batch_id,"active_claims":rows.len(),"tasks":rows,"batch_progress":progress}),
         )
     }
 

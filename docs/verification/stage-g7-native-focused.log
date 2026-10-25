@@ -1,0 +1,19 @@
+   Compiling coord v0.4.1 (D:\project\coord)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 10.44s
+     Running tests\action_runner.rs (target\debug\deps\action_runner-efe9248bdb25c11b.exe)
+
+running 11 tests
+test broker_never_forwards_arbitrary_task_payload_or_secret_sentinels ... ok
+test malicious_result_paths_and_unknown_fields_never_publish ... ok
+test hash_pin_is_rechecked_after_registry_load ... ok
+test broker_rechecks_current_receipt_attempt_and_action_fence ... ok
+test native_runner_rejects_the_daemon_identity_before_network_access ... ok
+test simultaneous_publications_never_replace_conflicting_results ... ok
+test junction_in_reference_ancestor_and_existing_output_are_rejected ... ok
+test logical_worker_publication_keeps_exact_receipt_owner ... ok
+test native_publisher_and_index_are_receipt_checked_atomic_and_idempotent ... ok
+test native_aggregator_includes_group_120_and_emits_only_review_candidates ... ok
+test external_daemon_only_exposes_authenticated_queue_broker_and_never_spawns ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.48s
+

@@ -1,0 +1,5 @@
+{"unit": "coord-relay.service", "launch": ["User=coord-relay", "WorkingDirectory=/opt/coord-relay", "ExecStart=/usr/bin/node /opt/coord-relay/server.mjs --config /etc/coord-relay/config.json"]}
+{"unit": "feathersjsapp.service", "launch": ["WorkingDirectory=/opt/app/feathers", "ExecStart=/usr/bin/node /opt/app/feathers/index.js"]}
+{"relay_config": {"agentHost": "100.116.134.114", "agentPort": 13012, "clientHost": "127.0.0.1", "clientPort": 13013, "journalFile": "/var/lib/coord-relay/requests.ndjson"}}
+{"oauth_counts": {"clients": 2, "accessTokens": 19, "refreshTokens": 19}, "client_digests": ["eeb595ffaeec3cc157243f766c320f4133f1d9a6af05ad21ee8fb373850122ba"]}
+{"facade_identity_exists": false, "facade_identity_sha256": null}

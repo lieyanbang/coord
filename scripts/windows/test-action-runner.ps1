@@ -117,9 +117,9 @@ try {
     $summary.phase = 'create-isolated-publish-task'
     $batch = Rpc 'batches/create' @{ name = 'G6 disposable low privilege runner'; config = @{ action_profile = 'emote' } }
     Rpc 'batches/add_tasks' @{ batch_id = $batch.id; tasks = @(@{ key = '00'; name = 'disposable test'; payload = @{ group_id = '00'; source_image_ids = @('1') } }) } | Out-Null
-    $task = (Rpc 'scheduler/claim' @{ batch_id = $batch.id; agent_id = 'A0'; lease_seconds = 30 }).task
-    $result = @{ schema_version = 1; group_id = '00'; agent_id = 'A0'; attempt_no = $task.attempt_no; source_image_ids = @('1'); characters = @(); uncertain = @(@{ image_id = '1'; visible_features = 'Visible disposable character evidence'; reference_candidates = @(); checked_paths = @('refs/arknights/icons/one.png'); check_conclusion = 'Checked disposable reference without match'; reason = 'Insufficient visual identity information'; review_priority = 'high' }); general_notes = '' }
-    Rpc 'scheduler/submit' @{ id = $task.id; agent_id = 'A0'; lease_token = $task.lease_token; result = $result } | Out-Null
+    $task = (Rpc 'scheduler/claim' @{ batch_id = $batch.id; agent_id = 'emote-0000'; lease_seconds = 30 }).task
+    $result = @{ schema_version = 1; group_id = '00'; agent_id = 'emote-0000'; attempt_no = $task.attempt_no; source_image_ids = @('1'); characters = @(); uncertain = @(@{ image_id = '1'; visible_features = 'Visible disposable character evidence'; reference_candidates = @(); checked_paths = @('refs/arknights/icons/one.png'); check_conclusion = 'Checked disposable reference without match'; reason = 'Insufficient visual identity information'; review_priority = 'high' }); general_notes = '' }
+    Rpc 'scheduler/submit' @{ id = $task.id; agent_id = 'emote-0000'; lease_token = $task.lease_token; result = $result } | Out-Null
     Run-AsRunner 'publish-task' '--once'
     Run-AsRunner 'publish-index' '--once'
     $actions = Rpc 'actions/status' @{ batch_id = $batch.id }

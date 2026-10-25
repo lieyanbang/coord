@@ -1,0 +1,9 @@
+error=InvalidDataException: Services rows do not match the expected seven managed service names
+{"quick_check":"ok","quick_check_reason":"","user_table_count":4,"row_counts_match":true,"size_bytes":69632,"sha256":"9ecbde7f4b209674e8355e557e6c4921f8697b378444408018feb1615579ef54"}
+
+[32;1m  Length[0m
+[32;1m  ------[0m
+75918514
+       1
+       1
+

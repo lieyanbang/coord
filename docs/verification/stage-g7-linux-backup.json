@@ -1,0 +1,16 @@
+{
+  "state": "PASS",
+  "observed_at": "2026-10-25T05:07:27.911165+00:00",
+  "backup_root": "/var/backups/coord-g7-20261025T050727Z-01d4e8f7",
+  "archive_sha256": "6fa0c6af1782f4317ddf77c392a74835d2e3b43a6a8fbe65dbf22cb7274f9bcb",
+  "archive_bytes": 52752,
+  "required_members_verified": true,
+  "file_hashes": {
+    "/opt/app/feathers/realtimetext/lib/coord-mcp/index.cjs": "e2a4c125f6742f915662707ff123f3eb0a3e3ec6b64ae2818baf1c3ea7cd5db3",
+    "/opt/app/feathers/realtimetext/lib/coord-mcp/oauth.cjs": "0dcc483bd3d6afd5f4625885aed70f5cdf1b30f6a44ced739549d382ce049c53",
+    "/etc/coord-relay/config.json": "7ef19bd3024c8cc0d12efa867da8dfffffff6eed83b8ea0651f9a074af72ae24",
+    "/etc/systemd/system/coord-relay.service": "f7a715b613c7516b93683d18fcf4e3dce211f9517e111b33ace730f4d4a06971"
+  },
+  "new_facade_identity_preexisted": false,
+  "mode": "read-only sources; root-only archive; secrets never emitted"
+}

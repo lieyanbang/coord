@@ -1,0 +1,96 @@
+{
+    "pending_urgent":  0,
+    "listener":  [
+                     {
+                         "LocalAddress":  "127.0.0.1",
+                         "LocalPort":  7777,
+                         "OwningProcess":  5368
+                     }
+                 ],
+    "installed_hash":  "b58d3620b1b6de8035bfcb97e99f2e4fe654f48b1cb5719ef9fca013f5652e0d",
+    "coord_top_level":  [
+                            {
+                                "Name":  "backup",
+                                "Mode":  "d-----"
+                            },
+                            {
+                                "Name":  "bin",
+                                "Mode":  "d-----"
+                            },
+                            {
+                                "Name":  "data",
+                                "Mode":  "d-----"
+                            },
+                            {
+                                "Name":  "health",
+                                "Mode":  "d-----"
+                            },
+                            {
+                                "Name":  "logs",
+                                "Mode":  "d-----"
+                            }
+                        ],
+    "observed_at":  "2026-10-25T04:41:36.8645946Z",
+    "monitor":  [
+                    {
+                        "TaskName":  "coord-health-monitor",
+                        "State":  3,
+                        "principal":  "SYSTEM",
+                        "actions":  {
+                                        "Execute":  "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+                                        "Arguments":  "-NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"C:\\ProgramData\\coord\\health\\coord-health-monitor.ps1\""
+                                    }
+                    }
+                ],
+    "pending_high":  0,
+    "administrator":  true,
+    "services":  [
+                     {
+                         "Name":  "coord",
+                         "State":  "Running",
+                         "StartName":  "NT AUTHORITY\\LocalService",
+                         "ProcessId":  5072
+                     },
+                     {
+                         "Name":  "Servy",
+                         "State":  "Running",
+                         "StartName":  "LocalSystem",
+                         "ProcessId":  3224
+                     },
+                     {
+                         "Name":  "CoordRelayAgent",
+                         "State":  "Running",
+                         "StartName":  "NT AUTHORITY\\LocalService",
+                         "ProcessId":  3084
+                     }
+                 ]
+}
+Servy.CLI 10.2.0+bc0f0c7b67862028549e8d99c0b1d16c2b58d228
+Copyright © 2026 Akram El Assas. All rights reserved.
+
+  install      Install a Windows service.
+
+  uninstall    Uninstall a Windows service.
+
+  start        Start a Windows service.
+
+  stop         Stop a Windows service.
+
+  status       Get the current status of a Windows service. Possible results:
+               NotInstalled, Stopped, StartPending, StopPending, Running,
+               ContinuePending, PausePending, Paused, Unknown.
+
+  restart      Restart a Windows service.
+
+  export       Export a Servy Windows service configuration to a configuration
+               file.
+
+  import       Import a Windows service configuration into the Servy database
+               and optionally install the service.
+
+  show         Show a Servy Windows service configuration in a human-readable
+               form, or list all services when no name is given.
+
+  help         Display more information on a specific command.
+
+  version      Display version information.

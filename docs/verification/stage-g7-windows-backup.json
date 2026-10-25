@@ -1,0 +1,29 @@
+{
+  "state": "PASS",
+  "observed_at": "2026-10-25T05:07:34.5868615Z",
+  "backup_root": "C:\\ProgramData\\coord\\backup\\g7-20261025T050716Z-eea8ecd6",
+  "access": "live sources read-only; SQLite Online Backup API includes committed WAL",
+  "coord_snapshot": {
+    "row_counts_match": true,
+    "quick_check": "ok",
+    "sha256": "9ecbde7f4b209674e8355e557e6c4921f8697b378444408018feb1615579ef54"
+  },
+  "servy_snapshot": {
+    "result": "PASS",
+    "sha256": "2e407ea3cee96b490a7ed281b8d8543121f1780bac8690e17656eaefd57127c7"
+  },
+  "installed_binary_sha256": "b58d3620b1b6de8035bfcb97e99f2e4fe654f48b1cb5719ef9fca013f5652e0d",
+  "monitor_task_saved": true,
+  "service_exports": [
+    "coord",
+    "CoordRelayAgent"
+  ],
+  "relay_files": [
+    "agent-config.example.json",
+    "agent.mjs",
+    "agent.secret",
+    "config.json",
+    "protocol.mjs"
+  ],
+  "secrets": "configuration and secrets remain only inside administrator-only remote backup"
+}

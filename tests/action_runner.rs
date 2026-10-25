@@ -65,6 +65,9 @@ impl Fixture {
         }
     }
     fn add_completed(&self, group: &str) -> (Uuid, coord::core::types::Task) {
+        self.add_completed_for(group, "A0")
+    }
+    fn add_completed_for(&self, group: &str, agent: &str) -> (Uuid, coord::core::types::Task) {
         let batch = self
             .store
             .create_batch(
@@ -89,16 +92,18 @@ impl Fixture {
             .unwrap();
         let task = self
             .store
-            .claim_next("A0", Some(batch), Some(30))
+            .claim_next(agent, Some(batch), Some(30))
             .unwrap()
             .unwrap();
+        let mut accepted = result(group);
+        accepted["agent_id"] = agent.into();
         assert!(matches!(
             self.store
                 .complete_task(
                     task.id,
-                    "A0",
+                    agent,
                     task.lease_token.as_deref().unwrap(),
-                    result(group),
+                    accepted,
                     None
                 )
                 .unwrap(),
@@ -162,6 +167,29 @@ fn native_publisher_and_index_are_receipt_checked_atomic_and_idempotent() {
             .len(),
         2
     );
+}
+
+#[test]
+fn logical_worker_publication_keeps_exact_receipt_owner() {
+    let fixture = Fixture::new();
+    fixture.add_completed_for("00", "emote-ABCD");
+    let job = fixture.job();
+    let outcome = fixture.registry.execute(&job);
+    assert_eq!(outcome.state, ActionState::Succeeded);
+    assert!(fixture.store.finish_action(&job, &outcome).unwrap());
+    let published: Value =
+        serde_json::from_slice(&fs::read(fixture.root.join("business/results/00.json")).unwrap())
+            .unwrap();
+    assert_eq!(published["agent_id"], "emote-ABCD");
+    let receipt: Value = serde_json::from_slice(
+        &fs::read(fixture.root.join("business/results/.receipts/00.json")).unwrap(),
+    )
+    .unwrap();
+    assert_eq!(receipt["agent_id"], "emote-ABCD");
+    let index = fixture.job();
+    let outcome = fixture.registry.execute(&index);
+    assert_eq!(outcome.state, ActionState::Succeeded);
+    assert!(fixture.store.finish_action(&index, &outcome).unwrap());
 }
 
 #[test]
