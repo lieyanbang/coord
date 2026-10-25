@@ -43,12 +43,12 @@ jobs:
         run: pwsh -NoProfile -File scripts/windows/test-coord-health-monitor.ps1 -CoordExe target/release/coord.exe
       - name: Dedicated low-privilege Action Runner rehearsal
         run: pwsh -NoProfile -File scripts/windows/test-action-runner.ps1 -BinaryDirectory target/release -EvidenceDirectory docs/verification/stage-g6-low-privilege
+      - name: Coord MCP test dependencies
+        run: npm ci --prefix relay/coord-mcp --ignore-scripts --no-audit --no-fund
       - name: relay protocol and lease-fencing tests
         env:
           COORD_TEST_BIN: target/release/coord.exe
         run: node --test relay/relay.test.mjs relay/live-coord.test.mjs relay/logical-workers.test.mjs
-      - name: Coord MCP test dependencies
-        run: npm ci --prefix relay/coord-mcp --ignore-scripts --no-audit --no-fund
       - name: Coord MCP OAuth and HTTP tests
         run: npm test --prefix relay/coord-mcp
       - name: Phase G request and result utility tests

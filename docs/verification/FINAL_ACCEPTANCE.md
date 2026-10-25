@@ -201,3 +201,31 @@ classification or unattended execution is claimed. Four local stage checks and
 eight Python tests pass. No binary/implementation, Access or Git history change.
 See [INITIAL_EMOTE_BATCH.md](INITIAL_EMOTE_BATCH.md) for exact evidence and
 safe rollback using an expired binding tombstone instead of removing protection.
+
+## Phase R implementation (2026-10-25)
+
+Phase R is a separate local implementation line from the historical G7/Formal
+Batch evidence above. R0–R3 local isolated implementation and reliability gates
+passed in commits `76cdcbc`, `16f40ba`, `b70a557`, and `004b93a`; details and
+limits are in [PHASE_R0_ARCHITECTURE.md](PHASE_R0_ARCHITECTURE.md),
+[PHASE_R1.md](PHASE_R1.md), [PHASE_R2.md](PHASE_R2.md), and
+[PHASE_R3.md](PHASE_R3.md). The implementation branch
+`codex/phase-r-execution-2026-10-25` was pushed only to the verified Fork
+`lieyanbang/coord`; no push was made to `origin`.
+
+The Windows Actions run for implementation commit
+`004b93a79cacac95bf04601c34c64a2a8558cb95` is
+[40194822262](https://github.com/lieyanbang/coord/actions/runs/40194822262).
+It failed when Relay tests loaded before `npm ci`, leaving Express unavailable
+on the clean runner. Rust gates, Release build, health monitor and low-privilege
+Runner rehearsal passed; later MCP/Python tests and the matching executable
+artifact were skipped. The workflow now installs Coord MCP dependencies before
+Relay tests; a fresh Fork run is pending. See [PHASE_R4.md](PHASE_R4.md). The
+R3 local release build is not used as a replacement for the CI artifact.
+
+Phase R overall remains **PARTIAL**. No real ChatGPT OAuth refresh or
+conversation/context-loss run was attempted because Phase R is not deployed;
+production routes, OAuth grants, formal Batch state, services, Canary, and
+remote Runner were not touched. That boundary is **NOT_RUN**, not inferred as
+PASS from the synthetic local MCP lifecycle. `TASK.md` remains byte-for-byte
+unchanged.
