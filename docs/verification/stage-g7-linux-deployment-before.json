@@ -1,0 +1,17 @@
+{
+  "state": "FAIL",
+  "started_at": "2026-10-25T05:44:56.252039+00:00",
+  "source_commit": "229d423b003a88bf2d49cca96502dfb803a482f1",
+  "backup_root": "/var/backups/coord-g7-20261025T050727Z-01d4e8f7",
+  "oauth_module_unchanged": true,
+  "access_policy_changed": false,
+  "files": {
+    "identity.cjs": "34606249670bcf246a203d9a3367c989301af9e42f04d0f3df7b5fd026ca5338",
+    "index.cjs": "f99bc4e670a01ab3dc116ae3b70ad80426cd7c84bde62ed48cba896ff529df2e",
+    "server.mjs": "b0311fa3e087eb2e6c0039cb7a9e12f206c892270ce21856141892aeb518f869",
+    "protocol.mjs": "24365da23d8a5d46e65ff0a4412786a32745757e1c7e736c121b49b36b4a2525"
+  },
+  "failure": "Sidecar not READY",
+  "rollback": "affected modules/config restored; live OAuth state preserved",
+  "finished_at": "2026-10-25T05:45:30.326059+00:00"
+}

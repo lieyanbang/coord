@@ -1,0 +1,2 @@
+[2m2026-10-25T05:15:48.491436Z[0m [32m INFO[0m [2mcoord::server[0m[2m:[0m opening state [3mdb_path[0m[2m=[0m"C:\\coord-g6-618e3ba6a32f41a192ab199d7c97cbbc\\protected\\state.db" [3mvault[0m[2m=[0mNone [3mactions_config[0m[2m=[0mSome("C:\\coord-g6-618e3ba6a32f41a192ab199d7c97cbbc\\config\\registry.json")
+[2m2026-10-25T05:15:48.521321Z[0m [32m INFO[0m [2mcoord::server[0m[2m:[0m coord listening [3maddr[0m[2m=[0m127.0.0.1:63546

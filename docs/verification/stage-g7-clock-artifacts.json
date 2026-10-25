@@ -1,0 +1,49 @@
+{
+  "state": "PASS",
+  "commit": "f0aa7daed53a36f8c0c2418d935858bbf9f9fd9e",
+  "run_id": 40167256908,
+  "files": [
+    {
+      "name": "coord-action-runner.exe",
+      "sha256": "72c2e72892405b16042f1e7a1066eb35493695d54de1183447ab771192fe14f8",
+      "bytes": 3666944,
+      "same_as_initial_deployed": false
+    },
+    {
+      "name": "coord-emote-action.exe",
+      "sha256": "cac5496ed1dea50f837f28403feb62515de1ba1459ea2557abe6097ec07bec55",
+      "bytes": 1082880,
+      "same_as_initial_deployed": false
+    },
+    {
+      "name": "coord.exe",
+      "sha256": "b23e43f30a076d3d3dc75e90a07a7a3f9de35ad33351bb2e9bf8938f9f220ed4",
+      "bytes": 11057152,
+      "same_as_initial_deployed": false
+    }
+  ],
+  "zip_sha256": {
+    "binaries": "22041c53f93c29da1f69eca839eeaa9e2dbde4cdc9939e94dbbf0fd0372a926f",
+    "evidence": "e8e9253e87169d4dea35a42333fefe814112ffe8d217397850cc270087b88343"
+  },
+  "identity_sha256": "13b19cf9d638a45152e847406b6abddf48758622ffc20ade1eb9c7f51dc73efa",
+  "checks": [
+    {
+      "test": "action_runner",
+      "exit": 0
+    },
+    {
+      "test": "agent_actions",
+      "exit": 0
+    },
+    {
+      "test": "agent_progress",
+      "exit": 0
+    },
+    {
+      "test": "relay_all",
+      "exit": 0
+    }
+  ],
+  "reproducibility": "NOT_CLAIMED; binaries differ from previous CI and local build"
+}

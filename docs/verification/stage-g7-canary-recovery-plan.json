@@ -1,0 +1,19 @@
+{
+  "state": "PASS",
+  "progress": {
+    "active": 8,
+    "id": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e",
+    "states": {
+      "cancelled": 0,
+      "claimed": 0,
+      "completed": 2,
+      "failed": 0,
+      "pending": 8,
+      "submitted": 0
+    },
+    "status": "active",
+    "terminal": 2,
+    "total": 10
+  },
+  "purpose": "Two additional synthetic fixtures for natural expiry/failure after reconciling the interrupted canary"
+}

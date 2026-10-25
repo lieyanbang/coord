@@ -1,0 +1,32 @@
+{"fields":["Name","DisplayName","Description","ExecutablePath","StartupDirectory","Parameters","StartupType","Priority","StartTimeout","StopTimeout","EnableConsoleUI","StdoutPath","StderrPath","EnableSizeRotation","RotationSize","EnableDateRotation","DateRotationType","MaxRotations","UseLocalTimeForRotation","EnableDebugLogs","EnableHealthMonitoring","HeartbeatInterval","MaxFailedChecks","RecoveryAction","RecoveryOnCleanExit","MaxRestartAttempts","HeartbeatUrlTimeoutSeconds","EnableHeartbeatUrlFlags","PreLaunchTimeoutSeconds","PreLaunchRetryAttempts","PreLaunchIgnoreFailure","PreStopTimeoutSeconds","PreStopLogAsError"],"service":"coord"}
+{"fields":["Name","DisplayName","Description","ExecutablePath","StartupDirectory","Parameters","StartupType","Priority","StartTimeout","StopTimeout","EnableConsoleUI","StdoutPath","StderrPath","EnableSizeRotation","RotationSize","EnableDateRotation","DateRotationType","MaxRotations","UseLocalTimeForRotation","EnableDebugLogs","EnableHealthMonitoring","HeartbeatInterval","MaxFailedChecks","RecoveryAction","RecoveryOnCleanExit","MaxRestartAttempts","HeartbeatUrlTimeoutSeconds","EnableHeartbeatUrlFlags","PreLaunchTimeoutSeconds","PreLaunchRetryAttempts","PreLaunchIgnoreFailure","PreStopTimeoutSeconds","PreStopLogAsError"],"service":"CoordRelayAgent"}
+{
+  "names": [
+    "ArasakaDDNS",
+    "ArasakaFFmpegWatchdog",
+    "ArasakaFFmpegWorker",
+    "CodexProxy",
+    "coord",
+    "CoordRelayAgent",
+    "MediaSTT",
+    "OCI-A1-Grabber"
+  ],
+  "service_count": 8,
+  "free_bytes": 48100241408,
+  "checker_sha256": "4f5a1ad4f344f16a049315829c41a59cf309b29d5768976cccce25ffb61ba737"
+}
+{
+  "node_binary": null,
+  "relay_config_fields": [
+    "serverHost",
+    "serverPort",
+    "agentId",
+    "coordUrl",
+    "secretFile",
+    "heartbeatMs",
+    "reconnectMinMs",
+    "reconnectMaxMs",
+    "coordTimeoutMs",
+    "maxInflight"
+  ]
+}

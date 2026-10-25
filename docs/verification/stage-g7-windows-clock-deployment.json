@@ -1,0 +1,17 @@
+{
+  "state": "PASS",
+  "restore_root": "C:\\ProgramData\\coord\\g7\\private\\clock-before-20261025T060304Z",
+  "identity_sha256": "13b19cf9d638a45152e847406b6abddf48758622ffc20ade1eb9c7f51dc73efa",
+  "commit": "f0aa7daed53a36f8c0c2418d935858bbf9f9fd9e",
+  "binary_changes": [
+    "coord-action-runner.exe",
+    "coord-emote-action.exe",
+    "coord.exe"
+  ],
+  "manifest_hash": "2c732c2f093f79e1f1f4a44ca96a3d6b6e0e637c2d8150fc2d8d34b40bf415dd",
+  "installed": {
+    "coord-action-runner.exe": "72c2e72892405b16042f1e7a1066eb35493695d54de1183447ab771192fe14f8",
+    "coord.exe": "b23e43f30a076d3d3dc75e90a07a7a3f9de35ad33351bb2e9bf8938f9f220ed4",
+    "coord-emote-action.exe": "cac5496ed1dea50f837f28403feb62515de1ba1459ea2557abe6097ec07bec55"
+  }
+}

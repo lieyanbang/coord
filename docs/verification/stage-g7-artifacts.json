@@ -1,0 +1,35 @@
+{
+  "production_gate": "NOT_RUN",
+  "commit": "229d423b003a88bf2d49cca96502dfb803a482f1",
+  "focused_exit": 0,
+  "state": "PASS",
+  "binary_artifact_id": 12587304556,
+  "relay_exit": 0,
+  "run_id": 40164606057,
+  "reproducibility": "NOT_CLAIMED",
+  "evidence_artifact_id": 12587214961,
+  "files": [
+    {
+      "sha256": "638acc7b22eeaaa2079340067fb3f64cb7f83c30e9e28896071addcdab5c8afd",
+      "local_release_sha256": "f3362675e750d0db11d4db7d011b611932ade13a5c614a52411f3168354e1dea",
+      "bytes": 3666944,
+      "name": "coord-action-runner.exe"
+    },
+    {
+      "sha256": "a997070cb5fe50434f125597fc237750da7e2c4e821e928de3561d3fe254182c",
+      "local_release_sha256": "5a8987d696d96e90feea86e150172fe6c5c9a5e42cab20e3388ba25824611251",
+      "bytes": 1082880,
+      "name": "coord-emote-action.exe"
+    },
+    {
+      "sha256": "24a9b16281e47df9510510560dd50c642b0b46fdf7640c828fded6d48d4ef597",
+      "local_release_sha256": "55043205c666b6db2afb23d60c96a591dafcbff6c6360f439f74c1b1e2cb981f",
+      "bytes": 11057152,
+      "name": "coord.exe"
+    }
+  ],
+  "zip_sha256": {
+    "evidence": "9d8db563815e2d6c695d6903639a57d2da315c3534e7d0f1356f98803587281d",
+    "binary": "e620087fa4f5b9fdb5f69ef3dd830024b7ae157948f3244fbd7833c9f432e6d9"
+  }
+}

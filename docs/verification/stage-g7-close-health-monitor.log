@@ -1,0 +1,4 @@
+health monitor failure recovery threshold: PASS (3 failures -> targeted start)
+health monitor key configuration rejection: PASS (missing/malformed/oversized/relative/unprotected; no probe or recovery)
+health monitor authenticated CLI probe: PASS (private key file overrides incorrect inherited key; READY)
+health monitor key environment restoration: PASS (finally restored before fake Servy recovery)

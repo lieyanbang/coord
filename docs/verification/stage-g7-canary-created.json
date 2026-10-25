@@ -1,0 +1,37 @@
+{
+  "formal_tasks_created": 0,
+  "classification_agents_started": 0,
+  "state": "PASS",
+  "batches": {
+    "operator": {
+      "active": 8,
+      "id": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e",
+      "states": {
+        "cancelled": 0,
+        "claimed": 0,
+        "completed": 0,
+        "failed": 0,
+        "pending": 8,
+        "submitted": 0
+      },
+      "status": "active",
+      "terminal": 0,
+      "total": 8
+    },
+    "browser": {
+      "active": 4,
+      "id": "d2313c78-22da-4cb8-bcd7-ece9897e0db1",
+      "states": {
+        "cancelled": 0,
+        "claimed": 0,
+        "completed": 0,
+        "failed": 0,
+        "pending": 4,
+        "submitted": 0
+      },
+      "status": "active",
+      "terminal": 0,
+      "total": 4
+    }
+  }
+}

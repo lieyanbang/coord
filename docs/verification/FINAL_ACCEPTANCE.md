@@ -127,3 +127,49 @@ the local build, so reproducibility is not claimed. The final local eight-check
 mechanism gates; the real ChatGPT, real Arasaka account/ACL, F3-R and deployment
 boundaries above remain unchanged. The first two cloud failures are retained
 in G6-D rather than relabelled PASS.
+
+## Phase G7 extension (2026-10-25)
+
+**Controlled deployment and automated/site acceptance PASS; real two-ChatGPT
+lifecycle NEEDS_USER_ACTION, overall G7 PARTIAL.** The user supersedes G6's
+protected-conversation identity gate with trusted logical worker declarations
+0000–0005 under the existing authenticated OAuth owner. The same owner can
+impersonate these labels, and ChatGPT cannot autonomously wake; neither is
+claimed as an implemented security/autonomy feature.
+
+Implementation `f0aa7daed53a36f8c0c2418d935858bbf9f9fd9e`, Fork Windows run
+[40167256908](https://github.com/lieyanbang/coord/actions/runs/40167256908), all
+steps success. Three downloaded executables and both ZIP hashes were verified;
+28 focused executable integrations and 25 Relay tests pass. The corrected
+signed protocol tolerates at most five seconds future issuance skew between
+hosts while preserving hard expiry and 60-second signed lifetime. No reproducible
+build claim: executable hashes differ from the initial CI and local builds.
+
+Actual Arasaka Runner standard-user SID, different from the daemon, NTFS/RPC
+denials, SCM privilege restriction, SYSTEM authenticated READY, native publish/
+index, Runner crash/Job cleanup/uncertain without replay and copied-DB old-binary
+readback pass. Both remote restore points passed before replacement. Deployment
+uses the verified CI executables, protected management/broker/signing keys and
+fixed publisher profiles; Access policy and production oauth.cjs are unchanged.
+
+Production operator synthetic Canary has 10/10 completed tasks and 11/11 actions
+succeeded. Six unique claims, progress/renewal, bounded expiry/failure recovery,
+stale/foreign tokens, unsigned/tampered requests, request replay, final index and
+receipt outcomes were checked. Original eight tasks retain all 27 old fields;
+unrelated services keep their identity/start mode/PIDs. 13011/13012, public
+OAuth metadata/challenges and the actual installed legacy OAuth tool pass.
+The final downloaded release explicitly passes 100/1,000/10,000-task capacity:
+10,000 takes 98.90s, claim P95 42.875ms, zero busy log lines, exact unique
+completion/receipt/terminal counts. This is local measurement, not production
+performance or long-duration soak evidence.
+
+The browser runtime cannot initialize (kernel-assets os error 3). Four separate
+synthetic browser tasks remain pending/unclaimed, and no actual two-conversation
+G7 visual/renew/submit/next-claim cycle is asserted. Handoff and binding expiry
+are in `../phase-g/G7-CHATGPT-CANARY.md`; operational recovery is in
+`../phase-g/G7-DEPLOYMENT.md`. F3-R's existing non-owner/protocol evidence gaps
+remain independently PARTIAL. No formal 121-task batch, classification agents,
+old-task closure, Access-policy change, release/tag, history rewrite or machine
+restart occurred. An accidental push to origin was denied; the verified Fork
+working branch was then pushed normally. Full evidence and preserved failures
+are in `PHASE_G7.md`.

@@ -1,0 +1,48 @@
+{
+  "state": "PASS",
+  "oauth_module_sha256": "0dcc483bd3d6afd5f4625885aed70f5cdf1b30f6a44ced739549d382ce049c53",
+  "oauth_counts": {
+    "clients": 2,
+    "accessTokens": 21,
+    "refreshTokens": 21
+  },
+  "oauth_clients_baseline_equal": true,
+  "old_access_entries_still_present": 19,
+  "old_refresh_entries_still_present": 19,
+  "oauth_state_not_restored": true,
+  "openresty_files_unchanged": true,
+  "identity_module_hashes": {
+    "/opt/coord-relay/identity.cjs": "13b19cf9d638a45152e847406b6abddf48758622ffc20ade1eb9c7f51dc73efa",
+    "/opt/app/feathers/realtimetext/lib/identity.cjs": "13b19cf9d638a45152e847406b6abddf48758622ffc20ade1eb9c7f51dc73efa"
+  },
+  "key_mode": "0640",
+  "key_owner_uid": 0,
+  "bindings": [
+    {
+      "id": "g7-operator",
+      "batch_id": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e",
+      "expires_at": 1792993523904
+    },
+    {
+      "id": "g7-browser",
+      "batch_id": "d2313c78-22da-4cb8-bcd7-ece9897e0db1",
+      "expires_at": 1792993523904
+    }
+  ],
+  "sidecar": {
+    "state": "READY",
+    "agentConnected": true,
+    "lastHeartbeat": "2026-10-25T06:05:30.468Z",
+    "pending": 0
+  },
+  "service_restart_counts": {
+    "feathersjsapp.service": [
+      "MainPID=125672",
+      "NRestarts=0"
+    ],
+    "coord-relay.service": [
+      "MainPID=125664",
+      "NRestarts=0"
+    ]
+  }
+}

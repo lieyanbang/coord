@@ -1,0 +1,366 @@
+{
+  "production_replacement": "NOT_RUN",
+  "runner_service": "CoordActionRunnerG7",
+  "daemon_sid": "S-1-5-19",
+  "backup_root": "C:\\ProgramData\\coord\\backup\\g7-20261025T050716Z-eea8ecd6",
+  "commit": "229d423b003a88bf2d49cca96502dfb803a482f1",
+  "base": "C:\\ProgramData\\coord\\g7",
+  "probe_service": "CoordG7Probe",
+  "state": "ACCOUNT_CREATED",
+  "runner_sid": "S-1-5-21-3592388187-2353680085-815129118-1004"
+}
+
+Servy.CLI 10.2.0+bc0f0c7b67862028549e8d99c0b1d16c2b58d228
+Copyright © 2026 Akram El Assas. All rights reserved.
+
+ERROR(S):
+  Option 'registry "C:\ProgramData\coord\g7\config\registry-probe.json"
+  --check-identity' is unknown.
+
+  -n, --name                      Required. Unique service name to install.
+
+  --displayName                   The human-readable name shown in the Windows
+                                  Services console (services.msc). If left
+                                  empty, the service name will be used instead.
+
+  -d, --description               Description of the service.
+
+  -p, --path                      Required. Path to the executable process.
+                                  Supports environment variable expansion,
+                                  example: %JAVA_HOME%\bin\java.exe
+
+  --startupDir                    Startup directory for the process. Supports
+                                  environment variable expansion, example:
+                                  %PROGRAMDATA%\MyApp
+
+  --params                        Additional parameters for the process.
+                                  Supports environment variable expansion,
+                                  example: --params="--data %ProgramData%\MyApp
+                                  --bin %MY_VAR%\bin". SECURITY WARNING: Use the
+                                  SERVY_PROCESS_PARAMETERS environment variable
+                                  instead to avoid exposing sensitive parameters
+                                  in OS process listings.
+
+  --startupType                   Service startup type. Options: Automatic,
+                                  AutomaticDelayedStart, Manual, Disabled.
+                                  Defaults to Automatic.
+
+  --priority                      Process priority level. Options: Idle,
+                                  BelowNormal, Normal, AboveNormal, High,
+                                  RealTime. Defaults to Normal.
+
+  -a, --cpuAffinity               Logical CPUs the process may run on (e.g.,
+                                  '0-3,8' or '0xFF00').
+
+  --startTimeout                  Timeout in seconds to wait for the process to
+                                  start successfully before considering the
+                                  startup as failed. Must be between 1 and 86400
+                                  seconds. Defaults to 10 seconds.
+
+  --stopTimeout                   Timeout in seconds to wait for the process to
+                                  exit. Must be between 1 and 86400 seconds.
+                                  Defaults to 5 seconds.
+
+  --enableConsoleUI               Enable console user interface for the service.
+                                  When enabled, stdout/stderr redirection is
+                                  disabled.
+
+  --stdout                        Path to stdout log file.
+
+  --stderr                        Path to stderr log file.
+
+  --enableRotation                Deprecated. Enable size-based log rotation.
+                                  This option is kept only for backward
+                                  compatibility. Use --enableSizeRotation
+                                  instead.
+
+  --enableSizeRotation            Enable size-based log rotation.
+
+  --rotationSize                  Log rotation size in Megabytes (MB). Must be
+                                  between 1 and 10240 MB.
+
+  --enableDateRotation            Enable date-based log rotation based on the
+                                  date interval specified by --dateRotationType.
+                                  When both size-based and date-based rotation
+                                  are enabled, size rotation takes precedence.
+
+  --dateRotationType              Date rotation type. Options: Daily, Weekly,
+                                  Monthly, None (None disables date-based
+                                  rotation; use when only size rotation is
+                                  desired).
+
+  --maxRotations                  Maximum rotated log files to keep. Must be
+                                  between 0 and 10000. Set to 0 or leave empty
+                                  for unlimited.
+
+  --useLocalTimeForRotation       Use local server time for log rotation instead
+                                  of UTC. Default is false.
+
+  --debug                         Whether debug logs are enabled. When enabled,
+                                  environment variables and process parameters
+                                  are recorded in the Servy.Service.log file.
+                                  Not recommended for production environments,
+                                  as these logs may contain sensitive
+                                  information.
+
+  --enableHealth                  Enable health monitoring.
+
+  --heartbeatInterval             Heartbeat interval in seconds. Must be between
+                                  5 and 86400 seconds. Only used when health
+                                  monitoring is enabled.
+
+  --maxFailedChecks               Maximum allowed failed health checks. Must be
+                                  between 1 and 100000. Only used when health
+                                  monitoring is enabled.
+
+  --recoveryAction                Recovery action on failure. Options: None,
+                                  RestartService, RestartProcess,
+                                  RestartComputer. RestartService and
+                                  RestartComputer actions are not available if
+                                  the service runs under NT
+                                  AUTHORITY\LocalService, NT
+                                  AUTHORITY\NetworkService, an IIS AppPool
+                                  identity (IIS APPPOOL\...), or a user account
+                                  without the required privileges. Only used
+                                  when health monitoring is enabled.
+
+  --recoveryOnCleanExit           Enable running recovery action even if the
+                                  process exits successfully. Default is false.
+                                  Only used when health monitoring is enabled.
+
+  --maxRestartAttempts            Maximum restart attempts on failure. Must be
+                                  between 0 and 100000. Set to 0 for unlimited
+                                  restart attempts. Only used when health
+                                  monitoring is enabled.
+
+  --heartbeatUrl                  Absolute URL for out-of-band diagnostic
+                                  heartbeat pings. Only used when health
+                                  monitoring is enabled.
+
+  --heartbeatUrlTimeoutSeconds    Timeout in seconds for external heartbeat URL
+                                  requests. Must be between 2 and 30 seconds.
+                                  Defaults to 10 seconds. Only used when health
+                                  monitoring is enabled.
+
+  --enableHeartbeatUrlFlags       Append /start and /fail to the heartbeat URL
+                                  on service start and failure. Only used when
+                                  health monitoring is enabled.
+
+  --failureProgramPath            The failure program path. Configure a script
+                                  or executable to run when the wrapped process
+                                  exits with a non-zero exit code (recovery
+                                  disabled) or after all recovery action retries
+                                  have failed (recovery enabled). It is not run
+                                  when the process fails to start; that path
+                                  stops the service. Supports environment
+                                  variable expansion, example:
+                                  %JAVA_HOME%\bin\java.exe
+
+  --failureProgramStartupDir      Specifies the directory in which the failure
+                                  program will start. If not set, defaults to
+                                  the service working directory. Supports
+                                  environment variable expansion, example:
+                                  %PROGRAMDATA%\MyApp
+
+  --failureProgramParams          Additional parameters for the failure program.
+                                  SECURITY WARNING: Use the
+                                  SERVY_FAILURE_PROGRAM_PARAMETERS environment
+                                  variable instead to avoid exposing sensitive
+                                  parameters in OS process listings.
+
+  --envVars                       Environment variables for the process. Enter
+                                  variables in the format varName=varValue
+                                  separated by semicolons (;). Use \= to escape
+                                  '=', \" to escape '"', \; to escape ';', \\ to
+                                  escape '\', and %% to escape '%' (collapses to
+                                  a single '%'). Supports environment variable
+                                  expansion, example: VAR1=%ProgramData%\MyApp;
+                                  VAR2=%VAR1%\bin. SECURITY WARNING: Use the
+                                  SERVY_ENVIRONMENT_VARIABLES environment
+                                  variable instead to avoid exposing sensitive
+                                  parameters in OS process listings.
+
+  --deps                          Specify one or more Windows service names (not
+                                  display names) that this service depends on
+                                  separated with semicolons (;). Each service
+                                  name must contain only letters, digits,
+                                  hyphens, underscores, periods, spaces, and
+                                  dollar signs ($), optionally preceded by '+'
+                                  to reference a load-order group, and must not
+                                  exceed 256 characters. Windows starts stopped
+                                  dependencies automatically when this service
+                                  starts; if a dependency is disabled or fails
+                                  to start, this service will not start.
+
+  --user                          The service account username (e.g.,
+                                  .\username, DOMAIN\username, DOMAIN\gMSA$, or
+                                  a built-in identity such as NT
+                                  AUTHORITY\LocalService, NT
+                                  AUTHORITY\NetworkService, NT SERVICE\MyService
+                                  or IIS APPPOOL\MyPool). Leave the --password
+                                  option or SERVY_PASSWORD environment variable
+                                  empty for built-in, virtual and gMSA accounts.
+                                  If this option is not set, the service runs
+                                  under Local System.
+
+  --password                      The service account password. SECURITY
+                                  WARNING: Use the SERVY_PASSWORD environment
+                                  variable instead to avoid exposing credentials
+                                  in OS process listings.
+
+  --preLaunchPath                 The pre-launch executable path. Configure an
+                                  optional script or executable to run before
+                                  the main service starts. This is useful for
+                                  preparing configurations, fetching secrets, or
+                                  other setup tasks. If the pre-launch script
+                                  fails, the service will not start unless you
+                                  enable --preLaunchIgnoreFailure. Supports
+                                  environment variable expansion, example:
+                                  %JAVA_HOME%\bin\java.exe
+
+  --preLaunchStartupDir           Specifies the directory in which the
+                                  pre-launch executable will start. If not set,
+                                  defaults to the service working directory.
+                                  Supports environment variable expansion,
+                                  example: %PROGRAMDATA%\MyApp
+
+  --preLaunchParams               Additional parameters for the pre-launch
+                                  executable. SECURITY WARNING: Use the
+                                  SERVY_PRE_LAUNCH_PARAMETERS environment
+                                  variable instead to avoid exposing sensitive
+                                  parameters in OS process listings.
+
+  --preLaunchEnv                  Environment variables for the pre-launch
+                                  executable. Enter variables in the format
+                                  varName=varValue separated by semicolons (;).
+                                  Use \= to escape '=', \" to escape '"', \; to
+                                  escape ';', \\ to escape '\', and %% to escape
+                                  '%' (collapses to a single '%'). Supports
+                                  environment variable expansion, example:
+                                  VAR1=%ProgramData%\MyApp; VAR2=%VAR1%\bin.
+                                  SECURITY WARNING: Use the
+                                  SERVY_PRE_LAUNCH_ENVIRONMENT_VARIABLES
+                                  environment variable instead to avoid exposing
+                                  sensitive parameters in OS process listings.
+
+  --preLaunchStdout               Path to stdout log file of the pre-launch
+                                  executable.
+
+  --preLaunchStderr               Path to stderr log file of the pre-launch
+                                  executable.
+
+  --preLaunchTimeout              Timeout for the pre-launch executable. Must be
+                                  between 0 and 86400 seconds. Set the timeout
+                                  to 0 to run the pre-launch hook in
+                                  fire-and-forget mode. When set to 0, the hook
+                                  is started and the service is launched
+                                  immediately without waiting for completion.
+                                  Use this only for tasks that do not affect the
+                                  service's ability to start or run correctly.
+                                  Stdout/Stderr redirection and retries are not
+                                  available in fire-and-forget mode.
+
+  --preLaunchRetryAttempts        Number of retry attempts for the pre-launch
+                                  executable if it fails. Must be between 0 and
+                                  100000.
+
+  --preLaunchIgnoreFailure        Ignore failure and start service even if
+                                  pre-launch executable fails.
+
+  --postLaunchPath                The post-launch executable path. Configure an
+                                  optional script or executable to run after the
+                                  process starts successfully. Supports
+                                  environment variable expansion, example:
+                                  %JAVA_HOME%\bin\java.exe
+
+  --postLaunchStartupDir          Specifies the directory in which the
+                                  post-launch executable will start. If not set,
+                                  defaults to the service working directory.
+                                  Supports environment variable expansion,
+                                  example: %PROGRAMDATA%\MyApp
+
+  --postLaunchParams              Additional parameters for the post-launch
+                                  executable. SECURITY WARNING: Use the
+                                  SERVY_POST_LAUNCH_PARAMETERS environment
+                                  variable instead to avoid exposing sensitive
+                                  parameters in OS process listings.
+
+  --preStopPath                   The pre-stop executable path. Configure an
+                                  optional script or executable to run before
+                                  the main service stops. This can be used for
+                                  graceful shutdown tasks such as notifying
+                                  external systems or draining resources. The
+                                  pre-stop process runs synchronously and
+                                  extends the service stop timeout while it is
+                                  running. Set the timeout to 0 to run the
+                                  pre-stop process in fire-and-forget mode.
+                                  Supports environment variable expansion,
+                                  example: %JAVA_HOME%\bin\java.exe
+
+  --preStopStartupDir             Specifies the directory in which the pre-stop
+                                  executable will start. If not set, defaults to
+                                  the service working directory. Supports
+                                  environment variable expansion, example:
+                                  %PROGRAMDATA%\MyApp
+
+  --preStopParams                 Additional parameters for the pre-stop
+                                  executable. SECURITY WARNING: Use the
+                                  SERVY_PRE_STOP_PARAMETERS environment variable
+                                  instead to avoid exposing sensitive parameters
+                                  in OS process listings.
+
+  --preStopTimeout                Timeout for the pre-stop executable. Set the
+                                  timeout to 0 to run the pre-stop process in
+                                  fire-and-forget mode. Must be between 0 and
+                                  86400 seconds.
+
+  --preStopLogAsError             Log pre-stop failure as error.
+
+  --postStopPath                  The post-stop executable path. Configure an
+                                  optional script or executable to run after the
+                                  wrapped process and all of its child processes
+                                  have exited. The post-stop process is started
+                                  in fire-and-forget mode and does not block
+                                  service shutdown. Supports environment
+                                  variable expansion, example:
+                                  %JAVA_HOME%\bin\java.exe
+
+  --postStopStartupDir            Specifies the directory in which the post-stop
+                                  executable will start. If not set, defaults to
+                                  the service working directory. Supports
+                                  environment variable expansion, example:
+                                  %PROGRAMDATA%\MyApp
+
+  --postStopParams                Additional parameters for the post-stop
+                                  executable. SECURITY WARNING: Use the
+                                  SERVY_POST_STOP_PARAMETERS environment
+                                  variable instead to avoid exposing sensitive
+                                  parameters in OS process listings.
+
+  -q, --quiet                     Suppress spinner and run in non-interactive
+                                  mode.
+
+  --help                          Display this help screen.
+
+  --version                       Display version information.
+
+
+{
+  "Name": "CoordG7Probe",
+  "State": "Stopped",
+  "StartName": "NT AUTHORITY\\LocalService",
+  "ProcessId": 0
+}
+{
+  "Name": "coord_action_g7",
+  "Enabled": true,
+  "SID": {
+    "BinaryLength": 28,
+    "AccountDomainSid": {
+      "BinaryLength": 24,
+      "AccountDomainSid": "S-1-5-21-3592388187-2353680085-815129118",
+      "Value": "S-1-5-21-3592388187-2353680085-815129118"
+    },
+    "Value": "S-1-5-21-3592388187-2353680085-815129118-1004"
+  }
+}

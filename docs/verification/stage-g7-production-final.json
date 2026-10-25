@@ -1,0 +1,381 @@
+{
+  "current_runner_identity": {
+    "sid": "S-1-5-21-3592388187-2353680085-815129118-1004",
+    "privileged": false
+  },
+  "browser_progress": {
+    "active": 4,
+    "id": "d2313c78-22da-4cb8-bcd7-ece9897e0db1",
+    "states": {
+      "cancelled": 0,
+      "claimed": 0,
+      "completed": 0,
+      "failed": 0,
+      "pending": 4,
+      "submitted": 0
+    },
+    "status": "active",
+    "terminal": 0,
+    "total": 4
+  },
+  "actions": {
+    "actions": [
+      {
+        "action_kind": "on_task_completed",
+        "attempt_count": 1,
+        "available_at": null,
+        "event_id": "8c4a5d39-f7f2-45fa-bd55-1344c099ed70",
+        "exit_code": 0,
+        "id": "ffe9131b-0226-4866-bddd-35ebe3f5e912",
+        "last_error": null,
+        "max_attempts": 2,
+        "output_bytes": 0,
+        "profile_id": "g7-canary-v1",
+        "profile_version": 1,
+        "state": "succeeded",
+        "task_id": "1a336685-719b-4ad4-a8a0-152fda16d5af"
+      },
+      {
+        "action_kind": "on_task_completed",
+        "attempt_count": 1,
+        "available_at": null,
+        "event_id": "8b0065cd-667c-4031-a2f9-75faca6bb88d",
+        "exit_code": 0,
+        "id": "e1a182d9-f062-478d-8449-e96afb547682",
+        "last_error": null,
+        "max_attempts": 2,
+        "output_bytes": 0,
+        "profile_id": "g7-canary-v1",
+        "profile_version": 1,
+        "state": "succeeded",
+        "task_id": "2cbc5bbe-5531-4d17-a50f-20b7d1af11ac"
+      },
+      {
+        "action_kind": "on_task_completed",
+        "attempt_count": 1,
+        "available_at": null,
+        "event_id": "d7269175-7b15-49b9-b8cb-3b12be9c1cbd",
+        "exit_code": 0,
+        "id": "f9857b6f-ec10-4ff4-b4ef-26be5632c7e2",
+        "last_error": null,
+        "max_attempts": 2,
+        "output_bytes": 0,
+        "profile_id": "g7-canary-v1",
+        "profile_version": 1,
+        "state": "succeeded",
+        "task_id": "93d968b6-773d-4ae2-94d8-73105542a55c"
+      },
+      {
+        "action_kind": "on_task_completed",
+        "attempt_count": 1,
+        "available_at": null,
+        "event_id": "e32ef21b-637e-41a8-9999-c8fb08c2ff6a",
+        "exit_code": 0,
+        "id": "fb85790b-d77e-4414-80f1-487a5a54facf",
+        "last_error": null,
+        "max_attempts": 2,
+        "output_bytes": 0,
+        "profile_id": "g7-canary-v1",
+        "profile_version": 1,
+        "state": "succeeded",
+        "task_id": "9f6f173f-6207-4ede-8c15-c02c2e078713"
+      },
+      {
+        "action_kind": "on_task_completed",
+        "attempt_count": 1,
+        "available_at": null,
+        "event_id": "c50e30bb-a8dc-42a7-bc8a-ad7c12f29040",
+        "exit_code": 0,
+        "id": "98b9607a-7a80-4f1a-9598-8ba67878eba4",
+        "last_error": null,
+        "max_attempts": 2,
+        "output_bytes": 0,
+        "profile_id": "g7-canary-v1",
+        "profile_version": 1,
+        "state": "succeeded",
+        "task_id": "9fc55947-8905-4463-a713-826c34d3e3c9"
+      },
+      {
+        "action_kind": "on_task_completed",
+        "attempt_count": 1,
+        "available_at": null,
+        "event_id": "cb93ddd1-a145-45c1-a503-ce38754edcc8",
+        "exit_code": 0,
+        "id": "bf6634fd-f92a-4107-9802-8e3f3d173b7d",
+        "last_error": null,
+        "max_attempts": 2,
+        "output_bytes": 0,
+        "profile_id": "g7-canary-v1",
+        "profile_version": 1,
+        "state": "succeeded",
+        "task_id": "bf4b1e38-13a8-432d-9edc-33c9440d6822"
+      },
+      {
+        "action_kind": "on_task_completed",
+        "attempt_count": 1,
+        "available_at": null,
+        "event_id": "b1d8a842-f9b4-4b32-baed-94664af498f4",
+        "exit_code": 0,
+        "id": "5b77711b-35e2-4452-87fe-12a1b3f5f844",
+        "last_error": null,
+        "max_attempts": 2,
+        "output_bytes": 0,
+        "profile_id": "g7-canary-v1",
+        "profile_version": 1,
+        "state": "succeeded",
+        "task_id": "cdf3bab3-9a34-488d-b115-9e703c2f39bd"
+      },
+      {
+        "action_kind": "on_task_completed",
+        "attempt_count": 1,
+        "available_at": null,
+        "event_id": "50908952-33a6-4b3c-af37-9b99df1a67a4",
+        "exit_code": 0,
+        "id": "ced1b9bc-1aac-49d0-a610-ba7defe6d17f",
+        "last_error": null,
+        "max_attempts": 2,
+        "output_bytes": 0,
+        "profile_id": "g7-canary-v1",
+        "profile_version": 1,
+        "state": "succeeded",
+        "task_id": "f7ff749a-9baa-401d-88bb-b5c170e7a692"
+      },
+      {
+        "action_kind": "on_task_completed",
+        "attempt_count": 1,
+        "available_at": null,
+        "event_id": "f9659aed-6c77-40bc-9ab8-906d034ec0a0",
+        "exit_code": 0,
+        "id": "4e0f1913-c98f-4fc8-9da9-aac7ba796c19",
+        "last_error": null,
+        "max_attempts": 2,
+        "output_bytes": 0,
+        "profile_id": "g7-canary-v1",
+        "profile_version": 1,
+        "state": "succeeded",
+        "task_id": "a5ddb73f-a357-4889-bcf9-0f47893d8032"
+      },
+      {
+        "action_kind": "on_task_completed",
+        "attempt_count": 1,
+        "available_at": null,
+        "event_id": "88f5a767-6891-4ff2-9608-5c28f06b4736",
+        "exit_code": 0,
+        "id": "8c04e767-96d7-490c-b91e-7212ff2d91f8",
+        "last_error": null,
+        "max_attempts": 2,
+        "output_bytes": 0,
+        "profile_id": "g7-canary-v1",
+        "profile_version": 1,
+        "state": "succeeded",
+        "task_id": "37d88506-6409-48b8-a6fc-95d675b2cc65"
+      },
+      {
+        "action_kind": "on_batch_completed",
+        "attempt_count": 1,
+        "available_at": null,
+        "event_id": "0b1ce2b0-242e-4d08-b3a6-436fb8151062",
+        "exit_code": 0,
+        "id": "ff13d05b-c2c4-4f32-94b8-185888aa12e4",
+        "last_error": null,
+        "max_attempts": 2,
+        "output_bytes": 0,
+        "profile_id": "g7-canary-v1",
+        "profile_version": 1,
+        "state": "succeeded",
+        "task_id": null
+      }
+    ],
+    "batch_id": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e",
+    "truncated": false
+  },
+  "unchanged_services": [
+    {
+      "name": "ArasakaDDNS",
+      "pid": 5992,
+      "state": "Running",
+      "same_identity_start_mode_pid": true
+    },
+    {
+      "name": "ArasakaFFmpegWatchdog",
+      "pid": 5076,
+      "state": "Running",
+      "same_identity_start_mode_pid": true
+    },
+    {
+      "name": "ArasakaFFmpegWorker",
+      "pid": 5088,
+      "state": "Running",
+      "same_identity_start_mode_pid": true
+    },
+    {
+      "name": "CodexProxy",
+      "pid": 8236,
+      "state": "Running",
+      "same_identity_start_mode_pid": true
+    },
+    {
+      "name": "MediaSTT",
+      "pid": 6332,
+      "state": "Running",
+      "same_identity_start_mode_pid": true
+    },
+    {
+      "name": "OCI-A1-Grabber",
+      "pid": 6600,
+      "state": "Running",
+      "same_identity_start_mode_pid": true
+    },
+    {
+      "name": "Servy",
+      "pid": 3224,
+      "state": "Running",
+      "same_identity_start_mode_pid": true
+    }
+  ],
+  "runner_identity_log": "{\"sid\":\"S-1-5-21-3592388187-2353680085-815129118-1004\",\"privileged\":false}\r\n",
+  "runner_acl_log": "{\"sid\":\"S-1-5-21-3592388187-2353680085-815129118-1004\",\"privileged\":false}\r\nmanagement RPC rejected missing and runner broker credentials: 401/401\r\n{\"acl_probe\":\"PASS\",\"denied_directories\":4,\"denied_reads\":11,\"denied_writes\":3,\"reads\":5,\"writable_directories\":3}\r\n",
+  "health": {
+    "status": "READY",
+    "checked_at_utc": "2026-10-25T06:10:16.731Z",
+    "checked_at_unix_ms": 1792908616731,
+    "last_success_at_utc": "2026-10-25T06:10:16.731Z",
+    "consecutive_failures": 0,
+    "latency_ms": 4,
+    "tasks_list_latency_ms": 3,
+    "sqlite_latency_ms": 1,
+    "checks": {
+      "tasks_list": "PASS",
+      "sqlite_read_only": "PASS"
+    },
+    "failed_checks": []
+  },
+  "review_candidates": {
+    "sha256": "637ab54127880ce1b6d190be10620d241b002f2222320920c3f445a0bd5cea07",
+    "bytes": 178
+  },
+  "monitor": {
+    "state": "Ready",
+    "principal": "SYSTEM",
+    "last_exit": 0
+  },
+  "actual_listener_binary": {
+    "sha256": "b23e43f30a076d3d3dc75e90a07a7a3f9de35ad33351bb2e9bf8938f9f220ed4",
+    "pid": 9756,
+    "path": "C:\\ProgramData\\coord\\bin\\coord.exe"
+  },
+  "formal_classification_created": false,
+  "runner_privileges": "[SC] QueryServiceConfig2 SUCCESS\r\n\r\nSERVICE_NAME: CoordActionRunnerG7\r\n        PRIVILEGES       : SeChangeNotifyPrivilege\r\n",
+  "observed_at": "2026-10-25T06:10:20.4850924Z",
+  "production_services": [
+    {
+      "Name": "coord",
+      "State": "Running",
+      "StartName": "NT AUTHORITY\\LocalService",
+      "ProcessId": 2512
+    },
+    {
+      "Name": "CoordRelayAgent",
+      "State": "Running",
+      "StartName": "NT AUTHORITY\\LocalService",
+      "ProcessId": 4428
+    },
+    {
+      "Name": "CoordActionRunnerG7",
+      "State": "Running",
+      "StartName": ".\\coord_action_g7",
+      "ProcessId": 10228
+    }
+  ],
+  "state": "PASS",
+  "published": [
+    {
+      "name": "00.json",
+      "bytes": 538,
+      "sha256": "72cc4cbbddfe3dc442cba9449e6669831575bd44f5399c3efc28bb83954c671d"
+    },
+    {
+      "name": "01.json",
+      "bytes": 538,
+      "sha256": "ff80402f532932c8282d2a4b0d8e3b1c657e1535859ead06e77b3b75f4ab1c53"
+    },
+    {
+      "name": "02.json",
+      "bytes": 538,
+      "sha256": "dd35da0a199c94a4520e4fb4208bdc955b1d5f01ec131045c2607f611fb6753e"
+    },
+    {
+      "name": "03.json",
+      "bytes": 538,
+      "sha256": "6a86e42cf08d06b22d08f98c71a7119aa835274b65b90d989738a87257ce2036"
+    },
+    {
+      "name": "04.json",
+      "bytes": 538,
+      "sha256": "2afd72480008b8f7dc45078b2de159da71a84feafbd16ab9f8dc7c9f05e3d814"
+    },
+    {
+      "name": "05.json",
+      "bytes": 538,
+      "sha256": "98eef63266dc62bf8c12cf89e0b7b082589410e7719ff2e681c9cf935c8bd414"
+    },
+    {
+      "name": "06.json",
+      "bytes": 538,
+      "sha256": "49aab133cd1b1354cdf280f4528f339c97f2553c85a8410176ef28ee8bd1062f"
+    },
+    {
+      "name": "07.json",
+      "bytes": 538,
+      "sha256": "4919a77ed7807f6b8b897468aa77de215b4e5a45e951a00e8fbd669f54b94f4a"
+    },
+    {
+      "name": "08.json",
+      "bytes": 538,
+      "sha256": "80667903c7c9dc2dd5c59d09ee5e3c73d2b5bdac4a93bee8eb5fea5ef4120e04"
+    },
+    {
+      "name": "09.json",
+      "bytes": 540,
+      "sha256": "342db9958057e8f8906ad57738cbccf562b451e22460b5817c394946f8982394"
+    },
+    {
+      "name": "index.json",
+      "bytes": 1710,
+      "sha256": "664cc08758de7aed167dbf1150bd4d8cfe02d318900b4dc6216ce51e3aa71b36"
+    }
+  ],
+  "original_database": {
+    "state": "PASS",
+    "original_tasks": 8,
+    "original_columns": 27,
+    "all_original_task_fields_match": true,
+    "quick_check": "ok",
+    "original_field_fingerprint": "d8211827f1e3d8861aab497ad63e24046ce54bbe8e0ccc0996a220e292c637dd"
+  },
+  "management_rejections": {
+    "runner_broker_credential": 401,
+    "missing": 401
+  },
+  "operator_progress": {
+    "active": 0,
+    "id": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e",
+    "states": {
+      "cancelled": 0,
+      "claimed": 0,
+      "completed": 10,
+      "failed": 0,
+      "pending": 0,
+      "submitted": 0
+    },
+    "status": "completed",
+    "terminal": 10,
+    "total": 10
+  },
+  "hashes": {
+    "coord-action-runner.exe": "72c2e72892405b16042f1e7a1066eb35493695d54de1183447ab771192fe14f8",
+    "coord.exe": "b23e43f30a076d3d3dc75e90a07a7a3f9de35ad33351bb2e9bf8938f9f220ed4",
+    "coord-emote-action.exe": "cac5496ed1dea50f837f28403feb62515de1ba1459ea2557abe6097ec07bec55"
+  },
+  "test_listeners_released": true
+}

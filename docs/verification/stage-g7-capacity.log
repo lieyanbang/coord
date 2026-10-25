@@ -1,0 +1,9 @@
+
+running 1 test
+{"claim_end_to_end_ms_p50":1.3665,"claim_end_to_end_ms_p95":11.649899999999999,"daemon_peak_working_set_bytes":15085568,"enqueue_seconds":0.0107188,"idle_wait_ms":210.8271,"receipts":100,"seconds":0.1175216,"sqlite_busy_log_lines":0,"sum_worker_peak_working_set_bytes":90406912,"tasks":100,"tasks_per_second":850.9074076595281,"terminal_consistent":true,"unique_completed":100,"workers":6}
+{"claim_end_to_end_ms_p50":2.2304,"claim_end_to_end_ms_p95":8.1233,"daemon_peak_working_set_bytes":19308544,"enqueue_seconds":0.0854346,"idle_wait_ms":207.6449,"receipts":1000,"seconds":1.2680883,"sqlite_busy_log_lines":0,"sum_worker_peak_working_set_bytes":90656768,"tasks":1000,"tasks_per_second":788.5886180008126,"terminal_consistent":true,"unique_completed":1000,"workers":6}
+test capacity_100_1000_10000_real_daemon_and_six_mcp_processes has been running for over 60 seconds
+{"claim_end_to_end_ms_p50":16.557,"claim_end_to_end_ms_p95":39.885400000000004,"daemon_peak_working_set_bytes":21573632,"enqueue_seconds":1.0538588,"idle_wait_ms":207.7871,"receipts":10000,"seconds":92.6010112,"sqlite_busy_log_lines":0,"sum_worker_peak_working_set_bytes":91533312,"tasks":10000,"tasks_per_second":107.9901814290339,"terminal_consistent":true,"unique_completed":10000,"workers":6}
+test capacity_100_1000_10000_real_daemon_and_six_mcp_processes ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 97.39s

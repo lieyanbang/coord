@@ -1,0 +1,82 @@
+{
+  "state": "PASS",
+  "phase": "completed",
+  "failed_phase": null,
+  "disposable_ci": true,
+  "fixture_layout": "system-volume-root",
+  "production_gate": "NOT_RUN",
+  "checks": [
+    {
+      "name": "identity",
+      "exit_code": 0,
+      "expected_exit_code": 0
+    },
+    {
+      "name": "acl-policy",
+      "exit_code": 0,
+      "expected_exit_code": 0
+    },
+    {
+      "name": "publish-task",
+      "exit_code": 0,
+      "expected_exit_code": 0
+    },
+    {
+      "name": "publish-index",
+      "exit_code": 0,
+      "expected_exit_code": 0
+    },
+    {
+      "name": "crash-recovery",
+      "exit_code": 0,
+      "expected_exit_code": 0
+    }
+  ],
+  "runner_sid": "S-1-5-21-399838505-1430754676-1685527644-1003",
+  "daemon_sid": "S-1-5-21-399838505-1430754676-1685527644-500",
+  "actions": {
+    "actions": [
+      {
+        "action_kind": "on_task_completed",
+        "attempt_count": 1,
+        "available_at": null,
+        "event_id": "576372c7-e0ec-4ea6-84fa-ffce7e99dc15",
+        "exit_code": 0,
+        "id": "38e3bc00-594d-4652-bbee-dbf595c466e8",
+        "last_error": null,
+        "max_attempts": 2,
+        "output_bytes": 0,
+        "profile_id": "emote",
+        "profile_version": 1,
+        "state": "succeeded",
+        "task_id": "1e3bdb5d-88ec-4d73-9b86-f0e7b8de4d56"
+      },
+      {
+        "action_kind": "on_batch_completed",
+        "attempt_count": 1,
+        "available_at": null,
+        "event_id": "2cafe987-bea8-4c9f-8e5c-f54807465dbd",
+        "exit_code": 0,
+        "id": "3a783369-be29-448d-b065-239a3a84e1db",
+        "last_error": null,
+        "max_attempts": 2,
+        "output_bytes": 0,
+        "profile_id": "emote",
+        "profile_version": 1,
+        "state": "succeeded",
+        "task_id": null
+      }
+    ],
+    "batch_id": "6977629c-ff35-4af4-8cbd-f0231f6c88f3",
+    "truncated": false
+  },
+  "crash_recovery": {
+    "child_killed_on_runner_exit": true,
+    "attempt_count": 1,
+    "state": "uncertain",
+    "isolated_forced_lease_expiry": true
+  },
+  "disposable_account_removed": true,
+  "disposable_fixture_removed": true,
+  "cleanup_errors": []
+}

@@ -1,0 +1,75 @@
+{
+  "state": "FAIL",
+  "environment": "actual production daemon/Sidecar/Windows Relay/dedicated service Runner",
+  "client_kind": "operator synthetic; no OAuth/ChatGPT claim",
+  "batch_id": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e",
+  "started_at": "2026-10-25T06:04:11.224Z",
+  "checks": [
+    "six unique concurrent claims",
+    "foreign live token denied; reads redact tokens",
+    "progress renewal; consumed sequence denied",
+    "six fenced submissions; request replay uncertain",
+    "next claim; natural expiry and failure reclaimed at attempt 2; stale submissions denied"
+  ],
+  "initial_progress": {
+    "active": 8,
+    "id": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e",
+    "states": {
+      "cancelled": 0,
+      "claimed": 0,
+      "completed": 2,
+      "failed": 0,
+      "pending": 8,
+      "submitted": 0
+    },
+    "status": "active",
+    "terminal": 2,
+    "total": 10
+  },
+  "claims": [
+    {
+      "id": "93d968b6-773d-4ae2-94d8-73105542a55c",
+      "worker": "emote-0000",
+      "attempt_no": 2
+    },
+    {
+      "id": "9f6f173f-6207-4ede-8c15-c02c2e078713",
+      "worker": "emote-0001",
+      "attempt_no": 2
+    },
+    {
+      "id": "9fc55947-8905-4463-a713-826c34d3e3c9",
+      "worker": "emote-0002",
+      "attempt_no": 2
+    },
+    {
+      "id": "bf4b1e38-13a8-432d-9edc-33c9440d6822",
+      "worker": "emote-0003",
+      "attempt_no": 2
+    },
+    {
+      "id": "cdf3bab3-9a34-488d-b115-9e703c2f39bd",
+      "worker": "emote-0004",
+      "attempt_no": 1
+    },
+    {
+      "id": "f7ff749a-9baa-401d-88bb-b5c170e7a692",
+      "worker": "emote-0005",
+      "attempt_no": 1
+    }
+  ],
+  "recoveries": [
+    {
+      "id": "a5ddb73f-a357-4889-bcf9-0f47893d8032",
+      "attempt_no": 2,
+      "worker": "emote-0004"
+    },
+    {
+      "id": "37d88506-6409-48b8-a6fc-95d675b2cc65",
+      "attempt_no": 2,
+      "worker": "emote-0004"
+    }
+  ],
+  "failure": "Expected values to be strictly equal:\n+ actual - expected\n\n+ 'error'\n- 'not_dispatched'\n",
+  "finished_at": "2026-10-25T06:04:14.026Z"
+}

@@ -1,0 +1,60 @@
+{
+  "state": "PASS",
+  "phase": "production-ready",
+  "commit": "229d423b003a88bf2d49cca96502dfb803a482f1",
+  "backup_root": "C:\\ProgramData\\coord\\backup\\g7-20261025T050716Z-eea8ecd6",
+  "fresh_snapshot": "C:\\ProgramData\\coord\\g7\\private\\pre-deploy-20261025T054313Z.db",
+  "started_at": "2026-10-25T05:43:13.6953601Z",
+  "management_unauthenticated_status": 401,
+  "health": {
+    "status": "READY",
+    "checked_at_utc": "2026-10-25T05:43:35.696Z",
+    "checked_at_unix_ms": 1792907015696,
+    "last_success_at_utc": "2026-10-25T05:43:35.696Z",
+    "consecutive_failures": 0,
+    "latency_ms": 29,
+    "tasks_list_latency_ms": 27,
+    "sqlite_latency_ms": 2,
+    "checks": {
+      "tasks_list": "PASS",
+      "sqlite_read_only": "PASS"
+    },
+    "failed_checks": []
+  },
+  "binary_sha256": "24a9b16281e47df9510510560dd50c642b0b46fdf7640c828fded6d48d4ef597",
+  "services": [
+    {
+      "Name": "coord",
+      "State": "Running",
+      "StartMode": "Auto",
+      "StartName": "NT AUTHORITY\\LocalService",
+      "ProcessId": 6220
+    },
+    {
+      "Name": "Servy",
+      "State": "Running",
+      "StartMode": "Auto",
+      "StartName": "LocalSystem",
+      "ProcessId": 3224
+    },
+    {
+      "Name": "CoordRelayAgent",
+      "State": "Running",
+      "StartMode": "Auto",
+      "StartName": "NT AUTHORITY\\LocalService",
+      "ProcessId": 8888
+    },
+    {
+      "Name": "CoordActionRunnerG7",
+      "State": "Running",
+      "StartMode": "Auto",
+      "StartName": ".\\coord_action_g7",
+      "ProcessId": 9484
+    }
+  ],
+  "monitor": {
+    "last_result": 0,
+    "principal": "SYSTEM"
+  },
+  "finished_at": "2026-10-25T05:43:37.3836906Z"
+}

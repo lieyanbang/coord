@@ -1,0 +1,7 @@
+{
+  "state": "FAIL",
+  "exit": 1,
+  "source": "captured remote stderr from the actual first read-only reconciliation run; stdout was empty",
+  "failure": "Expected values to be strictly equal:\n+ actual - expected\n\n+ 'error'\n- 'not_dispatched'\n",
+  "scope": "unsigned request retained emote-0000 and failed schema validation before protected-batch dispatch; corrected fixture uses coord-relay-agent"
+}

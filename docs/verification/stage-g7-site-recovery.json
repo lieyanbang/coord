@@ -1,0 +1,23 @@
+{
+  "state": "PASS",
+  "phase": "completed",
+  "scope": "candidate services and copied database only",
+  "production_database_modified": false,
+  "crash": {
+    "job_child_killed": true,
+    "old_runner_pid": 9592,
+    "attempt_count": 1,
+    "forced_expiry": "only exact copied database",
+    "new_runner_pid": 9792,
+    "batch_id": "4350d72a-e6b7-4246-808e-4dce7c315567",
+    "state": "uncertain",
+    "task_id": "6fdd0e6c-5a18-48e1-9707-9d33d306e64e",
+    "action_id": "fb330a35-678b-4565-ac04-2b5341889835"
+  },
+  "rollback": {
+    "original_tasks": 8,
+    "original_columns": 27,
+    "all_original_task_fields_match": true,
+    "prior_binary_rpc": "PASS"
+  }
+}

@@ -1,0 +1,124 @@
+{
+  "samples": [
+    {
+      "offset": 0,
+      "local": {
+        "ok": true,
+        "agentId": "emote-0000",
+        "batchId": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e"
+      },
+      "remote_state": "ok",
+      "progress": {
+        "active": 6,
+        "id": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e",
+        "states": {
+          "cancelled": 0,
+          "claimed": 0,
+          "completed": 2,
+          "failed": 0,
+          "pending": 6,
+          "submitted": 0
+        },
+        "status": "active",
+        "terminal": 2,
+        "total": 8
+      }
+    },
+    {
+      "offset": 0,
+      "local": {
+        "ok": true,
+        "agentId": "emote-0000",
+        "batchId": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e"
+      },
+      "remote_state": "ok",
+      "progress": {
+        "active": 6,
+        "id": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e",
+        "states": {
+          "cancelled": 0,
+          "claimed": 0,
+          "completed": 2,
+          "failed": 0,
+          "pending": 6,
+          "submitted": 0
+        },
+        "status": "active",
+        "terminal": 2,
+        "total": 8
+      }
+    },
+    {
+      "offset": 0,
+      "local": {
+        "ok": true,
+        "agentId": "emote-0000",
+        "batchId": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e"
+      },
+      "remote_state": "ok",
+      "progress": {
+        "active": 6,
+        "id": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e",
+        "states": {
+          "cancelled": 0,
+          "claimed": 0,
+          "completed": 2,
+          "failed": 0,
+          "pending": 6,
+          "submitted": 0
+        },
+        "status": "active",
+        "terminal": 2,
+        "total": 8
+      }
+    },
+    {
+      "offset": -1000,
+      "local": {
+        "ok": true,
+        "agentId": "emote-0000",
+        "batchId": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e"
+      },
+      "remote_state": "ok",
+      "progress": {
+        "active": 6,
+        "id": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e",
+        "states": {
+          "cancelled": 0,
+          "claimed": 0,
+          "completed": 2,
+          "failed": 0,
+          "pending": 6,
+          "submitted": 0
+        },
+        "status": "active",
+        "terminal": 2,
+        "total": 8
+      }
+    },
+    {
+      "offset": -1000,
+      "local": {
+        "ok": true,
+        "agentId": "emote-0000",
+        "batchId": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e"
+      },
+      "remote_state": "ok",
+      "progress": {
+        "active": 6,
+        "id": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e",
+        "states": {
+          "cancelled": 0,
+          "claimed": 0,
+          "completed": 2,
+          "failed": 0,
+          "pending": 6,
+          "submitted": 0
+        },
+        "status": "active",
+        "terminal": 2,
+        "total": 8
+      }
+    }
+  ]
+}

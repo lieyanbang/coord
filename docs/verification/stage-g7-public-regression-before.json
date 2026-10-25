@@ -1,0 +1,93 @@
+{
+  "state": "FAIL",
+  "observed_at": "2026-10-25T05:57:10.658070+00:00",
+  "checks": [
+    {
+      "path": "/app/CoordMCP/",
+      "status": 401,
+      "expected": 401,
+      "pass": true
+    },
+    {
+      "path": "/app/CoordMCP/.well-known/oauth-protected-resource/mcp",
+      "status": 200,
+      "expected": 200,
+      "pass": true,
+      "metadata": {
+        "resource": "https://lieyanbang.com/app/CoordMCP/",
+        "authorization_servers": [
+          "https://lieyanbang.com/app/CoordMCP"
+        ],
+        "scopes_supported": [
+          "coord",
+          "offline_access"
+        ],
+        "bearer_methods_supported": [
+          "header"
+        ]
+      }
+    },
+    {
+      "path": "/app/CoordMCP/.well-known/oauth-authorization-server",
+      "status": 200,
+      "expected": 200,
+      "pass": true,
+      "metadata": {
+        "issuer": "https://lieyanbang.com/app/CoordMCP",
+        "authorization_endpoint": "https://lieyanbang.com/app/CoordMCP/oauth/authorize",
+        "token_endpoint": "https://lieyanbang.com/app/CoordMCP/oauth/token",
+        "registration_endpoint": "https://lieyanbang.com/app/CoordMCP/oauth/register",
+        "response_types_supported": [
+          "code"
+        ],
+        "authorization_response_iss_parameter_supported": true,
+        "grant_types_supported": [
+          "authorization_code",
+          "refresh_token"
+        ],
+        "token_endpoint_auth_methods_supported": [
+          "none"
+        ],
+        "code_challenge_methods_supported": [
+          "S256"
+        ],
+        "scopes_supported": [
+          "coord",
+          "offline_access"
+        ],
+        "client_id_metadata_document_supported": false
+      }
+    },
+    {
+      "path": "/app/CoordMCP/authorize",
+      "status": 404,
+      "expected": 302,
+      "pass": false
+    },
+    {
+      "path": "/app/RemoteControlMCP/",
+      "status": 302,
+      "expected": 302,
+      "pass": true
+    },
+    {
+      "path": "/app/RemoteControlMCP2/",
+      "status": 302,
+      "expected": 302,
+      "pass": true
+    },
+    {
+      "path": "/app/RemoteControlMCP3/",
+      "status": 401,
+      "expected": 401,
+      "pass": true
+    },
+    {
+      "path": "/mcp",
+      "status": 401,
+      "expected": 401,
+      "pass": true
+    }
+  ],
+  "non_owner_access": "NOT_RUN; original F3-R boundary retained"
+}

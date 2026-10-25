@@ -1,0 +1,80 @@
+{
+  "state": "PASS",
+  "phase": "completed",
+  "runner_sid": "S-1-5-21-3592388187-2353680085-815129118-1004",
+  "daemon_sid": "S-1-5-19",
+  "production_replacement": "NOT_RUN",
+  "checks": [
+    {
+      "name": "service-identity",
+      "identity": {
+        "sid": "S-1-5-21-3592388187-2353680085-815129118-1004",
+        "privileged": false
+      },
+      "service_start_exit": 1,
+      "started": "2026-10-25T05:30:51.2466801Z",
+      "state": "PASS",
+      "note": "One-shot service may already be stopped when service-control polling returns."
+    },
+    {
+      "name": "service-acl-rpc",
+      "identity": {
+        "sid": "S-1-5-21-3592388187-2353680085-815129118-1004",
+        "privileged": false
+      },
+      "service_start_exit": 1,
+      "started": "2026-10-25T05:31:44.5316204Z",
+      "state": "PASS",
+      "note": "One-shot service may already be stopped when service-control polling returns."
+    }
+  ],
+  "system_health": {
+    "sid": "S-1-5-18",
+    "observed_at": "2026-10-25T05:32:35.8055988Z",
+    "status": "READY",
+    "exit": 0
+  },
+  "management_key_copies_match": true,
+  "publish": {
+    "task_id": "561f4878-2ea7-41d9-b7e8-3d7b15f815e0",
+    "actions": {
+      "actions": [
+        {
+          "action_kind": "on_batch_completed",
+          "attempt_count": 1,
+          "available_at": null,
+          "event_id": "9ff7c666-3d8e-453b-afe4-aa0476560776",
+          "exit_code": 0,
+          "id": "52fbf036-a694-40a0-aa41-9eb424d0721e",
+          "last_error": null,
+          "max_attempts": 2,
+          "output_bytes": 0,
+          "profile_id": "g7-probe-v1",
+          "profile_version": 1,
+          "state": "succeeded",
+          "task_id": null
+        },
+        {
+          "action_kind": "on_task_completed",
+          "attempt_count": 1,
+          "available_at": null,
+          "event_id": "7001b8ce-2923-427d-98e1-c779c9fb7daf",
+          "exit_code": 0,
+          "id": "7793cad7-538a-43d0-aae3-5dd64f3d9353",
+          "last_error": null,
+          "max_attempts": 2,
+          "output_bytes": 0,
+          "profile_id": "g7-probe-v1",
+          "profile_version": 1,
+          "state": "succeeded",
+          "task_id": "561f4878-2ea7-41d9-b7e8-3d7b15f815e0"
+        }
+      ],
+      "batch_id": "342a1a14-76e6-4988-880a-55fd1532a65e",
+      "truncated": false
+    },
+    "result_sha256": "afe0459835f889e924f5106de5fb3035a1530d82fe19d476fc2366daa69847a3",
+    "index_sha256": "ec8dfc05e491c0a77b79d8491284ab39d5e1d619369a5871b738671822424d0a",
+    "batch_id": "342a1a14-76e6-4988-880a-55fd1532a65e"
+  }
+}

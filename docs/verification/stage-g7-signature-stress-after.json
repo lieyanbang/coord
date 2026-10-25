@@ -1,0 +1,14 @@
+{
+  "counts": [
+    {
+      "offset": 0,
+      "total": 50,
+      "denied": []
+    },
+    {
+      "offset": -1000,
+      "total": 50,
+      "denied": []
+    }
+  ]
+}

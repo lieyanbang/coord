@@ -1,0 +1,46 @@
+{
+  "state": "FAIL",
+  "environment": "actual production daemon/Sidecar/Windows Relay/dedicated service Runner",
+  "client_kind": "operator synthetic; no OAuth/ChatGPT claim",
+  "batch_id": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e",
+  "started_at": "2026-10-25T05:48:44.508Z",
+  "checks": [
+    "six unique concurrent claims",
+    "foreign live token denied; reads redact tokens",
+    "progress renewal; consumed sequence denied"
+  ],
+  "claims": [
+    {
+      "id": "1a336685-719b-4ad4-a8a0-152fda16d5af",
+      "worker": "emote-0000",
+      "attempt_no": 1
+    },
+    {
+      "id": "2cbc5bbe-5531-4d17-a50f-20b7d1af11ac",
+      "worker": "emote-0001",
+      "attempt_no": 1
+    },
+    {
+      "id": "93d968b6-773d-4ae2-94d8-73105542a55c",
+      "worker": "emote-0002",
+      "attempt_no": 1
+    },
+    {
+      "id": "9f6f173f-6207-4ede-8c15-c02c2e078713",
+      "worker": "emote-0003",
+      "attempt_no": 1
+    },
+    {
+      "id": "9fc55947-8905-4463-a713-826c34d3e3c9",
+      "worker": "emote-0004",
+      "attempt_no": 1
+    },
+    {
+      "id": "bf4b1e38-13a8-432d-9edc-33c9440d6822",
+      "worker": "emote-0005",
+      "attempt_no": 1
+    }
+  ],
+  "failure": "Expected success, got not_dispatched/identity_invalid_or_expired\n+ actual - expected\n\n+ 'not_dispatched'\n- 'ok'\n",
+  "finished_at": "2026-10-25T05:48:45.478Z"
+}

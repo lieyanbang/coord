@@ -1,0 +1,45 @@
+{
+  "state": "PASS",
+  "oauth_module_sha256": "0dcc483bd3d6afd5f4625885aed70f5cdf1b30f6a44ced739549d382ce049c53",
+  "oauth_counts": {
+    "clients": 2,
+    "accessTokens": 21,
+    "refreshTokens": 21
+  },
+  "oauth_grants_preserved": true,
+  "openresty_files_unchanged": true,
+  "identity_module_hashes": {
+    "/opt/coord-relay/identity.cjs": "34606249670bcf246a203d9a3367c989301af9e42f04d0f3df7b5fd026ca5338",
+    "/opt/app/feathers/realtimetext/lib/identity.cjs": "34606249670bcf246a203d9a3367c989301af9e42f04d0f3df7b5fd026ca5338"
+  },
+  "key_mode": "0640",
+  "key_owner_uid": 0,
+  "bindings": [
+    {
+      "id": "g7-operator",
+      "batch_id": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e",
+      "expires_at": 1792993523904
+    },
+    {
+      "id": "g7-browser",
+      "batch_id": "d2313c78-22da-4cb8-bcd7-ece9897e0db1",
+      "expires_at": 1792993523904
+    }
+  ],
+  "sidecar": {
+    "state": "READY",
+    "agentConnected": true,
+    "lastHeartbeat": "2026-10-25T05:59:50.836Z",
+    "pending": 0
+  },
+  "service_restart_counts": {
+    "feathersjsapp.service": [
+      "MainPID=124908",
+      "NRestarts=0"
+    ],
+    "coord-relay.service": [
+      "MainPID=124905",
+      "NRestarts=0"
+    ]
+  }
+}

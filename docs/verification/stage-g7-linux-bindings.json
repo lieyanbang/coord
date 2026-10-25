@@ -1,0 +1,1 @@
+{"state": "PASS", "bindings": 2, "health": {"state": "READY", "agentConnected": true, "lastHeartbeat": "2026-10-25T05:47:40.138Z", "pending": 0}, "task_creation": "not performed by this helper"}

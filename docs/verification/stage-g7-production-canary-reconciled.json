@@ -1,0 +1,42 @@
+{
+  "state": "PASS",
+  "scope": "read-only production reconciliation; prior lifecycle trace retained separately",
+  "batch_id": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e",
+  "progress": {
+    "active": 0,
+    "id": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e",
+    "states": {
+      "cancelled": 0,
+      "claimed": 0,
+      "completed": 10,
+      "failed": 0,
+      "pending": 0,
+      "submitted": 0
+    },
+    "status": "completed",
+    "terminal": 10,
+    "total": 10
+  },
+  "tampered_identity": {
+    "status": 400,
+    "state": "error"
+  },
+  "wrong_transport_key": {
+    "status": 401
+  },
+  "unsigned_protected_batch": {
+    "state": "not_dispatched"
+  },
+  "journal": {
+    "no_task_or_lease_fields": true,
+    "record_keys": [
+      "at",
+      "code",
+      "method",
+      "requestHash",
+      "requestId",
+      "state"
+    ]
+  },
+  "real_chatgpt_lifecycle": "NEEDS_USER_ACTION"
+}

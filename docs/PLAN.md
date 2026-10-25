@@ -259,5 +259,7 @@ Windows 本机及 Windows Actions 的真实测试、构建与产物为准。
 - 报告明确逻辑 worker_id 可被相同 owner 冒用、不能保证 ChatGPT 持续自动唤醒；这两项不再阻止用户批准的可信协作试验。其余安全/完整性失败仍禁止放行。每 Gate 在 docs/verification/PHASE_G7.md 留真实证据；新 TASK.md 执行期只读，保护 Git 及用户既有未提交改动。
 
 ### G7 执行进度
-- A/B 本机源码与隔离机制门通过：四位逻辑 ID、批次/工具约束、两跳签名、轮转兼容、旧租约拒绝、权威批次状态与循环提示词已实现。`scripts/verify.ps1 -Stage g7` 八项 exit 0；Fork Actions/下载产物待验证。
-- C/D 进行中：现场一致备份、真实 Runner SID/ACL、SYSTEM 鉴权监护和生产 Canary 必须实测；不以 G6 disposable SID 代替。详细命令、退出码与当前状态见 `verification/PHASE_G7.md`。正式分类任务/Agent 仍禁止。
+- **已受控部署；自动/现场门 PASS，真实两 ChatGPT 生命周期 NEEDS_USER_ACTION，整体 PARTIAL。** A/B 四位逻辑 ID、批次/工具约束、两跳签名、轮转兼容、旧租约拒绝、权威状态和循环提示词已实现。实际跨 Linux/Windows 时钟偏差先复现再修复为最多 5 秒签发容差，过期与 60 秒签名寿命不放宽；修复后 100 次探针均通过。
+- C 现场 PASS：在线一致备份、真实标准账户 SID `…-1004`、ACL/RPC 拒绝、SYSTEM READY、native 发布/索引、Runner 崩溃后 uncertain 不重放及旧 EXE 读取迁移副本均实测。Fork run `40167256908` 对实现 `f0aa7da` 全绿；下载三 EXE 哈希核验并复验 28 项集成及 25 项 Relay 后已部署。哈希不同，不声称可复现构建。
+- D 合成生产 Canary PASS：operator batch `ddb65e62-2847-4dbb-a188-40f2c20c9c8e` 共 10 项完成，11 个动作全部 succeeded；六逻辑 ID 唯一领取、进度续租、自然过期/失败重试、旧 token 拒绝、索引及原 8 任务的 27 字段逐值不变均通过。原其他服务 PID、13011/13012、旧 OAuth/MCP 与公开路由回归通过；Access 策略未改。
+- 浏览器工具在初始化前报 `failed to write kernel assets` / os error 3，不能执行真实两聊天；独立 browser batch `d2313c78-22da-4cb8-bcd7-ece9897e0db1` 的 4 项合成任务仍 pending、无 claim。操作交接见 `phase-g/G7-CHATGPT-CANARY.md`，部署回滚见 `phase-g/G7-DEPLOYMENT.md`，完整证据见 `verification/PHASE_G7.md`。F3-R 原缺口保持 PARTIAL；正式分类任务/Agent 仍未创建或启动。

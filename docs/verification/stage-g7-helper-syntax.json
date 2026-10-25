@@ -1,0 +1,48 @@
+{
+  "state": "PASS",
+  "python_ast_files": 3,
+  "powershell_ast_files": [
+    {
+      "state": "PASS",
+      "name": "add-g7-canary-tasks.ps1"
+    },
+    {
+      "state": "PASS",
+      "name": "backup-g7.ps1"
+    },
+    {
+      "state": "PASS",
+      "name": "deploy-g7.ps1"
+    },
+    {
+      "state": "PASS",
+      "name": "prepare-g7-canaries.ps1"
+    },
+    {
+      "state": "PASS",
+      "name": "prepare-g7-site.ps1"
+    },
+    {
+      "state": "PASS",
+      "name": "rollback-g7.ps1"
+    },
+    {
+      "state": "PASS",
+      "name": "test-g7-recovery.ps1"
+    },
+    {
+      "state": "PASS",
+      "name": "test-g7-site.ps1"
+    },
+    {
+      "state": "PASS",
+      "name": "update-g7-clock.ps1"
+    },
+    {
+      "state": "PASS",
+      "name": "verify-g7-deployment.ps1"
+    }
+  ],
+  "node_syntax": "PASS",
+  "note": "Syntax checks; actual executed operations have separate site evidence. Rollback helpers not run on final live site."
+}

@@ -1,0 +1,1 @@
+{"state": "PASS", "commit": "f0aa7daed53a36f8c0c2418d935858bbf9f9fd9e", "identity_sha256": "13b19cf9d638a45152e847406b6abddf48758622ffc20ade1eb9c7f51dc73efa", "health": {"state": "READY", "agentConnected": true, "lastHeartbeat": "2026-10-25T06:03:40.339Z", "pending": 0}}

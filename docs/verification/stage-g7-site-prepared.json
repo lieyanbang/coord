@@ -1,0 +1,34 @@
+{
+  "production_replacement": "NOT_RUN",
+  "runner_service": "CoordActionRunnerG7",
+  "daemon_sid": "S-1-5-19",
+  "backup_root": "C:\\ProgramData\\coord\\backup\\g7-20261025T050716Z-eea8ecd6",
+  "commit": "229d423b003a88bf2d49cca96502dfb803a482f1",
+  "base": "C:\\ProgramData\\coord\\g7",
+  "probe_service": "CoordG7Probe",
+  "state": "PREPARED",
+  "runner_sid": "S-1-5-21-3592388187-2353680085-815129118-1004",
+  "registry": "C:\\ProgramData\\coord\\g7\\config\\registry-probe.json",
+  "probe_url": "http://127.0.0.1:17777/",
+  "credential_storage": "SCM plus protected DPAPI; transient installer environment restored",
+  "artifact_files": [
+    {
+      "sha256": "638acc7b22eeaaa2079340067fb3f64cb7f83c30e9e28896071addcdab5c8afd",
+      "local_release_sha256": "f3362675e750d0db11d4db7d011b611932ade13a5c614a52411f3168354e1dea",
+      "bytes": 3666944,
+      "name": "coord-action-runner.exe"
+    },
+    {
+      "sha256": "a997070cb5fe50434f125597fc237750da7e2c4e821e928de3561d3fe254182c",
+      "local_release_sha256": "5a8987d696d96e90feea86e150172fe6c5c9a5e42cab20e3388ba25824611251",
+      "bytes": 1082880,
+      "name": "coord-emote-action.exe"
+    },
+    {
+      "sha256": "24a9b16281e47df9510510560dd50c642b0b46fdf7640c828fded6d48d4ef597",
+      "local_release_sha256": "55043205c666b6db2afb23d60c96a591dafcbff6c6360f439f74c1b1e2cb981f",
+      "bytes": 11057152,
+      "name": "coord.exe"
+    }
+  ]
+}

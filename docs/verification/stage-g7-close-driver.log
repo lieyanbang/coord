@@ -1,0 +1,8 @@
+g7-close fmt: exit=0
+g7-close clippy: exit=0
+g7-close test: exit=0
+g7-close build: exit=0
+g7-close health-monitor: exit=0
+g7-close relay-tests: exit=0
+g7-close coord-mcp-tests: exit=0
+g7-close phase-g-tools: exit=0

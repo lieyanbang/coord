@@ -1,0 +1,8 @@
+g7-clock fmt: exit=0
+g7-clock clippy: exit=0
+g7-clock test: exit=0
+g7-clock build: exit=0
+g7-clock health-monitor: exit=0
+g7-clock relay-tests: exit=0
+g7-clock coord-mcp-tests: exit=0
+g7-clock phase-g-tools: exit=0
