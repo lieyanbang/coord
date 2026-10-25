@@ -16,13 +16,14 @@
 //!   - `agents/list`       — list known agents
 
 use axum::{
-    extract::{DefaultBodyLimit, State},
+    extract::{ConnectInfo, DefaultBodyLimit, State},
     http::HeaderMap,
     routing::post,
-    Json, Router,
+    Extension, Json, Router,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
+use std::net::SocketAddr;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::broadcast;
@@ -118,6 +119,7 @@ struct RpcError {
 async fn handle_rpc(
     State(state): State<AppState>,
     headers: HeaderMap,
+    peer: Option<Extension<ConnectInfo<SocketAddr>>>,
     Json(req): Json<RpcRequest>,
 ) -> Json<RpcResponse> {
     let id = req.id.clone();
@@ -133,6 +135,12 @@ async fn handle_rpc(
         })
     } else if req.jsonrpc.as_deref() != Some("2.0") {
         Err(MethodError::bad_params("jsonrpc must be 2.0"))
+    } else if req.method.starts_with("scheduler/trusted_")
+        && peer.is_some_and(|Extension(ConnectInfo(addr))| !addr.ip().is_loopback())
+    {
+        Err(MethodError::conflict(
+            "trusted scheduler methods must arrive over loopback; remote clients must use the authenticated Relay",
+        ))
     } else {
         dispatch(&state, &req.method, req.params).await
     };
@@ -190,6 +198,154 @@ async fn dispatch(state: &AppState, method: &str, params: Value) -> Result<Value
                 .map_err(MethodError::internal)?;
             state.bus.notify();
             Ok(json!({ "ok": true }))
+        }
+        "scheduler/trusted_claim" => {
+            #[derive(Deserialize)]
+            #[serde(deny_unknown_fields)]
+            struct P {
+                batch_id: Uuid,
+                worker_id: String,
+                #[serde(default)]
+                lease_seconds: Option<u64>,
+            }
+            let p: P = serde_json::from_value(params).map_err(MethodError::bad_params)?;
+            match state
+                .store
+                .claim_trusted(p.batch_id, &p.worker_id, p.lease_seconds)
+                .map_err(MethodError::internal)?
+            {
+                Some(task) => {
+                    state.bus.notify();
+                    Ok(trusted_task_value(&task))
+                }
+                None => Ok(json!({"state":"empty","batch_id":p.batch_id})),
+            }
+        }
+        "scheduler/trusted_progress" => {
+            #[derive(Deserialize)]
+            #[serde(deny_unknown_fields)]
+            struct P {
+                task_id: Uuid,
+                batch_id: Uuid,
+                worker_id: String,
+                attempt_no: u64,
+                checkpoint: String,
+                #[serde(default)]
+                lease_seconds: Option<u64>,
+            }
+            let p: P = serde_json::from_value(params).map_err(MethodError::bad_params)?;
+            match state
+                .store
+                .progress_trusted(
+                    p.task_id,
+                    p.batch_id,
+                    &p.worker_id,
+                    p.attempt_no,
+                    &p.checkpoint,
+                    p.lease_seconds,
+                )
+                .map_err(MethodError::internal)?
+            {
+                Some(value) => {
+                    state.bus.notify();
+                    Ok(value)
+                }
+                None => Err(MethodError::conflict(
+                    "progress rejected: the task is no longer owned by this attempt or the checkpoint is invalid",
+                )),
+            }
+        }
+        "scheduler/trusted_complete" => {
+            #[derive(Deserialize)]
+            #[serde(deny_unknown_fields)]
+            struct P {
+                task_id: Uuid,
+                batch_id: Uuid,
+                worker_id: String,
+                attempt_no: u64,
+                #[serde(default)]
+                result: Option<Value>,
+                #[serde(default)]
+                ack: Option<AckSpec>,
+            }
+            let p: P = serde_json::from_value(params).map_err(MethodError::bad_params)?;
+            match state
+                .store
+                .complete_trusted(
+                    p.task_id,
+                    p.batch_id,
+                    &p.worker_id,
+                    p.attempt_no,
+                    p.result.unwrap_or(Value::Null),
+                    p.ack,
+                )
+                .map_err(MethodError::internal)?
+            {
+                Some(value) => {
+                    state.bus.notify();
+                    Ok(value)
+                }
+                None => Err(MethodError::conflict(
+                    "completion rejected: the task is no longer owned by this attempt",
+                )),
+            }
+        }
+        "scheduler/trusted_release" => {
+            #[derive(Deserialize)]
+            #[serde(deny_unknown_fields)]
+            struct P {
+                task_id: Uuid,
+                batch_id: Uuid,
+                worker_id: String,
+                attempt_no: u64,
+                #[serde(default)]
+                reason: Option<String>,
+            }
+            let p: P = serde_json::from_value(params).map_err(MethodError::bad_params)?;
+            match state
+                .store
+                .release_trusted(
+                    p.task_id,
+                    p.batch_id,
+                    &p.worker_id,
+                    p.attempt_no,
+                    p.reason.as_deref(),
+                )
+                .map_err(MethodError::internal)?
+            {
+                Some(value) => {
+                    state.bus.notify();
+                    Ok(value)
+                }
+                None => Err(MethodError::conflict(
+                    "release rejected: the task is no longer owned by this live attempt",
+                )),
+            }
+        }
+        "scheduler/trusted_resume" => {
+            #[derive(Deserialize)]
+            #[serde(deny_unknown_fields)]
+            struct P {
+                batch_id: Uuid,
+                worker_id: String,
+            }
+            let p: P = serde_json::from_value(params).map_err(MethodError::bad_params)?;
+            state
+                .store
+                .resume_trusted(p.batch_id, &p.worker_id)
+                .map_err(MethodError::internal)
+        }
+        "scheduler/trusted_status" => {
+            #[derive(Deserialize)]
+            #[serde(deny_unknown_fields)]
+            struct P {
+                batch_id: Uuid,
+            }
+            let p: P = serde_json::from_value(params).map_err(MethodError::bad_params)?;
+            state
+                .store
+                .status_trusted(p.batch_id)
+                .map_err(MethodError::internal)
         }
         "tasks/claim" => {
             let p: ClaimParams = serde_json::from_value(params).map_err(MethodError::bad_params)?;
@@ -495,6 +651,14 @@ async fn dispatch(state: &AppState, method: &str, params: Value) -> Result<Value
 /// bus and re-queries on the first state change (or on timeout). The
 /// reclaim sweep runs first so a freshly-expired claim shows up as
 /// pending without callers having to poke `tasks/reclaim` manually.
+fn trusted_task_value(task: &crate::core::types::Task) -> Value {
+    let mut value = serde_json::to_value(task).unwrap_or(Value::Null);
+    if let Some(object) = value.as_object_mut() {
+        object.remove("lease_token");
+    }
+    value
+}
+
 async fn tasks_list(state: &AppState, params: Value) -> Result<Value, MethodError> {
     let limit = params
         .get("limit")
@@ -621,7 +785,13 @@ async fn agent_card() -> Json<Value> {
             { "id": "tasks/claim",    "name": "Atomic leased claim (extension)" },
             { "id": "tasks/extend",   "name": "Extend a claim's lease (extension)" },
             { "id": "tasks/reclaim",  "name": "Sweep expired leases (extension)" },
-            { "id": "tasks/complete", "name": "Complete a claimed task (extension)" }
+            { "id": "tasks/complete", "name": "Complete a claimed task (extension)" },
+            { "id": "scheduler/trusted_claim", "name": "Claim a batch task without exposing its lease token" },
+            { "id": "scheduler/trusted_progress", "name": "Persist a fenced checkpoint" },
+            { "id": "scheduler/trusted_complete", "name": "Complete a fenced attempt idempotently" },
+            { "id": "scheduler/trusted_release", "name": "Release a live attempt without consuming failure budget" },
+            { "id": "scheduler/trusted_resume", "name": "Resume or reconcile a worker attempt" },
+            { "id": "scheduler/trusted_status", "name": "Read trusted batch status" }
         ]
     }))
 }
@@ -743,6 +913,31 @@ impl MethodError {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[tokio::test]
+    async fn trusted_scheduler_methods_reject_non_loopback_peers() {
+        let store = Arc::new(Store::open(std::path::Path::new(":memory:")).unwrap());
+        let state = AppState {
+            store,
+            bus: ChangeBus::new(),
+            requests: Arc::new(tokio::sync::Semaphore::new(128)),
+            after_query: None,
+        };
+        let peer = Extension(ConnectInfo("192.0.2.10:1234".parse().unwrap()));
+        let request = RpcRequest {
+            jsonrpc: Some("2.0".into()),
+            id: Some(json!(1)),
+            method: "scheduler/trusted_status".into(),
+            params: json!({"batch_id": Uuid::new_v4()}),
+        };
+
+        let response = handle_rpc(State(state), HeaderMap::new(), Some(peer), Json(request)).await;
+
+        let error = response.0.error.expect("remote trusted RPC must be denied");
+        assert_eq!(error.code, -32001);
+        assert!(error.message.contains("loopback"));
+    }
+
     #[tokio::test]
     async fn write_between_empty_query_and_wait_is_not_lost() {
         let store = Arc::new(Store::open(std::path::Path::new(":memory:")).unwrap());

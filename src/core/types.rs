@@ -91,6 +91,16 @@ pub struct Task {
     pub attempt_no: u64,
     #[serde(default)]
     pub attempt_count: u32,
+    /// Compatibility count of how many claims have been issued for this task.
+    /// It is retained for history and is no longer the business retry gate.
+    #[serde(default)]
+    pub failure_count: u32,
+    /// Consecutive abandoned attempts since the last accepted progress update.
+    #[serde(default)]
+    pub interruption_streak: u32,
+    /// Set after repeated interruptions so operators can see a stuck task.
+    #[serde(default)]
+    pub needs_attention: bool,
     #[serde(default = "default_max_attempts")]
     pub max_attempts: u32,
     #[serde(default)]
