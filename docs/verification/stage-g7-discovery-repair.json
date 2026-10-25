@@ -1,0 +1,211 @@
+{
+  "windows": {
+    "before_sha256": "494b77ee53462767964bd4513593df3e0b80cd13a5c7087a3a2069d50e65f3de",
+    "legacy_allowlist_unchanged": true,
+    "added_binding": {
+      "worker_ids": [
+        "0000",
+        "0001"
+      ],
+      "batch_id": "d2313c78-22da-4cb8-bcd7-ece9897e0db1",
+      "not_before": 1792907222904,
+      "expires_at": 1792993523904,
+      "id": "g7-browser-reconnect",
+      "scopes": [
+        "coord:read",
+        "coord:claim",
+        "coord:progress",
+        "coord:extend",
+        "coord:submit",
+        "coord:failure"
+      ],
+      "client_sha256": "2e12506a52763d439506792019e34debb54b912d2575c82c3ef275af5cd01ab1"
+    },
+    "unrestarted_services": [
+      {
+        "Name": "coord",
+        "ProcessId": 2512,
+        "State": "Running",
+        "StartName": "NT AUTHORITY\\LocalService"
+      },
+      {
+        "Name": "Servy",
+        "ProcessId": 3224,
+        "State": "Running",
+        "StartName": "LocalSystem"
+      },
+      {
+        "Name": "CoordActionRunnerG7",
+        "ProcessId": 10228,
+        "State": "Running",
+        "StartName": ".\\coord_action_g7"
+      }
+    ],
+    "after_sha256": "176e68004d6a846c92f8216c53c1ff166884e6beea982235770cc2293976734b",
+    "original_bindings_retained": true,
+    "state": "PASS",
+    "backup_root": "C:\\ProgramData\\coord\\g7\\private\\reconnect-20261025T063741Z-97393b76"
+  },
+  "linux": {
+    "state": "PASS",
+    "backup_root": "/var/backups/coord-g7-20261025T050727Z-01d4e8f7/reconnect-20261025T063752Z-33cda995",
+    "before_sha256": "b984eca5dbc79f59a5f1a822b3c033cd3b85726bd8bb797334b5acda4b781b37",
+    "added_binding": {
+      "worker_ids": [
+        "0000",
+        "0001"
+      ],
+      "batch_id": "d2313c78-22da-4cb8-bcd7-ece9897e0db1",
+      "not_before": 1792907222904,
+      "expires_at": 1792993523904,
+      "id": "g7-browser-reconnect",
+      "scopes": [
+        "coord:read",
+        "coord:claim",
+        "coord:progress",
+        "coord:extend",
+        "coord:submit",
+        "coord:failure"
+      ],
+      "client_sha256": "2e12506a52763d439506792019e34debb54b912d2575c82c3ef275af5cd01ab1"
+    },
+    "oauth_store_modified": false,
+    "legacy_allowlist_unchanged": true,
+    "original_bindings_retained": true,
+    "after_sha256": "e356239e673e1a6d324d0c69504e3c8c0c2fda06b2de02ee9847c63f1e926f9b",
+    "health": {
+      "state": "READY",
+      "agentConnected": true,
+      "lastHeartbeat": "2026-10-25T06:37:53.409Z",
+      "pending": 0
+    }
+  },
+  "scope_probes": {
+    "state": "PASS",
+    "scope": "operator signed read-only transport through both loaded hops; not real ChatGPT OAuth acceptance",
+    "tests": {
+      "worker_0000": {
+        "status": 200,
+        "state": "ok",
+        "progress": {
+          "active": 4,
+          "id": "d2313c78-22da-4cb8-bcd7-ece9897e0db1",
+          "states": {
+            "cancelled": 0,
+            "claimed": 0,
+            "completed": 0,
+            "failed": 0,
+            "pending": 4,
+            "submitted": 0
+          },
+          "status": "active",
+          "terminal": 0,
+          "total": 4
+        }
+      },
+      "worker_0001": {
+        "status": 200,
+        "state": "ok",
+        "progress": {
+          "active": 4,
+          "id": "d2313c78-22da-4cb8-bcd7-ece9897e0db1",
+          "states": {
+            "cancelled": 0,
+            "claimed": 0,
+            "completed": 0,
+            "failed": 0,
+            "pending": 4,
+            "submitted": 0
+          },
+          "status": "active",
+          "terminal": 0,
+          "total": 4
+        }
+      },
+      "worker_0002": {
+        "status": 400,
+        "state": "error"
+      },
+      "wrong_batch": {
+        "status": 400,
+        "state": "error"
+      }
+    },
+    "public_policy": {
+      "bindings": [
+        {
+          "batch_id": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e",
+          "client_sha256": "eeb595ffaeec3cc157243f766c320f4133f1d9a6af05ad21ee8fb373850122ba",
+          "expires_at": 1792993523904,
+          "id": "g7-operator",
+          "not_before": 1792907222904,
+          "scopes": [
+            "coord:read",
+            "coord:claim",
+            "coord:progress",
+            "coord:extend",
+            "coord:submit",
+            "coord:failure"
+          ],
+          "worker_ids": [
+            "0000",
+            "0001",
+            "0002",
+            "0003",
+            "0004",
+            "0005"
+          ]
+        },
+        {
+          "batch_id": "d2313c78-22da-4cb8-bcd7-ece9897e0db1",
+          "client_sha256": "eeb595ffaeec3cc157243f766c320f4133f1d9a6af05ad21ee8fb373850122ba",
+          "expires_at": 1792993523904,
+          "id": "g7-browser",
+          "not_before": 1792907222904,
+          "scopes": [
+            "coord:read",
+            "coord:claim",
+            "coord:progress",
+            "coord:extend",
+            "coord:submit",
+            "coord:failure"
+          ],
+          "worker_ids": [
+            "0000",
+            "0001",
+            "0002",
+            "0003",
+            "0004",
+            "0005"
+          ]
+        },
+        {
+          "batch_id": "d2313c78-22da-4cb8-bcd7-ece9897e0db1",
+          "client_sha256": "2e12506a52763d439506792019e34debb54b912d2575c82c3ef275af5cd01ab1",
+          "expires_at": 1792993523904,
+          "id": "g7-browser-reconnect",
+          "not_before": 1792907222904,
+          "scopes": [
+            "coord:read",
+            "coord:claim",
+            "coord:progress",
+            "coord:extend",
+            "coord:submit",
+            "coord:failure"
+          ],
+          "worker_ids": [
+            "0000",
+            "0001"
+          ]
+        }
+      ],
+      "enabled": true,
+      "legacy_client_sha256": [
+        "eeb595ffaeec3cc157243f766c320f4133f1d9a6af05ad21ee8fb373850122ba"
+      ],
+      "mode": "logical",
+      "version": 2
+    },
+    "no_task_mutations": true
+  }
+}

@@ -101,3 +101,18 @@ selection. Never automatically replay an uncertain non-idempotent action.
 Actual current deployment, final CI hashes and canary outcome are recorded in
 `../verification/PHASE_G7.md`. Historical G6/F3-R boundaries remain independently
 scoped; two real ChatGPT lifecycle tests cannot be claimed from operator clients.
+
+## Exact reconnect binding repair (2026-10-25)
+
+A normal ChatGPT reconnect produced a new DCR client outside the configured
+identity bindings. OAuth succeeded but discovery returned 403. The precise
+new client was admitted only for the existing browser batch and workers
+0000/0001, with the original scopes and expiry. Original bindings, legacy
+allowlist and signing material remain unchanged. Both actual chats now pass
+4/4 tasks and 5/5 actions. No new binary was deployed.
+
+Before-state backups, affected-service reloads, exact repair/rollback steps and
+verification are in `../verification/G7_DISCOVERY_REPAIR.md`. The site-specific
+repair helpers deliberately reject reapplication. Future reconnects must reuse
+the approved public OAuth client or undergo an exact binding review; never
+allow every DCR client automatically. Expiry remains 2026-10-26T05:45:23.904Z.

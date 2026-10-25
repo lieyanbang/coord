@@ -1,17 +1,18 @@
 # Phase G7 — trusted logical workers and controlled deployment
 
 Date: 2026-10-25 Australia/Brisbane. Current result: **DEPLOYED; automated/site
-gates PASS; real two-ChatGPT lifecycle NEEDS_USER_ACTION (overall PARTIAL)**.
+gates and real two-ChatGPT synthetic lifecycle PASS**. This acceptance is
+limited to the authorized G7 trusted-owner synthetic scope.
 The user accepts logical-worker impersonation within one OAuth owner and lack
 of autonomous ChatGPT background wake. No other safety/integrity gate is relaxed.
 Formal emote-000 through emote-120 tasks and classification agents are prohibited.
 
 | G7 gate | Current result | Evidence |
 | --- | --- | --- |
-| A logical protocol and owner/legacy compatibility | PASS mechanism; real two-chat lifecycle pending | version-2 policy, explicit canonical worker, scope/batch/signature/fencing tests; actual installed OAuth legacy read |
-| B bounded lease and repeated claim | PASS operator synthetic; real ChatGPT visual/renewal cycle NEEDS_USER_ACTION | production six-worker trace, natural expiry/reclaim, progress/renewal, consumed sequence and stale token denials |
+| A logical protocol and owner/legacy compatibility | PASS; actual OAuth reconnect and both logical workers verified | version-2 policy, explicit canonical worker, scope/batch/signature/fencing tests; actual installed OAuth legacy read |
+| B bounded lease and repeated claim | PASS operator synthetic and actual two-chat lifecycle | production six-worker trace, natural expiry/reclaim, progress/renewal, consumed sequence and stale token denials |
 | C actual Runner and controlled deployment | PASS | real SID/ACL/RPC/SYSTEM tests, online backups, matched CI executable deployment, service crash/uncertain and copied-DB rollback |
-| D production synthetic canary and regression | PASS automated; real two-chat subgate NEEDS_USER_ACTION | 10/10 synthetic completed, 11/11 actions succeeded, final signed denial probes, original DB/service/route comparison |
+| D production synthetic canary and regression | PASS automated and actual two-chat subgate | 10/10 synthetic completed, 11/11 actions succeeded, final signed denial probes, original DB/service/route comparison |
 | Formal classification / 121 tasks | NOT_RUN; not authorized | no formal batch or classification agent |
 
 Final implementation is `f0aa7daed53a36f8c0c2418d935858bbf9f9fd9e` on Fork branch
@@ -285,3 +286,26 @@ push using origin (the upstream) was denied with HTTP 403; no upstream state
 changed. The corrected push explicitly targets the verified lieyanbang Fork.
 No force push, release tag or Release was used. TASK.md retains its original
 SHA-256. Reports preserve the real failures rather than replacing their outputs.
+
+## Discovery repair and real browser closeout (07:03 UTC)
+
+The preceding browser-runtime and NEEDS_USER_ACTION observations are historical.
+Browser control recovered. OAuth succeeded while discovery initially failed
+because a new DCR client was absent from the identity policy. The exact client
+was bound only to the browser batch and workers 0000/0001, preserving expiry,
+old grants, signing material and Access policy. The original Plus account
+reconnected successfully, and ChatGPT showed all ten G7 tools.
+
+Both original chats inspected synthetic marker previews and completed two tasks
+each: fresh progress, bounded renewal, submit, exact readback and next claim.
+Manager/SQLite/output checks prove 4/4 completed, 5/5 actions succeeded, no active
+task, all attempt 1. B's first final reply failed to render; a read-only follow-up
+confirmed both exact results and completed batch without resubmission. Old task
+fields, protected service PIDs, non-admin Runner, 401/401 and SYSTEM READY pass.
+
+All eight local g7-reconnect checks pass. Only policy, operating helpers and docs
+changed; installed binaries remain the matching f0aa7da CI artifacts. Details,
+exact IDs/backups/hashes and residual boundaries are in G7_DISCOVERY_REPAIR.md.
+F3-R remains independently PARTIAL. No extra tasks, formal classification,
+autonomous wake or protected conversation identity is claimed. Browser binding
+still expires 2026-10-26T05:45:23.904Z.

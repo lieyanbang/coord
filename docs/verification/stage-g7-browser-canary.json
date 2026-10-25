@@ -1,0 +1,299 @@
+{
+  "database": {
+    "state": "PASS",
+    "tasks": [
+      {
+        "id": "19355413-eeda-4d57-b499-3adcdf9e40e5",
+        "state": "completed",
+        "claimed_by": "emote-0000",
+        "attempt_no": 1,
+        "claimed_at": "2026-10-25T06:58:48.115200300+00:00",
+        "completed_at": "2026-10-25T06:59:15.333135900+00:00",
+        "progress": {
+          "agent_id": "emote-0000",
+          "attempt_no": 1,
+          "sequence": 1,
+          "checkpoint": "实际查看两张 256x256 PNG 合成 marker 附件：各 65536 像素均为不透明纯白 RGBA(255,255,255,255)，无边界、纹理、文字或角色轮廓；两张视觉与像素特征一致。仅就最近邻放大的附件作观察。",
+          "progress_at": "2026-10-25T06:59:11.871716100+00:00",
+          "last_extended_sequence": 1
+        },
+        "renewal": {
+          "progress_sequence": 1,
+          "lease_until": "2026-10-25T07:09:13.643904700+00:00"
+        },
+        "receipt_metadata": [
+          {
+            "operation": "complete",
+            "agent_id": "emote-0000"
+          }
+        ],
+        "group_id": "02",
+        "published_matches_result": true
+      },
+      {
+        "id": "462e3022-8da0-4826-8330-3d7ba43a6068",
+        "state": "completed",
+        "claimed_by": "emote-0000",
+        "attempt_no": 1,
+        "claimed_at": "2026-10-25T06:59:42.118760200+00:00",
+        "completed_at": "2026-10-25T06:59:46.205970800+00:00",
+        "progress": {
+          "agent_id": "emote-0000",
+          "attempt_no": 1,
+          "sequence": 1,
+          "checkpoint": "对用户所给两张合成 marker 附件作实际像素检查：两张均 256×256、65536 个像素全为不透明纯白 RGBA(255,255,255,255)，无可辨纹理、文字、角色或其他细节。描述仅基于最近邻放大的附件。",
+          "progress_at": "2026-10-25T06:59:43.413940700+00:00",
+          "last_extended_sequence": 1
+        },
+        "renewal": {
+          "progress_sequence": 1,
+          "lease_until": "2026-10-25T07:09:44.853830100+00:00"
+        },
+        "receipt_metadata": [
+          {
+            "operation": "complete",
+            "agent_id": "emote-0000"
+          }
+        ],
+        "group_id": "03",
+        "published_matches_result": true
+      },
+      {
+        "id": "6c215a3b-3376-4fe6-8631-541906e85330",
+        "state": "completed",
+        "claimed_by": "emote-0001",
+        "attempt_no": 1,
+        "claimed_at": "2026-10-25T06:59:52.301341100+00:00",
+        "completed_at": "2026-10-25T07:00:43.445181900+00:00",
+        "progress": {
+          "agent_id": "emote-0001",
+          "attempt_no": 1,
+          "sequence": 1,
+          "checkpoint": "Both provided 256x256 images inspected: uniformly opaque white, no visible characters, text, edges or shapes. Synthetic enlarged single-pixel marker.",
+          "progress_at": "2026-10-25T07:00:22.510389600+00:00",
+          "last_extended_sequence": 1
+        },
+        "renewal": {
+          "progress_sequence": 1,
+          "lease_until": "2026-10-25T07:10:31.805954900+00:00"
+        },
+        "receipt_metadata": [
+          {
+            "operation": "complete",
+            "agent_id": "emote-0001"
+          }
+        ],
+        "group_id": "01",
+        "published_matches_result": true
+      },
+      {
+        "id": "dcfc7146-2d8c-4860-b14f-9eb1c9d68ae4",
+        "state": "completed",
+        "claimed_by": "emote-0001",
+        "attempt_no": 1,
+        "claimed_at": "2026-10-25T07:01:01.343975800+00:00",
+        "completed_at": "2026-10-25T07:01:31.398042900+00:00",
+        "progress": {
+          "agent_id": "emote-0001",
+          "attempt_no": 1,
+          "sequence": 1,
+          "checkpoint": "Inspected the two supplied nearest-neighbor enlarged 256x256 synthetic marker attachments: both are fully opaque white with no identifiable edges, characters, symbols, or text.",
+          "progress_at": "2026-10-25T07:01:10.501428200+00:00",
+          "last_extended_sequence": 1
+        },
+        "renewal": {
+          "progress_sequence": 1,
+          "lease_until": "2026-10-25T07:11:19.307759900+00:00"
+        },
+        "receipt_metadata": [
+          {
+            "operation": "complete",
+            "agent_id": "emote-0001"
+          }
+        ],
+        "group_id": "00",
+        "published_matches_result": true
+      }
+    ],
+    "files": [
+      {
+        "path": "00.json",
+        "bytes": 933,
+        "sha256": "d2b3b09bb7cee11f7e30e806f8955f1240eaedf9fa97b87e67697541e94fdbc8"
+      },
+      {
+        "path": "01.json",
+        "bytes": 889,
+        "sha256": "3bcfa792b0f1f33de5cb71e496c322a6486867b1128b975013e6147c64d6c43e"
+      },
+      {
+        "path": "02.json",
+        "bytes": 849,
+        "sha256": "eccd5c39ba2c25aead683b5489c466571f9138cbf776d4d6ed5ab83a825d8bb9"
+      },
+      {
+        "path": "03.json",
+        "bytes": 867,
+        "sha256": "4f98fca897f845393191119439cb4910178d91de148ccda3ea582802e8c08ef4"
+      },
+      {
+        "path": "index.json",
+        "bytes": 802,
+        "sha256": "ca9ac52f1a4997662281f05d85b5dfc1ea79e046de89e71863611b25829db8aa"
+      },
+      {
+        "path": "review_queue/candidates.json",
+        "bytes": 178,
+        "sha256": "637ab54127880ce1b6d190be10620d241b002f2222320920c3f445a0bd5cea07"
+      }
+    ],
+    "index": {
+      "available_results": 4,
+      "expected_groups": 4,
+      "missing_groups": [],
+      "results": [
+        {
+          "character_count": 0,
+          "group_id": "00",
+          "path": "00.json",
+          "sha256": "d2b3b09bb7cee11f7e30e806f8955f1240eaedf9fa97b87e67697541e94fdbc8",
+          "uncertain_count": 1
+        },
+        {
+          "character_count": 0,
+          "group_id": "01",
+          "path": "01.json",
+          "sha256": "3bcfa792b0f1f33de5cb71e496c322a6486867b1128b975013e6147c64d6c43e",
+          "uncertain_count": 1
+        },
+        {
+          "character_count": 0,
+          "group_id": "02",
+          "path": "02.json",
+          "sha256": "eccd5c39ba2c25aead683b5489c466571f9138cbf776d4d6ed5ab83a825d8bb9",
+          "uncertain_count": 1
+        },
+        {
+          "character_count": 0,
+          "group_id": "03",
+          "path": "03.json",
+          "sha256": "4f98fca897f845393191119439cb4910178d91de148ccda3ea582802e8c08ef4",
+          "uncertain_count": 1
+        }
+      ],
+      "schema_version": 1,
+      "scope": "Receipt-checked preliminary index; no global character merge.",
+      "state": "STRUCTURALLY_COMPLETE"
+    },
+    "review_queue": {
+      "candidate_count": 0,
+      "candidates": [],
+      "missing_groups": [],
+      "note": "Candidates only; do not assign global IDs or merge automatically.",
+      "schema_version": 1,
+      "state": "candidate_review"
+    },
+    "tokens_exported": false,
+    "quick_check": "ok"
+  },
+  "actions": {
+    "actions": [
+      {
+        "action_kind": "on_task_completed",
+        "attempt_count": 1,
+        "available_at": null,
+        "event_id": "a65815f9-b9fb-495a-a0bf-9a0a10e65dba",
+        "exit_code": 0,
+        "id": "d7fd0d42-1801-4018-9251-6daaedbd8857",
+        "last_error": null,
+        "max_attempts": 2,
+        "output_bytes": 0,
+        "profile_id": "g7-browser-v1",
+        "profile_version": 1,
+        "state": "succeeded",
+        "task_id": "19355413-eeda-4d57-b499-3adcdf9e40e5"
+      },
+      {
+        "action_kind": "on_task_completed",
+        "attempt_count": 1,
+        "available_at": null,
+        "event_id": "c8f1ba6d-0cb8-441c-85d4-31000f731baf",
+        "exit_code": 0,
+        "id": "f117a992-9c6d-41be-a42f-0c5e3cc645de",
+        "last_error": null,
+        "max_attempts": 2,
+        "output_bytes": 0,
+        "profile_id": "g7-browser-v1",
+        "profile_version": 1,
+        "state": "succeeded",
+        "task_id": "462e3022-8da0-4826-8330-3d7ba43a6068"
+      },
+      {
+        "action_kind": "on_task_completed",
+        "attempt_count": 1,
+        "available_at": null,
+        "event_id": "b6f755f2-6fd4-4a34-be6b-392c92bf9278",
+        "exit_code": 0,
+        "id": "d138f7a7-da35-431f-8a75-98d5a5528751",
+        "last_error": null,
+        "max_attempts": 2,
+        "output_bytes": 0,
+        "profile_id": "g7-browser-v1",
+        "profile_version": 1,
+        "state": "succeeded",
+        "task_id": "6c215a3b-3376-4fe6-8631-541906e85330"
+      },
+      {
+        "action_kind": "on_task_completed",
+        "attempt_count": 1,
+        "available_at": null,
+        "event_id": "a8223b02-1c4b-40cc-94e5-6042ea906b02",
+        "exit_code": 0,
+        "id": "254cee33-8f5c-4037-a606-49eb5f2e9e3c",
+        "last_error": null,
+        "max_attempts": 2,
+        "output_bytes": 0,
+        "profile_id": "g7-browser-v1",
+        "profile_version": 1,
+        "state": "succeeded",
+        "task_id": "dcfc7146-2d8c-4860-b14f-9eb1c9d68ae4"
+      },
+      {
+        "action_kind": "on_batch_completed",
+        "attempt_count": 1,
+        "available_at": null,
+        "event_id": "e0ac587e-337c-44b5-a5a7-73d2851411f0",
+        "exit_code": 0,
+        "id": "b2ef386f-d8c5-4abe-a83a-4eb9e507c3c4",
+        "last_error": null,
+        "max_attempts": 2,
+        "output_bytes": 0,
+        "profile_id": "g7-browser-v1",
+        "profile_version": 1,
+        "state": "succeeded",
+        "task_id": null
+      }
+    ],
+    "batch_id": "d2313c78-22da-4cb8-bcd7-ece9897e0db1",
+    "truncated": false
+  },
+  "state": "PASS",
+  "mutation_performed": false,
+  "batch_id": "d2313c78-22da-4cb8-bcd7-ece9897e0db1",
+  "observed_at": "2026-10-25T07:03:15.0187043Z",
+  "progress": {
+    "active": 0,
+    "id": "d2313c78-22da-4cb8-bcd7-ece9897e0db1",
+    "states": {
+      "cancelled": 0,
+      "claimed": 0,
+      "completed": 4,
+      "failed": 0,
+      "pending": 0,
+      "submitted": 0
+    },
+    "status": "completed",
+    "terminal": 4,
+    "total": 4
+  }
+}

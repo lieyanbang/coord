@@ -1,18 +1,26 @@
-# Two-conversation canary handoff
+# Two-conversation canary acceptance
 
-Status: **NEEDS_USER_ACTION**. The browser automation runtime currently fails
-before JavaScript initializes (`failed to write kernel assets`, Windows os
-error 3). No G7 real ChatGPT write/renew/submit cycle is claimed. The four
-synthetic browser tasks remain unclaimed. This handoff does not authorize any
-formal image classification or 121-task initialization.
+Status: **PASS, 2026-10-25 07:03 UTC**. Both original chats completed two
+synthetic tasks each: 4/4 completed, active 0, 5/5 native actions succeeded.
+Every task had fresh progress and explicit renewal, attempt 1, submit and exact
+readback. Do not rerun these completed fixtures. Instructions below preserve
+the performed procedure. Exact IDs and repair evidence are in
+`../verification/G7_DISCOVERY_REPAIR.md`. Formal classification is not authorized.
+
+Browser control recovered. The replacement private Coord entry reconnected in
+the original Plus account; tool discovery and worker/batch arguments refreshed.
+The SHA-matched original 1x1 task/reference PNGs were attached as nearest-neighbor
+256x256 previews. Both chats inspected the white marker. B's first final reply
+failed to render; a read-only follow-up confirmed its exact tasks and completed
+batch without replaying writes.
 
 Existing probe chats:
 
 - A: https://chatgpt.com/c/6adc81f8-d6fc-83ec-a347-1f5e22910047
 - B: https://chatgpt.com/c/6adc82c9-4b6c-83ec-b273-477e77ade133
 
-Both use the existing authenticated Coord connector. Check that the refreshed
-tool schema includes worker_id. Chat A declares `0000`; chat B declares `0001`.
+Both used the reconnected authenticated Coord connector. The refreshed
+tool schema accepted worker_id. Chat A declares `0000`; chat B declares `0001`.
 Every logical call includes browser batch
 `d2313c78-22da-4cb8-bcd7-ece9897e0db1`. This label is cooperative, not a protected
 conversation credential; either owner conversation can declare either value.
@@ -54,5 +62,6 @@ comparison; ChatGPT cannot change an action profile or call management RPC.
 Refresh/close one chat during an additional approved fixture to test lost-turn
 recovery if desired. No active turn means no renewal; leases expire normally.
 Do not promise autonomous wake, 24-hour continuity or result replay after lease
-loss. Browser acceptance remains incomplete until actual tool traces and
-server-side task/attempt/action evidence establish the lifecycle above.
+loss. The actual browser lifecycle is now established by chat readbacks and
+server-side task/attempt/progress/action/output evidence. Additional browser-close
+and refresh fault scenarios were not performed during this acceptance.

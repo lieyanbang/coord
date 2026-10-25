@@ -1,0 +1,743 @@
+{
+  "observed_at": "2026-10-25T07:03:23.361169+00:00",
+  "since": "2026-10-25T06:00:00+00:00",
+  "mode": "read-only; no tokens, auth codes, cookies or raw request URLs returned",
+  "services": {
+    "feathersjsapp.service": [
+      "MainPID=126624",
+      "NRestarts=0",
+      "ActiveState=active"
+    ],
+    "coord-relay.service": [
+      "MainPID=126610",
+      "NRestarts=0",
+      "ActiveState=active"
+    ],
+    "openresty.service": [
+      "MainPID=109204",
+      "NRestarts=0",
+      "ActiveState=active"
+    ]
+  },
+  "oauth": {
+    "counts": {
+      "clients": 3,
+      "accessTokens": 25,
+      "refreshTokens": 25
+    },
+    "clients": [
+      {
+        "client_sha256": "0987c05c56e3a2d8cba28df1a3c8ab06c5ad0948bef49d29fb74f34053863235",
+        "allowed_by_identity_policy": false,
+        "createdAt": 1792624672081,
+        "client_name": "ChatGPT",
+        "redirect_uri_hosts": [
+          "chatgpt.com"
+        ]
+      },
+      {
+        "client_sha256": "eeb595ffaeec3cc157243f766c320f4133f1d9a6af05ad21ee8fb373850122ba",
+        "allowed_by_identity_policy": true,
+        "createdAt": 1792652374763,
+        "client_name": "ChatGPT",
+        "redirect_uri_hosts": [
+          "chatgpt.com"
+        ]
+      },
+      {
+        "client_sha256": "2e12506a52763d439506792019e34debb54b912d2575c82c3ef275af5cd01ab1",
+        "allowed_by_identity_policy": true,
+        "createdAt": 1792909626679,
+        "client_name": "ChatGPT",
+        "redirect_uri_hosts": [
+          "chatgpt.com"
+        ]
+      }
+    ],
+    "access_token_subjects": [
+      {
+        "client_sha256": "eeb595ffaeec3cc157243f766c320f4133f1d9a6af05ad21ee8fb373850122ba",
+        "allowed_by_identity_policy": true,
+        "records": 22,
+        "live_records": 0,
+        "latest_expiry": 1792909668309
+      },
+      {
+        "client_sha256": "2e12506a52763d439506792019e34debb54b912d2575c82c3ef275af5cd01ab1",
+        "allowed_by_identity_policy": true,
+        "records": 3,
+        "live_records": 2,
+        "latest_expiry": 1792912521863
+      }
+    ]
+  },
+  "access_logs": {
+    "files": [
+      {
+        "path": "/usr/local/openresty/nginx/logs/access.log",
+        "bytes": 44419885,
+        "scan": "complete file",
+        "matching_requests": 96
+      }
+    ],
+    "total_matching_requests": 96,
+    "counts": [
+      {
+        "method": "GET",
+        "path": "/app/CoordMCP/.well-known/oauth-authorization-server",
+        "status": 200,
+        "count": 10
+      },
+      {
+        "method": "GET",
+        "path": "/app/CoordMCP/.well-known/oauth-protected-resource/mcp",
+        "status": 200,
+        "count": 9
+      },
+      {
+        "method": "GET",
+        "path": "/app/CoordMCP/.well-known/openid-configuration",
+        "status": 404,
+        "count": 10
+      },
+      {
+        "method": "GET",
+        "path": "/app/CoordMCP/oauth/authorize",
+        "status": 200,
+        "count": 3
+      },
+      {
+        "method": "POST",
+        "path": "/app/CoordMCP",
+        "status": 308,
+        "count": 10
+      },
+      {
+        "method": "POST",
+        "path": "/app/CoordMCP/",
+        "status": 200,
+        "count": 32
+      },
+      {
+        "method": "POST",
+        "path": "/app/CoordMCP/",
+        "status": 202,
+        "count": 2
+      },
+      {
+        "method": "POST",
+        "path": "/app/CoordMCP/",
+        "status": 400,
+        "count": 2
+      },
+      {
+        "method": "POST",
+        "path": "/app/CoordMCP/",
+        "status": 401,
+        "count": 9
+      },
+      {
+        "method": "POST",
+        "path": "/app/CoordMCP/",
+        "status": 403,
+        "count": 1
+      },
+      {
+        "method": "POST",
+        "path": "/app/CoordMCP/oauth/authorize",
+        "status": 302,
+        "count": 3
+      },
+      {
+        "method": "POST",
+        "path": "/app/CoordMCP/oauth/register",
+        "status": 201,
+        "count": 1
+      },
+      {
+        "method": "POST",
+        "path": "/app/CoordMCP/oauth/token",
+        "status": 200,
+        "count": 4
+      }
+    ],
+    "latest_requests": [
+      {
+        "at": "2026-10-25T06:12:48+00:00",
+        "method": "POST",
+        "path": "/app/CoordMCP/oauth/token",
+        "status": 200
+      },
+      {
+        "at": "2026-10-25T06:12:49+00:00",
+        "method": "POST",
+        "path": "/app/CoordMCP",
+        "status": 308
+      },
+      {
+        "at": "2026-10-25T06:12:49+00:00",
+        "method": "POST",
+        "path": "/app/CoordMCP/",
+        "status": 400
+      },
+      {
+        "at": "2026-10-25T06:12:49+00:00",
+        "method": "POST",
+        "path": "/app/CoordMCP",
+        "status": 308
+      },
+      {
+        "at": "2026-10-25T06:12:49+00:00",
+        "method": "POST",
+        "path": "/app/CoordMCP/",
+        "status": 200
+      },
+      {
+        "at": "2026-10-25T06:12:49+00:00",
+        "method": "POST",
+        "path": "/app/CoordMCP",
+        "status": 308
+      },
+      {
+        "at": "2026-10-25T06:12:49+00:00",
+        "method": "POST",
+        "path": "/app/CoordMCP/",
+        "status": 202
+      },
+      {
+        "at": "2026-10-25T06:12:49+00:00",
+        "method": "POST",
+        "path": "/app/CoordMCP",
+        "status": 308
+      },
+      {
+        "at": "2026-10-25T06:12:50+00:00",
+        "method": "POST",
+        "path": "/app/CoordMCP/",
+        "status": 200
+      },
+      {
+        "at": "2026-10-25T06:25:50+00:00",
+        "method": "POST",
+        "path": "/app/CoordMCP",
+        "status": 308
+      },
+      {
+        "at": "2026-10-25T06:25:50+00:00",
+        "method": "POST",
+        "path": "/app/CoordMCP/",
+        "status": 401
+      },
+      {
+        "at": "2026-10-25T06:25:50+00:00",
+        "method": "GET",
+        "path": "/app/CoordMCP/.well-known/oauth-protected-resource/mcp",
+        "status": 200
+      },
+      {
+        "at": "2026-10-25T06:25:50+00:00",
+        "method": "GET",
+        "path": "/app/CoordMCP/.well-known/oauth-authorization-server",
+        "status": 200
+      },
+      {
+        "at": "2026-10-25T06:25:50+00:00",
+        "method": "GET",
+        "path": "/app/CoordMCP/.well-known/openid-configuration",
+        "status": 404
+      },
+      {
+        "at": "2026-10-25T06:25:51+00:00",
+        "method": "POST",
+        "path": "/app/CoordMCP",
+        "status": 308
+      },
+      {
+        "at": "2026-10-25T06:25:51+00:00",
+        "method": "POST",
+        "path": "/app/CoordMCP/",
+        "status": 401
+      },
+      {
+        "at": "2026-10-25T06:25:51+00:00",
+        "method": "GET",
+        "path": "/app/CoordMCP/.well-known/oauth-protected-resource/mcp",
+        "status": 200
+      },
+      {
+        "at": "2026-10-25T06:25:51+00:00",
+        "method": "GET",
+        "path": "/app/CoordMCP/.well-known/oauth-authorization-server",
+        "status": 200
+      },
+      {
+        "at": "2026-10-25T06:25:52+00:00",
+        "method": "GET",
+        "path": "/app/CoordMCP/.well-known/openid-configuration",
+        "status": 404
+      },
+      {
+        "at": "2026-10-25T06:27:01+00:00",
+        "method": "POST",
+        "path": "/app/CoordMCP",
+        "status": 308
+      },
+      {
+        "at": "2026-10-25T06:27:01+00:00",
+        "method": "POST",
+        "path": "/app/CoordMCP/",
+        "status": 401
+      },
+      {
+        "at": "2026-10-25T06:27:01+00:00",
+        "method": "GET",
+        "path": "/app/CoordMCP/.well-known/oauth-protected-resource/mcp",
+        "status": 200
+      },
+      {
+        "at": "2026-10-25T06:27:01+00:00",
+        "method": "GET",
+        "path": "/app/CoordMCP/.well-known/oauth-authorization-server",
+        "status": 200
+      },
+      {
+        "at": "2026-10-25T06:27:02+00:00",
+        "method": "GET",
+        "path": "/app/CoordMCP/.well-known/openid-configuration",
+        "status": 404
+      },
+      {
+        "at": "2026-10-25T06:27:02+00:00",
+        "method": "POST",
+        "path": "/app/CoordMCP",
+        "status": 308
+      },
+      {
+        "at": "2026-10-25T06:27:03+00:00",
+        "method": "POST",
+        "path": "/app/CoordMCP/",
+        "status": 401
+      },
+      {
+        "at": "2026-10-25T06:27:03+00:00",
+        "method": "GET",
+        "path": "/app/CoordMCP/.well-known/oauth-protected-resource/mcp",
+        "status": 200
+      },
+      {
+        "at": "2026-10-25T06:27:03+00:00",
+        "method": "GET",
+        "path": "/app/CoordMCP/.well-known/oauth-authorization-server",
+        "status": 200
+      },
+      {
+        "at": "2026-10-25T06:27:03+00:00",
+        "method": "GET",
+        "path": "/app/CoordMCP/.well-known/openid-configuration",
+        "status": 404
+      },
+      {
+        "at": "2026-10-25T06:27:06+00:00",
+        "method": "GET",
+        "path": "/app/CoordMCP/.well-known/oauth-authorization-server",
+        "status": 200
+      },
+      {
+        "at": "2026-10-25T06:27:06+00:00",
+        "method": "GET",
+        "path": "/app/CoordMCP/.well-known/openid-configuration",
+        "status": 404
+      },
+      {
+        "at": "2026-10-25T06:27:06+00:00",
+        "method": "POST",
+        "path": "/app/CoordMCP/oauth/register",
+        "status": 201
+      },
+      {
+        "at": "2026-10-25T06:27:22+00:00",
+        "method": "GET",
+        "path": "/app/CoordMCP/oauth/authorize",
+        "status": 200
+      },
+      {
+        "at": "2026-10-25T06:27:26+00:00",
+        "method": "POST",
+        "path": "/app/CoordMCP/oauth/authorize",
+        "status": 302
+      },
+      {
+        "at": "2026-10-25T06:27:29+00:00",
+        "method": "POST",
+        "path": "/app/CoordMCP/oauth/token",
+        "status": 200
+      },
+      {
+        "at": "2026-10-25T06:27:30+00:00",
+        "method": "POST",
+        "path": "/app/CoordMCP",
+        "status": 308
+      },
+      {
+        "at": "2026-10-25T06:27:30+00:00",
+        "method": "POST",
+        "path": "/app/CoordMCP/",
+        "status": 401
+      },
+      {
+        "at": "2026-10-25T06:27:30+00:00",
+        "method": "POST",
+        "path": "/app/CoordMCP",
+        "status": 308
+      },
+      {
+        "at": "2026-10-25T06:27:30+00:00",
+        "method": "POST",
+        "path": "/app/CoordMCP/",
+        "status": 403
+      },
+      {
+        "at": "2026-10-25T06:27:30+00:00",
+        "method": "GET",
+        "path": "/app/CoordMCP/.well-known/oauth-protected-resource/mcp",
+        "status": 200
+      },
+      {
+        "at": "2026-10-25T06:27:31+00:00",
+        "method": "GET",
+        "path": "/app/CoordMCP/.well-known/oauth-authorization-server",
+        "status": 200
+      },
+      {
+        "at": "2026-10-25T06:27:31+00:00",
+        "method": "GET",
+        "path": "/app/CoordMCP/.well-known/openid-configuration",
+        "status": 404
+      },
+      {
+        "at": "2026-10-25T06:43:46+00:00",
+        "method": "POST",
+        "path": "/app/CoordMCP/",
+        "status": 401
+      },
+      {
+        "at": "2026-10-25T06:43:46+00:00",
+        "method": "GET",
+        "path": "/app/CoordMCP/.well-known/oauth-protected-resource/mcp",
+        "status": 200
+      },
+      {
+        "at": "2026-10-25T06:43:46+00:00",
+        "method": "GET",
+        "path": "/app/CoordMCP/.well-known/oauth-authorization-server",
+        "status": 200
+      },
+      {
+        "at": "2026-10-25T06:43:47+00:00",
+        "method": "GET",
+        "path": "/app/CoordMCP/.well-known/openid-configuration",
+        "status": 404
+      },
+      {
+        "at": "2026-10-25T06:45:06+00:00",
+        "method": "POST",
+        "path": "/app/CoordMCP/",
+        "status": 401
+      },
+      {
+        "at": "2026-10-25T06:45:07+00:00",
+        "method": "GET",
+        "path": "/app/CoordMCP/.well-known/oauth-protected-resource/mcp",
+        "status": 200
+      },
+      {
+        "at": "2026-10-25T06:45:07+00:00",
+        "method": "GET",
+        "path": "/app/CoordMCP/.well-known/oauth-authorization-server",
+        "status": 200
+      },
+      {
+        "at": "2026-10-25T06:45:07+00:00",
+        "method": "GET",
+        "path": "/app/CoordMCP/.well-known/openid-configuration",
+        "status": 404
+      },
+      {
+        "at": "2026-10-25T06:45:22+00:00",
+        "method": "POST",
+        "path": "/app/CoordMCP/",
+        "status": 401
+      },
+      {
+        "at": "2026-10-25T06:45:22+00:00",
+        "method": "GET",
+        "path": "/app/CoordMCP/.well-known/oauth-protected-resource/mcp",
+        "status": 200
+      },
+      {
+        "at": "2026-10-25T06:45:23+00:00",
+        "method": "GET",
+        "path": "/app/CoordMCP/.well-known/oauth-authorization-server",
+        "status": 200
+      },
+      {
+        "at": "2026-10-25T06:45:23+00:00",
+        "method": "GET",
+        "path": "/app/CoordMCP/.well-known/openid-configuration",
+        "status": 404
+      },
+      {
+        "at": "2026-10-25T06:45:48+00:00",
+        "method": "GET",
+        "path": "/app/CoordMCP/oauth/authorize",
+        "status": 200
+      },
+      {
+        "at": "2026-10-25T06:47:01+00:00",
+        "method": "POST",
+        "path": "/app/CoordMCP/oauth/authorize",
+        "status": 302
+      },
+      {
+        "at": "2026-10-25T06:54:23+00:00",
+        "method": "GET",
+        "path": "/app/CoordMCP/oauth/authorize",
+        "status": 200
+      },
+      {
+        "at": "2026-10-25T06:54:49+00:00",
+        "method": "POST",
+        "path": "/app/CoordMCP/oauth/authorize",
+        "status": 302
+      },
+      {
+        "at": "2026-10-25T06:54:52+00:00",
+        "method": "POST",
+        "path": "/app/CoordMCP/oauth/token",
+        "status": 200
+      },
+      {
+        "at": "2026-10-25T06:54:53+00:00",
+        "method": "POST",
+        "path": "/app/CoordMCP/",
+        "status": 401
+      },
+      {
+        "at": "2026-10-25T06:54:54+00:00",
+        "method": "POST",
+        "path": "/app/CoordMCP/",
+        "status": 400
+      },
+      {
+        "at": "2026-10-25T06:54:54+00:00",
+        "method": "GET",
+        "path": "/app/CoordMCP/.well-known/oauth-protected-resource/mcp",
+        "status": 200
+      },
+      {
+        "at": "2026-10-25T06:54:54+00:00",
+        "method": "POST",
+        "path": "/app/CoordMCP/",
+        "status": 200
+      },
+      {
+        "at": "2026-10-25T06:54:54+00:00",
+        "method": "POST",
+        "path": "/app/CoordMCP/",
+        "status": 200
+      },
+      {
+        "at": "2026-10-25T06:54:55+00:00",
+        "method": "GET",
+        "path": "/app/CoordMCP/.well-known/oauth-authorization-server",
+        "status": 200
+      },
+      {
+        "at": "2026-10-25T06:54:55+00:00",
+        "method": "POST",
+        "path": "/app/CoordMCP/",
+        "status": 202
+      },
+      {
+        "at": "2026-10-25T06:54:55+00:00",
+        "method": "GET",
+        "path": "/app/CoordMCP/.well-known/openid-configuration",
+        "status": 404
+      },
+      {
+        "at": "2026-10-25T06:54:55+00:00",
+        "method": "POST",
+        "path": "/app/CoordMCP/",
+        "status": 200
+      },
+      {
+        "at": "2026-10-25T06:56:23+00:00",
+        "method": "POST",
+        "path": "/app/CoordMCP/",
+        "status": 200
+      },
+      {
+        "at": "2026-10-25T06:56:23+00:00",
+        "method": "POST",
+        "path": "/app/CoordMCP/",
+        "status": 200
+      },
+      {
+        "at": "2026-10-25T06:58:48+00:00",
+        "method": "POST",
+        "path": "/app/CoordMCP/",
+        "status": 200
+      },
+      {
+        "at": "2026-10-25T06:59:11+00:00",
+        "method": "POST",
+        "path": "/app/CoordMCP/",
+        "status": 200
+      },
+      {
+        "at": "2026-10-25T06:59:13+00:00",
+        "method": "POST",
+        "path": "/app/CoordMCP/",
+        "status": 200
+      },
+      {
+        "at": "2026-10-25T06:59:15+00:00",
+        "method": "POST",
+        "path": "/app/CoordMCP/",
+        "status": 200
+      },
+      {
+        "at": "2026-10-25T06:59:15+00:00",
+        "method": "POST",
+        "path": "/app/CoordMCP/",
+        "status": 200
+      },
+      {
+        "at": "2026-10-25T06:59:42+00:00",
+        "method": "POST",
+        "path": "/app/CoordMCP/",
+        "status": 200
+      },
+      {
+        "at": "2026-10-25T06:59:43+00:00",
+        "method": "POST",
+        "path": "/app/CoordMCP/",
+        "status": 200
+      },
+      {
+        "at": "2026-10-25T06:59:44+00:00",
+        "method": "POST",
+        "path": "/app/CoordMCP/",
+        "status": 200
+      },
+      {
+        "at": "2026-10-25T06:59:46+00:00",
+        "method": "POST",
+        "path": "/app/CoordMCP/",
+        "status": 200
+      },
+      {
+        "at": "2026-10-25T06:59:46+00:00",
+        "method": "POST",
+        "path": "/app/CoordMCP/",
+        "status": 200
+      },
+      {
+        "at": "2026-10-25T06:59:46+00:00",
+        "method": "POST",
+        "path": "/app/CoordMCP/",
+        "status": 200
+      },
+      {
+        "at": "2026-10-25T06:59:52+00:00",
+        "method": "POST",
+        "path": "/app/CoordMCP/",
+        "status": 200
+      },
+      {
+        "at": "2026-10-25T07:00:21+00:00",
+        "method": "POST",
+        "path": "/app/CoordMCP/oauth/token",
+        "status": 200
+      },
+      {
+        "at": "2026-10-25T07:00:22+00:00",
+        "method": "POST",
+        "path": "/app/CoordMCP/",
+        "status": 200
+      },
+      {
+        "at": "2026-10-25T07:00:31+00:00",
+        "method": "POST",
+        "path": "/app/CoordMCP/",
+        "status": 200
+      },
+      {
+        "at": "2026-10-25T07:00:43+00:00",
+        "method": "POST",
+        "path": "/app/CoordMCP/",
+        "status": 200
+      },
+      {
+        "at": "2026-10-25T07:00:51+00:00",
+        "method": "POST",
+        "path": "/app/CoordMCP/",
+        "status": 200
+      },
+      {
+        "at": "2026-10-25T07:01:01+00:00",
+        "method": "POST",
+        "path": "/app/CoordMCP/",
+        "status": 200
+      },
+      {
+        "at": "2026-10-25T07:01:10+00:00",
+        "method": "POST",
+        "path": "/app/CoordMCP/",
+        "status": 200
+      },
+      {
+        "at": "2026-10-25T07:01:19+00:00",
+        "method": "POST",
+        "path": "/app/CoordMCP/",
+        "status": 200
+      },
+      {
+        "at": "2026-10-25T07:01:31+00:00",
+        "method": "POST",
+        "path": "/app/CoordMCP/",
+        "status": 200
+      },
+      {
+        "at": "2026-10-25T07:01:45+00:00",
+        "method": "POST",
+        "path": "/app/CoordMCP/",
+        "status": 200
+      },
+      {
+        "at": "2026-10-25T07:01:57+00:00",
+        "method": "POST",
+        "path": "/app/CoordMCP/",
+        "status": 200
+      },
+      {
+        "at": "2026-10-25T07:02:39+00:00",
+        "method": "POST",
+        "path": "/app/CoordMCP/",
+        "status": 200
+      },
+      {
+        "at": "2026-10-25T07:02:40+00:00",
+        "method": "POST",
+        "path": "/app/CoordMCP/",
+        "status": 200
+      },
+      {
+        "at": "2026-10-25T07:02:40+00:00",
+        "method": "POST",
+        "path": "/app/CoordMCP/",
+        "status": 200
+      }
+    ]
+  }
+}

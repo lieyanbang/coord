@@ -130,8 +130,8 @@ in G6-D rather than relabelled PASS.
 
 ## Phase G7 extension (2026-10-25)
 
-**Controlled deployment and automated/site acceptance PASS; real two-ChatGPT
-lifecycle NEEDS_USER_ACTION, overall G7 PARTIAL.** The user supersedes G6's
+**Controlled deployment, automated/site and real two-ChatGPT synthetic
+acceptance PASS within the authorized trusted-owner G7 scope.** The user supersedes G6's
 protected-conversation identity gate with trusted logical worker declarations
 0000–0005 under the existing authenticated OAuth owner. The same owner can
 impersonate these labels, and ChatGPT cannot autonomously wake; neither is
@@ -163,10 +163,15 @@ The final downloaded release explicitly passes 100/1,000/10,000-task capacity:
 completion/receipt/terminal counts. This is local measurement, not production
 performance or long-duration soak evidence.
 
-The browser runtime cannot initialize (kernel-assets os error 3). Four separate
-synthetic browser tasks remain pending/unclaimed, and no actual two-conversation
-G7 visual/renew/submit/next-claim cycle is asserted. Handoff and binding expiry
-are in `../phase-g/G7-CHATGPT-CANARY.md`; operational recovery is in
+Browser control recovered and the exact reconnect client binding was repaired.
+Both original ChatGPT conversations completed two synthetic tasks each, with
+actual marker inspection, progress, renewal, submit, exact readback and repeated
+claim: 4/4 completed, active 0, 5/5 actions succeeded. SQLite receipt/progress
+records, published-result equality and all index hashes pass. B's initial final
+reply failed to render; a read-only follow-up confirmed its two exact completed
+results without replaying writes. All eight g7-reconnect checks and final
+production regression pass. See G7_DISCOVERY_REPAIR.md for exact IDs/evidence.
+Current binding expiry is 2026-10-26T05:45:23.904Z. Operational recovery is in
 `../phase-g/G7-DEPLOYMENT.md`. F3-R's existing non-owner/protocol evidence gaps
 remain independently PARTIAL. No formal 121-task batch, classification agents,
 old-task closure, Access-policy change, release/tag, history rewrite or machine

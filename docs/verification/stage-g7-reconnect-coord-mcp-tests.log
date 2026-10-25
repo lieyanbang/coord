@@ -1,0 +1,27 @@
+
+> coord-mcp@1.0.0 test
+> node --test coord-mcp.test.cjs oauth-access.test.cjs
+
+鉁?OAuth facade publishes coord scope and only accepts coord bearer tokens (2.8749ms)
+鉁?strict tool allowlist maps only fixed coord RPCs and fences mutating inputs (1.2029ms)
+鉁?lease tokens are removed recursively from read responses in either JSON casing (0.1709ms)
+鉁?Streamable HTTP serves initialize, tools/list, and a token-redacted tasks/list (384.102ms)
+鉁?unauthorized, invalid content type, malformed and oversized HTTP requests are rejected (23.6069ms)
+鉁?unknown tools and extra tool arguments never reach the sidecar (14.6576ms)
+鉁?uncertain sidecar writes are MCP errors and are never retried (10.1662ms)
+鉁?four active MCP calls are bounded and excess work receives 429 (171.9218ms)
+鉁?SidecarClient marks timeouts and oversized replies uncertain without retrying (31.3553ms)
+鉁?SidecarClient caps in-flight calls and rejects oversized requests before dispatch (2.0954ms)
+鉁?administrator-pinned OAuth binding supplies identity; MCP inputs cannot choose another agent or batch (42.7856ms)
+鉁?enabled identity policy rejects unknown, expired and cross-token OAuth contexts while preserving pinned legacy (27.2337ms)
+鉁?logical worker tools require OAuth, bind explicit worker and batch, and preserve legacy calls (35.3045ms)
+鉁?Cloudflare Access is required for a password-free, CSRF-bound, one-time OAuth authorization (189.5423ms)
+鉁?missing Access configuration fails closed without taking down protocol metadata (0.6707ms)
+鈩?tests 15
+鈩?suites 0
+鈩?pass 15
+鈩?fail 0
+鈩?cancelled 0
+鈩?skipped 0
+鈩?todo 0
+鈩?duration_ms 1036.2871
