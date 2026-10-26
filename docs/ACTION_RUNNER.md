@@ -1,8 +1,9 @@
 # Windows Action Runner
 
-Phase G6 separates completion execution from the daemon process. A trusted
-registry's `external_runner` starts a dedicated loopback queue broker in the
-daemon; that branch never creates an action child process. Start the independently
+Phase G6 introduced completion execution outside the daemon. R5-1B supersedes
+its shared Bearer Broker key with signed Runner requests. A trusted registry's
+`external_runner` starts a dedicated loopback queue broker in the daemon; that
+branch never creates an action child process. Start the independently
 configured Windows service/process with:
 
 ```powershell
@@ -24,15 +25,15 @@ network access. A shared built-in service identity does not isolate this runner
 from other services on the machine and is intentionally unsupported. A filtered
 administrator token is also insufficient.
 
-The broker exposes only `POST /claim`, `/authorize` and `/finish`, behind its own
-32-byte random bearer secret encoded as 64 hex characters in `key_file`. External
-mode also **requires** an independent `daemon_rpc_key_file`: the daemon reads it
-and requires its bearer value on every management RPC POST. Missing credentials
-or the runner's broker credential return HTTP 401 before dispatch. The runner
-registry loader does not open that management secret, and its NTFS ACL must deny
-the runner read access. Discovery GET stays readable. Without external mode the
-existing default localhost RPC remains for trusted local clients and is not a
-hostile-user security boundary.
+The Broker exposes only signed `POST /claim`, `/authorize` and `/finish` calls.
+The Runner signs each request with Ed25519; Core verifies it with the configured
+public key and consumes the nonce durably. There is no Bearer fallback. The
+independent `management_rpc_key_file` protects Core management RPC POST calls;
+the Runner does not read its contents. `external_runner.daemon_rpc_key_file`
+and `external_runner.key_file` are optional legacy fields accepted during
+migration. New registries omit them. Discovery GET stays readable. Without
+external mode the existing default localhost RPC remains for trusted local
+clients and is not a hostile-user security boundary.
 
 Before enabling external-mode RPC authentication, configure the existing SYSTEM
 health-monitor task with `-RpcAuthKeyFile <protected monitor copy>`. That file

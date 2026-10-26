@@ -7,8 +7,11 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use anyhow::Result;
+use axum::{routing::get, Json};
 
 use coord::a2a;
+use coord::core::action_runner::RuntimeHealth;
+use coord::core::actions::ActionRegistry;
 use coord::core::store::Store;
 use coord::mcp::Bridge;
 
@@ -18,6 +21,40 @@ use coord::mcp::Bridge;
 const RECLAIM_TICK: Duration = Duration::from_secs(30);
 const ACTION_TICK: Duration = Duration::from_millis(100);
 const ACTION_CONCURRENCY: usize = 2;
+
+type BrokerSetup =
+    std::result::Result<Option<(SocketAddr, axum::Router)>, (&'static str, anyhow::Error)>;
+
+fn prepare_broker(
+    registry: Option<Arc<ActionRegistry>>,
+    store: Arc<Store>,
+    health: RuntimeHealth,
+) -> BrokerSetup {
+    let Some(registry) = registry else {
+        return Ok(None);
+    };
+    let config = registry
+        .runner_config()
+        .map_err(|error| ("invalid_runner_configuration", error))?;
+    let Some(config) = config else {
+        return Ok(None);
+    };
+    config
+        .validate()
+        .map_err(|error| ("invalid_runner_configuration", error))?;
+    let identity = coord::core::windows_security::process_identity()
+        .map_err(|error| ("daemon_identity_unavailable", error))?;
+    if identity.sid != config.daemon_sid {
+        return Err((
+            "daemon_identity_mismatch",
+            anyhow::anyhow!("configured daemon SID does not match the current process"),
+        ));
+    }
+    let address = config.broker_addr;
+    let router = coord::core::action_runner::broker_router(store, config, health)
+        .map_err(|error| ("invalid_or_unreadable_public_key_configuration", error))?;
+    Ok(Some((address, router)))
+}
 
 pub async fn serve(
     addr: SocketAddr,
@@ -53,16 +90,79 @@ pub async fn serve(
             "completion actions are queue-only: configure external_runner for production execution"
         );
     }
+    let health = coord::core::action_runner::RuntimeHealth::new();
     let mut app = a2a::router_with_bus(store.clone(), bus.clone());
-    if let Some(config) = store
-        .action_registry()
-        .and_then(|registry| registry.external_runner.clone())
-    {
-        app = coord::core::action_runner::protect_management_rpc(
-            app,
-            coord::core::action_runner::management_key(&config)?,
-        );
+    let health_route = health.clone();
+    app = app.route(
+        "/healthz",
+        get(move || {
+            let health = health_route.clone();
+            async move { Json(health.snapshot()) }
+        }),
+    );
+    if let Some(registry) = store.action_registry() {
+        if let Some(management_path) = registry.management_key_path()? {
+            app = coord::core::action_runner::protect_management_rpc(
+                app,
+                coord::core::action_runner::management_key_from_path(&management_path)?,
+            );
+        }
     }
+    // Bind RPC before attempting any Broker setup. This listener is the
+    // Scheduler's independent fault domain; Broker failures below are health
+    // state transitions and never propagate out of serve().
+    tracing::info!(%addr, "coord listening");
+    let listener = tokio::net::TcpListener::bind(addr).await?;
+
+    let broker_registry = store.action_registry();
+    if broker_registry
+        .as_ref()
+        .is_some_and(|registry| registry.external_runner.is_some())
+    {
+        health.broker_starting();
+    }
+    let broker_store = store.clone();
+    let broker_health = health.clone();
+    tokio::spawn(async move {
+        let setup_health = broker_health.clone();
+        let prepared = tokio::task::spawn_blocking(move || {
+            prepare_broker(broker_registry, broker_store, setup_health)
+        })
+        .await;
+        let broker = match prepared {
+            Ok(Ok(Some(broker))) => broker,
+            Ok(Ok(None)) => {
+                broker_health.broker_unavailable("not_configured");
+                return;
+            }
+            Ok(Err((reason, error))) => {
+                tracing::error!(%error, reason, "Action Broker setup rejected; Scheduler remains available");
+                broker_health.broker_security_error(reason);
+                broker_health.runner_security_error(reason);
+                return;
+            }
+            Err(error) => {
+                tracing::error!(%error, "Action Broker initialization worker failed; Scheduler remains available");
+                broker_health.broker_security_error("initialization_worker_failed");
+                broker_health.runner_security_error("initialization_worker_failed");
+                return;
+            }
+        };
+        let (address, router) = broker;
+        match tokio::net::TcpListener::bind(address).await {
+            Err(error) => {
+                tracing::error!(%error, %address, "Action Broker listener unavailable; Scheduler remains available");
+                broker_health.broker_unavailable("listener_bind_failed");
+            }
+            Ok(broker_listener) => {
+                broker_health.broker_ready();
+                if let Err(error) = axum::serve(broker_listener, router).await {
+                    tracing::error!(%error, "Action Broker stopped; actions remain queued");
+                    broker_health.broker_unavailable("listener_stopped");
+                }
+            }
+        }
+    });
     // Bounded independent validation queue. The stored job fence prevents a
     // cancelled/retried task or a restarted consumer accepting stale verdicts.
     let validation_store = store.clone();
@@ -163,23 +263,6 @@ pub async fn serve(
         });
     }
 
-    if let Some(config) = store
-        .action_registry()
-        .and_then(|registry| registry.external_runner.clone())
-    {
-        // Binding/config errors stop startup, never fall back to inherited-token execution.
-        if coord::core::windows_security::process_identity()?.sid != config.daemon_sid {
-            anyhow::bail!("Action Broker daemon identity mismatch");
-        }
-        let listener = tokio::net::TcpListener::bind(config.broker_addr).await?;
-        let router = coord::core::action_runner::broker_router(store.clone(), config)?;
-        tokio::spawn(async move {
-            if let Err(error) = axum::serve(listener, router).await {
-                tracing::error!(%error,"Action Broker stopped; actions remain queued");
-            }
-        });
-    }
-
     // Background reclaim sweep. Lazy reclaim on `tasks/list` keeps the
     // bulletin self-healing for active readers, but the ticker covers
     // the case where nobody is reading: a stuck task should still
@@ -206,8 +289,6 @@ pub async fn serve(
         }
     });
 
-    tracing::info!(%addr, "coord listening");
-    let listener = tokio::net::TcpListener::bind(addr).await?;
     axum::serve(
         listener,
         app.into_make_service_with_connect_info::<SocketAddr>(),

@@ -15,11 +15,12 @@ New-Item -ItemType Directory -Path $evidenceRoot -Force | Out-Null
 # exact random child of the system volume root (never a shared writable parent).
 $systemVolumeRoot = [IO.Path]::GetPathRoot([IO.Path]::GetFullPath($env:SystemRoot))
 if ($systemVolumeRoot -notmatch '^[A-Za-z]:\\$') { throw 'Expected a local system-volume root for the disposable fixture.' }
-$testRoot = Join-Path $systemVolumeRoot ('coord-g6-' + [guid]::NewGuid().ToString('N'))
+$testRoot = Join-Path $systemVolumeRoot ('coord-r5-broker-' + [guid]::NewGuid().ToString('N'))
 $testRoot = [IO.Path]::GetFullPath($testRoot)
 $userName = 'coordT' + [guid]::NewGuid().ToString('N').Substring(0, 10)
 $createdSid = $null
-$daemonProcess = $null
+$daemonTaskName = 'coord-r5-broker-' + [guid]::NewGuid().ToString('N')
+$daemonCoreProcessId = $null
 $runnerProcess = $null
 $summary = [ordered]@{ state = 'FAIL'; phase = 'initialize'; failed_phase = $null; disposable_ci = $true; fixture_layout = 'system-volume-root'; production_gate = 'NOT_RUN'; checks = @() }
 function Assert-LocalTarget([string]$Target) {
@@ -46,7 +47,7 @@ function Run-AsRunner([string]$Label, [string]$ExtraArguments, [int]$ExpectedExi
     $script:summary.phase = $Label
     $stdoutPath = Assert-LocalTarget (Join-Path $testRoot ('logs/' + $Label + '.stdout.log'))
     $stderrPath = Assert-LocalTarget (Join-Path $testRoot ('logs/' + $Label + '.stderr.log'))
-    $arguments = '--registry "' + $registryPath + '" ' + $ExtraArguments
+    $arguments = '--registry "' + $registryPath + '" --private-key-file "' + $privateKeyPath + '" ' + $ExtraArguments
     $process = Start-Process -FilePath $runnerExe -ArgumentList $arguments -WorkingDirectory $testRoot -Credential $credential -WindowStyle Hidden -PassThru -RedirectStandardOutput $stdoutPath -RedirectStandardError $stderrPath
     if (-not $process.WaitForExit(45000)) {
         Stop-Process -Id $process.Id -Force -Confirm:$false
@@ -61,17 +62,20 @@ function Run-AsRunner([string]$Label, [string]$ExtraArguments, [int]$ExpectedExi
 try {
     $summary.phase = 'create-disposable-fixture'
     New-Item -ItemType Directory -Path $testRoot | Out-Null
-    $passwordText = [Convert]::ToBase64String([Security.Cryptography.RandomNumberGenerator]::GetBytes(24)) + 'aA1!'
+    $passwordBytes = New-Object byte[] 24
+    $randomGenerator = [Security.Cryptography.RandomNumberGenerator]::Create()
+    try { $randomGenerator.GetBytes($passwordBytes) } finally { $randomGenerator.Dispose() }
+    $passwordText = [Convert]::ToBase64String($passwordBytes) + 'aA1!'
     $securePassword = ConvertTo-SecureString -String $passwordText -AsPlainText -Force
-    $localUser = New-LocalUser -Name $userName -Password $securePassword -AccountNeverExpires -PasswordNeverExpires -Description 'Disposable coord G6 runner acceptance fixture'
+    $localUser = New-LocalUser -Name $userName -Password $securePassword -AccountNeverExpires -PasswordNeverExpires -Description 'Disposable coord R5-1B Runner acceptance fixture'
     $createdSid = $localUser.SID.Value
     Add-LocalGroupMember -SID 'S-1-5-32-545' -Member $userName
     $credential = [Management.Automation.PSCredential]::new(($env:COMPUTERNAME + '\' + $userName), $securePassword)
     $passwordText = $null
     $summary.runner_sid = $createdSid
-    $daemonSid = [Security.Principal.WindowsIdentity]::GetCurrent().User.Value
+    $daemonSid = 'S-1-5-19'
     $summary.daemon_sid = $daemonSid
-    foreach ($directory in @('bin', 'config', 'protected', 'logs', 'scratch', 'business/refs/arknights/icons', 'business/task/00', 'business/A1/private-attempt', 'business/results/.receipts', 'business/results/review_queue')) {
+    foreach ($directory in @('bin', 'config', 'management', 'runner-private', 'data', 'protected', 'logs', 'scratch', 'business/refs/arknights/icons', 'business/task/00', 'business/A1/private-attempt', 'business/results/.receipts', 'business/results/review_queue')) {
         New-Item -ItemType Directory -Path (Join-Path $testRoot $directory) -Force | Out-Null
     }
     foreach ($binaryName in @('coord.exe', 'coord-action-runner.exe', 'coord-emote-action.exe')) {
@@ -82,40 +86,92 @@ try {
     $pingExe = Join-Path $testRoot 'bin/ping-fixture.exe'
     Copy-Item -LiteralPath (Join-Path $env:windir 'System32/ping.exe') -Destination $pingExe
     $registryPath = Join-Path $testRoot 'config/registry.json'
-    $keyPath = Join-Path $testRoot 'config/broker.key'
-    $managementKeyPath = Join-Path $testRoot 'protected/management.key'
-    $managementKey = [Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
-    [IO.File]::WriteAllText($managementKeyPath, $managementKey)
-    [IO.File]::WriteAllText($keyPath, [Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(32)))
+    $privateKeyPath = Join-Path $testRoot 'runner-private/runner.pk8'
+    $publicKeyPath = Join-Path $testRoot 'config/runner-public.key'
+    $managementKeyPath = Join-Path $testRoot 'management/management.key'
+    $databasePath = Join-Path $testRoot 'data/state.db'
+    $managementBytes = New-Object byte[] 32
+    $randomGenerator = [Security.Cryptography.RandomNumberGenerator]::Create()
+    try { $randomGenerator.GetBytes($managementBytes) } finally { $randomGenerator.Dispose() }
+    $managementKey = ([BitConverter]::ToString($managementBytes) -replace '-', '').ToLowerInvariant()
     [IO.File]::WriteAllText((Join-Path $testRoot 'business/refs/arknights/icons/one.png'), 'disposable reference')
     [IO.File]::WriteAllText((Join-Path $testRoot 'business/task/00/1.png'), 'disposable image')
-    [IO.File]::WriteAllText((Join-Path $testRoot 'protected/state.db'), '')
     [IO.File]::WriteAllText((Join-Path $testRoot 'business/A1/private-attempt/secret.json'), '{}')
     $daemonPort = Free-Port; $brokerPort = Free-Port
     $daemonUrl = 'http://127.0.0.1:' + $daemonPort
     $command = @{ executable = $publisherExe; sha256 = (Get-FileHash -LiteralPath $publisherExe -Algorithm SHA256).Hash.ToLowerInvariant(); working_directory = (Join-Path $testRoot 'scratch'); args = @('--root', (Join-Path $testRoot 'business')); include_result = $true; timeout_ms = 10000; max_output_bytes = 65536; max_attempts = 2; idempotent = $true }
     $crashCommand = @{ executable = $pingExe; sha256 = (Get-FileHash -LiteralPath $pingExe -Algorithm SHA256).Hash.ToLowerInvariant(); working_directory = (Join-Path $testRoot 'scratch'); args = @('-n', '30', '127.0.0.1'); include_result = $false; timeout_ms = 30000; max_output_bytes = 65536; max_attempts = 1; idempotent = $false }
-    @{ version = 1; allowed_root = $testRoot; external_runner = @{ broker_addr = ('127.0.0.1:' + $brokerPort); key_file = $keyPath; daemon_rpc_key_file = $managementKeyPath; runner_sid = $createdSid; daemon_sid = $daemonSid }; profiles = @{ emote = @{ version = 1; on_task_completed = $command; on_batch_completed = $command }; crash = @{ version = 1; on_task_completed = $crashCommand } } } | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $registryPath -Encoding utf8NoBOM
-    # Administrator owns every directory. Runner gets read/execute on trusted
-    # code/config/input, modify only on exact output/scratch/log subtrees.
-    & icacls.exe $testRoot /inheritance:r /grant:r '*S-1-5-32-544:(OI)(CI)F' '*S-1-5-18:(OI)(CI)F' ('*' + $createdSid + ':(OI)(CI)RX') | Out-Null
+    # LocalService is the real Core identity; the dedicated user is the Runner.
+    # Core gets only the public key. Its service token cannot open the private key.
+    & icacls.exe $testRoot /inheritance:r /grant:r '*S-1-5-32-544:(OI)(CI)F' '*S-1-5-18:(OI)(CI)F' '*S-1-5-19:(OI)(CI)RX' ('*' + $createdSid + ':(OI)(CI)RX') | Out-Null
     if ($LASTEXITCODE -ne 0) { throw 'Test root ACL failed.' }
+    Set-FixtureAcl (Join-Path $testRoot 'config') @('*S-1-5-19:(OI)(CI)RX', ('*' + $createdSid + ':(OI)(CI)RX'))
+    Set-FixtureAcl (Join-Path $testRoot 'bin') @('*S-1-5-19:(OI)(CI)RX', ('*' + $createdSid + ':(OI)(CI)RX'))
+    Set-FixtureAcl (Join-Path $testRoot 'management') @('*S-1-5-19:(OI)(CI)R')
+    Set-FixtureAcl (Join-Path $testRoot 'runner-private') @(('*' + $createdSid + ':(OI)(CI)R'))
+    Set-FixtureAcl (Join-Path $testRoot 'data') @('*S-1-5-19:(OI)(CI)M')
     Set-FixtureAcl (Join-Path $testRoot 'protected') @()
     Set-FixtureAcl (Join-Path $testRoot 'business/A1') @()
-    foreach ($directory in @('logs', 'scratch', 'business/results')) { Set-FixtureAcl (Join-Path $testRoot $directory) @('*' + $createdSid + ':(OI)(CI)M') }
+    foreach ($directory in @('logs', 'scratch', 'business/results')) { Set-FixtureAcl (Join-Path $testRoot $directory) @('*' + $createdSid + ':(OI)(CI)M', '*S-1-5-19:(OI)(CI)M') }
+    [IO.File]::WriteAllText($managementKeyPath, $managementKey)
+    [IO.File]::WriteAllText($databasePath, '')
+    & $runnerExe --generate-keypair --private-key-file $privateKeyPath --public-key-file $publicKeyPath 2> (Join-Path $testRoot 'logs/keygen.stderr.log')
+    if ($LASTEXITCODE -ne 0) { throw 'Isolated Ed25519 key generation failed.' }
+    $keygenOutput = [IO.File]::ReadAllText((Join-Path $testRoot 'logs/keygen.stderr.log'))
+    if ($keygenOutput -match '[A-Za-z0-9_-]{64,}') { throw 'Key generation output included key-like material.' }
+    $registry = @{ version = 1; allowed_root = $testRoot; management_rpc_key_file = $managementKeyPath; external_runner = @{ broker_addr = ('127.0.0.1:' + $brokerPort); runner_sid = $createdSid; daemon_sid = $daemonSid; runner_key_id = 'ci-' + [guid]::NewGuid().ToString('N'); runner_public_key_file = $publicKeyPath }; profiles = @{ emote = @{ version = 1; on_task_completed = $command; on_batch_completed = $command }; crash = @{ version = 1; on_task_completed = $crashCommand } } }
+    $registry | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $registryPath -Encoding utf8NoBOM
     $probePath = Join-Path $testRoot 'config/acl-probe.json'
-    @{ read_files = @($registryPath, $keyPath, $publisherExe, (Join-Path $testRoot 'business/task/00/1.png'), (Join-Path $testRoot 'business/refs/arknights/icons/one.png')); denied_read_files = @((Join-Path $testRoot 'protected/state.db'), $managementKeyPath, (Join-Path $testRoot 'business/A1/private-attempt/secret.json')); denied_write_files = @($registryPath, $publisherExe, (Join-Path $testRoot 'bin/coord.exe')); write_directories = @((Join-Path $testRoot 'scratch'), (Join-Path $testRoot 'logs'), (Join-Path $testRoot 'business/results')); denied_write_directories = @((Join-Path $testRoot 'protected'), (Join-Path $testRoot 'config'), (Join-Path $testRoot 'bin'), $env:windir); denied_rpc_url = $daemonUrl; broker_key_file = $keyPath } | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $probePath -Encoding utf8NoBOM
+    @{ read_files = @($registryPath, $privateKeyPath, $publicKeyPath, $publisherExe, (Join-Path $testRoot 'business/task/00/1.png'), (Join-Path $testRoot 'business/refs/arknights/icons/one.png')); denied_read_files = @($databasePath, $managementKeyPath, (Join-Path $testRoot 'business/A1/private-attempt/secret.json')); denied_write_files = @($registryPath, $publisherExe, (Join-Path $testRoot 'bin/coord.exe')); write_directories = @((Join-Path $testRoot 'scratch'), (Join-Path $testRoot 'logs'), (Join-Path $testRoot 'business/results')); denied_write_directories = @((Join-Path $testRoot 'protected'), (Join-Path $testRoot 'config'), (Join-Path $testRoot 'bin'), $env:windir); denied_rpc_url = $daemonUrl } | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $probePath -Encoding utf8NoBOM
     Run-AsRunner 'identity' '--check-identity'
     & icacls.exe $testRoot /T | Set-Content -LiteralPath (Join-Path $evidenceRoot 'fixture-acls.log')
     if ($LASTEXITCODE -ne 0) { throw 'ACL evidence capture failed.' }
-    $summary.phase = 'start-isolated-daemon'
-    $daemonProcess = Start-Process -FilePath (Join-Path $testRoot 'bin/coord.exe') -ArgumentList @('serve', '--addr', ('127.0.0.1:' + $daemonPort), '--db', ('"' + (Join-Path $testRoot 'protected/state.db') + '"'), '--actions-config', ('"' + $registryPath + '"')) -WorkingDirectory $testRoot -WindowStyle Hidden -PassThru -RedirectStandardError (Join-Path $testRoot 'logs/daemon.stderr.log') -RedirectStandardOutput (Join-Path $testRoot 'logs/daemon.stdout.log')
+    $summary.phase = 'start-localservice-core-and-check-private-key-denial'
+    $localServiceScript = Join-Path $testRoot 'config/localservice-core.ps1'
+    $coreCredentialReport = Join-Path $testRoot 'logs/core-credential-boundary.json'
+    $daemonStdout = Join-Path $testRoot 'logs/daemon.stdout.log'
+    $daemonStderr = Join-Path $testRoot 'logs/daemon.stderr.log'
+    $localServiceBody = @'
+$ErrorActionPreference = 'Stop'
+$privateReadable = $false
+$publicReadable = $false
+try { $stream = [IO.File]::OpenRead('__PRIVATE__'); $stream.Dispose(); $privateReadable = $true } catch {}
+try { $stream = [IO.File]::OpenRead('__PUBLIC__'); $stream.Dispose(); $publicReadable = $true } catch {}
+$identity = [Security.Principal.WindowsIdentity]::GetCurrent().User.Value
+$report = @{ sid = $identity; private_key_read = $privateReadable; public_key_read = $publicReadable }
+[IO.File]::WriteAllText('__REPORT__', ($report | ConvertTo-Json -Compress), [Text.UTF8Encoding]::new($false))
+if ($identity -ne 'S-1-5-19' -or $privateReadable -or -not $publicReadable) { exit 7 }
+& '__COORD__' serve --addr '__DAEMON_ADDR__' --db '__DATABASE__' --actions-config '__REGISTRY__' 1> '__DAEMON_STDOUT__' 2> '__DAEMON_STDERR__'
+exit $LASTEXITCODE
+'@
+    $localServiceBody = $localServiceBody.Replace('__PRIVATE__', $privateKeyPath).Replace('__PUBLIC__', $publicKeyPath).Replace('__REPORT__', $coreCredentialReport).Replace('__COORD__', (Join-Path $testRoot 'bin/coord.exe')).Replace('__DAEMON_ADDR__', ('127.0.0.1:' + $daemonPort)).Replace('__DATABASE__', $databasePath).Replace('__REGISTRY__', $registryPath).Replace('__DAEMON_STDOUT__', $daemonStdout).Replace('__DAEMON_STDERR__', $daemonStderr)
+    [IO.File]::WriteAllText($localServiceScript, $localServiceBody, [Text.UTF8Encoding]::new($false))
+    $windowsPowerShell = Join-Path $env:SystemRoot 'System32/WindowsPowerShell/v1.0/powershell.exe'
+    $taskAction = New-ScheduledTaskAction -Execute $windowsPowerShell -Argument ('-NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "' + $localServiceScript + '"')
+    $taskPrincipal = New-ScheduledTaskPrincipal -UserId 'NT AUTHORITY\LOCAL SERVICE' -LogonType ServiceAccount -RunLevel Limited
+    Register-ScheduledTask -TaskName $daemonTaskName -Action $taskAction -Principal $taskPrincipal -Force | Out-Null
+    Start-ScheduledTask -TaskName $daemonTaskName
     $ready = $false
-    foreach ($attempt in 1..100) { try { Invoke-RestMethod ($daemonUrl + '/.well-known/agent.json') -TimeoutSec 1 | Out-Null; $ready = $true; break } catch { Start-Sleep -Milliseconds 100 } }
-    if (-not $ready) { throw 'Isolated daemon readiness failed.' }
+    foreach ($attempt in 1..100) {
+        if (Test-Path -LiteralPath $coreCredentialReport) {
+            $coreBoundary = Get-Content -LiteralPath $coreCredentialReport -Raw | ConvertFrom-Json
+            if ($coreBoundary.sid -ne 'S-1-5-19' -or $coreBoundary.private_key_read -or -not $coreBoundary.public_key_read) { throw 'LocalService key-isolation probe failed.' }
+            try {
+                Invoke-RestMethod ($daemonUrl + '/.well-known/agent.json') -TimeoutSec 1 | Out-Null
+                $healthz = Invoke-RestMethod ($daemonUrl + '/healthz') -TimeoutSec 1
+                if ($healthz.core.status -eq 'READY' -and $healthz.database.status -eq 'READY' -and $healthz.broker.status -eq 'READY') { $ready = $true; break }
+            } catch {}
+        }
+        Start-Sleep -Milliseconds 100
+    }
+    if (-not $ready) { throw 'LocalService Core/Broker did not reach ready state with private-key access denied.' }
+    $daemonCore = Get-CimInstance Win32_Process | Where-Object { $_.ExecutablePath -eq (Join-Path $testRoot 'bin/coord.exe') -and $_.CommandLine -like ('*' + $databasePath + '*') } | Select-Object -First 1
+    if (-not $daemonCore) { throw 'LocalService Core process was not found for the exact fixture database.' }
+    $daemonCoreProcessId = [int]$daemonCore.ProcessId
+    $summary.localservice_core = $coreBoundary
     Run-AsRunner 'acl-policy' ('--probe-acl "' + $probePath + '"')
     $summary.phase = 'create-isolated-publish-task'
-    $batch = Rpc 'batches/create' @{ name = 'G6 disposable low privilege runner'; config = @{ action_profile = 'emote' } }
+    $batch = Rpc 'batches/create' @{ name = 'R5-1B disposable low privilege runner'; config = @{ action_profile = 'emote' } }
     Rpc 'batches/add_tasks' @{ batch_id = $batch.id; tasks = @(@{ key = '00'; name = 'disposable test'; payload = @{ group_id = '00'; source_image_ids = @('1') } }) } | Out-Null
     $task = (Rpc 'scheduler/claim' @{ batch_id = $batch.id; agent_id = 'emote-0000'; lease_seconds = 30 }).task
     $result = @{ schema_version = 1; group_id = '00'; agent_id = 'emote-0000'; attempt_no = $task.attempt_no; source_image_ids = @('1'); characters = @(); uncertain = @(@{ image_id = '1'; visible_features = 'Visible disposable character evidence'; reference_candidates = @(); checked_paths = @('refs/arknights/icons/one.png'); check_conclusion = 'Checked disposable reference without match'; reason = 'Insufficient visual identity information'; review_priority = 'high' }); general_notes = '' }
@@ -133,11 +189,11 @@ try {
     # Kill exactly our independently authenticated runner while its pinned native
     # child is active. No production process or live lease is involved.
     $summary.phase = 'runner-crash-fixture'
-    $crashBatch = Rpc 'batches/create' @{ name = 'G6 disposable non-idempotent crash'; config = @{ action_profile = 'crash' } }
+    $crashBatch = Rpc 'batches/create' @{ name = 'R5-1B disposable non-idempotent crash'; config = @{ action_profile = 'crash' } }
     Rpc 'batches/add_tasks' @{ batch_id = $crashBatch.id; tasks = @(@{ key = 'one'; name = 'crash fixture'; payload = @{} }) } | Out-Null
     $crashTask = (Rpc 'scheduler/claim' @{ batch_id = $crashBatch.id; agent_id = 'A0'; lease_seconds = 30 }).task
     Rpc 'scheduler/submit' @{ id = $crashTask.id; agent_id = 'A0'; lease_token = $crashTask.lease_token; result = @{ ok = $true } } | Out-Null
-    $runnerProcess = Start-Process -FilePath $runnerExe -ArgumentList ('--registry "' + $registryPath + '" --once') -WorkingDirectory $testRoot -Credential $credential -WindowStyle Hidden -PassThru -RedirectStandardError (Join-Path $testRoot 'logs/crash-runner.stderr.log') -RedirectStandardOutput (Join-Path $testRoot 'logs/crash-runner.stdout.log')
+    $runnerProcess = Start-Process -FilePath $runnerExe -ArgumentList ('--registry "' + $registryPath + '" --private-key-file "' + $privateKeyPath + '" --once') -WorkingDirectory $testRoot -Credential $credential -WindowStyle Hidden -PassThru -RedirectStandardError (Join-Path $testRoot 'logs/crash-runner.stderr.log') -RedirectStandardOutput (Join-Path $testRoot 'logs/crash-runner.stdout.log')
     $childProcess = $null
     foreach ($attempt in 1..100) {
         $childProcess = Get-CimInstance Win32_Process -Filter ('ParentProcessId=' + $runnerProcess.Id) | Where-Object ExecutablePath -eq $pingExe | Select-Object -First 1
@@ -159,7 +215,7 @@ with sqlite3.connect(sys.argv[1]) as db:
     changed = db.execute("UPDATE completion_actions SET lease_until='2000-01-01T00:00:00Z' WHERE id=? AND state='running'", (sys.argv[2],)).rowcount
     assert changed == 1
 '@ | Set-Content -LiteralPath $expirePath -Encoding utf8NoBOM
-    & python $expirePath (Join-Path $testRoot 'protected/state.db') $crashAction.id
+    & python $expirePath $databasePath $crashAction.id
     if ($LASTEXITCODE -ne 0) { throw 'Disposable lease expiry injection failed.' }
     Run-AsRunner 'crash-recovery' '--once'
     $recovered = (Rpc 'actions/status' @{ batch_id = $crashBatch.id }).actions | Select-Object -First 1
@@ -180,7 +236,7 @@ with sqlite3.connect(sys.argv[1]) as db:
         if (-not $script:summary.failed_phase) { $script:summary.failed_phase = $Phase }
     }
     try {
-        foreach ($ownedProcess in @($runnerProcess, $daemonProcess)) {
+        foreach ($ownedProcess in @($runnerProcess)) {
             try {
                 if ($ownedProcess -and -not $ownedProcess.HasExited) {
                     Stop-Process -Id $ownedProcess.Id -Force -Confirm:$false
@@ -188,6 +244,29 @@ with sqlite3.connect(sys.argv[1]) as db:
                 }
             } catch { Add-CleanupFailure 'cleanup-stop-process' $_ }
         }
+        try {
+            $task = Get-ScheduledTask -TaskName $daemonTaskName -ErrorAction SilentlyContinue
+            if ($task) {
+                if ($task.State -eq 'Running') { Stop-ScheduledTask -TaskName $daemonTaskName }
+                Unregister-ScheduledTask -TaskName $daemonTaskName -Confirm:$false
+            }
+            $summary.localservice_task_removed = -not (Get-ScheduledTask -TaskName $daemonTaskName -ErrorAction SilentlyContinue)
+            if (-not $summary.localservice_task_removed) { throw 'LocalService Core task remains after cleanup.' }
+        } catch { Add-CleanupFailure 'cleanup-localservice-task' $_ }
+        try {
+            if ($daemonCoreProcessId) {
+                $ownedCore = Get-CimInstance Win32_Process -Filter ('ProcessId=' + $daemonCoreProcessId)
+                if ($ownedCore -and $ownedCore.ExecutablePath -eq (Join-Path $testRoot 'bin/coord.exe') -and $ownedCore.CommandLine -like ('*' + $databasePath + '*')) {
+                    Stop-Process -Id $daemonCoreProcessId -Force -Confirm:$false
+                    for ($attempt = 0; $attempt -lt 100 -and (Get-Process -Id $daemonCoreProcessId -ErrorAction SilentlyContinue); $attempt++) { Start-Sleep -Milliseconds 100 }
+                }
+                if (Get-Process -Id $daemonCoreProcessId -ErrorAction SilentlyContinue) { throw 'Exact LocalService Core process did not exit during cleanup.' }
+            }
+            $fixtureCorePath = Join-Path $testRoot 'bin/coord.exe'
+            $fixtureCoreProcesses = @(Get-CimInstance Win32_Process | Where-Object { $_.ExecutablePath -eq $fixtureCorePath -and $_.CommandLine -like ('*' + $databasePath + '*') })
+            foreach ($fixtureCore in $fixtureCoreProcesses) { Stop-Process -Id $fixtureCore.ProcessId -Force -Confirm:$false }
+            if (@(Get-CimInstance Win32_Process | Where-Object { $_.ExecutablePath -eq $fixtureCorePath -and $_.CommandLine -like ('*' + $databasePath + '*') }).Count -gt 0) { throw 'Exact disposable Core process remained after task cleanup.' }
+        } catch { Add-CleanupFailure 'cleanup-localservice-core-process' $_ }
         if ($createdSid) {
             try {
                 $currentUser = Get-LocalUser -Name $userName -ErrorAction SilentlyContinue
@@ -201,7 +280,7 @@ with sqlite3.connect(sys.argv[1]) as db:
         }
         # Preserve both failure sources before deleting the exact fixture. Each
         # cleanup step remains independent so one error cannot suppress summary.
-        foreach ($logName in @('daemon.stderr.log', 'crash-runner.stderr.log')) {
+        foreach ($logName in @('daemon.stderr.log', 'crash-runner.stderr.log', 'core-credential-boundary.json', 'keygen.stderr.log')) {
             try {
                 $source = Join-Path $testRoot ('logs/' + $logName)
                 if (Test-Path -LiteralPath $source) { Copy-Item -LiteralPath $source -Destination (Join-Path $evidenceRoot $logName) }
@@ -210,7 +289,7 @@ with sqlite3.connect(sys.argv[1]) as db:
         try {
             $resolvedRoot = [IO.Path]::GetFullPath($testRoot)
             $resolvedParent = [IO.Path]::GetDirectoryName($resolvedRoot)
-            if (-not $resolvedParent.Equals($systemVolumeRoot, [StringComparison]::OrdinalIgnoreCase) -or [IO.Path]::GetFileName($resolvedRoot) -notmatch '^coord-g6-[0-9a-f]{32}$') { throw 'Refusing cleanup outside the exact verified system-volume fixture root.' }
+            if (-not $resolvedParent.Equals($systemVolumeRoot, [StringComparison]::OrdinalIgnoreCase) -or [IO.Path]::GetFileName($resolvedRoot) -notmatch '^coord-r5-broker-[0-9a-f]{32}$') { throw 'Refusing cleanup outside the exact verified system-volume fixture root.' }
             if (Test-Path -LiteralPath $resolvedRoot) { Remove-Item -LiteralPath $resolvedRoot -Recurse -Force }
             $summary.disposable_fixture_removed = -not (Test-Path -LiteralPath $resolvedRoot)
             if (-not $summary.disposable_fixture_removed) { throw 'Disposable fixture remains after cleanup.' }

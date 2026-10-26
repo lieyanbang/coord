@@ -38,7 +38,9 @@ struct Snapshot {
     latency_ms: u64,
     tasks_list_latency_ms: u64,
     sqlite_latency_ms: u64,
+    runner_consecutive_failures: u32,
     checks: Checks,
+    components: Components,
     failed_checks: Vec<&'static str>,
 }
 
@@ -48,12 +50,38 @@ struct Checks {
     sqlite_read_only: &'static str,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+struct ComponentCheck {
+    status: String,
+    reason: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+struct RuntimeReport {
+    core: ComponentCheck,
+    database: ComponentCheck,
+    broker: ComponentCheck,
+    runner: ComponentCheck,
+    runner_last_seen_unix_ms: Option<i64>,
+}
+
+#[derive(Debug, Serialize)]
+struct Components {
+    core: ComponentCheck,
+    database: ComponentCheck,
+    broker: ComponentCheck,
+    runner: ComponentCheck,
+    runner_last_seen_unix_ms: Option<i64>,
+}
+
 #[derive(Deserialize)]
 struct PreviousSnapshot {
     #[serde(default)]
     last_success_at_utc: Option<String>,
     #[serde(default)]
     consecutive_failures: u32,
+    #[serde(default)]
+    runner_consecutive_failures: u32,
 }
 
 pub fn run(url: &str, args: &HealthArgs) -> Result<()> {
@@ -67,16 +95,40 @@ pub fn run(url: &str, args: &HealthArgs) -> Result<()> {
     let sqlite_started = Instant::now();
     let sqlite_ok = check_database(&args.db, timeout).is_ok();
     let sqlite_latency_ms = elapsed_ms(sqlite_started.elapsed());
+    let mut runtime = check_runtime(url, timeout).unwrap_or_else(|_| unknown_runtime());
+    if !tasks_ok {
+        runtime.core = ComponentCheck {
+            status: "FAIL".into(),
+            reason: Some("tasks_list_failed".into()),
+        };
+    }
+    if !sqlite_ok {
+        runtime.database = ComponentCheck {
+            status: "FAIL".into(),
+            reason: Some("sqlite_read_only_failed".into()),
+        };
+    }
 
     let latency_ms = elapsed_ms(started.elapsed());
     let checked_at = Utc::now();
     let checked_at_utc = checked_at.to_rfc3339_opts(SecondsFormat::Millis, true);
     let prior = read_previous(&args.status);
-    let hard_failure = !tasks_ok || !sqlite_ok;
+    let hard_failure = !tasks_ok
+        || !sqlite_ok
+        || runtime.core.status == "FAIL"
+        || runtime.database.status == "FAIL";
+    let component_degraded = [
+        &runtime.core,
+        &runtime.database,
+        &runtime.broker,
+        &runtime.runner,
+    ]
+    .iter()
+    .any(|component| component.status != "READY");
     let slow = latency_ms > args.degraded_after_ms;
     let status = if hard_failure {
         "FAIL"
-    } else if slow {
+    } else if slow || component_degraded {
         "DEGRADED"
     } else {
         "READY"
@@ -92,6 +144,12 @@ pub fn run(url: &str, args: &HealthArgs) -> Result<()> {
     if slow {
         failed_checks.push("latency_threshold");
     }
+    if runtime.broker.status != "READY" {
+        failed_checks.push("broker");
+    }
+    if runtime.runner.status != "READY" {
+        failed_checks.push("runner");
+    }
 
     let consecutive_failures = if hard_failure {
         prior.as_ref().map_or(1, |snapshot| {
@@ -103,8 +161,18 @@ pub fn run(url: &str, args: &HealthArgs) -> Result<()> {
     let last_success_at_utc = if status == "READY" {
         Some(checked_at_utc.clone())
     } else {
-        prior.and_then(|snapshot| snapshot.last_success_at_utc)
+        prior
+            .as_ref()
+            .and_then(|snapshot| snapshot.last_success_at_utc.clone())
     };
+    let runner_consecutive_failures =
+        if runtime.broker.status == "READY" && runtime.runner.status != "READY" {
+            prior.as_ref().map_or(1, |snapshot| {
+                snapshot.runner_consecutive_failures.saturating_add(1)
+            })
+        } else {
+            0
+        };
 
     let snapshot = Snapshot {
         status,
@@ -115,9 +183,17 @@ pub fn run(url: &str, args: &HealthArgs) -> Result<()> {
         latency_ms,
         tasks_list_latency_ms,
         sqlite_latency_ms,
+        runner_consecutive_failures,
         checks: Checks {
             tasks_list: if tasks_ok { "PASS" } else { "FAIL" },
             sqlite_read_only: if sqlite_ok { "PASS" } else { "FAIL" },
+        },
+        components: Components {
+            core: runtime.core,
+            database: runtime.database,
+            broker: runtime.broker,
+            runner: runtime.runner,
+            runner_last_seen_unix_ms: runtime.runner_last_seen_unix_ms,
         },
         failed_checks,
     };
@@ -138,6 +214,33 @@ fn check_tasks_list(url: &str, timeout: Duration) -> Result<()> {
         return Err(anyhow!("tasks/list did not return an array"));
     }
     Ok(())
+}
+
+fn check_runtime(url: &str, timeout: Duration) -> Result<RuntimeReport> {
+    let mut health_url = reqwest::Url::parse(url)?;
+    health_url.set_path("/healthz");
+    health_url.set_query(None);
+    let response = reqwest::blocking::Client::builder()
+        .timeout(timeout)
+        .build()?
+        .get(health_url)
+        .send()?
+        .error_for_status()?;
+    Ok(response.json()?)
+}
+
+fn unknown_runtime() -> RuntimeReport {
+    let unknown = ComponentCheck {
+        status: "NOT_REPORTED".into(),
+        reason: Some("health_endpoint_unavailable".into()),
+    };
+    RuntimeReport {
+        core: unknown.clone(),
+        database: unknown.clone(),
+        broker: unknown.clone(),
+        runner: unknown,
+        runner_last_seen_unix_ms: None,
+    }
 }
 
 fn check_database(path: &Path, timeout: Duration) -> Result<()> {

@@ -42,7 +42,7 @@ jobs:
       - name: health monitor authentication and recovery
         run: pwsh -NoProfile -File scripts/windows/test-coord-health-monitor.ps1 -CoordExe target/release/coord.exe
       - name: Dedicated low-privilege Action Runner rehearsal
-        run: pwsh -NoProfile -File scripts/windows/test-action-runner.ps1 -BinaryDirectory target/release -EvidenceDirectory docs/verification/stage-g6-low-privilege
+        run: pwsh -NoProfile -File scripts/windows/test-action-runner.ps1 -BinaryDirectory target/release -EvidenceDirectory docs/verification/stage-r5-1b-low-privilege
       - name: Coord MCP test dependencies
         run: npm ci --prefix relay/coord-mcp --ignore-scripts --no-audit --no-fund
       - name: relay protocol and lease-fencing tests
@@ -55,18 +55,38 @@ jobs:
         env:
           PYTHONDONTWRITEBYTECODE: '1'
         run: python -m unittest discover -s scripts/phase_g -p test_phase_g_tools.py -v
+      - name: Package matched R5-1B binaries and manifest
+        shell: pwsh
+        run: |
+          $stage = 'target/r5-1b-artifact'
+          New-Item -ItemType Directory -Path $stage -Force | Out-Null
+          $names = @('coord.exe', 'coord-action-runner.exe', 'coord-emote-action.exe')
+          $files = @()
+          foreach ($name in $names) {
+            $source = Join-Path 'target/release' $name
+            $destination = Join-Path $stage $name
+            if (-not (Test-Path -LiteralPath $source -PathType Leaf)) { throw "Missing release binary: $name" }
+            Copy-Item -LiteralPath $source -Destination $destination
+            $files += @{ name = $name; sha256 = (Get-FileHash -LiteralPath $destination -Algorithm SHA256).Hash.ToLowerInvariant() }
+          }
+          $zip = Join-Path $stage 'coord-r5-1b-windows-2022.zip'
+          Compress-Archive -LiteralPath @($names | ForEach-Object { Join-Path $stage $_ }) -DestinationPath $zip -CompressionLevel Optimal
+          $manifest = @{
+            state = 'PASS'
+            commit = (git rev-parse HEAD).Trim()
+            platform = 'windows-2022-x86_64-pc-windows-msvc'
+            files = $files
+            zip = @{ name = [IO.Path]::GetFileName($zip); sha256 = (Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash.ToLowerInvariant() }
+          }
+          $manifest | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $stage 'stage-r5-1b-artifacts.json') -Encoding utf8NoBOM
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: g6-low-privilege-evidence
-          path: docs/verification/stage-g6-low-privilege/
+          name: r5-1b-windows-low-privilege-evidence
+          path: docs/verification/stage-r5-1b-low-privilege/
           if-no-files-found: warn
       - uses: actions/upload-artifact@v4
         with:
-          name: coord-${{ matrix.os }}
-          path: |
-            target/release/coord
-            target/release/coord.exe
-            target/release/coord-action-runner.exe
-            target/release/coord-emote-action.exe
+          name: coord-r5-1b-${{ matrix.os }}
+          path: target/r5-1b-artifact/
           if-no-files-found: error

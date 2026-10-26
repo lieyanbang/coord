@@ -43,8 +43,10 @@ if (Test-Path -LiteralPath $healthPath) {
             status = $rawHealth.status
             checked_at_utc = $rawHealth.checked_at_utc
             checks = $rawHealth.checks
+            components = $rawHealth.components
             failed_checks = $rawHealth.failed_checks
             consecutive_failures = $rawHealth.consecutive_failures
+            runner_consecutive_failures = $rawHealth.runner_consecutive_failures
         }
     } catch {
         $health = [ordered]@{ error = 'status_parse_failed' }
@@ -61,7 +63,7 @@ if ($registry.exists) {
         $registry.runner_sid = $runner.runner_sid
         $registry.daemon_sid = $runner.daemon_sid
         $registry.broker_key_file_present = [bool]$runner.key_file
-        $registry.management_key_file_present = [bool]$runner.daemon_rpc_key_file
+        $registry.management_key_file_present = [bool]($config.management_rpc_key_file -or $runner.daemon_rpc_key_file)
         $registry.profile_names = @($config.profiles.PSObject.Properties.Name | Sort-Object)
     } catch {
         $registry.parse = 'failed'
@@ -126,13 +128,38 @@ if (Test-Path -LiteralPath $logDirectory) {
 }
 
 $rpcProbe = 'not_attempted'
+$rpcListeners = @($listeners | Where-Object { $_.port -eq 7777 })
+if ($rpcListeners.Count -eq 0) {
+    $rpcProbe = 'connection_refused'
+} else {
 try {
-    $body = '{"jsonrpc":"2.0","id":1,"method":"tasks/list","params":{"limit":1,"skip_reclaim":true}}'
-    $response = Invoke-WebRequest -Uri 'http://127.0.0.1:7777/' -Method Post -ContentType 'application/json' -Body $body -TimeoutSec 3 -SkipHttpErrorCheck
-    $rpcProbe = [string]$response.StatusCode
+    $body = [Text.Encoding]::UTF8.GetBytes('{"jsonrpc":"2.0","id":1,"method":"tasks/list","params":{"limit":1,"skip_reclaim":true}}')
+    $request = [Net.WebRequest]::Create('http://127.0.0.1:7777/')
+    $request.Method = 'POST'
+    $request.ContentType = 'application/json'
+    $request.Timeout = 3000
+    $request.ReadWriteTimeout = 3000
+    $request.ContentLength = $body.Length
+    $stream = $request.GetRequestStream()
+    $stream.Write($body, 0, $body.Length)
+    $stream.Dispose()
+    try {
+        $response = $request.GetResponse()
+        $rpcProbe = [string][int]$response.StatusCode
+        $response.Dispose()
+    } catch [Net.WebException] {
+        if ($_.Exception.Response) {
+            $rpcProbe = [string][int]$_.Exception.Response.StatusCode
+            $_.Exception.Response.Dispose()
+        } elseif ($_.Exception.Message -match 'refused|actively refused|unable to connect|No connection could be made' -or ($_.Exception.InnerException -and $_.Exception.InnerException.Message -match 'refused|actively refused|unable to connect|No connection could be made')) {
+            $rpcProbe = 'connection_refused'
+        } else {
+            $rpcProbe = $_.Exception.GetType().Name
+        }
+    }
 } catch {
-    if ($_.Exception.Message -match 'refused|actively refused|unable to connect|HttpRequestException') { $rpcProbe = 'connection_refused' }
-    else { $rpcProbe = $_.Exception.GetType().Name }
+    $rpcProbe = $_.Exception.GetType().Name
+}
 }
 
 $pythonPath = 'C:\Users\lieyanbang\AppData\Local\Programs\Python\Python314\python.exe'
@@ -185,7 +212,12 @@ def batch_report(batch_id):
             elif 'batch_id' in cols:
                 related[table] = safe_rows(table, 'WHERE batch_id=?', [batch_id])
     related['completion_actions'] = safe_rows('completion_actions', 'WHERE batch_id=?', [batch_id]) if 'completion_actions' in tables else []
-    canonical = json.dumps(related, sort_keys=True, separators=(',', ':'), default=str).encode()
+    # task_attempts is a derived table created additively by the new schema.
+    # Exclude it from the legacy-row fingerprint while reporting its own
+    # count/fingerprint so a migration does not masquerade as a task rewrite.
+    stable_related = {key: value for key, value in related.items() if key != 'task_attempts'}
+    canonical = json.dumps(stable_related, sort_keys=True, separators=(',', ':'), default=str).encode()
+    attempt_canonical = json.dumps(related.get('task_attempts', []), sort_keys=True, separators=(',', ':'), default=str).encode()
     return {
         'batch_id': batch_id,
         'batch_found': bool(batch),
@@ -194,6 +226,7 @@ def batch_report(batch_id):
         'task_attempt_sum': sum(int(row.get('attempt_count', 0) or 0) for row in task_rows),
         'task_attempt_max': max((int(row.get('attempt_count', 0) or 0) for row in task_rows), default=0),
         'attempt_table_rows': len(related.get('task_attempts', [])),
+        'derived_attempts_fingerprint': hashlib.sha256(attempt_canonical).hexdigest(),
         'progress_count': len(related.get('task_progress', [])),
         'progress_receipt_count': len(related.get('task_progress_receipts', [])),
         'extension_receipt_count': len(related.get('task_progress_extend_receipts', [])),
@@ -202,12 +235,20 @@ def batch_report(batch_id):
         'protected_fingerprint': hashlib.sha256(canonical).hexdigest(),
     }
 
+global_action_states = {}
+if 'completion_actions' in tables:
+    for state, count in db.execute('SELECT state,COUNT(*) FROM completion_actions GROUP BY state'):
+        global_action_states[state] = count
+
 print(json.dumps({
     'integrity_check': integrity,
     'user_version': user_version,
     'schema_version': schema_version,
     'journal_mode': journal_mode,
     'task_attempts_table': 'task_attempts' in tables,
+    'runner_nonces_table': 'runner_nonces' in tables,
+    'runner_nonce_rows': db.execute('SELECT COUNT(*) FROM runner_nonces').fetchone()[0] if 'runner_nonces' in tables else 0,
+    'completion_action_states': global_action_states,
     'protected': [batch_report(batch_id) for batch_id in [formal] + canaries],
 }, sort_keys=True))
 '@
@@ -227,6 +268,7 @@ print(json.dumps({
 $result = [ordered]@{
     state = 'PASS'
     observed_at_utc = [DateTime]::UtcNow.ToString('o')
+    host = $env:COMPUTERNAME
     services = $services
     listeners = $listeners
     unauthenticated_rpc_probe = $rpcProbe

@@ -269,14 +269,49 @@ The daemon runs only the authenticated queue broker and never spawns an action
 in that mode. Without an execution mode it explicitly logs queue-only operation;
 `isolated_in_process: true` is reserved for disposable regression tests.
 
-The external configuration contains `broker_addr` (loopback only), `key_file`
-(32 random bytes as 64 hex characters), `runner_sid`, `daemon_sid` and a separate
-administrator-protected `daemon_rpc_key_file`. The latter enables bearer
-authentication on all daemon RPC POSTs; the runner cannot read that key, and its
-broker key cannot call management RPC. CLI/MCP can use `COORD_RPC_AUTH_KEY` for
-loopback HTTP. Existing deployments without external mode retain their current
-trusted-localhost behavior. Actual production identity/ACL/RPC-denial acceptance
-is required before activation; see [ACTION_RUNNER.md](ACTION_RUNNER.md).
+The signed external configuration contains `broker_addr` (loopback only),
+`runner_sid`, `daemon_sid`, `runner_key_id`, a Core-readable
+`runner_public_key_file`, and a separate administrator-protected
+`management_rpc_key_file` at the registry top level. Legacy registries may
+still place this management path at `external_runner.daemon_rpc_key_file`; Core
+accepts it only as a migration fallback. New Runner configurations omit this
+field. A configured external Runner without a separate management key path is
+rejected before the RPC listener starts.
+The Runner private key is passed only to the dedicated Runner process and
+must be protected so that Core cannot read it. A compatibility registry may
+keep `management_rpc_key_file` while setting `external_runner` to `null`; the
+Scheduler remains authenticated and reports the Broker as `UNAVAILABLE`.
+The old
+`key_file` field may appear in a legacy registry; Core treats it as opaque and
+never opens it. Management RPC keeps its independent bearer key, which the
+Runner cannot read. CLI/MCP can use `COORD_RPC_AUTH_KEY` for loopback HTTP.
+Existing deployments without external mode retain their current
+trusted-localhost behavior.
+
+Runner requests use Ed25519 signatures with no Bearer fallback. The canonical
+UTF-8 envelope is the following fields joined by LF, in order: protocol label
+`coord-runner-request-v1`, key ID, configured Runner SID, uppercase method,
+exact origin-form path, decimal Unix timestamp in milliseconds, base64url
+nonce, and lowercase SHA-256 of the exact body bytes. The nonce is 16 bytes;
+the signature is canonical base64url Ed25519. Only `POST /claim`,
+`POST /authorize` and `POST /finish` are accepted. Query strings are rejected,
+the clock window is 30 seconds, the signed body is limited to 4 KiB, and an
+accepted `(key ID, nonce)` is recorded transactionally in SQLite so replay is
+rejected after a Core restart. Existing action ID, owner, lease-token and
+expiry fencing remains in force. An invalid signature from the configured key
+identity marks the Runner component `SECURITY_ERROR`; a later valid signed
+request clears that state.
+
+`GET /healthz` reports overall readiness plus `core`, `database`, `broker` and
+`runner` components. Overall status is `READY` only when all components are
+ready; Scheduler/RPC/SQLite availability with Broker or Runner degradation is
+`DEGRADED`. The `coord health` command still publishes its compatible
+`tasks_list` and `sqlite_read_only` checks and uses those checks to distinguish
+Core/DB failure from Broker/Runner degradation. Broker setup and listener
+failures do not stop Scheduler RPC; management-key or Core identity failures
+remain fatal because they would invalidate the RPC authentication boundary.
+Actual Windows service identity and ACL acceptance is required before
+activation; see [G7 deployment](phase-g/G7-DEPLOYMENT.md).
 
 Completion and the outbox row commit in one SQLite transaction, both for direct
 completion and validator `PASS`. Task actions are queued once per task/profile
@@ -298,7 +333,7 @@ worker disappears after an external side effect may have happened, a
 non-idempotent action becomes `uncertain`, not `succeeded`; idempotent replay is
 at-least-once, not exactly-once. Action failure never reopens a completed task.
 Batch actions wait for task actions to succeed. The queue-only broker exposes
-`POST /claim`, `/authorize` and `/finish` behind its independent bearer secret;
+`POST /claim`, `/authorize` and `/finish` behind Runner public-key verification;
 these are service endpoints, not MCP tools or generic JSON-RPC methods.
 Authorization reconstructs the stored event and rechecks current action fence,
 completed task attempt and matching accepted-result receipt immediately before

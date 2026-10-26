@@ -1,0 +1,37 @@
+[
+  {
+    "started": "2026-10-26T12:08:27.5633640Z",
+    "command": "cargo fmt --all -- --check",
+    "seconds": 0.4144227,
+    "log": "docs/verification/stage-r5-1b-fmt.log",
+    "exit": 0
+  },
+  {
+    "started": "2026-10-26T12:08:28.0229006Z",
+    "command": "cargo clippy --all-targets --all-features --locked -- -D warnings",
+    "seconds": 0.6409626,
+    "log": "docs/verification/stage-r5-1b-clippy.log",
+    "exit": 0
+  },
+  {
+    "started": "2026-10-26T12:08:28.6666640Z",
+    "command": "cargo test --all-features --locked",
+    "seconds": 41.609346,
+    "log": "docs/verification/stage-r5-1b-test.log",
+    "exit": 0
+  },
+  {
+    "started": "2026-10-26T12:09:10.2781527Z",
+    "command": "cargo build --release --locked",
+    "seconds": 0.4138572,
+    "log": "docs/verification/stage-r5-1b-build.log",
+    "exit": 0
+  },
+  {
+    "started": "2026-10-26T12:09:10.6949423Z",
+    "command": "powershell.exe -NoLogo -NoProfile -File scripts/windows/test-coord-health-monitor.ps1",
+    "seconds": 35.2588814,
+    "log": "docs/verification/stage-r5-1b-health-monitor.log",
+    "exit": 0
+  }
+]

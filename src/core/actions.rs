@@ -28,7 +28,10 @@ pub struct ActionRegistryFile {
     pub allowed_root: PathBuf,
     pub profiles: BTreeMap<String, ActionProfile>,
     #[serde(default)]
-    pub external_runner: Option<super::action_runner::RunnerConfig>,
+    pub management_rpc_key_file: Option<PathBuf>,
+    #[serde(default)]
+    /// Opaque to Core's scheduler startup; parsed inside the Broker fault domain.
+    pub external_runner: Option<Value>,
     /// Unsafe for production; only the existing isolated process canaries use it.
     #[serde(default)]
     pub isolated_in_process: bool,
@@ -62,7 +65,8 @@ pub struct ActionCommand {
 pub struct ActionRegistry {
     allowed_root: PathBuf,
     profiles: BTreeMap<String, ActionProfile>,
-    pub external_runner: Option<super::action_runner::RunnerConfig>,
+    management_rpc_key_file: Option<PathBuf>,
+    pub external_runner: Option<Value>,
     pub isolated_in_process: bool,
 }
 
@@ -122,6 +126,50 @@ impl ActionRegistry {
         if file.version != 1 || file.profiles.is_empty() {
             bail!("unsupported or empty action registry");
         }
+        let nested_management_path = file
+            .external_runner
+            .as_ref()
+            .and_then(|runner| runner.get("daemon_rpc_key_file"))
+            .and_then(Value::as_str)
+            .map(PathBuf::from);
+        if file.management_rpc_key_file.is_some()
+            && nested_management_path.as_ref().is_some_and(|nested| {
+                !super::action_runner::same_config_path(
+                    file.management_rpc_key_file.as_ref().unwrap(),
+                    nested,
+                )
+            })
+        {
+            bail!("conflicting management RPC key paths");
+        }
+        let management_rpc_key_file = file
+            .management_rpc_key_file
+            .clone()
+            .or(nested_management_path);
+        if file.external_runner.is_some() && management_rpc_key_file.is_none() {
+            bail!("separate management RPC key path required");
+        }
+        if management_rpc_key_file
+            .as_ref()
+            .is_some_and(|path| !path.is_absolute())
+        {
+            bail!("management RPC key path must be absolute");
+        }
+        if let (Some(management), Some(legacy)) = (
+            management_rpc_key_file.as_ref(),
+            file.external_runner
+                .as_ref()
+                .and_then(|runner| runner.get("key_file"))
+                .and_then(Value::as_str)
+                .map(PathBuf::from),
+        ) {
+            if super::action_runner::same_config_path(management, &legacy) {
+                bail!("management RPC key path must not reuse the legacy Broker key path");
+            }
+        }
+        if file.external_runner.is_some() && file.isolated_in_process {
+            bail!("external and isolated in-process modes cannot be combined");
+        }
         let root = super::windows_security::safe_existing_path(&file.allowed_root)?;
         if !root.is_dir() {
             bail!("action root must be a directory");
@@ -133,12 +181,6 @@ impl ActionRegistry {
             if profile.on_task_completed.is_none() && profile.on_batch_completed.is_none() {
                 bail!("action profile must define at least one completion action");
             }
-        }
-        if file.external_runner.is_some() && file.isolated_in_process {
-            bail!("external and isolated in-process modes cannot be combined");
-        }
-        if let Some(runner) = &file.external_runner {
-            runner.validate()?;
         }
         let mut profiles = file.profiles;
         for profile in profiles.values_mut() {
@@ -158,9 +200,41 @@ impl ActionRegistry {
         Ok(Self {
             allowed_root: root,
             profiles,
+            management_rpc_key_file,
             external_runner: file.external_runner,
             isolated_in_process: file.isolated_in_process,
         })
+    }
+
+    pub fn runner_config(&self) -> Result<Option<super::action_runner::RunnerConfig>> {
+        self.external_runner
+            .as_ref()
+            .map(|value| {
+                serde_json::from_value(value.clone())
+                    .context("invalid external_runner configuration")
+            })
+            .transpose()
+    }
+
+    pub fn management_key_path(&self) -> Result<Option<PathBuf>> {
+        let Some(management_path) = self.management_rpc_key_file.clone() else {
+            return Ok(None);
+        };
+        // Do this as a lexical config check before reading either file. The
+        // legacy Broker-key path can be inaccessible to Core by design.
+        if self
+            .external_runner
+            .as_ref()
+            .and_then(|runner| runner.get("key_file"))
+            .and_then(Value::as_str)
+            .map(PathBuf::from)
+            .is_some_and(|legacy_path| {
+                super::action_runner::same_config_path(&management_path, &legacy_path)
+            })
+        {
+            bail!("management RPC key path must not reuse the legacy Broker key path");
+        }
+        Ok(Some(management_path))
     }
 
     pub fn profile(&self, id: &str) -> Option<&ActionProfile> {

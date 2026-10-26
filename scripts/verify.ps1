@@ -24,7 +24,7 @@ try {
         Write-Output "$Stage $($check.Name): exit=$code"
         if ($code -ne 0) { throw "$($check.Name) failed; inspect $log" }
     }
-    if (($Stage -eq 'f1' -or $Stage -match '^g[67](?:-[a-z0-9]+)*$') -and $env:OS -eq 'Windows_NT') {
+    if (($Stage -eq 'f1' -or $Stage -eq 'r5-1b' -or $Stage -match '^g[67](?:-[a-z0-9]+)*$') -and $env:OS -eq 'Windows_NT') {
         $log = "docs/verification/stage-$Stage-health-monitor.log"
         $started = [DateTime]::UtcNow
         $windowsPowerShell = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'

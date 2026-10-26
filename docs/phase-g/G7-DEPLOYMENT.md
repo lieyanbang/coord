@@ -29,6 +29,15 @@ broker is 127.0.0.1:7779. SYSTEM health monitoring uses a separate protected
 copy of the management key and was verified by actual scheduled-task execution.
 Do not give the Runner this key or broaden the monitor copy's ACL.
 
+R5-1B moves the management key path to the registry's top-level
+`management_rpc_key_file`; `external_runner.daemon_rpc_key_file` remains a
+read-only Core migration fallback for existing registries and is no longer a
+Runner requirement. New signed Runner configurations omit both
+`daemon_rpc_key_file` and the legacy Broker `key_file`. A Scheduler recovery
+registry can retain management authentication with `external_runner: null`.
+That mode serves authenticated task RPC while reporting the Broker and Runner
+as `UNAVAILABLE`/`DEGRADED`; it never reads the legacy `key_file`.
+
 Production profiles `g7-canary-v1` and `g7-browser-v1` pin the native publisher's
 hash and fixed root/arguments. Their outputs are separate under `canary/business`
 and `browser/business`. The crash ping profile exists only in the copied-DB
@@ -143,3 +152,15 @@ Reconcile tasks/actions before restoring the registry. Never overwrite live DB
 or OAuth grants. The old whole-site rollback is not a safe blind operation on
 this new formal queue. Detailed evidence, guards and lease/API semantics:
 [INITIAL_EMOTE_BATCH.md](../verification/INITIAL_EMOTE_BATCH.md).
+
+## R5-1B Broker migration boundary (2026-10-26)
+
+This document records the prior G7 deployment and its shared Bearer Broker
+credential. That protocol is legacy and must not be used as a recovery
+fallback: the deployed LocalService Core is intentionally denied access to the
+legacy `broker.key`, and the prior Core cannot start with that ACL. R5-1B
+replaces it with a Runner-only Ed25519 private key, a Core-readable public key,
+durable nonce replay protection, and separate Scheduler/Broker health states.
+Until the R5-1B Windows artifact and production health gates pass, treat the
+current G7 runbook above as historical evidence only. The production Broker
+key, its ACL, and all unrelated credentials remain untouched.

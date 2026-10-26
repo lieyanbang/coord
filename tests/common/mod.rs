@@ -37,7 +37,7 @@ impl Daemon {
             .and_then(|path| std::fs::read(path).ok())
             .and_then(|bytes| serde_json::from_slice::<Value>(&bytes).ok())
             .and_then(|registry| {
-                registry["external_runner"]["daemon_rpc_key_file"]
+                registry["management_rpc_key_file"]
                     .as_str()
                     .map(str::to_string)
             })

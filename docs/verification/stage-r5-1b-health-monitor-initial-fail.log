@@ -1,0 +1,7 @@
+health monitor failure recovery threshold: PASS (3 failures -> targeted start)
+health monitor key configuration rejection: PASS (missing/malformed/oversized/relative/unprotected; no probe or recovery)
+<workspace>\scripts\windows\test-coord-health-monitor.ps1 : Method invocation failed because [System.Security.Cryp
+tography.RandomNumberGenerator] does not contain a method named 'GetBytes'.
+    + CategoryInfo          : InvalidOperation: (:) [test-coord-health-monitor.ps1], RuntimeException
+    + FullyQualifiedErrorId : MethodNotFound,test-coord-health-monitor.ps1
+ 

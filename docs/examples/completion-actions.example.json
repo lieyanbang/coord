@@ -1,12 +1,13 @@
 {
   "version": 1,
   "allowed_root": "C:\\ProgramData\\coord\\actions",
+  "management_rpc_key_file": "C:\\ProgramData\\coord\\protected\\management.key",
   "external_runner": {
     "broker_addr": "127.0.0.1:7778",
-    "key_file": "C:\\ProgramData\\coord\\actions\\config\\broker.key",
-    "daemon_rpc_key_file": "C:\\ProgramData\\coord\\protected\\management.key",
     "runner_sid": "REPLACE_WITH_DEDICATED_STANDARD_ACCOUNT_SID",
-    "daemon_sid": "REPLACE_WITH_ACTUAL_DAEMON_ACCOUNT_SID"
+    "daemon_sid": "REPLACE_WITH_ACTUAL_DAEMON_ACCOUNT_SID",
+    "runner_key_id": "REPLACE_WITH_RUNNER_KEY_ID",
+    "runner_public_key_file": "C:\\ProgramData\\coord\\actions\\broker-public\\runner.pub"
   },
   "profiles": {
     "emote-publisher-v2": {

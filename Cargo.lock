@@ -319,6 +319,7 @@ version = "0.4.1"
 dependencies = [
  "anyhow",
  "axum",
+ "base64",
  "chrono",
  "clap",
  "crossterm",
@@ -326,6 +327,7 @@ dependencies = [
  "parking_lot",
  "ratatui",
  "reqwest",
+ "ring",
  "rmcp",
  "rusqlite",
  "schemars",

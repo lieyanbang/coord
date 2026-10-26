@@ -8,13 +8,15 @@ param(
     [string]$ServyCli = 'C:\Program Files\Servy\servy-cli.exe',
     [string]$RpcAuthKeyFile,
     [int]$RestartThreshold = 3,
+    [int]$RunnerRestartThreshold = 3,
+    [string]$RunnerServiceName = 'CoordActionRunnerG7',
     [int]$MaxRestartsPerHour = 3,
     [int]$RestartCooldownMinutes = 10,
     [switch]$NoRestart
 )
 
 $ErrorActionPreference = 'Stop'
-if ($RestartThreshold -lt 1 -or $MaxRestartsPerHour -lt 1 -or $RestartCooldownMinutes -lt 1) {
+if ($RestartThreshold -lt 1 -or $RunnerRestartThreshold -lt 1 -or $MaxRestartsPerHour -lt 1 -or $RestartCooldownMinutes -lt 1) {
     exit 2
 }
 if (-not (Test-Path -LiteralPath $CoordExe -PathType Leaf)) {
@@ -93,9 +95,15 @@ if ($checkedAt -lt $probeStartedAt) {
     exit 2
 }
 
-if ($NoRestart -or $health.status -ne 'FAIL' -or [int]$health.consecutive_failures -lt $RestartThreshold) {
+$coreRecoveryNeeded = $health.status -eq 'FAIL' -and [int]$health.consecutive_failures -ge $RestartThreshold
+$runnerRecoveryNeeded = $health.status -eq 'DEGRADED' -and
+    $health.components.broker.status -eq 'READY' -and
+    $health.components.runner.status -eq 'UNAVAILABLE' -and
+    [int]$health.runner_consecutive_failures -ge $RunnerRestartThreshold
+if ($NoRestart -or (-not $coreRecoveryNeeded -and -not $runnerRecoveryNeeded)) {
     exit $healthExit
 }
+$targetService = if ($coreRecoveryNeeded) { 'coord' } else { $RunnerServiceName }
 
 $attempts = @()
 if (Test-Path -LiteralPath $RecoveryPath -PathType Leaf) {
@@ -110,7 +118,8 @@ $now = [DateTimeOffset]::UtcNow
 $recent = @($attempts | Where-Object {
     try {
         $attemptAt = [DateTimeOffset]::FromUnixTimeMilliseconds([long]$_.attempted_at_unix_ms)
-        ($now - $attemptAt).TotalHours -lt 1 -and $attemptAt -le $now
+        $attemptService = if ($_.service) { [string]$_.service } else { 'coord' }
+        $attemptService -eq $targetService -and ($now - $attemptAt).TotalHours -lt 1 -and $attemptAt -le $now
     } catch {
         $false
     }
@@ -128,7 +137,7 @@ if ($recent.Count -gt 0) {
 $previousErrorActionPreference = $ErrorActionPreference
 try {
     $ErrorActionPreference = 'Continue'
-    $serviceStateOutput = (& $ServyCli status --name coord --quiet 2>&1 | Out-String).Trim()
+    $serviceStateOutput = (& $ServyCli status --name $targetService --quiet 2>&1 | Out-String).Trim()
     $serviceStatusExit = $LASTEXITCODE
 } finally {
     $ErrorActionPreference = $previousErrorActionPreference
@@ -153,7 +162,7 @@ if ($serviceState -eq 'Running') {
 $previousErrorActionPreference = $ErrorActionPreference
 try {
     $ErrorActionPreference = 'Continue'
-    $null = & $ServyCli $action --name coord --quiet 2>&1 | Out-Null
+    $null = & $ServyCli $action --name $targetService --quiet 2>&1 | Out-Null
     $recoveryExit = $LASTEXITCODE
 } catch {
     $recoveryExit = 1
@@ -163,6 +172,7 @@ try {
 $recent += [pscustomobject]@{
     attempted_at_utc = $now.ToString('o')
     attempted_at_unix_ms = $now.ToUnixTimeMilliseconds()
+    service = $targetService
     action = $action
     exit_code = $recoveryExit
 }

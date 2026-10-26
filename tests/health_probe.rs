@@ -46,10 +46,20 @@ fn health_probe_is_read_only_tracks_success_and_does_not_persist_task_data() {
         String::from_utf8_lossy(&healthy.stderr)
     );
     let healthy_json = snapshot(&healthy);
-    assert_eq!(healthy_json["status"], "READY");
+    assert_eq!(healthy_json["status"], "DEGRADED");
+    assert_eq!(healthy_json["components"]["core"]["status"], "READY");
+    assert_eq!(healthy_json["components"]["database"]["status"], "READY");
+    assert_eq!(
+        healthy_json["components"]["broker"]["status"],
+        "UNAVAILABLE"
+    );
+    assert_eq!(
+        healthy_json["components"]["runner"]["status"],
+        "UNAVAILABLE"
+    );
     assert_eq!(healthy_json["checks"]["tasks_list"], "PASS");
     assert_eq!(healthy_json["checks"]["sqlite_read_only"], "PASS");
-    assert!(healthy_json["last_success_at_utc"].is_string());
+    assert!(healthy_json["last_success_at_utc"].is_null());
     assert_eq!(healthy_json["consecutive_failures"], 0);
     assert!(!String::from_utf8_lossy(&healthy.stdout).contains(&token));
     assert!(!std::fs::read_to_string(&status_path)
@@ -86,9 +96,9 @@ fn health_probe_is_read_only_tracks_success_and_does_not_persist_task_data() {
     let recovered = probe(&daemon, &db_path, &status_path);
     assert!(recovered.status.success());
     let recovered_json = snapshot(&recovered);
-    assert_eq!(recovered_json["status"], "READY");
+    assert_eq!(recovered_json["status"], "DEGRADED");
     assert_eq!(recovered_json["consecutive_failures"], 0);
-    assert!(recovered_json["last_success_at_utc"].is_string());
+    assert!(recovered_json["last_success_at_utc"].is_null());
 }
 
 #[test]
@@ -112,7 +122,7 @@ fn health_probe_does_not_run_the_tasks_list_lease_reclaimer() {
         "{}",
         String::from_utf8_lossy(&healthy.stderr)
     );
-    assert_eq!(snapshot(&healthy)["status"], "READY");
+    assert_eq!(snapshot(&healthy)["status"], "DEGRADED");
     let still_claimed = daemon.rpc("tasks/get", serde_json::json!({"id":task["id"]}));
     assert_eq!(still_claimed["state"], "claimed");
 

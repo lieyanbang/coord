@@ -1,0 +1,23 @@
+[
+  {
+    "log": "docs/verification/stage-r5-1b-fmt.log",
+    "seconds": 0.4316121,
+    "started": "2026-10-26T11:58:54.2483483Z",
+    "command": "cargo fmt --all -- --check",
+    "exit": 0
+  },
+  {
+    "log": "docs/verification/stage-r5-1b-clippy.log",
+    "seconds": 5.3725483,
+    "started": "2026-10-26T11:58:54.7427793Z",
+    "command": "cargo clippy --all-targets --all-features --locked -- -D warnings",
+    "exit": 0
+  },
+  {
+    "log": "docs/verification/stage-r5-1b-test.log",
+    "seconds": 43.8442967,
+    "started": "2026-10-26T11:59:00.1189940Z",
+    "command": "cargo test --all-features --locked",
+    "exit": 101
+  }
+]

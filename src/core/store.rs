@@ -157,6 +157,18 @@ impl Store {
         // Legacy claims lack a fence: invalidate them rather than allow a bypass.
         tx.execute("UPDATE tasks SET state='pending',claimed_by=NULL,claimed_at=NULL,lease_until=NULL WHERE state='claimed' AND lease_token IS NULL", [])?;
         tx.execute_batch("CREATE TABLE IF NOT EXISTS task_receipts(task_id TEXT NOT NULL,lease_token TEXT NOT NULL,operation TEXT NOT NULL,agent_id TEXT NOT NULL,request TEXT NOT NULL,response TEXT NOT NULL,PRIMARY KEY(task_id,lease_token,operation));")?;
+        // Durable replay protection for signed Action Runner requests. This is
+        // additive and intentionally does not rewrite any task/action rows.
+        tx.execute_batch(
+            "CREATE TABLE IF NOT EXISTS runner_nonces(
+                key_id TEXT NOT NULL,
+                nonce TEXT NOT NULL,
+                expires_at_unix_ms INTEGER NOT NULL,
+                accepted_at_unix_ms INTEGER NOT NULL,
+                PRIMARY KEY(key_id, nonce)
+            );
+            CREATE INDEX IF NOT EXISTS idx_runner_nonces_expiry ON runner_nonces(expires_at_unix_ms);",
+        )?;
         // Index just `lease_until` so the periodic reclaim sweep is a
         // cheap range scan even when the bulletin has thousands of
         // completed/cancelled rows that don't carry a lease.
@@ -196,6 +208,31 @@ impl Store {
 
     pub fn action_registry(&self) -> Option<Arc<super::actions::ActionRegistry>> {
         self.actions.clone()
+    }
+
+    /// Atomically consume a signed Runner nonce. The unique key survives Core
+    /// restarts, and expired entries are pruned in the same transaction.
+    pub fn consume_runner_nonce(
+        &self,
+        key_id: &str,
+        nonce: &str,
+        now_unix_ms: i64,
+        expires_at_unix_ms: i64,
+    ) -> Result<bool> {
+        let mut connection = self.conn.lock();
+        let transaction =
+            connection.transaction_with_behavior(rusqlite::TransactionBehavior::Immediate)?;
+        transaction.execute(
+            "DELETE FROM runner_nonces WHERE expires_at_unix_ms <= ?1",
+            [now_unix_ms],
+        )?;
+        let inserted = transaction.execute(
+            "INSERT OR IGNORE INTO runner_nonces(key_id,nonce,expires_at_unix_ms,accepted_at_unix_ms)
+             VALUES(?1,?2,?3,?4)",
+            params![key_id, nonce, expires_at_unix_ms, now_unix_ms],
+        )?;
+        transaction.commit()?;
+        Ok(inserted == 1)
     }
 
     pub fn create_task(&self, name: &str, payload: serde_json::Value) -> Result<Task> {
