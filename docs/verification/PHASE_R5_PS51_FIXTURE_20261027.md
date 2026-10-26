@@ -87,3 +87,52 @@ pre-commit gate is recorded in `stage-r5-1b-f-cleanup-checks.json`: fmt,
 clippy, all-feature locked tests and release all exited 0 (88 passed,
 8 intentionally ignored). Original protected files and every pre-existing
 untracked path were verified unchanged.
+
+## Final candidate: PASS (local and Hosted), production NOT_RUN
+
+Tested implementation commit: `ea9783268e33e546572fe346335056e28bc4d435`.
+Fork Windows run
+[40377126693](https://github.com/lieyanbang/coord/actions/runs/40377126693),
+job `121763119437`, completed **success**. All required steps passed:
+fmt/clippy/88 Rust tests/release, monitor, real LocalService and dedicated
+Runner rehearsal, Relay 27/27, MCP 18/18, Python 8/8, packaging and uploads.
+Signed tampering/expiry/restart-nonce-replay and action receipt/attempt/fence
+negative tests passed in that same Hosted run.
+
+Downloaded low-privilege evidence
+[12676791138](https://github.com/lieyanbang/coord/actions/runs/40377126693/artifacts/12676791138)
+has `state=PASS`, `phase=completed`, five expected exit-0 checks, LocalService
+public-key read/private-key denial, both signed actions succeeded, and crash
+recovery `uncertain` at attempt 1 with its child killed. Task/account/fixture
+removal is true and `cleanup_errors=[]`. Its 5246-byte ZIP SHA-256 matches
+GitHub: `5167e65472656e7ba99551318fd03ab68a51e0151e17577f0c4c728f2be858e2`.
+
+Downloaded build artifact
+[12677086008](https://github.com/lieyanbang/coord/actions/runs/40377126693/artifacts/12677086008)
+is 13,587,517 bytes. Its manifest commit and platform match the tested candidate.
+The outer GitHub archive, inner deployable ZIP, three executables and health
+script were independently hashed; inner ZIP contents match the manifest too.
+
+| Object | Verified SHA-256 |
+| --- | --- |
+| GitHub artifact ZIP | `c9b13286f93c5623b3db2248517155484935dc96608f43eb073345f45b76f47e` |
+| `coord-r5-1b-windows-2022.zip` | `c4edd881f2f52da702389fc37615c2eb1350d96728fa6bec82378e0064ba49a3` |
+| `coord.exe` | `943959b12ce75f8de716320e9fe15e72e3ea2911dbf096bedc6dc4bcfc22f3bc` |
+| `coord-action-runner.exe` | `72b46d25722842a30afd6cd3db32c9df5e15ae28fd0a9cf9a2ddb7a14dcb4baa` |
+| `coord-emote-action.exe` | `a6679db9064f10bfa74008458853db069ce5b79f018a3b6685710546e13c4879` |
+| `coord-health-monitor.ps1` | `efcee606cf5cb2483f0985b7e939fa661bf13b4035fb81a164a81b4cb7af6a25` |
+
+Downloaded Core `--version` reports 0.4.1; Runner and publisher `--help` all
+exit 0. Exact downloaded bytes and manifest are retained under
+`target/ps51-fixture-20261027/hosted-artifact/`; final low-privilege evidence is
+under `final-evidence/`, with `final-ci-run.json`, `final-ci-job.log`, and
+`artifact-verification.json` alongside. This evidence-only report follow-up
+reuses the completed gates; it does not change the tested implementation or
+request another CI run.
+
+Candidate F is complete with no remaining known in-scope blocker. This is a
+candidate for separately authorized evaluation, not production readiness.
+Production DB-copy migration/rollback/recovery (P/B3), real ChatGPT Web (W/B4),
+formal Batch operations, capacity reruns and Linux/macOS remain NOT_RUN in this
+task. Existing historical failure records and current PLAN/TASK were preserved.
+Stop after this candidate; no subsequent stage is started.
