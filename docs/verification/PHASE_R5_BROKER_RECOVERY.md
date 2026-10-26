@@ -134,3 +134,33 @@ clippy/tests/build, and the SYSTEM monitor harness. The Windows PowerShell 5.1
 parser and protected-fingerprint comparison also passed. These checks did not
 exercise the hosted LocalService fixture. Production recovery remains gated on
 a green Fork Windows run and a copy-only rehearsal.
+
+### B0 recheck and hosted startup evidence — 2026-10-26 15:04–15:19 UTC
+
+The direct SSH snapshot at
+[`PHASE_R5_B1_LIVE_RECHECK_20261026T151613Z.json`](PHASE_R5_B1_LIVE_RECHECK_20261026T151613Z.json)
+confirms the outage persists: `coord` and `CoordActionRunnerG7` are Stopped,
+7777/7779 are closed, and the real SYSTEM task returned 1 with health `FAIL`.
+SQLite integrity is `ok`; the formal Batch and both old Canary fingerprints
+match the prior audit. The legacy Broker-key content and hash were not read,
+and its ACL still excludes LocalService and the Runner SID. Linux Relay,
+Feathers, and OpenResty remain active with zero restarts; Sidecar is
+`READY/connected`, pending 0. No service, database, task, receipt, action, or
+ACL was changed.
+
+Fork run [40344079817](https://github.com/lieyanbang/coord/actions/runs/40344079817)
+passed source and SYSTEM-monitor checks but failed the hosted LocalService
+Core/Broker readiness fixture. Artifact `12660254058` is evidence-only and
+has SHA-256
+`877decc42c94c2e5f7ed8e860bc91d47c9bd7085c9a52c6aee12d2f8973d46b5`; it
+cannot be deployed. The fixture proved LocalService SID and key isolation,
+but recorded task result 1, no Core process/listener, no health response, and
+empty Core output. Root cause remains undetermined. The fixture now captures
+an explicit version probe, serve exit report, and bounded Windows application
+error evidence. That diagnostic update passed local PowerShell 5.1 parsing and
+the complete `r5-1b` local verification stage; the hosted proof is pending.
+
+**Recovery remains gated:** do not start the old shared-key Core, reset Servy
+recovery counters, install an unverified binary, start the Runner, or create a
+Canary. B3 is **NOT_RUN** until a green Fork artifact and protected-copy
+compatibility rehearsal are complete. B1/B2 remain **PARTIAL**.

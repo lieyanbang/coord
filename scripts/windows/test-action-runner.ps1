@@ -164,27 +164,59 @@ try {
     $summary.phase = 'start-localservice-core-and-check-private-key-denial'
     $localServiceScript = Join-Path $testRoot 'config/localservice-core.ps1'
     $coreCredentialReport = Join-Path $testRoot 'logs/core-credential-boundary.json'
+    $daemonStartupReport = Join-Path $testRoot 'logs/daemon-startup.json'
     $daemonStdout = Join-Path $testRoot 'logs/daemon.stdout.log'
     $daemonStderr = Join-Path $testRoot 'logs/daemon.stderr.log'
     $localServiceBody = @'
 $ErrorActionPreference = 'Stop'
 $privateReadable = $false
 $publicReadable = $false
+$startup = @{ phase = 'identity_probe' }
 try { $stream = [IO.File]::OpenRead('__PRIVATE__'); $stream.Dispose(); $privateReadable = $true } catch {}
 try { $stream = [IO.File]::OpenRead('__PUBLIC__'); $stream.Dispose(); $publicReadable = $true } catch {}
 $identity = [Security.Principal.WindowsIdentity]::GetCurrent().User.Value
 $report = @{ sid = $identity; private_key_read = $privateReadable; public_key_read = $publicReadable }
 [IO.File]::WriteAllText('__REPORT__', ($report | ConvertTo-Json -Compress), [Text.UTF8Encoding]::new($false))
-if ($identity -ne 'S-1-5-19' -or $privateReadable -or -not $publicReadable) { exit 7 }
-& '__COORD__' serve --addr '__DAEMON_ADDR__' --db '__DATABASE__' --actions-config '__REGISTRY__' 1> '__DAEMON_STDOUT__' 2> '__DAEMON_STDERR__'
-exit $LASTEXITCODE
+$startup.identity = $identity
+$startup.private_key_read = $privateReadable
+$startup.public_key_read = $publicReadable
+try {
+    if ($identity -ne 'S-1-5-19' -or $privateReadable -or -not $publicReadable) {
+        $startup.phase = 'identity_gate_failed'
+        $startup.exit_code = 7
+        [IO.File]::WriteAllText('__STARTUP_REPORT__', ($startup | ConvertTo-Json -Compress), [Text.UTF8Encoding]::new($false))
+        exit 7
+    }
+    $startup.phase = 'core_version_probe'
+    $versionOutput = @(& '__COORD__' --version 2>&1 | ForEach-Object { [string]$_ })
+    $startup.version_exit_code = $LASTEXITCODE
+    $startup.version_output = @($versionOutput | Select-Object -First 4)
+    [IO.File]::WriteAllText('__STARTUP_REPORT__', ($startup | ConvertTo-Json -Compress), [Text.UTF8Encoding]::new($false))
+    if ($startup.version_exit_code -ne 0) { throw 'coord version probe returned a nonzero exit code' }
+    $startup.phase = 'serve_running'
+    [IO.File]::WriteAllText('__STARTUP_REPORT__', ($startup | ConvertTo-Json -Compress), [Text.UTF8Encoding]::new($false))
+    & '__COORD__' serve --addr '__DAEMON_ADDR__' --db '__DATABASE__' --actions-config '__REGISTRY__' 1> '__DAEMON_STDOUT__' 2> '__DAEMON_STDERR__'
+    $startup.phase = 'serve_returned'
+    $startup.exit_code = $LASTEXITCODE
+    [IO.File]::WriteAllText('__STARTUP_REPORT__', ($startup | ConvertTo-Json -Compress), [Text.UTF8Encoding]::new($false))
+    exit $LASTEXITCODE
+} catch {
+    $startup.phase = 'powershell_exception'
+    $startup.exception_type = $_.Exception.GetType().FullName
+    $startup.exception_message = [string]$_.Exception.Message
+    $startup.error_id = [string]$_.FullyQualifiedErrorId
+    $startup.exit_code = 98
+    [IO.File]::WriteAllText('__STARTUP_REPORT__', ($startup | ConvertTo-Json -Compress), [Text.UTF8Encoding]::new($false))
+    exit 98
+}
 '@
-    $localServiceBody = $localServiceBody.Replace('__PRIVATE__', $privateKeyPath).Replace('__PUBLIC__', $publicKeyPath).Replace('__REPORT__', $coreCredentialReport).Replace('__COORD__', (Join-Path $testRoot 'bin/coord.exe')).Replace('__DAEMON_ADDR__', ('127.0.0.1:' + $daemonPort)).Replace('__DATABASE__', $databasePath).Replace('__REGISTRY__', $registryPath).Replace('__DAEMON_STDOUT__', $daemonStdout).Replace('__DAEMON_STDERR__', $daemonStderr)
+    $localServiceBody = $localServiceBody.Replace('__PRIVATE__', $privateKeyPath).Replace('__PUBLIC__', $publicKeyPath).Replace('__REPORT__', $coreCredentialReport).Replace('__STARTUP_REPORT__', $daemonStartupReport).Replace('__COORD__', (Join-Path $testRoot 'bin/coord.exe')).Replace('__DAEMON_ADDR__', ('127.0.0.1:' + $daemonPort)).Replace('__DATABASE__', $databasePath).Replace('__REGISTRY__', $registryPath).Replace('__DAEMON_STDOUT__', $daemonStdout).Replace('__DAEMON_STDERR__', $daemonStderr)
     [IO.File]::WriteAllText($localServiceScript, $localServiceBody, [Text.UTF8Encoding]::new($false))
     $windowsPowerShell = Join-Path $env:SystemRoot 'System32/WindowsPowerShell/v1.0/powershell.exe'
     $taskAction = New-ScheduledTaskAction -Execute $windowsPowerShell -Argument ('-NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "' + $localServiceScript + '"')
     $taskPrincipal = New-ScheduledTaskPrincipal -UserId 'NT AUTHORITY\LOCAL SERVICE' -LogonType ServiceAccount -RunLevel Limited
     Register-ScheduledTask -TaskName $daemonTaskName -Action $taskAction -Principal $taskPrincipal -Force | Out-Null
+    $taskStartedUtc = [DateTime]::UtcNow
     Start-ScheduledTask -TaskName $daemonTaskName
     $ready = $false
     $lastHealthz = $null
@@ -230,7 +262,30 @@ exit $LASTEXITCODE
                 $startupLogs += @{ stream = $log.stream; bytes = $logItem.Length; tail = $safeTail }
             }
         }
-        $summary.localservice_startup = @{ observed_at_utc = [DateTime]::UtcNow.ToString('o'); task_state = [string]$taskState; last_task_result = if ($taskInfo) { $taskInfo.LastTaskResult } else { $null }; core_process_ids = $coreProcessIds; listeners = $listeners; well_known_available = $wellKnownAvailable; well_known_exception_type = $lastWellKnownExceptionType; healthz = $healthSnapshot; healthz_exception_type = $lastHealthExceptionType; logs = $startupLogs }
+        $startupDetails = $null
+        if (Test-Path -LiteralPath $daemonStartupReport -PathType Leaf) {
+            try { $startupDetails = Get-Content -LiteralPath $daemonStartupReport -Raw | ConvertFrom-Json } catch { $startupDetails = @{ parse_error = $_.Exception.GetType().FullName } }
+        }
+        if ($startupDetails) {
+            $safeStartupDetails = ConvertTo-Json -InputObject $startupDetails -Depth 10 -Compress
+            $safeStartupDetails = $safeStartupDetails -replace '(?i)(authorization\s*:\s*bearer\s+)\S+', '$1<redacted>'
+            $safeStartupDetails = $safeStartupDetails -replace '(?i)((?:management|broker|private|secret|rpc)[-_ ]?(?:key|token)\s*[:=]\s*)\S+', '$1<redacted>'
+            $safeStartupDetails = $safeStartupDetails -replace '\b[A-Fa-f0-9]{64,}\b', '<redacted-long-hex>'
+            $safeStartupDetails = $safeStartupDetails -replace '\b[A-Za-z0-9_-]{80,}\b', '<redacted-long-token>'
+            $startupDetails = $safeStartupDetails | ConvertFrom-Json
+        }
+        $applicationEvents = @()
+        $eventStart = $taskStartedUtc.ToLocalTime().AddSeconds(-2)
+        foreach ($event in @(Get-WinEvent -FilterHashtable @{ LogName = 'Application'; StartTime = $eventStart } -ErrorAction SilentlyContinue | Where-Object { $_.ProviderName -in @('Application Error', 'Windows Error Reporting', '.NET Runtime', 'SideBySide') } | Sort-Object TimeCreated -Descending | Select-Object -First 12)) {
+            $message = [string]$event.Message
+            $message = $message -replace '(?i)(authorization\s*:\s*bearer\s+)\S+', '$1<redacted>'
+            $message = $message -replace '(?i)((?:management|broker|private|secret|rpc)[-_ ]?(?:key|token)\s*[:=]\s*)\S+', '$1<redacted>'
+            $message = $message -replace '\b[A-Fa-f0-9]{64,}\b', '<redacted-long-hex>'
+            $message = $message -replace '\b[A-Za-z0-9_-]{80,}\b', '<redacted-long-token>'
+            if ($message.Length -gt 1600) { $message = $message.Substring(0, 1600) }
+            $applicationEvents += @{ time_utc = $event.TimeCreated.ToUniversalTime().ToString('o'); provider = $event.ProviderName; id = $event.Id; level = $event.LevelDisplayName; message = $message }
+        }
+        $summary.localservice_startup = @{ observed_at_utc = [DateTime]::UtcNow.ToString('o'); task_started_utc = $taskStartedUtc.ToString('o'); task_state = [string]$taskState; last_task_result = if ($taskInfo) { $taskInfo.LastTaskResult } else { $null }; core_process_ids = $coreProcessIds; listeners = $listeners; well_known_available = $wellKnownAvailable; well_known_exception_type = $lastWellKnownExceptionType; healthz = $healthSnapshot; healthz_exception_type = $lastHealthExceptionType; startup_details = $startupDetails; application_events = $applicationEvents; logs = $startupLogs }
         throw 'LocalService Core/Broker did not reach ready state with private-key access denied.'
     }
     $daemonCore = Get-CimInstance Win32_Process | Where-Object { $_.ExecutablePath -eq (Join-Path $testRoot 'bin/coord.exe') -and $_.CommandLine -like ('*' + $databasePath + '*') } | Select-Object -First 1

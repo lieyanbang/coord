@@ -391,6 +391,70 @@ production Core and SYSTEM health remain **FAIL**; B1/B2 **PARTIAL** pending a
 green hosted LocalService fixture; B3 **NOT_RUN**; B4 **NOT_RUN**; B5
 **IN_PROGRESS**. No new Canary Batch or user ChatGPT action material exists.
 
+## R5-1B continuation — 2026-10-26 15:04–15:19 UTC
+
+### Hosted failure and diagnostic extension
+
+Fork Windows run [40344079817](https://github.com/lieyanbang/coord/actions/runs/40344079817),
+commit `a071b18c52ee6a2e587f116d6c9f01c5f3c6af8b`, passed fmt, clippy, all
+Rust tests, Release build, and the SYSTEM monitor suite. The dedicated
+LocalService/Runner rehearsal failed at its Core/Broker readiness gate; Relay,
+MCP, and packaging steps were skipped. Artifact `12660254058` is a diagnostic
+only ZIP (2,373 bytes; SHA-256
+`877decc42c94c2e5f7ed8e860bc91d47c9bd7085c9a52c6aee12d2f8973d46b5`), not a
+deployable package. Its sanitized fixture evidence confirms SID `S-1-5-19`,
+LocalService can read the public key and cannot read the private key, the
+temporary Core task returned 1, `/healthz` and the agent card did not respond,
+there was no Core process or listener, and captured stdout/stderr were empty.
+The disposable account, task, and fixture were removed with no cleanup error.
+This is a confirmed harness failure but still does not identify the Core exit
+cause.
+
+The hosted test now writes a disposable startup phase report, probes
+`coord.exe --version` under LocalService, captures the serve exit code and
+sanitized application-error events, and retains bounded output evidence. The
+Windows PowerShell 5.1 parser passes. These added diagnostics have not yet run
+on Hosted Windows, so they are not evidence that Core starts. The GitHub CLI
+was unavailable locally; the read-only GitHub Connector verified the job and
+artifact metadata without changing the run.
+
+### B0 live recheck
+
+Direct SSH through the External Context procedure collected
+[`PHASE_R5_B1_LIVE_RECHECK_20261026T151613Z.json`](PHASE_R5_B1_LIVE_RECHECK_20261026T151613Z.json)
+at 15:16:13Z (file SHA-256
+`ED5FBBAB29E774531ACFF9C6E93A67D04A0A7AAA9FE519238CA8681676ABFEE7`). The
+`coord` service (LocalService) and `CoordActionRunnerG7` were Stopped;
+`Servy` (LocalSystem PID 3224) and `CoordRelayAgent` (LocalService PID 5892)
+were Running; 7777/7779 had no listeners and an unauthenticated RPC probe was
+connection-refused. The real SYSTEM health task remained Ready but returned 1
+at 15:15:15Z; the fresh report was `FAIL` at 15:15:18Z with 900 consecutive
+failures (`tasks_list=FAIL`, read-only SQLite `PASS`).
+
+SQLite `integrity_check=ok`, WAL mode, schema 32, and `user_version=0` were
+observed. The formal Batch `90ce2ca7-184e-4c3d-9d87-56386db25419` remains 121
+tasks (105 completed, 16 pending), with 105 actions; its protected fingerprint
+and both old Canary fingerprints match the 14:59Z snapshot. The 38 failed
+historical completion Actions remain untouched. The production Broker-key
+ACL still has no LocalService or Runner ACE; the key content and hash were not
+read. At 15:19:10Z on the Linux relay host, Relay, Feathers, and OpenResty
+were active with `NRestarts=0`; Sidecar returned `READY`, connected, pending
+0. The first piped Bash check had a CRLF-affected curl argument and exited 3;
+a direct SSH curl recheck succeeded. No production state was changed.
+
+The local command `pwsh.exe -NoProfile -File scripts/verify.ps1 -Stage
+r5-1b` exited 0 for fmt, locked clippy, all-feature tests, locked Release
+build, and the isolated SYSTEM health-monitor harness. The PowerShell 5.1
+parser and `git diff --check` also passed. These local checks do not replace
+the missing Hosted Windows identity and startup result.
+
+**Gate disposition:** B0 read-only baseline **PASS** while Core and SYSTEM
+health remain **FAIL**; B1/B2 **PARTIAL** pending the new hosted diagnostic
+and a complete isolated Runner rehearsal; B3 **NOT_RUN**; B4 **NOT_RUN**; B5
+**IN_PROGRESS**. Production Core/Runner restore, copy migration, Canary
+creation, and ChatGPT prompts remain gated. Formal Phase H, both old Canaries,
+and all 38 failed business Actions remained read-only.
+
 ### Local R5-1B gate after startup diagnostics update — 2026-10-26 14:49 UTC
 
 `pwsh.exe -NoProfile -File scripts/verify.ps1 -Stage r5-1b` exited 0:

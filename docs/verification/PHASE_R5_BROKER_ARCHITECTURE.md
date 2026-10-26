@@ -266,3 +266,30 @@ three current protected fingerprints match the 12:49Z audit; and
 Windows LocalService account/ACL startup fixture. B1/B2 therefore remain
 **PARTIAL** until a new Fork Windows run completes the runner rehearsal,
 Relay/MCP checks, and package step.
+
+## B0–B2 continuation at 2026-10-26 15:19 UTC
+
+Fork run `40344079817` passed Rust and SYSTEM-monitor checks but failed the
+Hosted Windows LocalService Core startup fixture. The failure artifact is
+diagnostic-only; no release ZIP/EXE from that run is accepted. Its identity
+evidence confirms the desired key boundary (Core is LocalService, public key
+readable, Runner private key denied) while the Core process exited before
+opening either listener. This does not yet prove whether the cause is the
+test wrapper, Windows process launch, Core startup, configuration, or store.
+
+The disposable fixture now records `coord.exe --version` output and status
+before `serve`, writes an explicit report if `serve` returns or PowerShell
+throws, and samples bounded Windows Application Error events. Credential-like
+strings are redacted from these diagnostics. The test is constrained to a
+random disposable CI root and retains its existing cleanup checks. Local
+PowerShell 5.1 parsing and the full `scripts/verify.ps1 -Stage r5-1b` gate
+passed, but B1/B2 remain **PARTIAL** until the revised hosted run reaches the
+Broker/Runner, relay, and package stages.
+
+The production recheck at 15:16:13Z confirms Core/Runner stopped, both ports
+closed, SYSTEM health failing, database integrity valid, and protected
+formal/Canary fingerprints unchanged. Linux relay services and Sidecar were
+healthy at 15:19Z. Production recovery, artifact migration, B4, and a new
+Canary remain **NOT_RUN**; B5 remains **IN_PROGRESS**. The full sanitized
+snapshots and preserved history are in `PHASE_R5.md` and
+`PHASE_R5_BROKER_RECOVERY.md`.
