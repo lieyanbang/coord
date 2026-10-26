@@ -69,13 +69,21 @@ jobs:
             Copy-Item -LiteralPath $source -Destination $destination
             $files += @{ name = $name; sha256 = (Get-FileHash -LiteralPath $destination -Algorithm SHA256).Hash.ToLowerInvariant() }
           }
+          $healthMonitorName = 'coord-health-monitor.ps1'
+          $healthMonitorSource = Join-Path 'scripts/windows' $healthMonitorName
+          $healthMonitorDestination = Join-Path $stage $healthMonitorName
+          if (-not (Test-Path -LiteralPath $healthMonitorSource -PathType Leaf)) { throw 'Missing matched SYSTEM health monitor script.' }
+          Copy-Item -LiteralPath $healthMonitorSource -Destination $healthMonitorDestination
+          $healthMonitor = @{ name = $healthMonitorName; sha256 = (Get-FileHash -LiteralPath $healthMonitorDestination -Algorithm SHA256).Hash.ToLowerInvariant() }
           $zip = Join-Path $stage 'coord-r5-1b-windows-2022.zip'
-          Compress-Archive -LiteralPath @($names | ForEach-Object { Join-Path $stage $_ }) -DestinationPath $zip -CompressionLevel Optimal
+          $artifactNames = @($names) + @($healthMonitorName)
+          Compress-Archive -LiteralPath @($artifactNames | ForEach-Object { Join-Path $stage $_ }) -DestinationPath $zip -CompressionLevel Optimal
           $manifest = @{
             state = 'PASS'
             commit = (git rev-parse HEAD).Trim()
             platform = 'windows-2022-x86_64-pc-windows-msvc'
             files = $files
+            health_monitor_script = $healthMonitor
             zip = @{ name = [IO.Path]::GetFileName($zip); sha256 = (Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash.ToLowerInvariant() }
           }
           $manifest | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $stage 'stage-r5-1b-artifacts.json') -Encoding utf8NoBOM

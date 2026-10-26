@@ -28,17 +28,17 @@ function Assert-LocalTarget([string]$Target) {
     if (-not $resolved.StartsWith($testRoot + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) { throw 'Fixture path escapes exact disposable test root.' }
     return $resolved
 }
-function Set-FixtureAcl([string]$Target, [string[]]$Grants) {
+function Set-FixtureAcl([string]$Target) {
     $resolved = Assert-LocalTarget $Target
     & icacls.exe $resolved /inheritance:r | Out-Null
     if ($LASTEXITCODE -ne 0) { throw 'Fixture ACL application failed.' }
-    # Windows PowerShell 5.1 can serialize a splatted native-command string
-    # array as one argument. Apply each ACE separately so icacls receives one
-    # SID:permission token per invocation.
-    foreach ($grant in (@('*S-1-5-32-544:(OI)(CI)F', '*S-1-5-18:(OI)(CI)F') + $Grants)) {
-        & icacls.exe $resolved /grant:r $grant | Out-Null
-        if ($LASTEXITCODE -ne 0) { throw 'Fixture ACL application failed.' }
-    }
+    Add-FixtureGrant $resolved '*S-1-5-32-544:(OI)(CI)F'
+    Add-FixtureGrant $resolved '*S-1-5-18:(OI)(CI)F'
+}
+function Add-FixtureGrant([string]$Target, [string]$Grant) {
+    $resolved = Assert-LocalTarget $Target
+    & icacls.exe $resolved /grant:r $Grant | Out-Null
+    if ($LASTEXITCODE -ne 0) { throw 'Fixture ACL application failed.' }
 }
 function Free-Port {
     $listener = [Net.Sockets.TcpListener]::new([Net.IPAddress]::Loopback, 0)
@@ -110,16 +110,31 @@ try {
     $crashCommand = @{ executable = $pingExe; sha256 = (Get-FileHash -LiteralPath $pingExe -Algorithm SHA256).Hash.ToLowerInvariant(); working_directory = (Join-Path $testRoot 'scratch'); args = @('-n', '30', '127.0.0.1'); include_result = $false; timeout_ms = 30000; max_output_bytes = 65536; max_attempts = 1; idempotent = $false }
     # LocalService is the real Core identity; the dedicated user is the Runner.
     # Core gets only the public key. Its service token cannot open the private key.
-    & icacls.exe $testRoot /inheritance:r /grant:r '*S-1-5-32-544:(OI)(CI)F' '*S-1-5-18:(OI)(CI)F' '*S-1-5-19:(OI)(CI)RX' ('*' + $createdSid + ':(OI)(CI)RX') | Out-Null
-    if ($LASTEXITCODE -ne 0) { throw 'Test root ACL failed.' }
-    Set-FixtureAcl (Join-Path $testRoot 'config') @('*S-1-5-19:(OI)(CI)RX', ('*' + $createdSid + ':(OI)(CI)RX'))
-    Set-FixtureAcl (Join-Path $testRoot 'bin') @('*S-1-5-19:(OI)(CI)RX', ('*' + $createdSid + ':(OI)(CI)RX'))
-    Set-FixtureAcl (Join-Path $testRoot 'management') @('*S-1-5-19:(OI)(CI)R')
-    Set-FixtureAcl (Join-Path $testRoot 'runner-private') @(('*' + $createdSid + ':(OI)(CI)R'))
-    Set-FixtureAcl (Join-Path $testRoot 'data') @('*S-1-5-19:(OI)(CI)M')
-    Set-FixtureAcl (Join-Path $testRoot 'protected') @()
-    Set-FixtureAcl (Join-Path $testRoot 'business/A1') @()
-    foreach ($directory in @('logs', 'scratch', 'business/results')) { Set-FixtureAcl (Join-Path $testRoot $directory) @('*' + $createdSid + ':(OI)(CI)M', '*S-1-5-19:(OI)(CI)M') }
+    Set-FixtureAcl $testRoot
+    Add-FixtureGrant $testRoot '*S-1-5-19:(OI)(CI)RX'
+    Add-FixtureGrant $testRoot ('*' + $createdSid + ':(OI)(CI)RX')
+    foreach ($relative in @('config', 'bin')) {
+        $path = Join-Path $testRoot $relative
+        Set-FixtureAcl $path
+        Add-FixtureGrant $path '*S-1-5-19:(OI)(CI)RX'
+        Add-FixtureGrant $path ('*' + $createdSid + ':(OI)(CI)RX')
+    }
+    $managementPath = Join-Path $testRoot 'management'
+    Set-FixtureAcl $managementPath
+    Add-FixtureGrant $managementPath '*S-1-5-19:(OI)(CI)R'
+    $runnerPrivatePath = Join-Path $testRoot 'runner-private'
+    Set-FixtureAcl $runnerPrivatePath
+    Add-FixtureGrant $runnerPrivatePath ('*' + $createdSid + ':(OI)(CI)R')
+    $dataPath = Join-Path $testRoot 'data'
+    Set-FixtureAcl $dataPath
+    Add-FixtureGrant $dataPath '*S-1-5-19:(OI)(CI)M'
+    foreach ($relative in @('protected', 'business/A1')) { Set-FixtureAcl (Join-Path $testRoot $relative) }
+    foreach ($relative in @('logs', 'scratch', 'business/results')) {
+        $path = Join-Path $testRoot $relative
+        Set-FixtureAcl $path
+        Add-FixtureGrant $path ('*' + $createdSid + ':(OI)(CI)M')
+        Add-FixtureGrant $path '*S-1-5-19:(OI)(CI)M'
+    }
     [IO.File]::WriteAllText($managementKeyPath, $managementKey)
     [IO.File]::WriteAllText($databasePath, '')
     & $runnerExe --generate-keypair --private-key-file $privateKeyPath --public-key-file $publicKeyPath 2> (Join-Path $testRoot 'logs/keygen.stderr.log')

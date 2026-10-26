@@ -117,3 +117,53 @@ copied to the remote backup. The next production transition is a fresh
 protected backup, followed by a new-copy compatibility-Core rehearsal with
 Broker **DEGRADED/UNAVAILABLE**. Do not restore the old G7 Core or grant it
 access to the old Broker key.
+
+## Fork Actions rerun and backup audit update — 2026-10-26
+
+The protected G7 backup created under `C:\ProgramData\coord\backup\g7-20261026T124419Z-0380fb72` is now verified complete: online SQLite backup and Servy snapshot passed; the 48-object tree has only SYSTEM/Administrators FullControl at its root, no unexpected ACEs, and unchanged parent and legacy Broker-key ACLs. The DB audit found matching row counts, table/schema-object fingerprints, and `integrity_check=ok` between live and backup. The SQLite internal `schema_version` cookie is 32 in the live DB and 1 in the online backup, while both `user_version` values are 0. This metadata discrepancy is recorded for migration rehearsal; it is not yet treated as an application-schema difference.
+
+Fork run [40324684634](https://github.com/lieyanbang/coord/actions/runs/40324684634) tested `949d4b36446a463a457e30be8ab4c9da570a4927`. Fmt, clippy, all Rust tests, Release build, and isolated health-monitor recovery/fault-domain tests passed. The dedicated Windows low-privilege Runner rehearsal still failed at fixture ACL setup (step exit 1); the log showed `icacls` received the Runner Modify ACE and LocalService Modify ACE as one space-joined argument. The workflow skipped Relay/MCP tests and package creation. Its 465-byte diagnostic artifact is not a deployable build and must not be used. The earlier claim that the ACL fix was sufficient is superseded by this observed hosted failure.
+
+The repair now makes each grant a scalar `icacls /grant:r` invocation through `Add-FixtureGrant`, and each fixture directory is configured one grant at a time. The PowerShell parser check passes. A local `scripts/verify.ps1 -Stage r5-1b` rerun is in progress; hosted Windows execution remains the required validation of ACL semantics.
+
+Recorded execution deviations remain: the one-off local ACL command was rejected by local execution policy before process creation; an earlier PowerShell command failed before SCP parsing completed; a separate incorrectly quoted remote PowerShell 7 invocation failed without producing a backup; and several audit wrapper commands failed before read-only substitute queries completed. None of these changed production services, the live DB, or the legacy Broker-key ACL. No real Batch, old Canary, or failed business Action was executed or mutated.
+
+## B0-B2 continuation checkpoint — 2026-10-26 14:00 UTC
+
+- The updated local gate `scripts/verify.ps1 -Stage r5-1b` completed with exit
+  0 for fmt, clippy, all-feature Rust tests, release build, and the isolated
+  SYSTEM health-monitor harness. The exact command records and sanitized logs
+  are in `stage-r5-1b-checks.json` and `stage-r5-1b-*.log`.
+- Windows PowerShell 5.1 parser checks passed for all eight changed deployment,
+  backup, verifier, and rehearsal scripts. `git diff --check` passed; Git only
+  reported the repository's LF-to-CRLF working-copy notices.
+- Fork run [40324684634](https://github.com/lieyanbang/coord/actions/runs/40324684634)
+  failed its dedicated low-privilege ACL fixture before Relay/MCP or packaging.
+  The produced 465-byte diagnostic artifact is not deployable. The revised
+  fixture applies one ACE per `icacls /grant:r` invocation; local parsing and
+  Rust/monitor checks pass, but this repair still requires a new hosted Windows
+  Actions run. No artifact from either failed run is accepted.
+- A direct OpenSSH read-only recheck at 14:00:32Z is preserved in
+  [`PHASE_R5_B1_LIVE_RECHECK_20261026T140032Z.json`](PHASE_R5_B1_LIVE_RECHECK_20261026T140032Z.json).
+  Coord and `CoordActionRunnerG7` were stopped; `Servy` (LocalSystem PID 3224)
+  and `CoordRelayAgent` (LocalService PID 5892) were running; neither 7777 nor
+  7779 had a listener. The enabled SYSTEM task was Ready and its latest run at
+  14:00Z returned `LastTaskResult=1`. The status file reported `FAIL` with 825
+  consecutive failures; its older schema did not expose component fields.
+  The legacy `broker.key` was neither opened nor hashed.
+- The configured Coord MCP `tasks_list` call for pending urgent tasks returned
+  `INVALID_ARGUMENT / logical_worker_required`; the exposed connector has no
+  heartbeat or task-creation operation. No high-priority query, task claim,
+  task ID, or ack was fabricated. No production or formal Batch operation was
+  attempted. The local `coord` command is not installed, so stage commits remain
+  the available repository ledger.
+
+### Current gate disposition
+
+| Gate | Status at 14:00 UTC | Evidence / next transition |
+| --- | --- | --- |
+| B0 | **PASS, outage persists** | Architecture and fresh sanitized Windows snapshot are recorded; recheck again immediately before deployment. |
+| B1/B2 | **PARTIAL** | Local regression and monitor tests pass; Windows ACL rehearsal failed in run `40324684634`; the one-ACE fix awaits a passing Fork run. |
+| B3 | **NOT_RUN** | No accepted build artifact. Do not deploy or use either failed-run artifact. After a green run, verify exact commit, ZIP, three EXEs, and health script; then perform the protected-copy rehearsal before production recovery. |
+| B4 | **NOT_RUN** | No new Canary Batch or prompts exist. |
+| B5 | **IN_PROGRESS** | Prior FAIL/BLOCKED/deviation records remain preserved; continue appending evidence. |

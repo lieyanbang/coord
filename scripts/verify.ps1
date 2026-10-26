@@ -15,10 +15,16 @@ try {
         $started = [DateTime]::UtcNow
         $cargoArgs = $check.Args
         [System.IO.File]::WriteAllText($log, '', [System.Text.Encoding]::UTF8)
-        & cargo @cargoArgs 2>&1 | ForEach-Object {
-            $_.ToString().Replace($repoRoot,'<workspace>').Replace($env:USERPROFILE,'<user>')
-        } | Set-Content -Encoding utf8 $log
-        $code = $LASTEXITCODE
+        $previousErrorActionPreference = $ErrorActionPreference
+        $ErrorActionPreference = 'Continue'
+        try {
+            & cargo @cargoArgs 2>&1 | ForEach-Object {
+                $_.ToString().Replace($repoRoot,'<workspace>').Replace($env:USERPROFILE,'<user>')
+            } | Set-Content -Encoding utf8 $log
+            $code = $LASTEXITCODE
+        } finally {
+            $ErrorActionPreference = $previousErrorActionPreference
+        }
         $results += @{command=('cargo '+($cargoArgs -join ' '));exit=$code;started=$started.ToString('o');seconds=([DateTime]::UtcNow-$started).TotalSeconds;log=$log}
         $results | ConvertTo-Json -Depth 5 | Set-Content -Encoding utf8 "docs/verification/stage-$Stage-checks.json"
         Write-Output "$Stage $($check.Name): exit=$code"
@@ -30,10 +36,16 @@ try {
         $windowsPowerShell = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
         $coordExe = (Resolve-Path -LiteralPath 'target/release/coord.exe').Path
         $testScript = 'scripts/windows/test-coord-health-monitor.ps1'
-        & $windowsPowerShell -NoLogo -NoProfile -NonInteractive -File $testScript -CoordExe $coordExe 2>&1 | ForEach-Object {
-            $_.ToString().Replace($repoRoot,'<workspace>').Replace($env:USERPROFILE,'<user>')
-        } | Set-Content -Encoding utf8 $log
-        $code = $LASTEXITCODE
+        $previousErrorActionPreference = $ErrorActionPreference
+        $ErrorActionPreference = 'Continue'
+        try {
+            & $windowsPowerShell -NoLogo -NoProfile -NonInteractive -File $testScript -CoordExe $coordExe 2>&1 | ForEach-Object {
+                $_.ToString().Replace($repoRoot,'<workspace>').Replace($env:USERPROFILE,'<user>')
+            } | Set-Content -Encoding utf8 $log
+            $code = $LASTEXITCODE
+        } finally {
+            $ErrorActionPreference = $previousErrorActionPreference
+        }
         $results += @{command=('powershell.exe -NoLogo -NoProfile -File '+$testScript);exit=$code;started=$started.ToString('o');seconds=([DateTime]::UtcNow-$started).TotalSeconds;log=$log}
         $results | ConvertTo-Json -Depth 5 | Set-Content -Encoding utf8 "docs/verification/stage-$Stage-checks.json"
         Write-Output "$Stage health-monitor: exit=$code"

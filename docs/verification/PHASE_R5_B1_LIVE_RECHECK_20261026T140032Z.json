@@ -1,0 +1,48 @@
+{
+  "observed_at_utc": "2026-10-26T14:00:32.1996860Z",
+  "method": "direct OpenSSH read-only PowerShell query",
+  "command_exit_code": 0,
+  "services": [
+    {
+      "name": "coord",
+      "state": "Stopped",
+      "start_name": "NT AUTHORITY\\LocalService",
+      "process_id": 0
+    },
+    {
+      "name": "Servy",
+      "state": "Running",
+      "start_name": "LocalSystem",
+      "process_id": 3224
+    },
+    {
+      "name": "CoordRelayAgent",
+      "state": "Running",
+      "start_name": "NT AUTHORITY\\LocalService",
+      "process_id": 5892
+    },
+    {
+      "name": "CoordActionRunnerG7",
+      "state": "Stopped",
+      "start_name": ".\\coord_action_g7",
+      "process_id": 0
+    }
+  ],
+  "listeners": [],
+  "system_health_task": {
+    "state": "Ready",
+    "last_run_time_utc": "2026-10-26T14:00:00.0000000Z",
+    "last_task_result": 1,
+    "next_run_time_utc": "2026-10-26T14:01:01.0000000Z"
+  },
+  "health_status": {
+    "status": "FAIL",
+    "checked_at_unix_ms": 1793023217968,
+    "consecutive_failures": 825,
+    "component_fields_exposed_by_current_file": false
+  },
+  "legacy_broker_key_content_read": false,
+  "legacy_broker_key_hash_computed": false,
+  "production_mutations": false,
+  "formal_batch_or_canary_mutations": false
+}

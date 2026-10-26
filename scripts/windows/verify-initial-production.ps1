@@ -31,11 +31,9 @@ $expected=@{'coord.exe'='b23e43f30a076d3d3dc75e90a07a7a3f9de35ad33351bb2e9bf8938
 foreach($name in $expected.Keys){if((Get-FileHash (Join-Path $base ('bin/'+$name))).Hash.ToLowerInvariant() -ne $expected[$name]){throw 'Installed hash drift.'}}
 $listeners=@(Get-NetTCPConnection -LocalPort 7777,7779 -State Listen)
 if($listeners.Count -ne 2 -or @($listeners|Where-Object LocalAddress -ne '127.0.0.1').Count){throw 'Listener scope failed.'}
-$key=[IO.File]::ReadAllText((Join-Path $base 'daemon-private/management.key')).Trim()
-$broker=[IO.File]::ReadAllText((Join-Path $base 'config/broker.key')).Trim()
 $body='{"jsonrpc":"2.0","id":1,"method":"tasks/list","params":{"limit":1,"skip_reclaim":true}}'
 $missing=Invoke-WebRequest 'http://127.0.0.1:7777/' -Method Post -ContentType application/json -Body $body -SkipHttpErrorCheck
-$denied=Invoke-WebRequest 'http://127.0.0.1:7777/' -Method Post -ContentType application/json -Headers @{Authorization=('Bearer '+$broker)} -Body $body -SkipHttpErrorCheck
+$denied=Invoke-WebRequest 'http://127.0.0.1:7777/' -Method Post -ContentType application/json -Headers @{Authorization='Bearer unrelated-runner-credential'} -Body $body -SkipHttpErrorCheck
 if($missing.StatusCode -ne 401 -or $denied.StatusCode -ne 401){throw 'Management security boundary failed.'}
 $registry=Get-Content -Raw (Join-Path $base 'config/registry-production.json')|ConvertFrom-Json
 $oldRegistry=Get-Content -Raw (Join-Path $state.backup_root 'registry-before.json')|ConvertFrom-Json
@@ -45,4 +43,4 @@ $oldPolicy=Get-Content -Raw (Join-Path $state.backup_root 'identity-before.json'
 if(($identity.bindings[0..2]|ConvertTo-Json -Depth 20 -Compress) -ne ($oldPolicy.bindings|ConvertTo-Json -Depth 20 -Compress)){throw 'Old identity bindings changed.'}
 $runnerToken=@(Get-Content (Join-Path $base 'runtime/logs/runner.stderr.log')|Where-Object{$_ -match '^\{"sid":'}|ForEach-Object{$_|ConvertFrom-Json})|Select-Object -Last 1
 if($runnerToken.sid -ne $registry.external_runner.runner_sid -or $runnerToken.privileged -ne $false){throw 'Current Runner service token failed.'}
-@{state='PASS';observed_at=[DateTime]::UtcNow.ToString('o');batch_id=$state.batch_id;backup_acl_admin_system_only=$true;unrelated_service_configurations_preserved=$protected.Count;protected_application_services_unchanged=$stable;os_transient_state_changes=$transient;owned_services=@($now|Where-Object Name -in $owned|Select-Object Name,State,StartName,ProcessId);health=$health;monitor=@{principal=$monitor.Principal.UserId;last_exit=(Get-ScheduledTaskInfo coord-health-monitor).LastTaskResult};hashes=$expected;management_rejections=@($missing.StatusCode,$denied.StatusCode);loopback_only=$true;prior_profiles_and_bindings_unchanged=$true;runner_token=$runnerToken;rollback_requires_expired_formal_binding_tombstone=$true}|ConvertTo-Json -Depth 20
+@{state='PASS';observed_at=[DateTime]::UtcNow.ToString('o');batch_id=$state.batch_id;backup_acl_admin_system_only=$true;unrelated_service_configurations_preserved=$protected.Count;protected_application_services_unchanged=$stable;os_transient_state_changes=$transient;owned_services=@($now|Where-Object Name -in $owned|Select-Object Name,State,StartName,ProcessId);health=$health;monitor=@{principal=$monitor.Principal.UserId;last_exit=(Get-ScheduledTaskInfo coord-health-monitor).LastTaskResult};hashes=$expected;management_rejections=@{missing=$missing.StatusCode;unrelated_credential=$denied.StatusCode;legacy_broker_key_read='NOT_PERFORMED'};loopback_only=$true;prior_profiles_and_bindings_unchanged=$true;runner_token=$runnerToken;rollback_requires_expired_formal_binding_tombstone=$true}|ConvertTo-Json -Depth 20

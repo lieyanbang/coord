@@ -1,37 +1,37 @@
-[
-  {
-    "log": "docs/verification/stage-r5-1b-fmt.log",
-    "started": "2026-10-26T12:31:36.0379601Z",
-    "seconds": 0.4550713,
-    "exit": 0,
-    "command": "cargo fmt --all -- --check"
-  },
-  {
-    "log": "docs/verification/stage-r5-1b-clippy.log",
-    "started": "2026-10-26T12:31:36.5441567Z",
-    "seconds": 0.6977718,
-    "exit": 0,
-    "command": "cargo clippy --all-targets --all-features --locked -- -D warnings"
-  },
-  {
-    "log": "docs/verification/stage-r5-1b-test.log",
-    "started": "2026-10-26T12:31:37.2456469Z",
-    "seconds": 44.2702656,
-    "exit": 0,
-    "command": "cargo test --all-features --locked"
-  },
-  {
-    "log": "docs/verification/stage-r5-1b-build.log",
-    "started": "2026-10-26T12:32:21.5183666Z",
-    "seconds": 0.506647,
-    "exit": 0,
-    "command": "cargo build --release --locked"
-  },
-  {
-    "log": "docs/verification/stage-r5-1b-health-monitor.log",
-    "started": "2026-10-26T12:32:22.0283171Z",
-    "seconds": 36.1958993,
-    "exit": 0,
-    "command": "powershell.exe -NoLogo -NoProfile -File scripts/windows/test-coord-health-monitor.ps1"
-  }
+﻿[
+    {
+        "log":  "docs/verification/stage-r5-1b-fmt.log",
+        "command":  "cargo fmt --all -- --check",
+        "started":  "2026-10-26T14:02:53.5672323Z",
+        "seconds":  0.4122145,
+        "exit":  0
+    },
+    {
+        "log":  "docs/verification/stage-r5-1b-clippy.log",
+        "command":  "cargo clippy --all-targets --all-features --locked -- -D warnings",
+        "started":  "2026-10-26T14:02:54.1689384Z",
+        "seconds":  0.6828864,
+        "exit":  0
+    },
+    {
+        "log":  "docs/verification/stage-r5-1b-test.log",
+        "command":  "cargo test --all-features --locked",
+        "started":  "2026-10-26T14:02:54.8518248Z",
+        "seconds":  42.2463555,
+        "exit":  0
+    },
+    {
+        "log":  "docs/verification/stage-r5-1b-build.log",
+        "command":  "cargo build --release --locked",
+        "started":  "2026-10-26T14:03:37.1011175Z",
+        "seconds":  0.4426447,
+        "exit":  0
+    },
+    {
+        "log":  "docs/verification/stage-r5-1b-health-monitor.log",
+        "command":  "powershell.exe -NoLogo -NoProfile -File scripts/windows/test-coord-health-monitor.ps1",
+        "started":  "2026-10-26T14:03:37.5489051Z",
+        "seconds":  34.0629292,
+        "exit":  0
+    }
 ]

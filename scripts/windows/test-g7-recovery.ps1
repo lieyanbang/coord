@@ -1,11 +1,14 @@
+param([Parameter(Mandatory)][string]$RehearsalRoot)
 $ErrorActionPreference='Stop'
 $ProgressPreference='SilentlyContinue'
-$b='C:\ProgramData\coord\g7'
+$b=[IO.Path]::GetFullPath($RehearsalRoot)
 $state=Get-Content -Raw -LiteralPath (Join-Path $b 'private/site-state.json')|ConvertFrom-Json
 $site=Get-Content -Raw -LiteralPath (Join-Path $b 'private/site-result.json')|ConvertFrom-Json
-if($site.state-ne 'PASS' -or $state.base-ne $b){throw 'Accepted real service/ACL/SYSTEM site gate required.'}
+if($site.state-ne 'PASS' -or $state.base-ne $b -or [IO.Path]::GetDirectoryName($b)-ine [IO.Path]::GetFullPath([string]$state.backup_root) -or [IO.Path]::GetFileName($b)-notmatch '^r5-1b-[a-f0-9]{8}$'){throw 'Accepted protected-copy rehearsal site gate required.'}
 $private=Join-Path $b 'private'
 $servy='C:\Program Files\Servy\servy-cli.exe'
+$backupManifest=Get-Content -Raw -LiteralPath (Join-Path $state.backup_root 'backup-manifest.json')|ConvertFrom-Json
+if($backupManifest.state-ne 'PASS' -or [IO.Path]::GetFullPath([string]$backupManifest.backup_root)-ine [IO.Path]::GetFullPath([string]$state.backup_root)){throw 'Verified exact rollback backup manifest required.'}
 $key=[IO.File]::ReadAllText((Join-Path $b 'daemon-private/management.key')).Trim()
 $summary=[ordered]@{state='FAIL';phase='isolated-runner-crash';scope='candidate services and copied database only';production_database_modified=$false}
 function Rpc([string]$Method,$Params){
@@ -39,17 +42,18 @@ try{
  foreach($try in 1..50){if(-not(Get-Process -Id $child.ProcessId -ErrorAction SilentlyContinue)){break};Start-Sleep -Milliseconds 100}
  if(Get-Process -Id $child.ProcessId -ErrorAction SilentlyContinue){throw 'Runner crash did not terminate its Job child.'}
  $db=Join-Path $b 'verification/state.db'
- if([IO.Path]::GetFullPath($db)-ne 'C:\ProgramData\coord\g7\verification\state.db'){throw 'Refusing lease injection outside the exact copied database.'}
+ if([IO.Path]::GetFullPath($db)-ine [IO.Path]::GetFullPath((Join-Path $b 'verification/state.db'))){throw 'Refusing lease injection outside the exact copied database.'}
  $expire=@'
-import sqlite3,sys
-assert sys.argv[1].lower()==r'C:\ProgramData\coord\g7\verification\state.db'.lower()
+import os,sqlite3,sys
+expected=os.path.normcase(os.path.abspath(os.path.join(sys.argv[3],'verification','state.db')))
+assert os.path.normcase(os.path.abspath(sys.argv[1]))==expected
 with sqlite3.connect(sys.argv[1]) as db:
     changed=db.execute("UPDATE completion_actions SET lease_until='2000-01-01T00:00:00Z' WHERE id=? AND state='running'",(sys.argv[2],)).rowcount
     assert changed==1
 '@
  $expirePath=Join-Path $private 'expire-copied-action.py'
  $expire|Set-Content -LiteralPath $expirePath -Encoding utf8NoBOM
- & python.exe $expirePath $db $action.id
+ & python.exe $expirePath $db $action.id $b
  if($LASTEXITCODE-ne 0){throw 'Copied action lease injection failed.'}
  $recovered=$null;$newRunner=$null
  foreach($try in 1..300){
@@ -69,7 +73,7 @@ with sqlite3.connect(sys.argv[1]) as db:
  if($LASTEXITCODE-ne 0){throw 'Migration rollback copy failed.'}
  if(Get-NetTCPConnection -LocalPort 17778 -State Listen -ErrorAction SilentlyContinue){throw 'Rollback loopback port occupied.'}
  $oldExe=Join-Path $state.backup_root 'binary/coord.exe'
- if((Get-FileHash -LiteralPath $oldExe).Hash.ToLowerInvariant()-ne 'b58d3620b1b6de8035bfcb97e99f2e4fe654f48b1cb5719ef9fca013f5652e0d'){throw 'Prior binary restore hash mismatch.'}
+ if((Get-FileHash -LiteralPath $oldExe -Algorithm SHA256).Hash.ToLowerInvariant()-ne [string]$backupManifest.installed_binary_sha256){throw 'Prior binary restore hash does not match the verified backup manifest.'}
  $rollbackProcess=Start-Process -FilePath $oldExe -ArgumentList @('serve','--addr','127.0.0.1:17778','--db',$rollbackDb) -WorkingDirectory $b -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $private 'rollback.stdout.log') -RedirectStandardError (Join-Path $private 'rollback.stderr.log')
  $ready=$false
  foreach($try in 1..100){
@@ -97,7 +101,14 @@ with ro(sys.argv[1]) as original,ro(sys.argv[2]) as restored:
  $summary.state='PASS';$summary.phase='completed'
 }catch{$summary.failure=@{phase=$summary.phase;message=$_.Exception.Message;exception_type=$_.Exception.GetType().FullName};throw}
 finally{
+ foreach($name in @($state.runner_service,$state.probe_service)){
+  try{$service=Get-Service -Name $name -ErrorAction SilentlyContinue;if($service -and $service.Status-ne 'Stopped'){& $servy stop --name $name --quiet *> (Join-Path $private ($name+'.final-stop.log'));if($LASTEXITCODE-ne 0){throw 'Owned rehearsal service failed to stop.'}}}catch{$summary.final_service_cleanup='FAIL'}
+ }
  if($rollbackProcess-and -not $rollbackProcess.HasExited){Stop-Process -Id $rollbackProcess.Id -Force -Confirm:$false;[void]$rollbackProcess.WaitForExit(10000)}
+ if(-not $summary.final_service_cleanup){$summary.final_service_cleanup='PASS'}
+ Start-Sleep -Milliseconds 250
+ if(Get-NetTCPConnection -State Listen -LocalPort 17777,17778 -ErrorAction SilentlyContinue){$summary.final_listener_cleanup='FAIL'}else{$summary.final_listener_cleanup='PASS'}
  $summary|ConvertTo-Json -Depth 15|Set-Content -LiteralPath (Join-Path $private 'site-recovery-result.json') -Encoding utf8NoBOM
  $summary|ConvertTo-Json -Depth 15
 }
+if($summary.state -ne 'PASS' -or $summary.final_service_cleanup -ne 'PASS' -or $summary.final_listener_cleanup -ne 'PASS'){throw 'Protected-copy recovery rehearsal or exact owned-service cleanup failed.'}
