@@ -1,0 +1,48 @@
+{
+  "state": "PASS",
+  "scope": "Linux Coord relay hop only",
+  "observed_at_utc": "2026-10-26T12:35:24Z",
+  "host": "instance-20260424-1840",
+  "transport": "direct OpenSSH via External Context Skill",
+  "services": {
+    "coord-relay.service": {
+      "ActiveState": "active",
+      "SubState": "running",
+      "MainPID": "127496",
+      "NRestarts": "0"
+    },
+    "feathersjsapp.service": {
+      "ActiveState": "active",
+      "SubState": "running",
+      "MainPID": "127510",
+      "NRestarts": "0"
+    },
+    "openresty.service": {
+      "ActiveState": "active",
+      "SubState": "running",
+      "MainPID": "109204",
+      "NRestarts": "0"
+    }
+  },
+  "healthz": {
+    "state": "READY",
+    "agentConnected": true,
+    "lastHeartbeat": "2026-10-26T12:35:22.418Z",
+    "pending": 0
+  },
+  "listeners": [
+    {
+      "address": "100.116.134.114",
+      "port": 13011
+    },
+    {
+      "address": "100.116.134.114",
+      "port": 13012
+    },
+    {
+      "address": "127.0.0.1",
+      "port": 13013
+    }
+  ],
+  "mutations": "none"
+}

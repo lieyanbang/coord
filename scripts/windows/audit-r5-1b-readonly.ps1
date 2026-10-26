@@ -1,3 +1,8 @@
+[CmdletBinding()]
+param(
+    [string]$DbPath = 'C:\ProgramData\coord\data\coord.db'
+)
+
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 
@@ -163,7 +168,7 @@ try {
 }
 
 $pythonPath = 'C:\Users\lieyanbang\AppData\Local\Programs\Python\Python314\python.exe'
-$dbPath = Join-Path $root 'data\coord.db'
+$dbPath = [IO.Path]::GetFullPath($DbPath)
 $dbAudit = $null
 if (Test-Path -LiteralPath $dbPath) {
     $python = @'
@@ -266,7 +271,7 @@ print(json.dumps({
 }
 
 $result = [ordered]@{
-    state = 'PASS'
+    state = if ($dbAudit -and $dbAudit.integrity_check -eq 'ok') { 'PASS' } else { 'FAIL' }
     observed_at_utc = [DateTime]::UtcNow.ToString('o')
     host = $env:COMPUTERNAME
     services = $services

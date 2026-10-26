@@ -30,8 +30,15 @@ function Assert-LocalTarget([string]$Target) {
 }
 function Set-FixtureAcl([string]$Target, [string[]]$Grants) {
     $resolved = Assert-LocalTarget $Target
-    & icacls.exe $resolved /inheritance:r /grant:r '*S-1-5-32-544:(OI)(CI)F' '*S-1-5-18:(OI)(CI)F' @Grants | Out-Null
+    & icacls.exe $resolved /inheritance:r | Out-Null
     if ($LASTEXITCODE -ne 0) { throw 'Fixture ACL application failed.' }
+    # Windows PowerShell 5.1 can serialize a splatted native-command string
+    # array as one argument. Apply each ACE separately so icacls receives one
+    # SID:permission token per invocation.
+    foreach ($grant in (@('*S-1-5-32-544:(OI)(CI)F', '*S-1-5-18:(OI)(CI)F') + $Grants)) {
+        & icacls.exe $resolved /grant:r $grant | Out-Null
+        if ($LASTEXITCODE -ne 0) { throw 'Fixture ACL application failed.' }
+    }
 }
 function Free-Port {
     $listener = [Net.Sockets.TcpListener]::new([Net.IPAddress]::Loopback, 0)
