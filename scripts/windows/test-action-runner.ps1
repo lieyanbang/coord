@@ -382,14 +382,22 @@ with sqlite3.connect(sys.argv[1]) as db:
             if ($daemonCoreProcessId) {
                 $ownedCore = Get-CimInstance Win32_Process -Filter ('ProcessId=' + $daemonCoreProcessId)
                 if ($ownedCore -and $ownedCore.ExecutablePath -eq (Join-Path $testRoot 'bin/coord.exe') -and $ownedCore.CommandLine -like ('*' + $databasePath + '*')) {
-                    Stop-Process -Id $daemonCoreProcessId -Force -Confirm:$false
+                    # Stopping the scheduled task can already be terminating
+                    # its Start-Process child after the CIM snapshot above.
+                    try { Stop-Process -Id $daemonCoreProcessId -Force -Confirm:$false } catch {
+                        if ($_.FullyQualifiedErrorId -notlike 'NoProcessFoundForGivenId,*') { throw }
+                    }
                     for ($attempt = 0; $attempt -lt 100 -and (Get-Process -Id $daemonCoreProcessId -ErrorAction SilentlyContinue); $attempt++) { Start-Sleep -Milliseconds 100 }
                 }
                 if (Get-Process -Id $daemonCoreProcessId -ErrorAction SilentlyContinue) { throw 'Exact LocalService Core process did not exit during cleanup.' }
             }
             $fixtureCorePath = Join-Path $testRoot 'bin/coord.exe'
             $fixtureCoreProcesses = @(Get-CimInstance Win32_Process | Where-Object { $_.ExecutablePath -eq $fixtureCorePath -and $_.CommandLine -like ('*' + $databasePath + '*') })
-            foreach ($fixtureCore in $fixtureCoreProcesses) { Stop-Process -Id $fixtureCore.ProcessId -Force -Confirm:$false }
+            foreach ($fixtureCore in $fixtureCoreProcesses) {
+                try { Stop-Process -Id $fixtureCore.ProcessId -Force -Confirm:$false } catch {
+                    if ($_.FullyQualifiedErrorId -notlike 'NoProcessFoundForGivenId,*') { throw }
+                }
+            }
             if (@(Get-CimInstance Win32_Process | Where-Object { $_.ExecutablePath -eq $fixtureCorePath -and $_.CommandLine -like ('*' + $databasePath + '*') }).Count -gt 0) { throw 'Exact disposable Core process remained after task cleanup.' }
         } catch { Add-CleanupFailure 'cleanup-localservice-core-process' $_ }
         if ($createdSid) {

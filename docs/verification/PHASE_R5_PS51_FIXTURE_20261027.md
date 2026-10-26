@@ -46,6 +46,44 @@ checks. No capacity claim is made from the ignored capacity test.
 The local Core check ran as the operator. This workstation has no administrator
 token; the existing account/ACL rehearsal is deliberately restricted to a
 disposable GitHub runner. Real LocalService/private-key denial, dedicated Runner
-publication and crash recovery are therefore assessed by that unchanged Hosted
-fixture, separately from local readiness. Historical SYSTEM-monitor evidence is
+publication and crash recovery are therefore assessed by the Hosted fixture,
+separately from local readiness. Historical SYSTEM-monitor evidence is
 reused locally; the Hosted workflow independently runs its monitor gate.
+
+## First Hosted candidate: real checks passed, cleanup failed
+
+Candidate `ab7a4641b928cb7c9627afaf91d71a1c21c56e6b`, run
+[40375610957](https://github.com/lieyanbang/coord/actions/runs/40375610957),
+job `121757730745`: fmt, clippy, Rust tests, release and monitor passed.
+The low-privilege fixture reached `phase=completed`: real LocalService SID
+`S-1-5-19`, public key readable/private key denied, Runner identity/ACL,
+task/index signed publication and crash recovery all passed. Both publication
+actions succeeded at attempt 1; the non-idempotent crash became `uncertain`
+at attempt 1 and its Job Object child was killed.
+
+Overall **FAIL** was solely `cleanup-localservice-core-process`:
+`Cannot find a process with the process identifier 9720.` The task, account
+and fixture were removed. Stopping the scheduled task also terminates its
+new `Start-Process` child, which can disappear between the cleanup CIM snapshot
+and `Stop-Process`. This is an adjacent fixture race exposed by this change,
+not evidence of a Core/Runner implementation failure.
+
+Diagnostic artifact
+[12674997005](https://github.com/lieyanbang/coord/actions/runs/40375610957/artifacts/12674997005),
+5304 bytes, was downloaded and its ZIP SHA-256 matched GitHub's digest:
+`319cab8fc600a83ba4dc68566ab5edc0f3a34d470b4d544cccaa86c8e224b084`.
+Raw ZIP, extracted `summary.json` and job log are under
+`target/ps51-fixture-20261027/first-ci-*`. This is a diagnostic ZIP, not a
+deployment package. Hosted Node/Relay/MCP/Python and packaging were skipped.
+
+The same script now tolerates only `NoProcessFoundForGivenId` at both exact
+Core stop sites. Other errors still propagate; exact executable/database
+guards, bounded wait and final absence assertions remain. An AST-extracted
+local test exercised both guards against an already exited process, a live
+owned process and an injected unexpected error: all six cases passed
+(`cleanup-race-results.json`). The startup wrapper and Node/Rust code did not
+change, so their focused local evidence above remains applicable. A fresh
+pre-commit gate is recorded in `stage-r5-1b-f-cleanup-checks.json`: fmt,
+clippy, all-feature locked tests and release all exited 0 (88 passed,
+8 intentionally ignored). Original protected files and every pre-existing
+untracked path were verified unchanged.
