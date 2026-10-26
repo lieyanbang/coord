@@ -1,0 +1,118 @@
+{
+  "state": "PASS",
+  "observed_at_utc": "2026-10-26T14:45:06.6563326Z",
+  "host": "ARASAKA",
+  "source": "Direct OpenSSH read-only queries; SQLite opened with mode=ro and query_only",
+  "production_writes": false,
+  "services": [
+    { "name": "coord", "state": "Stopped", "start_name": "NT AUTHORITY\\LocalService", "start_mode": "Auto", "pid": 0 },
+    { "name": "Servy", "state": "Running", "start_name": "LocalSystem", "start_mode": "Auto", "pid": 3224 },
+    { "name": "CoordRelayAgent", "state": "Running", "start_name": "NT AUTHORITY\\LocalService", "start_mode": "Auto", "pid": 5892 },
+    { "name": "CoordActionRunnerG7", "state": "Stopped", "start_name": ".\\coord_action_g7", "start_mode": "Auto", "pid": 0 }
+  ],
+  "listeners": [],
+  "system_health_task": {
+    "principal": "SYSTEM",
+    "state": "Ready",
+    "last_result": 1,
+    "last_run_utc": "2026-10-26T14:44:44Z",
+    "next_run_utc": "2026-10-26T14:45:45Z"
+  },
+  "health_file": {
+    "status": "FAIL",
+    "checked_at_utc": "2026-10-26T14:44:18.398Z",
+    "checks": { "tasks_list": "FAIL", "sqlite_read_only": "PASS" },
+    "components": null,
+    "failed_checks": ["tasks_list", "latency_threshold"],
+    "consecutive_failures": 869
+  },
+  "registry_summary": {
+    "broker_addr": "127.0.0.1:7779",
+    "runner_sid": "S-1-5-21-3592388187-2353680085-815129118-1004",
+    "daemon_sid": "S-1-5-19",
+    "legacy_shared_key_configured": true,
+    "public_key_configured": false,
+    "management_key_configured": true,
+    "profile_names": ["emote-publisher-v1", "g7-browser-v1", "g7-canary-v1"]
+  },
+  "legacy_broker_key": {
+    "contents_read": false,
+    "hash_computed": false,
+    "owner": "BUILTIN\\Administrators",
+    "access": [
+      { "identity": "BUILTIN\\Administrators", "rights": "FullControl", "type": "Allow", "inherited": true },
+      { "identity": "NT AUTHORITY\\SYSTEM", "rights": "FullControl", "type": "Allow", "inherited": true },
+      { "identity": "ARASAKA\\lieyanbang", "rights": "ReadAndExecute, Synchronize", "type": "Allow", "inherited": true }
+    ]
+  },
+  "database": {
+    "path": "C:\\ProgramData\\coord\\data\\coord.db",
+    "files": [
+      { "name": "coord.db", "bytes": 2826240, "last_write_utc": "2026-10-25T09:29:15.3145409Z" },
+      { "name": "coord.db-shm", "bytes": 32768, "last_write_utc": "2026-10-26T14:44:18.3944192Z" },
+      { "name": "coord.db-wal", "bytes": 4181832, "last_write_utc": "2026-10-25T14:59:58.6114188Z" }
+    ],
+    "integrity_check": "ok",
+    "journal_mode": "wal",
+    "schema_version": 32,
+    "user_version": 0,
+    "task_attempts_table": false,
+    "runner_nonces_table": false,
+    "completion_action_states": { "failed": 38, "succeeded": 83 },
+    "protected_batches": [
+      {
+        "batch_id": "90ce2ca7-184e-4c3d-9d87-56386db25419",
+        "task_count": 121,
+        "task_states": { "completed": 105, "pending": 16 },
+        "task_attempt_sum": 112,
+        "task_attempt_max": 2,
+        "progress_count": 106,
+        "progress_receipt_count": 145,
+        "extension_receipt_count": 0,
+        "task_receipt_count": 105,
+        "action_count": 105,
+        "protected_fingerprint": "0a604adcb9527722cb2ba55283dd623e1c396edafa1a5853ad79b36b2a7d2361"
+      },
+      {
+        "batch_id": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e",
+        "task_count": 10,
+        "task_states": { "completed": 10 },
+        "task_attempt_sum": 16,
+        "task_attempt_max": 2,
+        "progress_count": 2,
+        "progress_receipt_count": 2,
+        "extension_receipt_count": 2,
+        "task_receipt_count": 11,
+        "action_count": 11,
+        "protected_fingerprint": "dbcfaa4e5a308867157302c1f1e59ac902da985f6b0dfcc392bde3b118bb03e4"
+      },
+      {
+        "batch_id": "d2313c78-22da-4cb8-bcd7-ece9897e0db1",
+        "task_count": 4,
+        "task_states": { "completed": 4 },
+        "task_attempt_sum": 4,
+        "task_attempt_max": 1,
+        "progress_count": 4,
+        "progress_receipt_count": 4,
+        "extension_receipt_count": 4,
+        "task_receipt_count": 4,
+        "action_count": 5,
+        "protected_fingerprint": "b2e63e2c5cb5c85afee4bc243b5b48693be6bf5a0f9a93821c4b4a794b540024"
+      }
+    ],
+    "additional_batch_metadata": [
+      { "batch_id": "ee52bcae-f269-498b-b7ed-d740e1b137ab", "created_at": "2026-10-21T21:48:27.922926300+00:00", "status": "active", "task_count": 1, "task_states": { "completed": 1 } }
+    ]
+  },
+  "linux_relay": {
+    "observed_at_utc": "2026-10-26T14:45:03Z",
+    "services": [
+      { "name": "coord-relay.service", "active_state": "active", "sub_state": "running", "main_pid": 127496, "restarts": 0 },
+      { "name": "feathersjsapp.service", "active_state": "active", "sub_state": "running", "main_pid": 127510, "restarts": 0 },
+      { "name": "openresty.service", "active_state": "active", "sub_state": "running", "main_pid": 109204, "restarts": 0 }
+    ],
+    "listeners": ["127.0.0.1:13013", "100.116.134.114:13011", "100.116.134.114:13012"],
+    "sidecar_health": { "state": "READY", "agentConnected": true, "pending": 0 }
+  },
+  "audit_correction": "An initial read-only exploratory query transposed the middle UUID groups. Re-running against the exact TASK.md ID found the expected 121-task batch; no database write occurred."
+}

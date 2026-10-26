@@ -212,3 +212,35 @@ or the compatibility Core cannot keep Scheduler/DB readiness independent from
 Broker. Any failed/inconclusive identity probe remains **FAIL** or
 **INCONCLUSIVE**, never a permission PASS. Formal Phase H tasks, both old
 Canaries, and their existing failed business Actions remain read-only.
+
+## B0 read-only refresh — 2026-10-26 14:45 UTC
+
+The direct SSH refresh is preserved in
+[`PHASE_R5_B1_LIVE_RECHECK_20261026T144506Z.json`](PHASE_R5_B1_LIVE_RECHECK_20261026T144506Z.json).
+The scheduler Core and legacy Runner remain stopped; Servy and the Windows
+Coord relay agent remain running. Ports 7777/7779 have no listeners. The real
+SYSTEM monitor is enabled and scheduled, but its latest result is 1; the health
+file is `FAIL` after 869 consecutive failures. Its legacy schema still has no
+Core/DB/Broker/Runner component fields.
+
+The configured production registry still has the legacy shared Broker-key
+field and no Runner public-key mapping. The Broker-key DACL was inspected
+without opening or hashing the file; no LocalService or Runner grant is
+present. The independent management-key configuration remains present. No
+ACL or service change was made.
+
+The exact `TASK.md` Batch ID is
+`90ce2ca7-184e-4c3d-9d87-56386db25419`. The read-only SQLite audit reports
+`integrity_check=ok`, WAL mode, schema cookie 32, `user_version=0`, and no
+nonce or derived-attempt tables. Its 121 task states remain 105 completed and
+16 pending. All three protected fingerprints match the 12:49Z snapshot. The
+database also contains a separate older active Batch with one completed task;
+it was not created or changed in this phase and remains outside the protected
+work. The 38 failed completion actions remain recorded and untouched.
+
+An initial exploratory SQL probe in this refresh used a transposed UUID and
+returned no formal-Batch rows. The parameter was corrected to the exact
+`TASK.md` value; the succeeding read-only audit found the expected Batch and
+counts. No SQL write or state transition occurred. The Linux relay, Feathers,
+and OpenResty units were also read-only rechecked active with zero restarts;
+the loopback sidecar returned `READY`, connected, pending 0.

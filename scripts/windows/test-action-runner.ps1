@@ -40,9 +40,18 @@ function Add-FixtureGrant([string]$Target, [string]$Grant) {
     & icacls.exe $resolved /grant:r $Grant | Out-Null
     if ($LASTEXITCODE -ne 0) { throw 'Fixture ACL application failed.' }
 }
-function Free-Port {
-    $listener = [Net.Sockets.TcpListener]::new([Net.IPAddress]::Loopback, 0)
-    $listener.Start(); $portNumber = $listener.LocalEndpoint.Port; $listener.Stop(); return $portNumber
+function Free-PortPair {
+    $listeners = [Collections.Generic.List[Net.Sockets.TcpListener]]::new()
+    try {
+        foreach ($index in 1..2) {
+            $listener = [Net.Sockets.TcpListener]::new([Net.IPAddress]::Loopback, 0)
+            $listener.Start()
+            $listeners.Add($listener)
+        }
+        return @($listeners | ForEach-Object { [int]$_.LocalEndpoint.Port })
+    } finally {
+        foreach ($listener in $listeners) { $listener.Stop() }
+    }
 }
 function Rpc([string]$Method, $Params) {
     $body = @{ jsonrpc = '2.0'; id = 1; method = $Method; params = $Params } | ConvertTo-Json -Depth 40 -Compress
@@ -104,7 +113,11 @@ try {
     [IO.File]::WriteAllText((Join-Path $testRoot 'business/refs/arknights/icons/one.png'), 'disposable reference')
     [IO.File]::WriteAllText((Join-Path $testRoot 'business/task/00/1.png'), 'disposable image')
     [IO.File]::WriteAllText((Join-Path $testRoot 'business/A1/private-attempt/secret.json'), '{}')
-    $daemonPort = Free-Port; $brokerPort = Free-Port
+    $ports = Free-PortPair
+    $daemonPort = [int]$ports[0]; $brokerPort = [int]$ports[1]
+    if ($daemonPort -eq $brokerPort) { throw 'RPC and Broker fixture ports must be distinct.' }
+    $summary.daemon_port = $daemonPort
+    $summary.broker_port = $brokerPort
     $daemonUrl = 'http://127.0.0.1:' + $daemonPort
     $command = @{ executable = $publisherExe; sha256 = (Get-FileHash -LiteralPath $publisherExe -Algorithm SHA256).Hash.ToLowerInvariant(); working_directory = (Join-Path $testRoot 'scratch'); args = @('--root', (Join-Path $testRoot 'business')); include_result = $true; timeout_ms = 10000; max_output_bytes = 65536; max_attempts = 2; idempotent = $true }
     $crashCommand = @{ executable = $pingExe; sha256 = (Get-FileHash -LiteralPath $pingExe -Algorithm SHA256).Hash.ToLowerInvariant(); working_directory = (Join-Path $testRoot 'scratch'); args = @('-n', '30', '127.0.0.1'); include_result = $false; timeout_ms = 30000; max_output_bytes = 65536; max_attempts = 1; idempotent = $false }
@@ -174,19 +187,52 @@ exit $LASTEXITCODE
     Register-ScheduledTask -TaskName $daemonTaskName -Action $taskAction -Principal $taskPrincipal -Force | Out-Null
     Start-ScheduledTask -TaskName $daemonTaskName
     $ready = $false
+    $lastHealthz = $null
+    $wellKnownAvailable = $false
+    $lastWellKnownExceptionType = $null
+    $lastHealthExceptionType = $null
     foreach ($attempt in 1..100) {
         if (Test-Path -LiteralPath $coreCredentialReport) {
             $coreBoundary = Get-Content -LiteralPath $coreCredentialReport -Raw | ConvertFrom-Json
             if ($coreBoundary.sid -ne 'S-1-5-19' -or $coreBoundary.private_key_read -or -not $coreBoundary.public_key_read) { throw 'LocalService key-isolation probe failed.' }
+            $summary.localservice_core = $coreBoundary
             try {
                 Invoke-RestMethod ($daemonUrl + '/.well-known/agent.json') -TimeoutSec 1 | Out-Null
-                $healthz = Invoke-RestMethod ($daemonUrl + '/healthz') -TimeoutSec 1
-                if ($healthz.core.status -eq 'READY' -and $healthz.database.status -eq 'READY' -and $healthz.broker.status -eq 'READY') { $ready = $true; break }
-            } catch {}
+                $wellKnownAvailable = $true
+            } catch { $lastWellKnownExceptionType = $_.Exception.GetType().FullName }
+            try {
+                $lastHealthz = Invoke-RestMethod ($daemonUrl + '/healthz') -TimeoutSec 1
+                if ($wellKnownAvailable -and $lastHealthz.core.status -eq 'READY' -and $lastHealthz.database.status -eq 'READY' -and $lastHealthz.broker.status -eq 'READY') { $ready = $true; break }
+            } catch { $lastHealthExceptionType = $_.Exception.GetType().FullName }
         }
         Start-Sleep -Milliseconds 100
     }
-    if (-not $ready) { throw 'LocalService Core/Broker did not reach ready state with private-key access denied.' }
+    if (-not $ready) {
+        $taskInfo = Get-ScheduledTaskInfo -TaskName $daemonTaskName -ErrorAction SilentlyContinue
+        $taskState = (Get-ScheduledTask -TaskName $daemonTaskName -ErrorAction SilentlyContinue).State
+        $corePath = Join-Path $testRoot 'bin/coord.exe'
+        $coreProcessIds = @(Get-CimInstance Win32_Process | Where-Object { $_.ExecutablePath -eq $corePath -and $_.CommandLine -like ('*' + $databasePath + '*') } | Select-Object -ExpandProperty ProcessId)
+        $listeners = @(Get-NetTCPConnection -State Listen -LocalPort $daemonPort,$brokerPort -ErrorAction SilentlyContinue | Select-Object LocalAddress,LocalPort,OwningProcess)
+        $healthSnapshot = $null
+        if ($lastHealthz) {
+            $healthSnapshot = @{ status = $lastHealthz.status; core = $lastHealthz.core; database = $lastHealthz.database; broker = $lastHealthz.broker; runner = $lastHealthz.runner }
+        }
+        $startupLogs = @()
+        foreach ($log in @(@{ stream = 'stdout'; path = $daemonStdout }, @{ stream = 'stderr'; path = $daemonStderr })) {
+            if (Test-Path -LiteralPath $log.path -PathType Leaf) {
+                $logItem = Get-Item -LiteralPath $log.path
+                $logText = Get-Content -LiteralPath $log.path -Raw
+                $safeLogText = $logText -replace '(?i)(authorization\s*:\s*bearer\s+)\S+', '$1<redacted>'
+                $safeLogText = $safeLogText -replace '(?i)((?:management|broker|private|secret|rpc)[-_ ]?(?:key|token)\s*[:=]\s*)\S+', '$1<redacted>'
+                $safeLogText = $safeLogText -replace '\b[A-Fa-f0-9]{64,}\b', '<redacted-long-hex>'
+                $safeLogText = $safeLogText -replace '\b[A-Za-z0-9_-]{80,}\b', '<redacted-long-token>'
+                $safeTail = @($safeLogText -split '\r?\n' | Select-Object -Last 30)
+                $startupLogs += @{ stream = $log.stream; bytes = $logItem.Length; tail = $safeTail }
+            }
+        }
+        $summary.localservice_startup = @{ observed_at_utc = [DateTime]::UtcNow.ToString('o'); task_state = [string]$taskState; last_task_result = if ($taskInfo) { $taskInfo.LastTaskResult } else { $null }; core_process_ids = $coreProcessIds; listeners = $listeners; well_known_available = $wellKnownAvailable; well_known_exception_type = $lastWellKnownExceptionType; healthz = $healthSnapshot; healthz_exception_type = $lastHealthExceptionType; logs = $startupLogs }
+        throw 'LocalService Core/Broker did not reach ready state with private-key access denied.'
+    }
     $daemonCore = Get-CimInstance Win32_Process | Where-Object { $_.ExecutablePath -eq (Join-Path $testRoot 'bin/coord.exe') -and $_.CommandLine -like ('*' + $databasePath + '*') } | Select-Object -First 1
     if (-not $daemonCore) { throw 'LocalService Core process was not found for the exact fixture database.' }
     $daemonCoreProcessId = [int]$daemonCore.ProcessId
@@ -302,7 +348,7 @@ with sqlite3.connect(sys.argv[1]) as db:
         }
         # Preserve both failure sources before deleting the exact fixture. Each
         # cleanup step remains independent so one error cannot suppress summary.
-        foreach ($logName in @('daemon.stderr.log', 'crash-runner.stderr.log', 'core-credential-boundary.json', 'keygen.stderr.log')) {
+        foreach ($logName in @('crash-runner.stderr.log', 'core-credential-boundary.json', 'keygen.stderr.log')) {
             try {
                 $source = Join-Path $testRoot ('logs/' + $logName)
                 if (Test-Path -LiteralPath $source) { Copy-Item -LiteralPath $source -Destination (Join-Path $evidenceRoot $logName) }

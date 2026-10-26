@@ -1,4 +1,4 @@
-﻿health monitor failure recovery threshold: PASS (3 failures -> targeted start)
+health monitor failure recovery threshold: PASS (3 failures -> targeted start)
 health monitor key configuration rejection: PASS (missing/malformed/oversized/relative/unprotected; no probe or recovery)
 health monitor authenticated CLI probe: PASS (Scheduler/RPC/DB and Broker READY; Runner explicitly UNAVAILABLE; no Core recovery)
 health monitor Runner recovery: PASS (Broker READY permits one bounded Runner start; Core service is untouched)

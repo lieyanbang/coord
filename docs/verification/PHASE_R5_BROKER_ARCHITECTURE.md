@@ -196,3 +196,73 @@ The next `scripts/verify.ps1 -Stage r5-1b` completed with exit 0 for fmt,
 clippy, all-feature Rust tests, Release build, and the isolated SYSTEM health
 monitor harness. Hosted Windows verification is still required for this path
 guard and the actual low-privilege ACL fixture.
+
+## Fork run 40338070149 failure and refreshed B0 snapshot — 2026-10-26
+
+Fork Windows run [40338070149](https://github.com/lieyanbang/coord/actions/runs/40338070149)
+tested commit `87332f64900bf1618e923ed809963327305786ad`. Rust fmt, clippy,
+all-feature tests, Release build, and SYSTEM health-monitor authentication and
+recovery tests passed. The dedicated low-privilege Runner rehearsal failed at
+the LocalService Core/Broker readiness gate. The exact fixture identity check
+passed as `S-1-5-19`; its boundary report confirms the public key was readable
+and the private key was not. `daemon.stderr.log` was empty. The run's uploaded
+diagnostic artifact `12658671800` is 2,267 bytes with ZIP SHA-256
+`4027a5c393a883dcb1dadafe7f7799dcfebe8e0f867bcfcdba7f0468a98921ec`; its
+summary did not retain task result, listeners, or `/healthz`, so it is not a
+deployable artifact and does not identify the startup cause. Relay/MCP and
+packaging steps were skipped.
+
+The current local, not-yet-hosted revision adds two distinct loopback ports,
+separate `.well-known` and `/healthz` probes, and a redacted startup-log tail
+with task, process, and listener evidence. Those diagnostics were not present
+in commit `87332f6` and have not yet been exercised. The private key stays in
+the disposable Runner-only fixture; key material was not included in the
+artifact.
+
+The direct Windows and Linux recheck at 14:45Z is preserved in
+[`PHASE_R5_B1_LIVE_RECHECK_20261026T144506Z.json`](PHASE_R5_B1_LIVE_RECHECK_20261026T144506Z.json).
+It confirms the production outage persists: Coord/Runner stopped, no 7777 or
+7779 listener, SYSTEM `LastTaskResult=1`, and health `FAIL` with 869
+consecutive failures. The production DB passed read-only integrity and all
+three protected fingerprints matched the prior 12:49Z audit; the exact formal
+Batch remains 121 tasks (105 completed, 16 pending). The old operator and
+browser Canary fingerprints also matched. A separate pre-existing active
+Batch has one completed task and was not touched. The legacy Broker key was
+not opened or hashed; its existing DACL still excludes LocalService and the
+Runner SID. Linux Relay, Feathers, OpenResty, and the sidecar remained READY
+with no restart or configuration write.
+
+One exploratory query initially used a transposed Batch UUID and returned an
+empty match. Re-running with the exact `TASK.md` ID recovered the expected
+121-row record and matching protected fingerprint; this was a read-only probe
+parameter error, not a database change or a missing-Batch condition.
+
+### Current gates after the 14:45Z snapshot
+
+| Gate | Status | Evidence / next transition |
+| --- | --- | --- |
+| B0 | **PASS, outage persists** | Architecture and the refreshed Windows/Linux/database baseline are recorded; repeat read-only checks immediately before any deployment. |
+| B1/B2 | **PARTIAL** | Source and local tests cover failure isolation and signed Runner auth, but the latest hosted LocalService/Core startup rehearsal failed. Run the revised diagnostic fixture on Fork Windows before acceptance. |
+| B3 | **NOT_RUN** | No matching green artifact. Do not deploy the failed diagnostic artifact. |
+| B4 | **NOT_RUN** | No new R5 Canary Batch or ChatGPT prompt exists. |
+| B5 | **IN_PROGRESS** | Historical FAIL/BLOCKED/deviation entries remain intact; append each next run and recovery result. |
+
+## Local R5-1B verification after diagnostic update — 2026-10-26 14:49–14:50 UTC
+
+Command: `pwsh.exe -NoProfile -File scripts/verify.ps1 -Stage r5-1b`.
+Exit code: **0**. Recorded checks in `stage-r5-1b-checks.json`:
+
+| Check | Command | Exit |
+| --- | --- | ---: |
+| fmt | `cargo fmt --all -- --check` | 0 |
+| clippy | `cargo clippy --all-targets --all-features --locked -- -D warnings` | 0 |
+| Rust tests | `cargo test --all-features --locked` | 0 |
+| Release build | `cargo build --release --locked` | 0 |
+| SYSTEM monitor harness | `powershell.exe -NoLogo -NoProfile -File scripts/windows/test-coord-health-monitor.ps1` | 0 |
+
+The updated `test-action-runner.ps1` parses with Windows PowerShell 5.1; the
+three current protected fingerprints match the 12:49Z audit; and
+`git diff --check` exits 0. This local command does not exercise the Hosted
+Windows LocalService account/ACL startup fixture. B1/B2 therefore remain
+**PARTIAL** until a new Fork Windows run completes the runner rehearsal,
+Relay/MCP checks, and package step.
