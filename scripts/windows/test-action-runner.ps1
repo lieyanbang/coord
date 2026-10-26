@@ -25,7 +25,7 @@ $runnerProcess = $null
 $summary = [ordered]@{ state = 'FAIL'; phase = 'initialize'; failed_phase = $null; disposable_ci = $true; fixture_layout = 'system-volume-root'; production_gate = 'NOT_RUN'; checks = @() }
 function Assert-LocalTarget([string]$Target) {
     $resolved = [IO.Path]::GetFullPath($Target)
-    if (-not $resolved.StartsWith($testRoot + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) { throw 'Fixture path escapes exact disposable test root.' }
+    if (-not $resolved.Equals($testRoot, [StringComparison]::OrdinalIgnoreCase) -and -not $resolved.StartsWith($testRoot + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) { throw 'Fixture path escapes exact disposable test root.' }
     return $resolved
 }
 function Set-FixtureAcl([string]$Target) {

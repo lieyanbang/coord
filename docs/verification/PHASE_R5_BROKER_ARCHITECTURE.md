@@ -167,3 +167,32 @@ Recorded execution deviations remain: the one-off local ACL command was rejected
 | B3 | **NOT_RUN** | No accepted build artifact. Do not deploy or use either failed-run artifact. After a green run, verify exact commit, ZIP, three EXEs, and health script; then perform the protected-copy rehearsal before production recovery. |
 | B4 | **NOT_RUN** | No new Canary Batch or prompts exist. |
 | B5 | **IN_PROGRESS** | Prior FAIL/BLOCKED/deviation records remain preserved; continue appending evidence. |
+
+## Fork run 40336379565 failure and path-guard repair — 2026-10-26
+
+Run [40336379565](https://github.com/lieyanbang/coord/actions/runs/40336379565)
+tested commit `62518f479b1529581a185f62924ca23da7e5f4aa`. Fmt, clippy, Rust
+tests, Release build, and health-monitor authentication/recovery passed. The
+dedicated low-privilege rehearsal then failed at
+`test-action-runner.ps1:28` with `Fixture path escapes exact disposable test
+root.` This happened before the first `icacls` fixture operation: the path
+guard allowed descendants but rejected the exact random fixture root that the
+test itself passed to `Set-FixtureAcl`. Relay/MCP and package steps were
+skipped. The only uploaded output was the 475-byte diagnostic evidence ZIP
+(artifact `12657545905`, SHA-256
+`899be85f8c6bf45a3a822ce63dcea766d3e1bb2b57a887817caecb2bccf2ccd4`); it is
+not a deployable artifact.
+
+The local repair allows the exact normalized root or a path below that root,
+while still requiring the separator after the root for descendants so a
+same-prefix sibling remains denied. A local predicate check and PowerShell
+parser check are required before the next stage commit. The Hosted Windows run
+must still prove actual account, ACL, signature, and recovery behavior. B1/B2
+remain **PARTIAL**; B3 remains **NOT_RUN** and production remains unchanged.
+
+The follow-up local check passed all three boundary cases (root allowed, child
+allowed, same-prefix sibling rejected), and the PowerShell 5.1 parser passed.
+The next `scripts/verify.ps1 -Stage r5-1b` completed with exit 0 for fmt,
+clippy, all-feature Rust tests, Release build, and the isolated SYSTEM health
+monitor harness. Hosted Windows verification is still required for this path
+guard and the actual low-privilege ACL fixture.
