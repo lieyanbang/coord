@@ -195,11 +195,13 @@ try {
     if ($startup.version_exit_code -ne 0) { throw 'coord version probe returned a nonzero exit code' }
     $startup.phase = 'serve_running'
     [IO.File]::WriteAllText('__STARTUP_REPORT__', ($startup | ConvertTo-Json -Compress), [Text.UTF8Encoding]::new($false))
-    & '__COORD__' serve --addr '__DAEMON_ADDR__' --db '__DATABASE__' --actions-config '__REGISTRY__' 1> '__DAEMON_STDOUT__' 2> '__DAEMON_STDERR__'
+    # PowerShell 5.1 turns redirected native stderr into ErrorRecords. Let
+    # Start-Process capture the streams so normal Rust logs cannot trigger Stop.
+    $coreProcess = Start-Process -FilePath '__COORD__' -ArgumentList 'serve --addr "__DAEMON_ADDR__" --db "__DATABASE__" --actions-config "__REGISTRY__"' -WindowStyle Hidden -Wait -PassThru -RedirectStandardOutput '__DAEMON_STDOUT__' -RedirectStandardError '__DAEMON_STDERR__'
     $startup.phase = 'serve_returned'
-    $startup.exit_code = $LASTEXITCODE
+    $startup.exit_code = $coreProcess.ExitCode
     [IO.File]::WriteAllText('__STARTUP_REPORT__', ($startup | ConvertTo-Json -Compress), [Text.UTF8Encoding]::new($false))
-    exit $LASTEXITCODE
+    exit $startup.exit_code
 } catch {
     $startup.phase = 'powershell_exception'
     $startup.exception_type = $_.Exception.GetType().FullName

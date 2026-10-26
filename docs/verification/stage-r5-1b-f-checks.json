@@ -1,0 +1,30 @@
+[
+  {
+    "started": "2026-10-26T18:09:39.9769206Z",
+    "exit": 0,
+    "command": "cargo fmt --all -- --check",
+    "log": "docs/verification/stage-r5-1b-f-fmt.log",
+    "seconds": 0.6690818
+  },
+  {
+    "started": "2026-10-26T18:09:40.6952820Z",
+    "exit": 0,
+    "command": "cargo clippy --all-targets --all-features --locked -- -D warnings",
+    "log": "docs/verification/stage-r5-1b-f-clippy.log",
+    "seconds": 1.3511667
+  },
+  {
+    "started": "2026-10-26T18:09:42.0493700Z",
+    "exit": 0,
+    "command": "cargo test --all-features --locked",
+    "log": "docs/verification/stage-r5-1b-f-test.log",
+    "seconds": 41.1321209
+  },
+  {
+    "started": "2026-10-26T18:10:23.1833085Z",
+    "exit": 0,
+    "command": "cargo build --release --locked",
+    "log": "docs/verification/stage-r5-1b-f-build.log",
+    "seconds": 0.5724779
+  }
+]
