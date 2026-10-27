@@ -1,0 +1,1194 @@
+{
+  "state": "PASS",
+  "stage": "B3-A2",
+  "production_b3_b": "AUTHORIZED_NOT_YET_STARTED",
+  "source_commit": "ea9783268e33e546572fe346335056e28bc4d435",
+  "baseline_head": "9cf72d7327553a1ab3331948300b2392cf0b8de0",
+  "branch": "codex/b3-a2-b-20261027",
+  "servy_scm_restore": {
+    "all_export_fields_equal": true,
+    "scm_fields_equal": true,
+    "service_dacl_equal": true,
+    "state": "PASS",
+    "changed_child": {
+      "sid": "S-1-5-19",
+      "mode": "hold",
+      "utc": "2026-10-27T02:08:56.7104183Z",
+      "marker": "restoreB",
+      "pid": 2772
+    },
+    "scm": {
+      "Name": "CoordB3A2_6e3a9c1f",
+      "PathName": "\"C:\\ProgramData\\Servy\\Servy.Service.CLI.exe\" \"CoordB3A2_6e3a9c1f\"",
+      "StartName": "NT AUTHORITY\\LocalService",
+      "StartMode": "Manual",
+      "DisplayName": "CoordB3A2_6e3a9c1f",
+      "Description": null
+    },
+    "restored_child": {
+      "sid": "S-1-5-19",
+      "pid": 9740,
+      "utc": "2026-10-27T02:09:04.4209137Z",
+      "marker": "restoreA",
+      "mode": "hold"
+    }
+  },
+  "existing_11_rows_unchanged": true,
+  "temporary_service_removed": true,
+  "restart_budget": {
+    "child_runs": [
+      {
+        "utc": "2026-10-27T02:09:08.829684Z",
+        "sid": "S-1-5-19",
+        "marker": "budget",
+        "mode": "crash",
+        "pid": 10128
+      },
+      {
+        "utc": "2026-10-27T02:09:16.7296931Z",
+        "pid": 2812,
+        "marker": "budget",
+        "sid": "S-1-5-19",
+        "mode": "crash"
+      },
+      {
+        "mode": "crash",
+        "pid": 2912,
+        "sid": "S-1-5-19",
+        "marker": "budget",
+        "utc": "2026-10-27T02:09:24.565767Z"
+      }
+    ],
+    "interpretation": "Zero is a current persisted counter, not proof of no historical retries; limit exhaustion resets to zero. Manual deployment starts are supervised; monitor disabled and Servy recovery None during changes; final original maximum 3/RestartProcess and monitor hourly 3/cooldown 10 minutes; preserve recovery history",
+    "configured_maximum": 2,
+    "scm_failure_actions": [
+      {
+        "service": "coord",
+        "reset_seconds": 0,
+        "actions": [],
+        "no_automatic_recovery": true,
+        "read_only_api": "QueryServiceConfig2W(SERVICE_CONFIG_FAILURE_ACTIONS)"
+      },
+      {
+        "service": "CoordActionRunnerG7",
+        "reset_seconds": 0,
+        "actions": [],
+        "no_automatic_recovery": true,
+        "read_only_api": "QueryServiceConfig2W(SERVICE_CONFIG_FAILURE_ACTIONS)"
+      }
+    ],
+    "test_state": "PASS",
+    "counter_transitions": [
+      {
+        "attempts": 0,
+        "service_state": "Running",
+        "utc": "2026-10-27T02:09:09.4232418Z"
+      },
+      {
+        "attempts": 1,
+        "service_state": "Running",
+        "utc": "2026-10-27T02:09:16.4899523Z"
+      },
+      {
+        "attempts": 2,
+        "service_state": "Running",
+        "utc": "2026-10-27T02:09:24.520187Z"
+      },
+      {
+        "attempts": 0,
+        "service_state": "Running",
+        "utc": "2026-10-27T02:09:32.3252835Z"
+      }
+    ],
+    "production_after": {
+      "core": {
+        "Success": true,
+        "ErrorMessage": null,
+        "Data": null,
+        "UpdateData": null,
+        "RestartAttempts": {
+          "Attempts": 0,
+          "UpdatedAtUtc": "2026-10-27T01:54:02.9607984Z"
+        }
+      },
+      "runner": {
+        "Success": true,
+        "ErrorMessage": null,
+        "Data": null,
+        "UpdateData": null,
+        "RestartAttempts": {
+          "Attempts": 0,
+          "UpdatedAtUtc": "2026-10-25T05:43:30.515007Z"
+        }
+      }
+    },
+    "production_before": {
+      "core": {
+        "Success": true,
+        "ErrorMessage": null,
+        "Data": null,
+        "UpdateData": null,
+        "RestartAttempts": {
+          "Attempts": 0,
+          "UpdatedAtUtc": "2026-10-27T01:54:02.9607984Z"
+        }
+      },
+      "runner": {
+        "Success": true,
+        "ErrorMessage": null,
+        "Data": null,
+        "UpdateData": null,
+        "RestartAttempts": {
+          "Attempts": 0,
+          "UpdatedAtUtc": "2026-10-25T05:43:30.515007Z"
+        }
+      }
+    }
+  },
+  "publisher": {
+    "core": {
+      "sid": "S-1-5-19",
+      "pid": 5840
+    },
+    "actual_identity": {
+      "sid": "S-1-5-21-3592388187-2353680085-815129118-1009",
+      "privileged": false
+    },
+    "cleanup": {
+      "requested_at_utc": "2026-10-27T02:21:36.3978636Z",
+      "task_name": "coord-b3a2-20261027-profile-exact-cleanup",
+      "script_sha256": "1f99adfed34f68059138aa740cbd3c35e77c5cef30c6c0b5e6f5541a99311be0",
+      "instance_id": "{00BB5FD3-415E-49BD-8FEE-325BBBE69C45}",
+      "last_task_result": 0,
+      "cleanup": {
+        "started_at_utc": "2026-10-27T02:21:44.4238016Z",
+        "execution_sid": "S-1-5-18",
+        "pid": 4708,
+        "target_sid": "S-1-5-21-3592388187-2353680085-815129118-1009",
+        "profile_path": "C:\\Users\\coordA2e6bcbb89",
+        "account_count": 0,
+        "owned_processes": [],
+        "before": [
+          {
+            "SID": "S-1-5-21-3592388187-2353680085-815129118-1009",
+            "LocalPath": "C:\\Users\\coordA2e6bcbb89",
+            "Loaded": true
+          }
+        ],
+        "scope": "User authorized cleanup: only two hardcoded owned SID/Classes hives, REG_FORCE_UNLOAD=1, then standard DeleteProfileW. No process termination, service restart or policy changes",
+        "unload_ntstatus": [
+          "0x00000000",
+          "0x00000000"
+        ],
+        "other_hives_unchanged": true,
+        "hive_exists": false,
+        "classes_hive_exists": false,
+        "delete_win32": 0,
+        "after": [],
+        "directory_exists": false,
+        "state": "PASS",
+        "ended_at_utc": "2026-10-27T02:21:44.7352921Z"
+      },
+      "task_removed": true
+    },
+    "outputs": [
+      {
+        "sha256": "4d0efef085fe85d8134c85423a67a624d2ce98549efac4316131c3f42c0fb905",
+        "relative_path": "business\\results\\00.json",
+        "bytes": 410
+      },
+      {
+        "sha256": "ff8fb648bd0392cca50b96bac0c969105631fe4f5618f6c5d0729d2c200a9eb8",
+        "relative_path": "business\\results\\.receipts\\00.json",
+        "bytes": 241
+      },
+      {
+        "sha256": "5f8cd5d880eacac62676e2543328d29387afc5603b6be8106840a09c4140148b",
+        "relative_path": "business\\results\\index.json",
+        "bytes": 349
+      },
+      {
+        "sha256": "637ab54127880ce1b6d190be10620d241b002f2222320920c3f445a0bd5cea07",
+        "relative_path": "business\\results\\review_queue\\candidates.json",
+        "bytes": 178
+      }
+    ],
+    "actions": {
+      "actions": [
+        {
+          "action_kind": "on_batch_completed",
+          "attempt_count": 1,
+          "available_at": null,
+          "event_id": "f1036881-5421-4994-a444-6e4f147558d6",
+          "exit_code": 0,
+          "id": "36b091dc-9b5c-4988-9645-3d424f93e2be",
+          "last_error": null,
+          "max_attempts": 2,
+          "output_bytes": 0,
+          "profile_id": "emote",
+          "profile_version": 1,
+          "state": "succeeded",
+          "task_id": null
+        },
+        {
+          "action_kind": "on_task_completed",
+          "attempt_count": 1,
+          "available_at": null,
+          "event_id": "58af0fac-96cb-4124-8f52-73380f699071",
+          "exit_code": 0,
+          "id": "c8ca196a-2c10-4bec-97cf-eb881dff4092",
+          "last_error": null,
+          "max_attempts": 2,
+          "output_bytes": 0,
+          "profile_id": "emote",
+          "profile_version": 1,
+          "state": "succeeded",
+          "task_id": "99631fde-bb51-4fbb-ad20-876045dd3487"
+        }
+      ],
+      "batch_id": "d7193d12-22ed-4f94-bcb2-03a1d3e72378",
+      "truncated": false
+    },
+    "runner_sid": "S-1-5-21-3592388187-2353680085-815129118-1009",
+    "runner_account": "coordA2e6bcbb89",
+    "checks": [
+      {
+        "name": "publish-task",
+        "request_utc": "2026-10-27T02:16:56.1011521Z",
+        "instance_id": "{19F14C35-F4F3-4D5D-A831-B51D6EB76B27}",
+        "task_last_run_utc": "2026-10-27T02:16:16Z",
+        "task_last_result": 0,
+        "native": {
+          "session_id": 0,
+          "wrapper_pid": 900,
+          "exit_code": 0,
+          "started_at_utc": "2026-10-27T02:16:56.9553795Z",
+          "pid": 1928,
+          "sid": "S-1-5-21-3592388187-2353680085-815129118-1009",
+          "ended_at_utc": "2026-10-27T02:16:57.4650716Z"
+        },
+        "stderr_bytes": 142
+      },
+      {
+        "name": "publish-index",
+        "request_utc": "2026-10-27T02:17:01.574545Z",
+        "instance_id": "{867558E3-A57E-407B-B01D-8C1A3B3B35EF}",
+        "task_last_run_utc": "2026-10-27T02:17:17Z",
+        "task_last_result": 0,
+        "native": {
+          "exit_code": 0,
+          "wrapper_pid": 7432,
+          "session_id": 0,
+          "ended_at_utc": "2026-10-27T02:17:02.6289447Z",
+          "sid": "S-1-5-21-3592388187-2353680085-815129118-1009",
+          "started_at_utc": "2026-10-27T02:17:02.2007346Z",
+          "pid": 6648
+        },
+        "stderr_bytes": 142
+      }
+    ],
+    "selection": "Retain all production publisher bytes and profile pins/parameters/versions",
+    "state": "PASS",
+    "sha256": "cac5496ed1dea50f837f28403feb62515de1ba1459ea2557abe6097ec07bec55"
+  },
+  "freeze": {
+    "final_guard_source": "import hashlib, json, re, sqlite3, sys\nfrom pathlib import Path\n\nTABLES = ('batches','tasks','task_receipts','task_progress','task_progress_receipts','task_progress_extend_receipts','completion_actions','task_attempts')\nPREFIX = 'coord_b3_hold_'\n\ndef update_sql(name, table, columns):\n    condition = ' OR '.join(f'OLD.\"{column}\" IS NOT NEW.\"{column}\"' for column in columns)\n    return f'CREATE TRIGGER \"{name}\" BEFORE UPDATE ON \"{table}\" WHEN {condition} BEGIN SELECT RAISE(ABORT,\\'coord_b3_business_frozen\\'); END'\n\ndef statements(db):\n    existing = {r[0] for r in db.execute(\"SELECT name FROM sqlite_master WHERE type='table'\")}\n    result = {}\n    for table in TABLES:\n        if table not in existing:\n            if table == 'task_attempts':\n                continue  # Candidate creates this derived table additively during its first open.\n            raise ValueError('Required business table missing: '+table)\n        for operation in ('INSERT','UPDATE','DELETE'):\n            name = PREFIX+table+'_'+operation.lower()\n            if operation == 'UPDATE':\n                columns = [row[1] for row in db.execute('PRAGMA table_info(\"'+table+'\")')]\n                result[name] = update_sql(name,table,columns)\n                continue\n            condition = ''\n            if table == 'task_attempts' and operation == 'INSERT':\n                # Candidate replays INSERT OR IGNORE for existing derived PKs on every open.\n                condition = ' WHEN NOT EXISTS (SELECT 1 FROM task_attempts WHERE task_id=NEW.task_id AND attempt_no=NEW.attempt_no)'\n            result[name] = f'CREATE TRIGGER \"{name}\" BEFORE {operation} ON \"{table}\"{condition} BEGIN SELECT RAISE(ABORT,\\'coord_b3_business_frozen\\'); END'\n    return result\n\ndef install(path, upgrade=False):\n    db = sqlite3.connect(path, timeout=5)\n    with db:\n        db.execute('BEGIN IMMEDIATE')\n        expected = statements(db)\n        for name, sql in expected.items():\n            present = db.execute(\"SELECT sql FROM sqlite_master WHERE type='trigger' AND name=?\",(name,)).fetchone()\n            if present and present[0] != sql:\n                table = name[len(PREFIX):-len('_update')] if name.endswith('_update') else ''\n                previous_columns = re.findall(r'OLD\\.\"([a-zA-Z_][a-zA-Z0-9_]*)\" IS NOT NEW\\.\"\\1\"',present[0])\n                current_columns = [row[1] for row in db.execute('PRAGMA table_info(\"'+table+'\")')] if table in TABLES else []\n                if not upgrade or not previous_columns or current_columns[:len(previous_columns)] != previous_columns or present[0] != update_sql(name,table,previous_columns):\n                    raise ValueError('Existing trigger differs: '+name)\n                db.execute('DROP TRIGGER \"'+name+'\"')\n                present = None\n            if not present:\n                db.execute(sql)\n    return dict(state='PASS',triggers=sorted(expected),trigger_count=len(expected),sql_sha256=hashlib.sha256(json.dumps(expected,sort_keys=True).encode()).hexdigest(),upgrade_after_additive_migration=upgrade,policy='Existing-column values immutable; no-op updates allowed. New migration columns are initialized before atomic upgrade covers all columns. Business INSERT/DELETE blocked; agents/nonces remain available; existing derived INSERT OR IGNORE rows allowed on restart')\n\ndef snapshot(db):\n    output = {}\n    for table in TABLES:\n        if db.execute(\"SELECT 1 FROM sqlite_master WHERE type='table' AND name=?\",(table,)).fetchone():\n            columns = [r[1] for r in db.execute('PRAGMA table_info(\"'+table+'\")')]\n            rows = list(db.execute('SELECT * FROM \"'+table+'\"'))\n            output[table] = dict(columns=columns,rows=sorted(rows,key=repr))\n    return output\n\ndef verify_denials(path):\n    db = sqlite3.connect(path,timeout=5)\n    before = snapshot(db)\n    denied = []\n    for table, sql in [('tasks',\"UPDATE tasks SET state='pending'\"),('batches',\"UPDATE batches SET status=CASE WHEN status='active' THEN 'cancelled' ELSE 'active' END\"),('task_receipts',\"DELETE FROM task_receipts\"),('completion_actions',\"UPDATE completion_actions SET state='pending'\")]:\n        try:\n            with db:\n                db.execute(sql)\n            raise ValueError('Write unexpectedly accepted: '+table)\n        except sqlite3.IntegrityError as error:\n            if str(error) != 'coord_b3_business_frozen':\n                raise\n            denied.append(table)\n    after = snapshot(db)\n    if before != after:\n        raise ValueError('Business rows changed')\n    return dict(state='PASS',denied=denied,all_business_rows_equal=True)\n\ndef prepare_isolated(path):\n    db = sqlite3.connect(path)\n    with db:\n        held = db.execute(\"UPDATE tasks SET lease_until='2000-01-01T00:00:00Z' WHERE name IN ('owned-frozen-reclaim','owned-frozen-pending') AND state='claimed'\").rowcount\n        action = db.execute(\"UPDATE completion_actions SET state='pending' WHERE id=(SELECT id FROM completion_actions WHERE action_kind='on_task_completed' ORDER BY id LIMIT 1)\").rowcount\n        if held != 1 or action != 1:\n            raise ValueError('Expected only the owned synthetic reclaim/action probes')\n    target = Path(path).with_name('frozen-before.private.db')\n    if target.exists():\n        raise ValueError('Isolated reference copy already exists')\n    with sqlite3.connect(target) as reference:\n        db.backup(reference)\n    batch = db.execute(\"SELECT batch_id FROM tasks WHERE name IN ('owned-frozen-reclaim','owned-frozen-pending') AND state='claimed'\").fetchone()[0]\n    return dict(state='PASS',owned_expired_claims=held,owned_pending_actions=action,owned_batch_id=batch)\n\ndef compare_isolated(path):\n    with sqlite3.connect(path) as db, sqlite3.connect(Path(path).with_name('frozen-before.private.db')) as reference:\n        if snapshot(db) != snapshot(reference):\n            raise ValueError('Frozen business rows differ from isolated reference')\n    return dict(state='PASS',full_business_rows_equal=True,comparison='All columns including fences compared privately; no credential values or derived hashes emitted')\n\ndef remove_isolated(path):\n    db = sqlite3.connect(path)\n    before = snapshot(db)\n    with db:\n        expected = statements(db)\n        for name, sql in expected.items():\n            row = db.execute(\"SELECT sql FROM sqlite_master WHERE type='trigger' AND name=?\",(name,)).fetchone()\n            if not row or row[0] != sql:\n                raise ValueError('Guard no longer matches reviewed isolated definition')\n            db.execute('DROP TRIGGER \"'+name+'\"')\n    if before != snapshot(db):\n        raise ValueError('Removing isolated guards changed business rows')\n    return dict(state='PASS',removed=len(expected),business_rows_unchanged=True)\n\nif __name__ == '__main__':\n    operation, path = sys.argv[1:]\n    resolved = str(Path(path).resolve())\n    allowed = [r'C:\\ProgramData\\coord\\data\\coord.db',r'C:\\coord-b3a2-20261027-a\\publisher\\data\\fixture.db',r'C:\\coord-b3a2-20261027-a\\freeze-legacy-v2.private.db']\n    if resolved.lower() not in [value.lower() for value in allowed]:\n        raise ValueError('Not an exact authorized database path')\n    if operation == 'install':\n        print(json.dumps(install(path)))\n    elif operation == 'upgrade-after-migration':\n        print(json.dumps(install(path,upgrade=True)))\n    elif operation == 'verify-isolated-denials' and 'coord-b3a2-20261027-a' in resolved:\n        print(json.dumps(verify_denials(path)))\n    elif operation in ('prepare-isolated','compare-isolated','remove-isolated') and 'coord-b3a2-20261027-a' in resolved:\n        print(json.dumps({'prepare-isolated':prepare_isolated,'compare-isolated':compare_isolated,'remove-isolated':remove_isolated}[operation](path)))\n    else:\n        raise ValueError('Unsupported operation; no production mutation probes or automatic unfreeze')\n",
+    "original_column_comparator_source": "import json,sqlite3,sys\nfrom urllib.parse import quote\n\ndef ro(path):\n    db=sqlite3.connect('file:'+quote(path.replace('\\\\','/'),safe='/:')+'?mode=ro',uri=True,timeout=5)\n    db.execute('PRAGMA query_only=ON');db.execute('BEGIN')\n    return db\n\nsource,target=sys.argv[1:]\nif not source.lower().endswith('.db') or not target.lower().endswith('.db'):\n    raise ValueError('Database paths required')\ntables=('batches','tasks','task_receipts','task_progress','task_progress_receipts','task_progress_extend_receipts','completion_actions')\nchecks=[]\nwith ro(source) as before,ro(target) as after:\n    for table in tables:\n        columns=[row[1] for row in before.execute('PRAGMA table_info(\"'+table+'\")')]\n        current=[row[1] for row in after.execute('PRAGMA table_info(\"'+table+'\")')]\n        if not columns or not set(columns)<=set(current):\n            raise ValueError('Original table/columns missing: '+table)\n        query='SELECT '+','.join('\"'+name+'\"' for name in columns)+' FROM \"'+table+'\"'\n        old=sorted(before.execute(query).fetchall(),key=repr);new=sorted(after.execute(query).fetchall(),key=repr)\n        if old!=new:\n            raise ValueError('Original rows differ: '+table)\n        checks.append(dict(table=table,rows=len(old),original_columns=len(columns),new_columns=[name for name in current if name not in columns],all_original_values_equal=True))\n    integrity=after.execute('PRAGMA integrity_check').fetchone()[0]\n    if integrity!='ok':raise ValueError('Integrity check failed')\nprint(json.dumps(dict(state='PASS',all_original_values_equal=True,includes_fences_and_receipts_compared_privately=True,no_credential_values_or_derived_hashes_emitted=True,integrity_check=integrity,tables=checks)))\n",
+    "first_sql_transaction_negative": {
+      "state": "PASS",
+      "started_at_utc": "2026-10-27T02:29:38.8320874Z",
+      "scope": "Only retained owned synthetic database; Disposable standard-account signed negative; independent of the prior passing publisher acceptance",
+      "runner_account": "coordFz1fbd704a",
+      "runner_sid": "S-1-5-21-3592388187-2353680085-815129118-1010",
+      "reused_existing_guard": true,
+      "core_boundary": {
+        "public_read": true,
+        "private_read": false,
+        "utc": "2026-10-27T02:29:43.1838364Z",
+        "pid": 1736,
+        "sid": "S-1-5-19"
+      },
+      "denied_rpc": [
+        {
+          "code": -32000,
+          "message": "internal error: coord_b3_business_frozen",
+          "method": "scheduler/claim"
+        },
+        {
+          "code": -32000,
+          "message": "internal error: coord_b3_business_frozen",
+          "method": "tasks/reclaim"
+        }
+      ],
+      "runner_task_instance": "{711FB25F-EBDF-4C69-B672-65599DD19B6D}",
+      "runner_negative": {
+        "native_exit": 1,
+        "native_pid": 3248,
+        "ended_at_utc": "2026-10-27T02:29:44.9055522Z",
+        "sid": "S-1-5-21-3592388187-2353680085-815129118-1010",
+        "started_at_utc": "2026-10-27T02:29:44.4993289Z",
+        "wrapper_pid": 7708
+      },
+      "runner_task_exit": 1,
+      "read_only_skip_reclaim_pass": true,
+      "full_rows_comparison": {
+        "state": "PASS",
+        "full_business_rows_equal": true,
+        "comparison": "All columns including fences compared privately; no credential values or derived hashes emitted"
+      },
+      "background_ticker_seconds": 32.1156786,
+      "guard_removal": {
+        "state": "PASS",
+        "removed": 24,
+        "business_rows_unchanged": true
+      },
+      "batch_right_holders": [
+        "S-1-5-32-544",
+        "S-1-5-32-551",
+        "S-1-5-32-559"
+      ],
+      "profile_remaining": [
+        {
+          "SID": "S-1-5-21-3592388187-2353680085-815129118-1010",
+          "LocalPath": "C:\\Users\\coordFz1fbd704a",
+          "Loaded": true
+        }
+      ],
+      "tasks_remaining": 0,
+      "listeners_remaining": 0,
+      "keys_absent": true,
+      "ended_at_utc": "2026-10-27T02:30:19.7076525Z"
+    },
+    "final_guard_sha256": "d1684bd936a57095d8859ade46508efbb98a0f50f50eca3243dd00ac60ac79b0",
+    "state": "PASS",
+    "production_probe_rule": "Never execute production mutation probes; install guards only after fresh backup. Use original-column private comparisons across additive migration, then full new-schema baseline comparisons",
+    "legacy_schema_final_version": {
+      "state": "PASS",
+      "scope": "Only new consistent offline copy: first legacy-schema open with 21 business guards, then 24 guards and restart. Operator process tests the new guard/schema combination; prior LocalService/Runner acceptance is reused",
+      "started_at_utc": "2026-10-27T02:45:00.2462615Z",
+      "initial_guard": {
+        "state": "PASS",
+        "triggers": [
+          "coord_b3_hold_batches_delete",
+          "coord_b3_hold_batches_insert",
+          "coord_b3_hold_batches_update",
+          "coord_b3_hold_completion_actions_delete",
+          "coord_b3_hold_completion_actions_insert",
+          "coord_b3_hold_completion_actions_update",
+          "coord_b3_hold_task_progress_delete",
+          "coord_b3_hold_task_progress_extend_receipts_delete",
+          "coord_b3_hold_task_progress_extend_receipts_insert",
+          "coord_b3_hold_task_progress_extend_receipts_update",
+          "coord_b3_hold_task_progress_insert",
+          "coord_b3_hold_task_progress_receipts_delete",
+          "coord_b3_hold_task_progress_receipts_insert",
+          "coord_b3_hold_task_progress_receipts_update",
+          "coord_b3_hold_task_progress_update",
+          "coord_b3_hold_task_receipts_delete",
+          "coord_b3_hold_task_receipts_insert",
+          "coord_b3_hold_task_receipts_update",
+          "coord_b3_hold_tasks_delete",
+          "coord_b3_hold_tasks_insert",
+          "coord_b3_hold_tasks_update"
+        ],
+        "trigger_count": 21,
+        "sql_sha256": "bebd324292bbe6d58b278042ec5d70f8776c52cfe384912ce88e2a5fdbd8ec70",
+        "upgrade_after_additive_migration": false,
+        "policy": "Existing-column values immutable; no-op updates allowed. New migration columns are initialized before atomic upgrade covers all columns. Business INSERT/DELETE blocked; agents/nonces remain available; existing derived INSERT OR IGNORE rows allowed on restart"
+      },
+      "starts": [
+        {
+          "stop": "Exact owned process controlled stop",
+          "pid": 9944,
+          "round": 1,
+          "utc": "2026-10-27T02:45:02.2496262Z",
+          "read_only_skip_reclaim": true,
+          "health": {
+            "checked_at_unix_ms": 1793069102148,
+            "status": "DEGRADED",
+            "core": {
+              "status": "READY",
+              "reason": null
+            },
+            "database": {
+              "status": "READY",
+              "reason": null
+            },
+            "broker": {
+              "status": "UNAVAILABLE",
+              "reason": "not_configured"
+            },
+            "runner": {
+              "status": "UNAVAILABLE",
+              "reason": "broker_unavailable"
+            },
+            "runner_last_seen_unix_ms": null
+          }
+        },
+        {
+          "stop": "Exact owned process controlled stop",
+          "pid": 212,
+          "round": 2,
+          "utc": "2026-10-27T02:45:03.2168985Z",
+          "read_only_skip_reclaim": true,
+          "health": {
+            "checked_at_unix_ms": 1793069103211,
+            "status": "DEGRADED",
+            "core": {
+              "status": "READY",
+              "reason": null
+            },
+            "database": {
+              "status": "READY",
+              "reason": null
+            },
+            "broker": {
+              "status": "UNAVAILABLE",
+              "reason": "not_configured"
+            },
+            "runner": {
+              "status": "UNAVAILABLE",
+              "reason": "broker_unavailable"
+            },
+            "runner_last_seen_unix_ms": null
+          }
+        }
+      ],
+      "final_guard": {
+        "state": "PASS",
+        "triggers": [
+          "coord_b3_hold_batches_delete",
+          "coord_b3_hold_batches_insert",
+          "coord_b3_hold_batches_update",
+          "coord_b3_hold_completion_actions_delete",
+          "coord_b3_hold_completion_actions_insert",
+          "coord_b3_hold_completion_actions_update",
+          "coord_b3_hold_task_attempts_delete",
+          "coord_b3_hold_task_attempts_insert",
+          "coord_b3_hold_task_attempts_update",
+          "coord_b3_hold_task_progress_delete",
+          "coord_b3_hold_task_progress_extend_receipts_delete",
+          "coord_b3_hold_task_progress_extend_receipts_insert",
+          "coord_b3_hold_task_progress_extend_receipts_update",
+          "coord_b3_hold_task_progress_insert",
+          "coord_b3_hold_task_progress_receipts_delete",
+          "coord_b3_hold_task_progress_receipts_insert",
+          "coord_b3_hold_task_progress_receipts_update",
+          "coord_b3_hold_task_progress_update",
+          "coord_b3_hold_task_receipts_delete",
+          "coord_b3_hold_task_receipts_insert",
+          "coord_b3_hold_task_receipts_update",
+          "coord_b3_hold_tasks_delete",
+          "coord_b3_hold_tasks_insert",
+          "coord_b3_hold_tasks_update"
+        ],
+        "trigger_count": 24,
+        "sql_sha256": "678a8a1227dda09cbf98e43b90f348e8b242b2ce66e94cdfec1c23e8ee48dd3a",
+        "upgrade_after_additive_migration": true,
+        "policy": "Existing-column values immutable; no-op updates allowed. New migration columns are initialized before atomic upgrade covers all columns. Business INSERT/DELETE blocked; agents/nonces remain available; existing derived INSERT OR IGNORE rows allowed on restart"
+      },
+      "original_column_comparison": {
+        "state": "PASS",
+        "all_original_values_equal": true,
+        "includes_fences_and_receipts_compared_privately": true,
+        "no_credential_values_or_derived_hashes_emitted": true,
+        "integrity_check": "ok",
+        "tables": [
+          {
+            "table": "batches",
+            "rows": 4,
+            "original_columns": 6,
+            "new_columns": [],
+            "all_original_values_equal": true
+          },
+          {
+            "table": "tasks",
+            "rows": 145,
+            "original_columns": 27,
+            "new_columns": [
+              "failure_count",
+              "interruption_streak",
+              "needs_attention"
+            ],
+            "all_original_values_equal": true
+          },
+          {
+            "table": "task_receipts",
+            "rows": 125,
+            "original_columns": 6,
+            "new_columns": [],
+            "all_original_values_equal": true
+          },
+          {
+            "table": "task_progress",
+            "rows": 112,
+            "original_columns": 8,
+            "new_columns": [],
+            "all_original_values_equal": true
+          },
+          {
+            "table": "task_progress_receipts",
+            "rows": 151,
+            "original_columns": 7,
+            "new_columns": [],
+            "all_original_values_equal": true
+          },
+          {
+            "table": "task_progress_extend_receipts",
+            "rows": 6,
+            "original_columns": 5,
+            "new_columns": [],
+            "all_original_values_equal": true
+          },
+          {
+            "table": "completion_actions",
+            "rows": 121,
+            "original_columns": 22,
+            "new_columns": [],
+            "all_original_values_equal": true
+          }
+        ]
+      },
+      "direct_denials": {
+        "state": "PASS",
+        "denied": [
+          "tasks",
+          "batches",
+          "task_receipts",
+          "completion_actions"
+        ],
+        "all_business_rows_equal": true
+      },
+      "guard_removal": {
+        "state": "PASS",
+        "removed": 24,
+        "business_rows_unchanged": true
+      },
+      "protected_records_unchanged": true,
+      "before": {
+        "completion_action_states": {
+          "failed": 38,
+          "succeeded": 83
+        },
+        "integrity_check": "ok",
+        "journal_mode": "wal",
+        "protected": [
+          {
+            "action_count": 105,
+            "attempt_table_rows": 0,
+            "batch_found": true,
+            "batch_id": "90ce2ca7-184e-4c3d-9d87-56386db25419",
+            "derived_attempts_fingerprint": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "extension_receipt_count": 0,
+            "progress_count": 106,
+            "progress_receipt_count": 145,
+            "protected_fingerprint": "0a604adcb9527722cb2ba55283dd623e1c396edafa1a5853ad79b36b2a7d2361",
+            "task_attempt_max": 2,
+            "task_attempt_sum": 112,
+            "task_count": 121,
+            "task_receipt_count": 105,
+            "task_states": {
+              "completed": 105,
+              "pending": 16
+            }
+          },
+          {
+            "action_count": 11,
+            "attempt_table_rows": 0,
+            "batch_found": true,
+            "batch_id": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e",
+            "derived_attempts_fingerprint": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "extension_receipt_count": 2,
+            "progress_count": 2,
+            "progress_receipt_count": 2,
+            "protected_fingerprint": "dbcfaa4e5a308867157302c1f1e59ac902da985f6b0dfcc392bde3b118bb03e4",
+            "task_attempt_max": 2,
+            "task_attempt_sum": 16,
+            "task_count": 10,
+            "task_receipt_count": 11,
+            "task_states": {
+              "completed": 10
+            }
+          },
+          {
+            "action_count": 5,
+            "attempt_table_rows": 0,
+            "batch_found": true,
+            "batch_id": "d2313c78-22da-4cb8-bcd7-ece9897e0db1",
+            "derived_attempts_fingerprint": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "extension_receipt_count": 4,
+            "progress_count": 4,
+            "progress_receipt_count": 4,
+            "protected_fingerprint": "b2e63e2c5cb5c85afee4bc243b5b48693be6bf5a0f9a93821c4b4a794b540024",
+            "task_attempt_max": 1,
+            "task_attempt_sum": 4,
+            "task_count": 4,
+            "task_receipt_count": 4,
+            "task_states": {
+              "completed": 4
+            }
+          }
+        ],
+        "runner_nonce_rows": 0,
+        "runner_nonces_table": false,
+        "schema_version": 1,
+        "task_attempts_table": false,
+        "user_version": 0
+      },
+      "after": {
+        "completion_action_states": {
+          "failed": 38,
+          "succeeded": 83
+        },
+        "integrity_check": "ok",
+        "journal_mode": "wal",
+        "protected": [
+          {
+            "action_count": 105,
+            "attempt_table_rows": 105,
+            "batch_found": true,
+            "batch_id": "90ce2ca7-184e-4c3d-9d87-56386db25419",
+            "derived_attempts_fingerprint": "d53f9c9683905890fe2dc4a8a07539136826ab73e304b51a34d91ba0ec14f059",
+            "extension_receipt_count": 0,
+            "progress_count": 106,
+            "progress_receipt_count": 145,
+            "protected_fingerprint": "a880c0db9afe89eca0abeee0257cdbd5ae3840027a2f72c3f9a07d871a878f8d",
+            "task_attempt_max": 2,
+            "task_attempt_sum": 112,
+            "task_count": 121,
+            "task_receipt_count": 105,
+            "task_states": {
+              "completed": 105,
+              "pending": 16
+            }
+          },
+          {
+            "action_count": 11,
+            "attempt_table_rows": 10,
+            "batch_found": true,
+            "batch_id": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e",
+            "derived_attempts_fingerprint": "6a490e3bb07783f5fbfbcde378677290996dc70f6dc82b1a79fa4fd8eded8eef",
+            "extension_receipt_count": 2,
+            "progress_count": 2,
+            "progress_receipt_count": 2,
+            "protected_fingerprint": "41d686091d4f6faefe270a4d18f3e812ec6ac8d39ffd03fbb0ad147ee570e236",
+            "task_attempt_max": 2,
+            "task_attempt_sum": 16,
+            "task_count": 10,
+            "task_receipt_count": 11,
+            "task_states": {
+              "completed": 10
+            }
+          },
+          {
+            "action_count": 5,
+            "attempt_table_rows": 4,
+            "batch_found": true,
+            "batch_id": "d2313c78-22da-4cb8-bcd7-ece9897e0db1",
+            "derived_attempts_fingerprint": "de7c734a9e92f82bd0863c69e0c92cc2304cf6a400d0b9ac621af97c1e678000",
+            "extension_receipt_count": 4,
+            "progress_count": 4,
+            "progress_receipt_count": 4,
+            "protected_fingerprint": "90694ba2f953d229ecc2a61228797151f2e92a50564896944ca3f5e386211dda",
+            "task_attempt_max": 1,
+            "task_attempt_sum": 4,
+            "task_count": 4,
+            "task_receipt_count": 4,
+            "task_states": {
+              "completed": 4
+            }
+          }
+        ],
+        "runner_nonce_rows": 0,
+        "runner_nonces_table": true,
+        "schema_version": 34,
+        "task_attempts_table": true,
+        "user_version": 0
+      },
+      "listeners_remaining": 0,
+      "ephemeral_management_key_absent": true,
+      "ended_at_utc": "2026-10-27T02:45:04.1998114Z"
+    },
+    "cleanup": {
+      "requested_at_utc": "2026-10-27T02:32:16.4619588Z",
+      "task_name": "coord-b3a2-20261027-profile1010-profile-exact-cleanup",
+      "script_sha256": "43f42c1b7899c125c7fdcdcf4e1a68183d5d871801824f8ebce81dfa61b8cb20",
+      "instance_id": "{A47EF8D9-226A-456D-A5C2-7279FAA667BD}",
+      "last_task_result": 0,
+      "cleanup": {
+        "started_at_utc": "2026-10-27T02:32:25.5645748Z",
+        "execution_sid": "S-1-5-18",
+        "pid": 2188,
+        "target_sid": "S-1-5-21-3592388187-2353680085-815129118-1010",
+        "profile_path": "C:\\Users\\coordFz1fbd704a",
+        "account_count": 0,
+        "owned_processes": [],
+        "before": [
+          {
+            "SID": "S-1-5-21-3592388187-2353680085-815129118-1010",
+            "LocalPath": "C:\\Users\\coordFz1fbd704a",
+            "Loaded": true
+          }
+        ],
+        "scope": "User authorized cleanup: only two hardcoded owned SID/Classes hives, REG_FORCE_UNLOAD=1, then standard DeleteProfileW. No process termination, service restart or policy changes",
+        "unload_ntstatus": [
+          "0x00000000",
+          "0x00000000"
+        ],
+        "other_hives_unchanged": true,
+        "hive_exists": false,
+        "classes_hive_exists": false,
+        "delete_win32": 0,
+        "after": [],
+        "directory_exists": false,
+        "state": "PASS",
+        "ended_at_utc": "2026-10-27T02:32:25.9976544Z"
+      },
+      "task_removed": true
+    }
+  },
+  "preservation": {
+    "utc": "2026-10-27T02:51:10.7791935Z",
+    "source_binaries": [
+      {
+        "name": "coord.exe",
+        "matches": true,
+        "sha256": "943959b12ce75f8de716320e9fe15e72e3ea2911dbf096bedc6dc4bcfc22f3bc"
+      },
+      {
+        "name": "coord-action-runner.exe",
+        "matches": true,
+        "sha256": "72b46d25722842a30afd6cd3db32c9df5e15ae28fd0a9cf9a2ddb7a14dcb4baa"
+      }
+    ],
+    "temporary_accounts": [],
+    "temporary_profiles": [],
+    "temporary_tasks": [],
+    "temporary_services": [],
+    "policy": [
+      {
+        "failure_actions_tail": "UNPARSED",
+        "service": "coord",
+        "no_automatic_scm_recovery": false
+      },
+      {
+        "failure_actions_tail": "UNPARSED",
+        "service": "CoordActionRunnerG7",
+        "no_automatic_scm_recovery": false
+      }
+    ],
+    "acl_metadata": [
+      {
+        "path": "C:\\ProgramData\\coord\\g7",
+        "sddl": "O:BAG:S-1-5-21-3592388187-2353680085-815129118-513D:AI(A;;0x100080;;;LS)(A;OICIID;FA;;;BA)(A;OICIID;FA;;;SY)(A;OICIID;0x1200a9;;;S-1-5-21-3592388187-2353680085-815129118-1001)"
+      },
+      {
+        "path": "C:\\ProgramData\\coord\\g7\\config",
+        "sddl": "O:BAG:S-1-5-21-3592388187-2353680085-815129118-513D:AI(A;;0x100080;;;LS)(A;OICIID;FA;;;BA)(A;OICIID;FA;;;SY)(A;OICIID;0x1200a9;;;S-1-5-21-3592388187-2353680085-815129118-1001)"
+      },
+      {
+        "path": "C:\\ProgramData\\coord\\g7\\config\\registry-production.json",
+        "sddl": "O:BAG:S-1-5-21-3592388187-2353680085-815129118-513D:AI(A;;FR;;;LS)(A;ID;FA;;;BA)(A;ID;FA;;;SY)(A;ID;0x1200a9;;;S-1-5-21-3592388187-2353680085-815129118-1001)"
+      },
+      {
+        "path": "C:\\ProgramData\\coord\\g7\\bin",
+        "sddl": "O:BAG:S-1-5-21-3592388187-2353680085-815129118-513D:AI(A;;0x100080;;;LS)(A;OICIID;FA;;;BA)(A;OICIID;FA;;;SY)(A;OICIID;0x1200a9;;;S-1-5-21-3592388187-2353680085-815129118-1001)"
+      },
+      {
+        "path": "C:\\ProgramData\\coord\\g7\\bin\\coord-action-runner.exe",
+        "sddl": "O:BAG:S-1-5-21-3592388187-2353680085-815129118-513D:AI(A;ID;FA;;;BA)(A;ID;FA;;;SY)(A;ID;0x1200a9;;;S-1-5-21-3592388187-2353680085-815129118-1001)"
+      },
+      {
+        "path": "C:\\ProgramData\\coord\\g7\\bin\\coord-emote-action.exe",
+        "sddl": "O:BAG:S-1-5-21-3592388187-2353680085-815129118-513D:AI(A;;FR;;;LS)(A;ID;FA;;;BA)(A;ID;FA;;;SY)(A;ID;0x1200a9;;;S-1-5-21-3592388187-2353680085-815129118-1001)"
+      },
+      {
+        "path": "C:\\ProgramData\\coord\\g7\\runtime\\scratch",
+        "sddl": "O:BAG:S-1-5-21-3592388187-2353680085-815129118-513D:AI(A;;0x100080;;;LS)(A;OICIID;FA;;;BA)(A;OICIID;FA;;;SY)(A;OICIID;0x1200a9;;;S-1-5-21-3592388187-2353680085-815129118-1001)"
+      },
+      {
+        "path": "C:\\ProgramData\\coord\\data",
+        "sddl": "O:BAG:S-1-5-21-3592388187-2353680085-815129118-513D:AI(A;OICI;0x1301bf;;;LS)(A;OICIID;FA;;;BA)(A;OICIID;FA;;;SY)(A;OICIID;0x1200a9;;;S-1-5-21-3592388187-2353680085-815129118-1001)"
+      },
+      {
+        "path": "C:\\ProgramData\\coord\\data\\coord.db",
+        "sddl": "O:LSG:LSD:AI(A;ID;0x1301bf;;;LS)(A;ID;FA;;;BA)(A;ID;FA;;;SY)(A;ID;0x1200a9;;;S-1-5-21-3592388187-2353680085-815129118-1001)"
+      },
+      {
+        "path": "C:\\ProgramData\\coord\\g7\\config\\broker.key",
+        "sddl": "O:BAG:S-1-5-21-3592388187-2353680085-815129118-513D:AI(A;ID;FA;;;BA)(A;ID;FA;;;SY)(A;ID;0x1200a9;;;S-1-5-21-3592388187-2353680085-815129118-1001)"
+      }
+    ],
+    "temporary_listeners": [],
+    "coord_processes": [],
+    "production_data_unchanged": {
+      "state": "PASS",
+      "all_original_values_equal": true,
+      "includes_fences_and_receipts_compared_privately": true,
+      "no_credential_values_or_derived_hashes_emitted": true,
+      "integrity_check": "ok",
+      "tables": [
+        {
+          "table": "batches",
+          "rows": 4,
+          "original_columns": 6,
+          "new_columns": [],
+          "all_original_values_equal": true
+        },
+        {
+          "table": "tasks",
+          "rows": 145,
+          "original_columns": 27,
+          "new_columns": [],
+          "all_original_values_equal": true
+        },
+        {
+          "table": "task_receipts",
+          "rows": 125,
+          "original_columns": 6,
+          "new_columns": [],
+          "all_original_values_equal": true
+        },
+        {
+          "table": "task_progress",
+          "rows": 112,
+          "original_columns": 8,
+          "new_columns": [],
+          "all_original_values_equal": true
+        },
+        {
+          "table": "task_progress_receipts",
+          "rows": 151,
+          "original_columns": 7,
+          "new_columns": [],
+          "all_original_values_equal": true
+        },
+        {
+          "table": "task_progress_extend_receipts",
+          "rows": 6,
+          "original_columns": 5,
+          "new_columns": [],
+          "all_original_values_equal": true
+        },
+        {
+          "table": "completion_actions",
+          "rows": 121,
+          "original_columns": 22,
+          "new_columns": [],
+          "all_original_values_equal": true
+        }
+      ]
+    },
+    "production_services": [
+      {
+        "Name": "coord",
+        "State": "Stopped",
+        "StartName": "NT AUTHORITY\\LocalService",
+        "StartMode": "Auto",
+        "ProcessId": 0
+      },
+      {
+        "Name": "Servy",
+        "State": "Running",
+        "StartName": "LocalSystem",
+        "StartMode": "Auto",
+        "ProcessId": 3224
+      },
+      {
+        "Name": "CoordRelayAgent",
+        "State": "Running",
+        "StartName": "NT AUTHORITY\\LocalService",
+        "StartMode": "Auto",
+        "ProcessId": 5892
+      },
+      {
+        "Name": "CoordActionRunnerG7",
+        "State": "Stopped",
+        "StartName": ".\\coord_action_g7",
+        "StartMode": "Auto",
+        "ProcessId": 0
+      }
+    ]
+  },
+  "linux_before": {
+    "observed_at_utc": "2026-10-27T12:30:07.340623+10:00",
+    "host": "instance-20260424-1840",
+    "services": {
+      "coord-relay.service": {
+        "exit_code": 0,
+        "properties": [
+          "MainPID=127496",
+          "NRestarts=0",
+          "ActiveState=active",
+          "SubState=running"
+        ]
+      },
+      "feathersjsapp.service": {
+        "exit_code": 0,
+        "properties": [
+          "MainPID=127510",
+          "NRestarts=0",
+          "ActiveState=active",
+          "SubState=running"
+        ]
+      },
+      "openresty.service": {
+        "exit_code": 0,
+        "properties": [
+          "MainPID=109204",
+          "NRestarts=0",
+          "ActiveState=active",
+          "SubState=running"
+        ]
+      }
+    },
+    "sidecar_health": {
+      "http_status": 200,
+      "body": {
+        "state": "READY",
+        "agentConnected": true,
+        "lastHeartbeat": "2026-10-27T02:30:03.532Z",
+        "pending": 0
+      }
+    }
+  },
+  "artifact_readback": [
+    {
+      "name": "coord.exe",
+      "sha256": "943959b12ce75f8de716320e9fe15e72e3ea2911dbf096bedc6dc4bcfc22f3bc",
+      "matched": true
+    },
+    {
+      "name": "coord-action-runner.exe",
+      "sha256": "72b46d25722842a30afd6cd3db32c9df5e15ae28fd0a9cf9a2ddb7a14dcb4baa",
+      "matched": true
+    },
+    {
+      "name": "coord-emote-action.exe",
+      "sha256": "a6679db9064f10bfa74008458853db069ce5b79f018a3b6685710546e13c4879",
+      "matched": true
+    },
+    {
+      "name": "coord-r5-1b-windows-2022.zip",
+      "sha256": "c4edd881f2f52da702389fc37615c2eb1350d96728fa6bec82378e0064ba49a3",
+      "matched": true
+    },
+    {
+      "name": "coord-health-monitor.ps1",
+      "sha256": "efcee606cf5cb2483f0985b7e939fa661bf13b4035fb81a164a81b4cb7af6a25",
+      "matched": true
+    }
+  ],
+  "ci": {
+    "authenticated": {
+      "login": "lieyanbang",
+      "id": 108782145
+    },
+    "repository": {
+      "id": "1427021099",
+      "name": "coord",
+      "owner": {
+        "login": "lieyanbang",
+        "id": 108782145,
+        "type": "User",
+        "avatar_url": "https://avatars.githubusercontent.com/u/108782145?v=4",
+        "url": "https://api.github.com/users/lieyanbang"
+      },
+      "repository_full_name": "lieyanbang/coord",
+      "permissions": {
+        "admin": true,
+        "maintain": true,
+        "pull": true,
+        "push": true,
+        "triage": true
+      },
+      "allow_auto_merge": false,
+      "allow_merge_commit": true,
+      "allow_rebase_merge": true,
+      "allow_squash_merge": true,
+      "allow_update_branch": false,
+      "clone_url": "https://github.com/lieyanbang/coord.git",
+      "size": 1765,
+      "default_branch": "main",
+      "git_commits_url": "https://api.github.com/repos/lieyanbang/coord/git/commits{/sha}",
+      "git_refs_url": "https://api.github.com/repos/lieyanbang/coord/git/refs{/sha}",
+      "git_url": "git://github.com/lieyanbang/coord.git",
+      "master_branch": null,
+      "visibility": "public",
+      "archived": false,
+      "is_code_search_indexed": null
+    },
+    "workflow": {
+      "jobs": [
+        {
+          "id": 121763119437,
+          "name": "test (windows-2022)",
+          "status": "completed",
+          "conclusion": "success",
+          "run_id": 40377126693,
+          "logs_url": null,
+          "steps": [
+            {
+              "name": "Set up job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 1
+            },
+            {
+              "name": "Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 2
+            },
+            {
+              "name": "Run dtolnay/rust-toolchain@stable",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 3
+            },
+            {
+              "name": "Run Swatinem/rust-cache@v2",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 4
+            },
+            {
+              "name": "Run actions/setup-python@v5",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 5
+            },
+            {
+              "name": "Run actions/setup-node@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 6
+            },
+            {
+              "name": "fmt",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 7
+            },
+            {
+              "name": "clippy",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 8
+            },
+            {
+              "name": "test",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 9
+            },
+            {
+              "name": "release build",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 10
+            },
+            {
+              "name": "health monitor authentication and recovery",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 11
+            },
+            {
+              "name": "Dedicated low-privilege Action Runner rehearsal",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 12
+            },
+            {
+              "name": "Coord MCP test dependencies",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 13
+            },
+            {
+              "name": "relay protocol and lease-fencing tests",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 14
+            },
+            {
+              "name": "Coord MCP OAuth and HTTP tests",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 15
+            },
+            {
+              "name": "Phase G request and result utility tests",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 16
+            },
+            {
+              "name": "Package matched R5-1B binaries and manifest",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 17
+            },
+            {
+              "name": "Run actions/upload-artifact@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 18
+            },
+            {
+              "name": "Run actions/upload-artifact@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 19
+            },
+            {
+              "name": "Post Run actions/setup-node@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 35
+            },
+            {
+              "name": "Post Run actions/setup-python@v5",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 36
+            },
+            {
+              "name": "Post Run Swatinem/rust-cache@v2",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 37
+            },
+            {
+              "name": "Post Run actions/checkout@v4",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 38
+            },
+            {
+              "name": "Complete job",
+              "status": "completed",
+              "conclusion": "success",
+              "number": 39
+            }
+          ]
+        }
+      ]
+    },
+    "new_run_triggered": false
+  },
+  "local_gate_reused": "stage-r5-b3-a-checks.json: fmt/clippy/tests/release exit 0, 88 passed and 8 intentionally ignored",
+  "product_source_changed": false,
+  "new_full_ci_triggered": false,
+  "protected_files_unchanged": true,
+  "historical_failures": [
+    "First disposable CLI install parsed a leading dash value as an option; --params=value passed",
+    "Publisher fixture selection assertion failed after the publication checks passed; resumed the retained synthetic DB",
+    "Built-in NetworkService runner SID correctly rejected; no identity rule was weakened",
+    "First unconditional guard rejected new-column migration backfill; final original-column immutable guards and atomic post-migration upgrade passed"
+  ],
+  "raw_root": "target/b3-a2-b-20261027",
+  "remote_root": "C:\\coord-b3a2-20261027-a",
+  "remaining": "Only authorized B3-B deployment and production acceptance. Formal Batch/B4 remain outside scope"
+}

@@ -336,3 +336,91 @@ config/path/install/quiet，没有提供隔离数据库选项；没有为试验�
 [Actions 40377126693](https://github.com/lieyanbang/coord/actions/runs/40377126693)
 （本轮只读回查 job 121763119437 及各步骤仍 success），不触发无代码变化的全量 CI。
 TASK/PLAN、原有 `.gitignore` 修改、未跟踪文件和 Git 历史保持。
+
+## B3-A2 — 2026-10-27 01:59–02:53 UTC；本轮生产授权
+
+**B3-A2 PASS；B3-B 此记录时尚未写生产。** 更新后的 TASK 明确授权在 A2 全通过后
+直接执行 Coord 专属 B3-B，无需重复取得同一范围的批准。TASK/PLAN 继续只读。
+当前分支 `codex/b3-a2-b-20261027`，基线 `9cf72d7`；产品源码和正式脚本仍为
+已验收的 `ea9783268e33e546572fe346335056e28bc4d435`，仅补充运维与证据。
+
+### A2 实测结果
+
+- **Servy/SCM 完整恢复 PASS**：仅创建唯一临时服务 `CoordB3A2_6e3a9c1f` 及其新记录。
+  配置 B 的真实 LocalService 子进程 PID 2772（02:08:56Z），恢复 A 后 PID 9740
+  （02:09:04Z）；全部导出字段、SCM 路径/身份/启动方式/显示名/描述及服务 DACL
+  逐项恢复一致。临时服务删除后，原有 11 条完整 Servy 记录与写前 inventory 一致。
+  没有导入旧快照或覆盖已有其他服务记录。初次 CLI 参数以 `-NoProfile` 开头被
+  解析器当选项拒绝，使用 `--params=<value>` 后通过；原始失败保留。
+- **真实预算及防重启风暴方案 PASS**：验证 Servy Host PID 后通过只读命名管道
+  GetRestartAttempts 查询两个生产实例，均为 0，并保留各自 UpdatedAtUtc。
+  临时服务设置最大重试 2，实际产生初次运行加两次重试（PIDs 10128/2812/2912），
+  25.9 秒后停止；计数跨进程保留，达到上限后归零，不能从 0 反推历史未重启。
+  同版本源代码还按健康稳定窗口重置计数。
+  [版本固定的恢复实现](https://github.com/aelassas/servy/blob/bc0f0c7b67862028549e8d99c0b1d16c2b58d228/src/Servy.Service/Service.cs)
+  与现场一致。中文 `sc qfailure` 输出不作未解析的 PASS；改用只读
+  QueryServiceConfig2W，确认 Core/Runner 的 SCM 自动失败动作列表均为空。
+  正式维护期间禁用 Coord monitor 的自动触发，并将这两个实例的 Servy recovery
+  暂设 None，按检查点单次监督启动；稳定后才恢复原有最大 3 次的 RestartProcess
+  策略与 monitor 的每小时 3 次/10 分钟冷却，保留原 monitor 恢复历史。
+- **保留旧 publisher 与 pin PASS**：复制原发布器到隔离路径，验证旧 hash
+  `cac5496ed1dea50f837f28403feb62515de1ba1459ea2557abe6097ec07bec55`；候选 Core
+  PID 5840/SID S-1-5-19，真实标准 Runner SID 尾号 1009、privileged=false。
+  task/index 两条签名 Action 均 succeeded、attempt=1、exit=0，产生四项真实隔离
+  文件。Task Instances `19F14C35-F4F3-4D5D-A831-B51D6EB76B27` 与
+  `867558E3-A57E-407B-B01D-8C1A3B3B35EF`，native PIDs 1928/6648。
+  因此正式方案保留全部三个原 profile 的发布器 EXE、参数、版本和旧 pin，不替换
+  为包中的新 publisher，不放宽白名单。
+- **业务冻结 PASS**：新增一次性数据库护栏，仅保护业务表的 INSERT/DELETE 和
+  已有字段的实际变化；agents 与签名 nonce 维护不受影响。标准账户 SID 尾号 1010
+  的真实签名 Runner poll 在动作状态更新前返回 500/native 1；管理 claim/reclaim
+  被拒绝，`tasks/list {skip_reclaim:true}` 仍成功；经历 32 秒实际 reclaim ticker
+  后全部隔离业务列值（包括 fences）一致。Task Instance
+  `711FB25F-EBDF-4C69-B672-65599DD19B6D`，native PID 3248。
+  首版对任意 UPDATE 一律拒绝，随后在新鲜旧结构副本发现它也阻止新增列回填；
+  最终版本按旧列逐项比较，迁移后在单个事务中升级为全列保护。两个实际副本
+  启动 PID 9944/212，21→24 个触发器覆盖、重启、变更拒绝及撤销均通过。
+  七张原业务表的全部旧列逐值一致：145 tasks、125 receipts、112 progress、
+  151 progress receipts、6 extension receipts、121 actions；这是全库计数，
+  正式 Batch 仍为其原有 121 tasks / 105 completed / 16 pending。
+  三个新增调度列及派生 attempt 表单独报告；不能把不同列集合的原始 hash 直接
+  当成原数据被改写或宣称 hash 相同。原列比较包含私下逐值比较的 fences，不输出
+  凭据或其派生摘要。最终护栏撤销测试不改变业务行。
+
+本轮没有降低 Runner SID 校验。一次 NetworkService 冻结试验被现有专用 SID 校验
+拒绝，改回标准账户后通过。夹具输入断言失败、该身份拒绝及首版护栏阻塞均保留。
+两个本轮临时账户/profile/hive 清理已完成，两个精确 SYSTEM 清理 Instance 为
+`00BB5FD3-415E-49BD-8FEE-325BBBE69C45` / PID 4708 和
+`A47EF8D9-226A-456D-A5C2-7279FAA667BD` / PID 2188；两次两个 hive 均 NTSTATUS 0、
+DeleteProfileW=0，其他 hive 映射不变。任务、进程、监听及临时密钥均清理。
+
+02:51Z 写前只读核对，全部原业务列与一致备份相同；Core/Runner 仍 Stopped，
+Servy/Relay 仍 PID 3224/5892。原生产 Runner SID 尾号 1004、启用且非管理员，
+RequiredPrivileges 仅 SeChangeNotifyPrivilege。01:59Z 与 02:30Z Linux 快照确认
+Relay/Feathers/OpenResty PID 与 NRestarts 不变，Sidecar HTTP 200/READY/connected。
+
+### B3-B 固定实施与恢复顺序
+
+1. 核对无其他 Core/Runner 操作者及 A2 PASS 清单；保存准确服务导出、SCM/ACL、
+   原 Registry、二进制与监控任务，禁用 Coord monitor 触发后完成新鲜一致备份。
+2. 安装已验证的旧列业务护栏，保持 Runner 停止、Servy recovery None；部署同版
+   候选 Core 与明确 Broker 禁用的兼容 Registry。独立管理认证保留原凭据值；
+   仅使用新建、精确 ACL 的管理凭据副本，不读取/复制/哈希旧 Broker key。
+3. 真实 LocalService Core 稳定 DEGRADED，认证只读 RPC/SQLite PASS、原列全值
+   一致后，把护栏升级至所有新列。新增列与派生表变化单列说明。
+4. 在 Arasaka 创建生产专用 Ed25519 keypair，验证真实既有 Runner 身份及最小
+   私钥/公钥/管理认证 ACL；保持原 publisher/pin，启用签名 Broker 和真实服务
+   Runner，再加载最终恢复策略并观察稳定性。
+5. 实际 SYSTEM monitor 至少两次新鲜 exit 0，另核对内容、服务 PID/SID、监听、
+   Linux/入口及保护数据。不得创建、领取或恢复正式 Batch/B4；业务冻结保留。
+
+任一点失败先停 Runner，保持 monitor 不自动重试，恢复**同版候选兼容 Core +
+Broker DEGRADED**；保留当前 DB 和护栏，不用旧 G7 EXE 或旧 DB 覆盖恢复。
+仍不能安全恢复时立即 BLOCKED，报告实际状态。
+
+本轮 A2 结构化证据见
+[PHASE_R5_B3_A2_EVIDENCE_20261027.json](PHASE_R5_B3_A2_EVIDENCE_20261027.json)。
+原始证据及一次性操作源码位于 `target/b3-a2-b-20261027/` 与 Arasaka 同名隔离根。
+本地和远端候选文件匹配原 manifest；本轮重新只读核验 Fork run 40377126693 的
+job 121763119437 及全部步骤 success。产品源码未改，沿用既有本地 gate 和 CI，
+未因运维诊断重跑完整 Rust/Hosted 测试。
