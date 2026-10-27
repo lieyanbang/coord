@@ -388,6 +388,12 @@ function createCoordOAuthServer(BaseOAuthServer, config, options = {}) {
 
     async tokenPost(req, res) {
       const body = requestBody(req);
+      this.auditRequest({
+        method: 'POST',
+        originalUrl: '/coord/oauth/token',
+        headers: {},
+        body: { grant_type: ['authorization_code', 'refresh_token'].includes(body.grant_type) ? body.grant_type : 'unsupported' },
+      }, res, 'coord.oauth.token');
       if (body.grant_type !== 'authorization_code') return super.tokenPost(req, res);
 
       try {

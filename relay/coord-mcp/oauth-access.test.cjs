@@ -78,6 +78,13 @@ class TestOAuthServer {
 
   async init() { await this.store.init(); }
 
+  auditRequest(req, res, route) {
+    this.auditRecords ||= [];
+    res.once('finish', () => {
+      this.auditRecords.push({ request: { ...req, route }, response: { statusCode: res.statusCode } });
+    });
+  }
+
   metadata() {
     return {
       issuer: this.config.issuer,
@@ -480,4 +487,32 @@ test('missing Access configuration fails closed without taking down protocol met
   assert.equal(response.body.error, 'access_not_configured');
   assert.equal(oauth.metadata().issuer, ISSUER);
   assert.deepEqual(oauth.metadata().scopes_supported, ['coord', 'offline_access']);
+});
+
+test('token lifecycle audit records grant and status without credentials or arbitrary input', async () => {
+  const oauth = createCoordOAuthServer(TestOAuthServer, { issuer: ISSUER, resource: RESOURCE });
+  const app = express();
+  installOAuthRoutes(app, express, oauth, '/coord/oauth');
+  const server = http.createServer(app);
+  servers.add(server);
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  const url = `http://127.0.0.1:${server.address().port}/coord/oauth/token?code=PRIVATE_QUERY`;
+  for (const grant of ['authorization_code', 'refresh_token', 'PRIVATE_GRANT']) {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'content-type': 'application/x-www-form-urlencoded', authorization: 'Bearer PRIVATE_HEADER', cookie: 'PRIVATE_COOKIE' },
+      body: new URLSearchParams({ grant_type: grant, client_id: 'PRIVATE_CLIENT', code: 'PRIVATE_CODE', refresh_token: 'PRIVATE_REFRESH', code_verifier: 'PRIVATE_VERIFIER', arbitrary: 'PRIVATE_FIELD' }),
+    });
+    assert.equal(response.status, 400);
+    await response.text();
+  }
+  assert.deepEqual(oauth.auditRecords.map((entry) => entry.request.body.grant_type), ['authorization_code', 'refresh_token', 'unsupported']);
+  assert.deepEqual(oauth.auditRecords.map((entry) => entry.response.statusCode), [400, 400, 400]);
+  for (const entry of oauth.auditRecords) {
+    assert.deepEqual(Object.keys(entry.request).sort(), ['body', 'headers', 'method', 'originalUrl', 'route']);
+    assert.deepEqual(entry.request.headers, {});
+    assert.equal(entry.request.originalUrl, '/coord/oauth/token');
+    assert.deepEqual(Object.keys(entry.request.body), ['grant_type']);
+  }
+  assert.doesNotMatch(JSON.stringify(oauth.auditRecords), /PRIVATE_/);
 });
