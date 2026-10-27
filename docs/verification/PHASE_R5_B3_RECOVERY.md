@@ -252,3 +252,87 @@ PARTIAL，不扩大范围。该授权不包含 B3-B。
 本轮没有产品源码或正式脚本修改，复用 `stage-r5-b3-a-checks.json` 的本地构建门槛
 及 Fork run 40377126693，不触发新的无代码变化全量 CI；本轮新增验证均为上述
 最小目标机启动、登录、任务及隔离动作测试。TASK/PLAN 和既有 Git 成果保持。
+
+## B3-A1 清理续轮 — 2026-10-27 01:13–01:29 UTC
+
+**B3-A1：PASS。** 前轮真实低权限 Runner 的启动、身份/ACL、签名连接、两项隔离
+Action、fence 负例和退出证据保持有效；本轮完成最后的临时 profile 清理。
+本结论只适用于 B3-A1；**B3-A 整体仍 PARTIAL，B3-B 尚未具备完整准入且未授权执行**。
+用户本轮明确授权“清理继续任务”。全部清理只针对本轮新增的 SID
+`S-1-5-21-3592388187-2353680085-815129118-1008` 和
+`C:\Users\coordA164a92cf1`，没有修改生产服务、在线配置、凭据或全局策略。
+
+### 清理调用修正与实际结果
+
+| SYSTEM Task Instance / 实际 PID | UTC 开始–结束 | 实际操作与结果 |
+| --- | --- | --- |
+| `80F05E13-87CA-4D2D-9E41-BDD3DA4D6259` / 1408 | 01:13:50.390–52.444 | 执行原审阅候选，DeleteProfileW 返回 87，profile 仍挂载 |
+| `65FDD894-D09B-47D3-917A-8B456951D1D6` / 9880 | 01:15:41.728–41.855 | 标准非强制卸载 SID/Classes，均返回 Win32 5 |
+| `333008AD-A0F6-41DD-9730-17848CE7C037` / 5964 | 01:21:37.660–37.759 | 修正 NULL 传参后标准删除返回 Win32 32，确认共享冲突仍在 |
+| `734507DD-84D3-45B3-9F28-7F8AB3C86A04` / 4540 | 01:25:14.662–14.976 | 两个精确 hive 卸载 NTSTATUS 均 0；标准删除返回 0；清理 PASS |
+
+四次 Task 的 LastTaskResult 均为 0；前面三次操作仍失败，不能以包装进程退出 0
+替代清理成功。每次均记录真实 SYSTEM SID `S-1-5-18`、Task COM Instance、PID、
+UTC 和独立操作结果，执行后删除相应一次性任务。
+
+先前 Win32 87 是本轮清理包装脚本的传参缺陷：PowerShell 将 `$null` 转换成 C#
+字符串参数时传入空字符串。最小无副作用探针及目标机探针均证实该转换；
+[DeleteProfileW 的契约](https://learn.microsoft.com/en-us/windows/win32/api/userenv/nf-userenv-deleteprofilew)
+要求第三参数为真正 NULL。改由 C# 内部传入 literal null 后返回 32，才取得真实
+共享冲突证据；不能继续把 87 当作 Windows profile 删除层的最终错误。
+
+按全部进程的 `GetOwnerSid` 核对该 SID 无存活进程，避免删除账户后名称无法解析的
+漏检。启动器宿主已退出；User Profile Service/Operational records 282/284/285/
+287/288 保留本轮加载路径。hivelist 将两个精确 SID 挂载映射到上述临时目录的
+NTUSER.DAT 和 UsrClass.dat。加载事件宿主 PID 1700 同时承载 ProfSvc、Schedule
+等多个系统服务；没有终止该进程或重启这些服务，也不据此断言已找到具体持锁句柄。
+
+在新的清理授权内，最后采用一次性 SYSTEM 帮助程序，只对硬编码的这两个 native
+路径调用 `NtUnloadKey2(REG_FORCE_UNLOAD=1)`，再调用标准 DeleteProfileW。
+接口/标志按 [PHNT 原始声明](https://github.com/winsiderss/phnt/blob/master/ntregapi.h)
+核对；它仅用于本轮 disposable 夹具收尾，没有进入产品或正式部署脚本。
+执行前再次校验 SID、目录、账户不存在、无该 SID 进程及 hive backing paths；
+只在本进程临时启用已持有的 Backup/Restore privilege 并恢复。两个卸载成功后
+标准删除成功，未手工删除 ProfileList 或目录来伪造清理。前后其他 hive 的完整
+映射逐值一致。原有失败记录及三次失败尝试原文均保留。
+
+01:26:40Z 最终只读核对：该账户、profile、目录、两个 hive、相关任务、存活进程
+及 18777/18779 监听全部为零；临时私钥/公钥/独立管理密钥仍不存在；保留的夹具
+和证据逐项限 Administrators/SYSTEM。生产 Core/Runner 仍 Stopped；Servy/Relay
+保持 PID 3224/5892 及原身份，7777/7779 无监听。生产数据库的完整安全摘要与
+00:56:04Z 基线逐值一致：正式 Batch 105 completed / 16 pending、两个旧 Canary、
+receipt/progress 指纹及历史 Action 38 failed / 83 succeeded 均未改变。
+
+### B3-B 剩余准入
+
+补查发现 Servy 校验器实际在
+`C:\ProgramData\coord\backup\g7-20261026T124419Z-0380fb72\servy-snapshot-check.exe`。
+因此前文“两个已知路径不存在”不能扩展解释为主机没有校验器。本轮用该工具将
+既有 Servy 备份只读恢复为**新的离线副本**，再对照原 inventory 校验：两步 exit 0，
+quick_check/integrity_check 均 ok、schema 10、11 条完整服务记录一致，**离线快照
+副本验证 PASS**。没有把备份写回在线 Servy.db。
+
+完整 Servy/SCM 配置恢复仍 **NOT_RUN**。当前 CLI 10.2.0 的 import help 仅列出
+config/path/install/quiet，没有提供隔离数据库选项；没有为试验向共享 Servy 数据库
+导入或更改真实服务。离线记录一致不等于完整服务恢复验收。下一阶段仍需：
+
+- 在可隔离的 Servy/SCM 环境证明完整配置恢复；确认实际已用重启次数和可用预算。
+  既有导出的 MaxRestartAttempts=3 是配置上限，不能当作剩余预算。
+- 固定 publisher 对齐方案并完成隔离验收。现有文件匹配旧 pin `cac5496e…`，
+  新包 publisher 为 `a6679db9…`；本轮没有替换正式发布器或改 profile pin。
+  优先评估保留旧 publisher 与原 pin，仅在相应兼容性证据成立后形成部署清单。
+- 获得独立 B3-B 生产批准，再刷新一致备份、准确服务身份/ACL及生产签名密钥，
+  完成真实服务 Runner、SYSTEM 两次监控和生产一致性验收。
+
+到此停止 B3-A1；没有部署生产、恢复正式 Batch、创建 Canary 或进入 B4。
+
+结构化清理证据见
+[PHASE_R5_B3_A1_CLEANUP_20261027.json](PHASE_R5_B3_A1_CLEANUP_20261027.json)。
+原始记录、四个 Task XML、一次性清理源码及离线 Servy 校验摘要保存在
+`target/b3-a1-cleanup-20261027/`，远端对应证据仍在受保护夹具目录中。
+本轮只提交证据文档；产品源码和正式脚本与 `ea9783268e33e546572fe346335056e28bc4d435`
+一致。复用 `stage-r5-b3-a-checks.json`（fmt/clippy/tests/release 全部 exit 0，
+88 passed / 8 intentionally ignored）及 Fork
+[Actions 40377126693](https://github.com/lieyanbang/coord/actions/runs/40377126693)
+（本轮只读回查 job 121763119437 及各步骤仍 success），不触发无代码变化的全量 CI。
+TASK/PLAN、原有 `.gitignore` 修改、未跟踪文件和 Git 历史保持。

@@ -1,0 +1,654 @@
+{
+  "state": "PASS",
+  "scope": "B3-A1 only",
+  "runner_runtime_gate": "PASS_REUSED_UNCHANGED",
+  "profile_cleanup_gate": "PASS",
+  "b3_a_overall": "PARTIAL",
+  "b3_b": "NOT_READY_NOT_AUTHORIZED_NOT_RUN",
+  "authority": "User explicitly authorized cleanup and continuation; exact disposable profile only",
+  "baseline_head": "dd21a3443a9c43f56aec2b41a4f898948b2fc1d6",
+  "branch": "codex/b3-a1-cleanup-20261027",
+  "source_commit": "ea9783268e33e546572fe346335056e28bc4d435",
+  "product_source_changed": false,
+  "prior_runtime_evidence": "PHASE_R5_B3_A1_EVIDENCE_20261027.json",
+  "cleanup_runs": [
+    {
+      "requested_at_utc": "2026-10-27T01:13:49.6905546Z",
+      "task_name": "coord-b3a1-20261027-a-profile-cleanup",
+      "instance_id": "{80F05E13-87CA-4D2D-9E41-BDD3DA4D6259}",
+      "last_task_result": 0,
+      "wrapper": {
+        "started_at_utc": "2026-10-27T01:13:50.3900759Z",
+        "sid": "S-1-5-18",
+        "pid": 1408,
+        "candidate_sha256": "9fa6d2aa08a3f14a8bad3d247a492cc76112cabdb5f0d90c41935d10b38c974f",
+        "state": "COMPLETED",
+        "cleanup_state": "PARTIAL",
+        "ended_at_utc": "2026-10-27T01:13:52.4446357Z"
+      },
+      "cleanup": {
+        "started_at_utc": "2026-10-27T01:13:52.3026801Z",
+        "sid": "S-1-5-21-3592388187-2353680085-815129118-1008",
+        "profile_path": "C:\\Users\\coordA164a92cf1",
+        "before": [
+          {
+            "SID": "S-1-5-21-3592388187-2353680085-815129118-1008",
+            "LocalPath": "C:\\Users\\coordA164a92cf1",
+            "Loaded": true
+          }
+        ],
+        "scope": "One disposable profile only; no force unload, service restart, global policy, production database, or other profile operations",
+        "delete_success": false,
+        "win32_error": 87,
+        "after": [
+          {
+            "SID": "S-1-5-21-3592388187-2353680085-815129118-1008",
+            "LocalPath": "C:\\Users\\coordA164a92cf1",
+            "Loaded": true
+          }
+        ],
+        "directory_exists": true,
+        "state": "PARTIAL",
+        "ended_at_utc": "2026-10-27T01:13:52.4101892Z"
+      },
+      "task_removed": true
+    },
+    {
+      "requested_at_utc": "2026-10-27T01:15:38.999722Z",
+      "task": "coord-b3a1-20261027-a-profile-unload",
+      "instance_id": "{65FDD894-D09B-47D3-917A-8B456951D1D6}",
+      "last_task_result": 0,
+      "cleanup": {
+        "started_at_utc": "2026-10-27T01:15:41.7286458Z",
+        "execution_sid": "S-1-5-18",
+        "pid": 9880,
+        "target_sid": "S-1-5-21-3592388187-2353680085-815129118-1008",
+        "before": [
+          {
+            "SID": "S-1-5-21-3592388187-2353680085-815129118-1008",
+            "LocalPath": "C:\\Users\\coordA164a92cf1",
+            "Loaded": true
+          }
+        ],
+        "operation": "Standard non-force unload of only the disposable SID/classes, using existing process privileges; no service or policy change",
+        "unload_win32": [
+          5,
+          5
+        ],
+        "hive_exists": true,
+        "classes_hive_exists": true,
+        "after": [
+          {
+            "SID": "S-1-5-21-3592388187-2353680085-815129118-1008",
+            "LocalPath": "C:\\Users\\coordA164a92cf1",
+            "Loaded": true
+          }
+        ],
+        "directory_exists": true,
+        "state": "PARTIAL",
+        "ended_at_utc": "2026-10-27T01:15:41.8550705Z"
+      },
+      "task_removed": true
+    },
+    {
+      "requested_at_utc": "2026-10-27T01:21:34.9002387Z",
+      "task_name": "coord-b3a1-20261027-a-profile-delete-null",
+      "script_sha256": "22bc39c9f25c61f48e63fa5bf58fe29a2151faf6be4f288a0cda38cb3eb2e342",
+      "instance_id": "{333008AD-A0F6-41DD-9730-17848CE7C037}",
+      "last_task_result": 0,
+      "cleanup": {
+        "started_at_utc": "2026-10-27T01:21:37.6608232Z",
+        "execution_sid": "S-1-5-18",
+        "pid": 5964,
+        "target_sid": "S-1-5-21-3592388187-2353680085-815129118-1008",
+        "profile_path": "C:\\Users\\coordA164a92cf1",
+        "before": [
+          {
+            "SID": "S-1-5-21-3592388187-2353680085-815129118-1008",
+            "LocalPath": "C:\\Users\\coordA164a92cf1",
+            "Loaded": true
+          }
+        ],
+        "powershell_null_is_native_null": false,
+        "operation": "Standard DeleteProfileW with C# literal null computerName; one exact disposable profile; no force unload, policy or service changes",
+        "delete_win32": 32,
+        "after": [
+          {
+            "SID": "S-1-5-21-3592388187-2353680085-815129118-1008",
+            "LocalPath": "C:\\Users\\coordA164a92cf1",
+            "Loaded": true
+          }
+        ],
+        "directory_exists": true,
+        "hive_exists": true,
+        "classes_hive_exists": true,
+        "state": "PARTIAL",
+        "ended_at_utc": "2026-10-27T01:21:37.7596065Z"
+      },
+      "task_removed": true
+    },
+    {
+      "requested_at_utc": "2026-10-27T01:25:06.9910662Z",
+      "task_name": "coord-b3a1-20261027-a-profile-exact-cleanup",
+      "script_sha256": "b2c561f4f3cc4543d547bcbbd0576b534a03a6b562efcb1498724e7b1c35cde8",
+      "instance_id": "{734507DD-84D3-45B3-9F28-7F8AB3C86A04}",
+      "last_task_result": 0,
+      "cleanup": {
+        "started_at_utc": "2026-10-27T01:25:14.6628027Z",
+        "execution_sid": "S-1-5-18",
+        "pid": 4540,
+        "target_sid": "S-1-5-21-3592388187-2353680085-815129118-1008",
+        "profile_path": "C:\\Users\\coordA164a92cf1",
+        "account_count": 0,
+        "owned_processes": [],
+        "before": [
+          {
+            "SID": "S-1-5-21-3592388187-2353680085-815129118-1008",
+            "LocalPath": "C:\\Users\\coordA164a92cf1",
+            "Loaded": true
+          }
+        ],
+        "scope": "User authorized cleanup: only two hardcoded owned SID/Classes hives, REG_FORCE_UNLOAD=1, then standard DeleteProfileW. No process termination, service restart or policy changes",
+        "unload_ntstatus": [
+          "0x00000000",
+          "0x00000000"
+        ],
+        "other_hives_unchanged": true,
+        "hive_exists": false,
+        "classes_hive_exists": false,
+        "delete_win32": 0,
+        "after": [],
+        "directory_exists": false,
+        "state": "PASS",
+        "ended_at_utc": "2026-10-27T01:25:14.9762694Z"
+      },
+      "task_removed": true
+    }
+  ],
+  "interpretation": {
+    "task_zero_note": "All four wrapper exits are zero; first three operation results are PARTIAL, not PASS",
+    "initial_87": "PowerShell null-to-string conversion supplied empty computerName; corrected in C# using literal null",
+    "other_hives_unchanged": true,
+    "corrected_32": "Standard DeleteProfileW reached a genuine sharing violation",
+    "process_ownership_check": "CIM GetOwnerSid across all processes avoids account-name resolution after account deletion",
+    "final_cleanup": "Two hardcoded owned SID/Classes native paths only; NtUnloadKey2 REG_FORCE_UNLOAD=1, then standard DeleteProfileW; all statuses success"
+  },
+  "final_state": {
+    "observed_at_utc": "2026-10-27T01:26:40.8436305Z",
+    "production_database": {
+      "completion_action_states": {
+        "failed": 38,
+        "succeeded": 83
+      },
+      "integrity_check": "ok",
+      "journal_mode": "wal",
+      "protected": [
+        {
+          "action_count": 105,
+          "attempt_table_rows": 0,
+          "batch_found": true,
+          "batch_id": "90ce2ca7-184e-4c3d-9d87-56386db25419",
+          "derived_attempts_fingerprint": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "extension_receipt_count": 0,
+          "progress_count": 106,
+          "progress_receipt_count": 145,
+          "protected_fingerprint": "0a604adcb9527722cb2ba55283dd623e1c396edafa1a5853ad79b36b2a7d2361",
+          "task_attempt_max": 2,
+          "task_attempt_sum": 112,
+          "task_count": 121,
+          "task_receipt_count": 105,
+          "task_states": {
+            "completed": 105,
+            "pending": 16
+          }
+        },
+        {
+          "action_count": 11,
+          "attempt_table_rows": 0,
+          "batch_found": true,
+          "batch_id": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e",
+          "derived_attempts_fingerprint": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "extension_receipt_count": 2,
+          "progress_count": 2,
+          "progress_receipt_count": 2,
+          "protected_fingerprint": "dbcfaa4e5a308867157302c1f1e59ac902da985f6b0dfcc392bde3b118bb03e4",
+          "task_attempt_max": 2,
+          "task_attempt_sum": 16,
+          "task_count": 10,
+          "task_receipt_count": 11,
+          "task_states": {
+            "completed": 10
+          }
+        },
+        {
+          "action_count": 5,
+          "attempt_table_rows": 0,
+          "batch_found": true,
+          "batch_id": "d2313c78-22da-4cb8-bcd7-ece9897e0db1",
+          "derived_attempts_fingerprint": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "extension_receipt_count": 4,
+          "progress_count": 4,
+          "progress_receipt_count": 4,
+          "protected_fingerprint": "b2e63e2c5cb5c85afee4bc243b5b48693be6bf5a0f9a93821c4b4a794b540024",
+          "task_attempt_max": 1,
+          "task_attempt_sum": 4,
+          "task_count": 4,
+          "task_receipt_count": 4,
+          "task_states": {
+            "completed": 4
+          }
+        }
+      ],
+      "runner_nonce_rows": 0,
+      "runner_nonces_table": false,
+      "schema_version": 32,
+      "task_attempts_table": false,
+      "user_version": 0
+    },
+    "production_services": [
+      {
+        "Name": "coord",
+        "State": "Stopped",
+        "StartName": "NT AUTHORITY\\LocalService",
+        "ProcessId": 0
+      },
+      {
+        "Name": "Servy",
+        "State": "Running",
+        "StartName": "LocalSystem",
+        "ProcessId": 3224
+      },
+      {
+        "Name": "CoordRelayAgent",
+        "State": "Running",
+        "StartName": "NT AUTHORITY\\LocalService",
+        "ProcessId": 5892
+      },
+      {
+        "Name": "CoordActionRunnerG7",
+        "State": "Stopped",
+        "StartName": ".\\coord_action_g7",
+        "ProcessId": 0
+      }
+    ],
+    "production_listeners": [],
+    "batch_right_holders": [
+      "S-1-5-32-544",
+      "S-1-5-32-551",
+      "S-1-5-32-559"
+    ],
+    "deny_batch_holders": [],
+    "owned_profile": [],
+    "owned_profile_directory_exists": false,
+    "owned_hive_exists": false,
+    "owned_classes_hive_exists": false,
+    "own_account_count": 0,
+    "own_task_count": 0,
+    "own_listener_count": 0,
+    "own_processes": [],
+    "isolated_artifact_acl_admin_system_only": true,
+    "isolated_acl_failures": [],
+    "ephemeral_keys_absent": true,
+    "servy_backup_root": "C:\\ProgramData\\coord\\backup\\g7-20261026T124419Z-0380fb72",
+    "servy_backup_root_files": [
+      {
+        "Name": "backup-manifest.json",
+        "Length": 1425
+      },
+      {
+        "Name": "coord-backup.json",
+        "Length": 188
+      },
+      {
+        "Name": "coord.db",
+        "Length": 2949120
+      },
+      {
+        "Name": "coord.db-shm",
+        "Length": 32768
+      },
+      {
+        "Name": "coord.db-wal",
+        "Length": 0
+      },
+      {
+        "Name": "servy-backup.json",
+        "Length": 2666
+      },
+      {
+        "Name": "servy-snapshot-check.exe",
+        "Length": 75922610
+      },
+      {
+        "Name": "servy-verify.json",
+        "Length": 1607
+      },
+      {
+        "Name": "Servy.db",
+        "Length": 32768
+      },
+      {
+        "Name": "Servy.db-shm",
+        "Length": 32768
+      },
+      {
+        "Name": "Servy.db-wal",
+        "Length": 0
+      },
+      {
+        "Name": "sqlite-online-backup.py",
+        "Length": 3278
+      }
+    ],
+    "servy_cli_help_exit": 0
+  },
+  "production_database_matches_prior": true,
+  "production_services_match_prior": true,
+  "servy_offline_copy": {
+    "started_at_utc": "2026-10-27T01:28:47.6570831Z",
+    "scope": "Existing Servy backup read-only to a new private offline database; no live Servy database writes/import, no SCM changes",
+    "checker_found": true,
+    "original_inventory": "C:\\ProgramData\\coord\\backup\\g7-20261026T124419Z-0380fb72\\servy-backup.json",
+    "copy_exit": 0,
+    "verify_exit": 0,
+    "verify_result": "PASS",
+    "quick_check": [
+      "ok"
+    ],
+    "integrity_check": [
+      "ok"
+    ],
+    "schema": {
+      "rows": 1,
+      "id": 1,
+      "version": 10
+    },
+    "services_count": 11,
+    "import_help_exit": 0,
+    "offline_snapshot_gate": "PASS",
+    "service_configuration_import_gate": "NOT_RUN: offline snapshot verification does not establish Servy/SCM configuration restore",
+    "used_restart_budget": "NOT_VERIFIED: static export MaxRestartAttempts is not the used runtime counter",
+    "ended_at_utc": "2026-10-27T01:28:50.0158207Z"
+  },
+  "ci_reuse": {
+    "run_id": 40377126693,
+    "all_returned_steps": "success",
+    "local_gate": "stage-r5-b3-a-checks.json",
+    "new_full_ci_triggered": false,
+    "job_id": 121763119437,
+    "fresh_readback": true,
+    "tests_intentionally_ignored": 8,
+    "url": "https://github.com/lieyanbang/coord/actions/runs/40377126693",
+    "job_conclusion": "success",
+    "local_gate_exit_codes": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "tests_passed": 88
+  },
+  "git_preservation": {
+    "source_diff_empty": true,
+    "protected_files": [
+      {
+        "path": ".gitignore",
+        "sha256": "34CC463BB9DF5DC625FB3152E23A4849397A7505EEFB6686B840178E5BD7CFD8"
+      },
+      {
+        "path": "docs/PLAN.md",
+        "sha256": "E138D86D63001865B66329375E17F297D6CB67D0A77F517D1566C5C234636C52"
+      },
+      {
+        "path": "TASK.md",
+        "sha256": "4587CBA7AE42BEDE29CBD5F3639CBF098D0FDB728D62B9C63FFC86F6A9112360"
+      }
+    ],
+    "original_status_entries_preserved": true,
+    "original_status_entry_count": 3988,
+    "push_permission": true,
+    "fork": "https://github.com/lieyanbang/coord.git",
+    "authenticated_owner": "lieyanbang",
+    "protected_hashes_unchanged": true,
+    "prior_history_rewritten": false
+  },
+  "remaining": [
+    "Full isolated Servy/SCM configuration restoration remains NOT_RUN; offline database copy alone is insufficient",
+    "Actual used restart budget remains NOT_VERIFIED; configured maximum 3 is not remaining budget",
+    "Publisher old hash pin alignment plan needs isolated acceptance; production publisher and pin unchanged",
+    "Independent B3-B production authorization, fresh backup, exact identity/key/ACL and real service/SYSTEM acceptance required"
+  ],
+  "raw_evidence_root": "target/b3-a1-cleanup-20261027",
+  "remote_evidence_root": "C:\\coord-b3a1-20261027-a\\evidence",
+  "raw_manifest": [
+    {
+      "path": "target\\b3-a1-cleanup-20261027\\evidence-download\\cleanup-final-state.json",
+      "bytes": 4606,
+      "sha256": "56fb3f64dbf563a925627beb14da317e4dd33cb929f9be709afb5ad4359d1fb3"
+    },
+    {
+      "path": "target\\b3-a1-cleanup-20261027\\evidence-download\\cleanup-protected-db.json",
+      "bytes": 1824,
+      "sha256": "5851eb42a4a6dca1003bbc6ca894be6eb5308c3630a6af4bef256e0d7aec86e0"
+    },
+    {
+      "path": "target\\b3-a1-cleanup-20261027\\evidence-download\\cleanup-protected-db.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "target\\b3-a1-cleanup-20261027\\evidence-download\\servy-cli-help.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "target\\b3-a1-cleanup-20261027\\evidence-download\\servy-cli-help.stdout.log",
+      "bytes": 1056,
+      "sha256": "96369446c8fa5b350a1d9f959cdd22f76feda9776108bd68b81a884062c3f08b"
+    },
+    {
+      "path": "target\\b3-a1-cleanup-20261027\\evidence-download\\servy-import-help.stdout.log",
+      "bytes": 620,
+      "sha256": "459c3abec13ae11667876c5bb79a1b5ba0a00253ff3e367ca9e80216e9493935"
+    },
+    {
+      "path": "target\\b3-a1-cleanup-20261027\\evidence-download\\system-cleanup-invocation.json",
+      "bytes": 2123,
+      "sha256": "418a037995b10c7b89bf551d222b1d8a7649ce369c250cff776f591bdfe96411"
+    },
+    {
+      "path": "target\\b3-a1-cleanup-20261027\\evidence-download\\system-cleanup-result.json",
+      "bytes": 798,
+      "sha256": "57ed8921ba2c00366a5af87b20ba83355f35614408e783d5046b71550e96fd23"
+    },
+    {
+      "path": "target\\b3-a1-cleanup-20261027\\evidence-download\\system-cleanup-task.xml",
+      "bytes": 1292,
+      "sha256": "a722cc36ec80e546e679226ac26e971a0c14b5fa14383bde6f2ddcb907064c3b"
+    },
+    {
+      "path": "target\\b3-a1-cleanup-20261027\\evidence-download\\system-delete-null-invocation.json",
+      "bytes": 1971,
+      "sha256": "22994d213faf0ca6b33c2fbc441429a9e8d8c154a656a2ff746afc990ab7e4e1"
+    },
+    {
+      "path": "target\\b3-a1-cleanup-20261027\\evidence-download\\system-delete-null-result.json",
+      "bytes": 935,
+      "sha256": "588ea39e3752996290fd24df3915f9afd78b6e955fb463fcebea388b029d73c8"
+    },
+    {
+      "path": "target\\b3-a1-cleanup-20261027\\evidence-download\\system-delete-null-task.xml",
+      "bytes": 1297,
+      "sha256": "82a4ce5f58cb2c6ee058c5d4dbe631bbbc02beb381b25ff70b8ba2f758bd1140"
+    },
+    {
+      "path": "target\\b3-a1-cleanup-20261027\\evidence-download\\system-exact-cleanup-invocation.json",
+      "bytes": 8880,
+      "sha256": "3fa8abe1714e21d8b666fb003cd01cc2e826f6d799be85c2c84afb2a89352d76"
+    },
+    {
+      "path": "target\\b3-a1-cleanup-20261027\\evidence-download\\system-exact-cleanup-result.json",
+      "bytes": 6123,
+      "sha256": "5331ad4faad8f4c839fe05eda3613c53a1b82413001148a0607f7e0fb299a352"
+    },
+    {
+      "path": "target\\b3-a1-cleanup-20261027\\evidence-download\\system-exact-cleanup-task.xml",
+      "bytes": 1301,
+      "sha256": "429f0324afe7c087510a1c07cb9bc3838c9414c429cd0b1d702b87e4a32591f8"
+    },
+    {
+      "path": "target\\b3-a1-cleanup-20261027\\evidence-download\\system-unload-invocation.json",
+      "bytes": 1860,
+      "sha256": "25c2a0b37e2b28d4bc6e731b1805073083c8c04424b8597e198d9d1554e18a0c"
+    },
+    {
+      "path": "target\\b3-a1-cleanup-20261027\\evidence-download\\system-unload-result.json",
+      "bytes": 854,
+      "sha256": "b2b057a156339fbc2340a0f8c03ceeed5bfe7750aa93cf035d5f42de4ad7a7d6"
+    },
+    {
+      "path": "target\\b3-a1-cleanup-20261027\\evidence-download\\system-unload-task.xml",
+      "bytes": 1221,
+      "sha256": "753caefff1b7a043ad3d862ee28e93cd1bf2d2717c117444df75b6e0e57ee9d3"
+    },
+    {
+      "path": "target\\b3-a1-cleanup-20261027\\ExactHiveCleanup.cs",
+      "bytes": 3241,
+      "sha256": "fe353006800464d413ed2e29195d7ebd8c4ca3ec921750740ba5b4400ff402da"
+    },
+    {
+      "path": "target\\b3-a1-cleanup-20261027\\final-check.ps1",
+      "bytes": 3846,
+      "sha256": "a1ef4e6f4fed9ede20bbb208cc844de86894c3a9af78c17208cfa5d4838cfc4b"
+    },
+    {
+      "path": "target\\b3-a1-cleanup-20261027\\final-state.json",
+      "bytes": 3235,
+      "sha256": "816274f9266e25d26cc89d0e2593492773f757515c6ace7633df2382c6abb60d"
+    },
+    {
+      "path": "target\\b3-a1-cleanup-20261027\\final-state.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "target\\b3-a1-cleanup-20261027\\holder-diagnosis.json",
+      "bytes": 2009,
+      "sha256": "8bf02f5b47adff59dbadb86ae9a3d32b5d215074bda42b3bdce36e3a584c55f8"
+    },
+    {
+      "path": "target\\b3-a1-cleanup-20261027\\holder-diagnosis.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "target\\b3-a1-cleanup-20261027\\invoke-delete-null.ps1",
+      "bytes": 2187,
+      "sha256": "320fe5a915a3b747c8186a1f948f1e6638f5bbd77f0e58c9e99285e4feba7c19"
+    },
+    {
+      "path": "target\\b3-a1-cleanup-20261027\\invoke-exact-cleanup.ps1",
+      "bytes": 2199,
+      "sha256": "d5b04f8af63720bb000d1885312165669716bce01bb097e9e7fa18255c7b8d58"
+    },
+    {
+      "path": "target\\b3-a1-cleanup-20261027\\owner-diagnosis.json",
+      "bytes": 7839,
+      "sha256": "7c9fcedd7f62addd247c26585e796207f53045fd6b7b5e89ef0c78741a62569e"
+    },
+    {
+      "path": "target\\b3-a1-cleanup-20261027\\owner-diagnosis.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "target\\b3-a1-cleanup-20261027\\preflight.json",
+      "bytes": 667,
+      "sha256": "c8314edb7c665ff4f951fb86ff1d009d80f147ed234b3c5850dae19f9204a2f4"
+    },
+    {
+      "path": "target\\b3-a1-cleanup-20261027\\preflight.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "target\\b3-a1-cleanup-20261027\\servy-copy-check.ps1",
+      "bytes": 2636,
+      "sha256": "224848c7ddb41b5c04eafbf454690b6ae76b8b6c248bb9a4f3efe11930f4d7d3"
+    },
+    {
+      "path": "target\\b3-a1-cleanup-20261027\\servy-copy.json",
+      "bytes": 793,
+      "sha256": "b1742f8a7fae2bc1a6b7fc3e718f8737366640bb2a3f0a01aae41f5340562998"
+    },
+    {
+      "path": "target\\b3-a1-cleanup-20261027\\servy-copy.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "target\\b3-a1-cleanup-20261027\\system-delete-null.json",
+      "bytes": 1071,
+      "sha256": "6bf4e1e7cce0925a9dc18ef581aff63d363ca1207eefcce4d56317f0344f175a"
+    },
+    {
+      "path": "target\\b3-a1-cleanup-20261027\\system-delete-null.ps1",
+      "bytes": 2444,
+      "sha256": "22bc39c9f25c61f48e63fa5bf58fe29a2151faf6be4f288a0cda38cb3eb2e342"
+    },
+    {
+      "path": "target\\b3-a1-cleanup-20261027\\system-delete-null.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "target\\b3-a1-cleanup-20261027\\system-exact-cleanup.json",
+      "bytes": 5989,
+      "sha256": "b9c2f6b1fe637e22b2d30404b297ca916e1cbfae6a1b5c56557cd1dbb0b90f2b"
+    },
+    {
+      "path": "target\\b3-a1-cleanup-20261027\\system-exact-cleanup.ps1",
+      "bytes": 3712,
+      "sha256": "b2c561f4f3cc4543d547bcbbd0576b534a03a6b562efcb1498724e7b1c35cde8"
+    },
+    {
+      "path": "target\\b3-a1-cleanup-20261027\\system-exact-cleanup.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "target\\b3-a1-cleanup-20261027\\system-run.json",
+      "bytes": 1133,
+      "sha256": "b2fdc9e2238f800d65da3cc3fef828fd41af7da5c2657b4d2c4a2ec49b1ee49f"
+    },
+    {
+      "path": "target\\b3-a1-cleanup-20261027\\system-run.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "target\\b3-a1-cleanup-20261027\\system-unload.json",
+      "bytes": 891,
+      "sha256": "e1be67f1239f838f8d067f5dac00c1c21fc534d2746a117b90c4840e1e18b46f"
+    },
+    {
+      "path": "target\\b3-a1-cleanup-20261027\\system-unload.ps1",
+      "bytes": 4448,
+      "sha256": "b1b9d75d700c9857314ffbffad1ffb102c97484882bb17a8059c50e0c3cd3f3a"
+    },
+    {
+      "path": "target\\b3-a1-cleanup-20261027\\system-unload.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "target\\b3-a1-cleanup-20261027\\system-wrapper.ps1",
+      "bytes": 1041,
+      "sha256": "772e08b2146ce7813b5b66e42f82c28187508b22e0764c11a48cc3de52e5d060"
+    }
+  ],
+  "references": [
+    "https://learn.microsoft.com/en-us/windows/win32/api/userenv/nf-userenv-deleteprofilew",
+    "https://github.com/winsiderss/phnt/blob/master/ntregapi.h"
+  ]
+}
