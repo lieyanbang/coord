@@ -143,3 +143,112 @@ Hosted run，不触发新的全量云端运行；本次提交仅归档证据。
 signed-first-failure.json、signed-credential-failure.json、signed.json、
 core-recovery.json、各阶段数据库摘要、final-windows.jsonl、final-summary.json、
 清理结果及原始 stderr；Arasaka 隔离目录保留副本和受保护服务导出。
+
+## B3-A1 追加 — 2026-10-27 00:37–00:56 UTC
+
+**B3-A1：PARTIAL；真实低权限 Runner 功能闭环 PASS，临时 profile 清理未闭环。**
+本轮唯一 ACTIVE 范围来自更新后的 TASK。源码、生产服务和生产凭据均未改动；
+没有重跑已通过的副本迁移、Core/Broker 解耦、签名/nonce/重启测试或完整 CI。
+原始失败记录、前面的 B3-A BLOCKED 和同实现 Hosted PASS 继续保留。
+
+### 两个启动值已经分层定位
+
+1. **`267011 / 0x41303` 是 Task 状态，不是 Runner 退出码。**
+   历史 Security record `261979`、`261980`（2026-10-26 21:47:19.968Z、
+   21:47:20.030Z）均为 event 4625、LogonType=4、Status=`0xC000015B`。
+   Task 在批处理登录阶段被拒绝，没有创建 Runner。
+   [Microsoft 的 4625 状态说明](https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4625)
+   与此相符。TaskScheduler/Operational 当时及本轮均未启用；没有打开全局审计，
+   不声称取得不存在的历史 Task Instance/进程创建事件。
+2. **`0xC0000142` 来自 Session 0 的继承桌面启动环境，发生在 Rust 之前。**
+   历史 4624 record `261939` 已证明交互式登录成功。本轮对同一 disposable SID、
+   同一原生 `cmd.exe → whoami.exe`、同一命令和创建标志做唯一变量为桌面的对照：
+   继承 SSH 桌面 PID 5216，00:46:06.026–06.416Z，退出 `0xC0000142`；
+   新建专属非交互 window station/desktop 后 PID 1496，06.424–06.602Z，退出 0。
+   仅对新建对象授予该 SID/Administrators/SYSTEM 权限，没有修改已有桌面 DACL。
+   这与 [CreateProcessWithLogonW 的桌面权限契约](https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-createprocesswithlogonw)
+   一致；不是候选 Runner 的 DLL 或 Rust 业务代码故障证据。
+
+### 最小隔离修复及真实 Runner 验收
+
+只对本轮新建账户 `coordA164a92cf1`，SID
+`S-1-5-21-3592388187-2353680085-815129118-1008`，临时添加一项
+`SeBatchLogonRight`。原授权列表仅为 `S-1-5-32-544/551/559`，拒绝列表为空；
+添加期间精确等于原列表加该新 SID。没有修改已有账户、GPO、安全模板或全局桌面。
+退出后按 [LSA 账户权限 API](https://learn.microsoft.com/en-us/windows/win32/secmgmt/managing-account-permissions)
+撤销该项，最终完整授权/拒绝列表均恢复一致。
+
+真实任务采用 Password / Limited，在独立目录 `C:\coord-b3a1-20261027-a`、
+端口 18777/18779、新空测试 DB 中运行；没有载入生产 DB 或正式 Batch。
+复用原 CI 匹配的三个 EXE，哈希仍为前文列出的值。Core 实际 PID 8648、SID
+S-1-5-19；Runner 日志报告本轮专用 SID、`privileged=false`。Core 可读隔离公钥，
+不能读私钥；标准 Runner 可加载匹配私钥，不能读 DB/独立管理凭据、不能写
+Registry/二进制/Windows 目录，管理 RPC 缺凭据及错误凭据均 401。
+
+| 新鲜目标机检查 | Task Instance / Native PID | Task / Native exit |
+| --- | --- | --- |
+| 原生 whoami | `9A0A4010-67BE-4C41-9947-A7A19140A44D` / 1212 | 0 / 0 |
+| Runner identity | `14AFB648-FD4B-4987-BBA5-AFEE82B1E0C4` / 1188 | 0 / 0 |
+| Runner ACL | `2A6D0690-0044-4E1C-B5EA-50251C2B64F8` / 8568 | 0 / 0 |
+| 实际签名连接 | `EFBD18B0-9ED0-4CF7-9CC1-1E06C602D587` / 2820 | 0 / 0 |
+| task 发布 | `F83A2D12-ADA9-4D38-B270-31EB5B8290B9` / 5224 | 0 / 0 |
+| batch index 发布 | `892F691B-8BCC-44ED-8AE3-5DB364735958` / 10036 | 0 / 0 |
+| 错误 fence 负例 | `B157AB2D-9B97-49C8-B63E-73E8A37F925B` / 3076 | 0 / 0 |
+| 完成后再次轮询 | `7502D3CA-7087-4ACB-887E-D2AE13F59A97` / 3100 | 0 / 0 |
+| 错误 Runner SID 负例 | `37A56346-2E45-4EFA-A786-D5D11638976A` / 2024 | 1 / 1（预期拒绝） |
+
+每项保留实际 wrapper/native PID、WindowsIdentity SID、UTC 开始/结束、分离
+stdout/stderr、真实 ExitCode 和任务结果；没有将 null 当 0。新 Security 记录中
+有本 SID 的 27 条 LogonType=4 成功登录，另有两条原生对照的 Type=2 成功登录；
+这些登录记录包含任务注册/凭据验证，不能把 27 条登录算作 27 次 Runner 执行。
+例如 identity 对应 records 262446/262449/262452，task 发布对应
+262473/262476/262479。Task COM 返回各次真实 Instance GUID。CIM 的 LastRunTime
+在不同请求中异常返回相同时间，原文保留但不用于运行时间结论；时间依据各次请求、
+wrapper 记录及 Security 事件。没有补造未开启审计的 4688/TaskScheduler 事件。
+
+独立空 DB 中的一项合成任务触发两条 Action；两条均 succeeded、attempt=1、
+exit=0，生成 00.json、receipt、index 和 review_queue 四项隔离产物。后续轮询
+未重放；由**相同低权限任务身份**发送的签名错误 fence 请求，authorize 返回
+200/null，finish 返回 409，终态及 attempt 保持。这里没有用管理员签名器替代
+Runner。nonce/重启负例复用相同实现的上一轮目标机证据，没有重跑。
+
+### 清理阻塞与停止线
+
+功能检查全部完成，但原生对照工具使用了 `LOGON_WITH_PROFILE`，本轮新增 profile
+`C:\Users\coordA164a92cf1` 仍显示 Loaded=true，HKU 对应 SID 和 Classes hive
+仍挂载。这属于**本轮隔离夹具的清理未闭环**，不能将 B3-A1 标为 PASS。
+00:56:04Z 的最新核验：账户、任务、18777/18779 监听均为 0；该账户无存活进程，
+全部临时私钥/公钥/管理密钥已删除，测试目录逐项恢复 Administrators/SYSTEM only。
+
+已经尝试的有区别清理路径原文均保留：普通管理员 `reg unload` 为 Access denied；
+仅在当前清理进程临时启用已持有的 Backup/Restore privilege 后，原生卸载两个
+精确临时 hive 仍均返回 Win32 5，进程权限随后恢复；
+[DeleteProfileW](https://learn.microsoft.com/en-us/windows/win32/api/userenv/nf-userenv-deleteprofilew)
+对精确本轮 SID/path 返回 Win32 87。没有强制卸载、删除 ProfileList 伪造成功、
+重启 User Profile Service/Task Scheduler、操作其他 profile 或切换 SYSTEM 执行。
+
+TASK 的停止线明确要求需要 SYSTEM/全局政策等处理时另行授权，因此停止进一步
+主机修改。已准备但**未注册、未执行**的一次性 SYSTEM 清理候选：
+`target/b3-a1-runner-20261027/system-cleanup-candidate.ps1`；远端同名文件在测试根目录。
+它固定校验本轮 SID/path、无账户/活动进程，仅尝试标准 profile 删除 API 并记录结果；
+没有强制卸载、服务重启、全局策略或生产操作。若获独立批准，仍失败则继续保留
+PARTIAL，不扩大范围。该授权不包含 B3-B。
+
+### B3-B 剩余准入与证据
+
+- 本轮临时 profile 清理需闭环；B3-A1 目前 **PARTIAL**，真实低权限 Runner
+  启动/签名/隔离 Action/退出部分 **PASS**，未回退为“Runner 源码不明崩溃”。
+- Servy 完整配置副本恢复、实际已用重启预算、旧 publisher pin 与候选部署的
+  对齐方案仍未验收；因本轮清理停止线没有继续创建新服务/身份来扩大试验。
+- 生产新鲜一致备份、准确服务参数/ACL/生产专用密钥、实际服务 Runner 和 SYSTEM
+  两次成功仍须在独立获批的 B3-B 完成；没有恢复生产、B4 或正式 Phase H。
+- 最终只读生产 DB 审计与前轮受保护基线逐值一致；正式 Batch 105 completed /
+  16 pending，历史 Action 38 failed / 83 succeeded。生产 Core/Runner 仍 Stopped，
+  Servy/Relay PID 和身份不变；没有监听 7777/7779，没有读取/哈希旧 Broker key。
+
+新结构化摘要见 [PHASE_R5_B3_A1_EVIDENCE_20261027.json](PHASE_R5_B3_A1_EVIDENCE_20261027.json)。
+原始历史与新事件、九项任务 XML、PID/身份/退出记录、流日志、合成输出及清理失败
+在 `target/b3-a1-runner-20261027/`；远端副本仍限 Administrators/SYSTEM。
+本轮没有产品源码或正式脚本修改，复用 `stage-r5-b3-a-checks.json` 的本地构建门槛
+及 Fork run 40377126693，不触发新的无代码变化全量 CI；本轮新增验证均为上述
+最小目标机启动、登录、任务及隔离动作测试。TASK/PLAN 和既有 Git 成果保持。

@@ -1,0 +1,1114 @@
+{
+  "state": "PARTIAL",
+  "runner_runtime_gate": "PASS",
+  "profile_cleanup_gate": "PARTIAL",
+  "production_b3_b": "NOT_AUTHORIZED_NOT_RUN",
+  "source_commit": "ea9783268e33e546572fe346335056e28bc4d435",
+  "baseline_head": "901c5240019e578cbfad616bfee2c11f1996ab94",
+  "branch": "codex/b3-a1-runner-20261027",
+  "product_source_changed": false,
+  "historical_events": {
+    "observed_at_utc": "2026-10-27T00:37:24.8492433Z",
+    "query_start_utc": "2026-10-26T21:44:00Z",
+    "query_end_utc": "2026-10-26T21:50:00Z",
+    "logs": [
+      {
+        "name": "Microsoft-Windows-TaskScheduler/Operational",
+        "events": [],
+        "enabled": false,
+        "record_count": null,
+        "scanned": 0,
+        "limit_reached": false
+      },
+      {
+        "name": "Security",
+        "events": [
+          {
+            "provider": "Microsoft-Windows-Security-Auditing",
+            "utc": "2026-10-26T21:47:20.0305229Z",
+            "data": {
+              "ProcessId": "0x6a4",
+              "TargetUserName": "coordB38c89421e",
+              "TargetUserSid": "S-1-0-0",
+              "LogonType": "4",
+              "Status": "0xc000015b",
+              "SubStatus": "0x0",
+              "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+            },
+            "id": 4625,
+            "record_id": 261980
+          },
+          {
+            "provider": "Microsoft-Windows-Security-Auditing",
+            "utc": "2026-10-26T21:47:19.9684118Z",
+            "data": {
+              "ProcessId": "0x6a4",
+              "TargetUserName": "coordB38c89421e",
+              "TargetUserSid": "S-1-0-0",
+              "LogonType": "4",
+              "Status": "0xc000015b",
+              "SubStatus": "0x0",
+              "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+            },
+            "id": 4625,
+            "record_id": 261979
+          },
+          {
+            "provider": "Microsoft-Windows-Security-Auditing",
+            "utc": "2026-10-26T21:46:30.3621243Z",
+            "data": {
+              "ProcessId": "0x6a4",
+              "TargetUserName": "coordB3910a43d6",
+              "TargetUserSid": "S-1-5-21-3592388187-2353680085-815129118-1006",
+              "LogonType": "2",
+              "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+            },
+            "id": 4624,
+            "record_id": 261939
+          },
+          {
+            "provider": "Microsoft-Windows-Security-Auditing",
+            "utc": "2026-10-26T21:45:49.6392418Z",
+            "data": {
+              "ProcessId": "0x6a4",
+              "TargetUserName": "coordB357c23ff6",
+              "TargetUserSid": "S-1-5-21-3592388187-2353680085-815129118-1005",
+              "LogonType": "2",
+              "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+            },
+            "id": 4624,
+            "record_id": 261881
+          }
+        ],
+        "enabled": true,
+        "record_count": 31586,
+        "scanned": 40,
+        "limit_reached": false
+      },
+      {
+        "name": "Application",
+        "events": [],
+        "enabled": true,
+        "record_count": 42130,
+        "scanned": 0,
+        "limit_reached": false
+      },
+      {
+        "name": "System",
+        "events": [],
+        "enabled": true,
+        "record_count": 9703,
+        "scanned": 0,
+        "limit_reached": false
+      }
+    ],
+    "services": [
+      {
+        "Name": "coord",
+        "State": "Stopped",
+        "StartName": "NT AUTHORITY\\LocalService",
+        "ProcessId": 0
+      },
+      {
+        "Name": "Servy",
+        "State": "Running",
+        "StartName": "LocalSystem",
+        "ProcessId": 3224
+      },
+      {
+        "Name": "CoordRelayAgent",
+        "State": "Running",
+        "StartName": "NT AUTHORITY\\LocalService",
+        "ProcessId": 5892
+      },
+      {
+        "Name": "CoordActionRunnerG7",
+        "State": "Stopped",
+        "StartName": ".\\coord_action_g7",
+        "ProcessId": 0
+      }
+    ],
+    "production_listeners": [],
+    "session_id": 0,
+    "policy": [
+      {
+        "Scope": 4,
+        "ExecutionPolicy": 5
+      },
+      {
+        "Scope": 3,
+        "ExecutionPolicy": 5
+      },
+      {
+        "Scope": 0,
+        "ExecutionPolicy": 5
+      },
+      {
+        "Scope": 1,
+        "ExecutionPolicy": 1
+      },
+      {
+        "Scope": 2,
+        "ExecutionPolicy": 5
+      }
+    ]
+  },
+  "new_events": {
+    "observed_at_utc": "2026-10-27T00:53:53.0403445Z",
+    "query_start_utc": "2026-10-27T00:46:00Z",
+    "query_end_utc": "2026-10-27T00:47:00Z",
+    "logs": [
+      {
+        "name": "Microsoft-Windows-TaskScheduler/Operational",
+        "events": [],
+        "enabled": false,
+        "record_count": null,
+        "scanned": 0,
+        "limit_reached": false
+      },
+      {
+        "name": "Security",
+        "events": [
+          {
+            "provider": "Microsoft-Windows-Security-Auditing",
+            "utc": "2026-10-27T00:46:48.0106346Z",
+            "data": {
+              "ProcessId": "0x6a4",
+              "TargetUserName": "coordA164a92cf1",
+              "TargetUserSid": "S-1-5-21-3592388187-2353680085-815129118-1008",
+              "LogonType": "4",
+              "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+            },
+            "id": 4624,
+            "record_id": 262515
+          },
+          {
+            "provider": "Microsoft-Windows-Security-Auditing",
+            "utc": "2026-10-27T00:46:47.9970977Z",
+            "data": {
+              "ProcessId": "0x6a4",
+              "TargetUserName": "coordA164a92cf1",
+              "TargetUserSid": "S-1-5-21-3592388187-2353680085-815129118-1008",
+              "LogonType": "4",
+              "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+            },
+            "id": 4624,
+            "record_id": 262512
+          },
+          {
+            "provider": "Microsoft-Windows-Security-Auditing",
+            "utc": "2026-10-27T00:46:47.9405868Z",
+            "data": {
+              "ProcessId": "0x6a4",
+              "TargetUserName": "coordA164a92cf1",
+              "TargetUserSid": "S-1-5-21-3592388187-2353680085-815129118-1008",
+              "LogonType": "4",
+              "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+            },
+            "id": 4624,
+            "record_id": 262509
+          },
+          {
+            "provider": "Microsoft-Windows-Security-Auditing",
+            "utc": "2026-10-27T00:46:43.6378802Z",
+            "data": {
+              "ProcessId": "0x6a4",
+              "TargetUserName": "coordA164a92cf1",
+              "TargetUserSid": "S-1-5-21-3592388187-2353680085-815129118-1008",
+              "LogonType": "4",
+              "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+            },
+            "id": 4624,
+            "record_id": 262506
+          },
+          {
+            "provider": "Microsoft-Windows-Security-Auditing",
+            "utc": "2026-10-27T00:46:43.6243773Z",
+            "data": {
+              "ProcessId": "0x6a4",
+              "TargetUserName": "coordA164a92cf1",
+              "TargetUserSid": "S-1-5-21-3592388187-2353680085-815129118-1008",
+              "LogonType": "4",
+              "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+            },
+            "id": 4624,
+            "record_id": 262503
+          },
+          {
+            "provider": "Microsoft-Windows-Security-Auditing",
+            "utc": "2026-10-27T00:46:43.5595214Z",
+            "data": {
+              "ProcessId": "0x6a4",
+              "TargetUserName": "coordA164a92cf1",
+              "TargetUserSid": "S-1-5-21-3592388187-2353680085-815129118-1008",
+              "LogonType": "4",
+              "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+            },
+            "id": 4624,
+            "record_id": 262500
+          },
+          {
+            "provider": "Microsoft-Windows-Security-Auditing",
+            "utc": "2026-10-27T00:46:39.2425502Z",
+            "data": {
+              "ProcessId": "0x6a4",
+              "TargetUserName": "coordA164a92cf1",
+              "TargetUserSid": "S-1-5-21-3592388187-2353680085-815129118-1008",
+              "LogonType": "4",
+              "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+            },
+            "id": 4624,
+            "record_id": 262497
+          },
+          {
+            "provider": "Microsoft-Windows-Security-Auditing",
+            "utc": "2026-10-27T00:46:39.2294964Z",
+            "data": {
+              "ProcessId": "0x6a4",
+              "TargetUserName": "coordA164a92cf1",
+              "TargetUserSid": "S-1-5-21-3592388187-2353680085-815129118-1008",
+              "LogonType": "4",
+              "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+            },
+            "id": 4624,
+            "record_id": 262494
+          },
+          {
+            "provider": "Microsoft-Windows-Security-Auditing",
+            "utc": "2026-10-27T00:46:39.1766822Z",
+            "data": {
+              "ProcessId": "0x6a4",
+              "TargetUserName": "coordA164a92cf1",
+              "TargetUserSid": "S-1-5-21-3592388187-2353680085-815129118-1008",
+              "LogonType": "4",
+              "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+            },
+            "id": 4624,
+            "record_id": 262491
+          },
+          {
+            "provider": "Microsoft-Windows-Security-Auditing",
+            "utc": "2026-10-27T00:46:34.8090125Z",
+            "data": {
+              "ProcessId": "0x6a4",
+              "TargetUserName": "coordA164a92cf1",
+              "TargetUserSid": "S-1-5-21-3592388187-2353680085-815129118-1008",
+              "LogonType": "4",
+              "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+            },
+            "id": 4624,
+            "record_id": 262488
+          },
+          {
+            "provider": "Microsoft-Windows-Security-Auditing",
+            "utc": "2026-10-27T00:46:34.7959587Z",
+            "data": {
+              "ProcessId": "0x6a4",
+              "TargetUserName": "coordA164a92cf1",
+              "TargetUserSid": "S-1-5-21-3592388187-2353680085-815129118-1008",
+              "LogonType": "4",
+              "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+            },
+            "id": 4624,
+            "record_id": 262485
+          },
+          {
+            "provider": "Microsoft-Windows-Security-Auditing",
+            "utc": "2026-10-27T00:46:34.7426307Z",
+            "data": {
+              "ProcessId": "0x6a4",
+              "TargetUserName": "coordA164a92cf1",
+              "TargetUserSid": "S-1-5-21-3592388187-2353680085-815129118-1008",
+              "LogonType": "4",
+              "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+            },
+            "id": 4624,
+            "record_id": 262482
+          },
+          {
+            "provider": "Microsoft-Windows-Security-Auditing",
+            "utc": "2026-10-27T00:46:30.1907964Z",
+            "data": {
+              "ProcessId": "0x6a4",
+              "TargetUserName": "coordA164a92cf1",
+              "TargetUserSid": "S-1-5-21-3592388187-2353680085-815129118-1008",
+              "LogonType": "4",
+              "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+            },
+            "id": 4624,
+            "record_id": 262479
+          },
+          {
+            "provider": "Microsoft-Windows-Security-Auditing",
+            "utc": "2026-10-27T00:46:30.177552Z",
+            "data": {
+              "ProcessId": "0x6a4",
+              "TargetUserName": "coordA164a92cf1",
+              "TargetUserSid": "S-1-5-21-3592388187-2353680085-815129118-1008",
+              "LogonType": "4",
+              "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+            },
+            "id": 4624,
+            "record_id": 262476
+          },
+          {
+            "provider": "Microsoft-Windows-Security-Auditing",
+            "utc": "2026-10-27T00:46:30.127011Z",
+            "data": {
+              "ProcessId": "0x6a4",
+              "TargetUserName": "coordA164a92cf1",
+              "TargetUserSid": "S-1-5-21-3592388187-2353680085-815129118-1008",
+              "LogonType": "4",
+              "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+            },
+            "id": 4624,
+            "record_id": 262473
+          },
+          {
+            "provider": "Microsoft-Windows-Security-Auditing",
+            "utc": "2026-10-27T00:46:25.4561049Z",
+            "data": {
+              "ProcessId": "0x6a4",
+              "TargetUserName": "coordA164a92cf1",
+              "TargetUserSid": "S-1-5-21-3592388187-2353680085-815129118-1008",
+              "LogonType": "4",
+              "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+            },
+            "id": 4624,
+            "record_id": 262470
+          },
+          {
+            "provider": "Microsoft-Windows-Security-Auditing",
+            "utc": "2026-10-27T00:46:25.4430875Z",
+            "data": {
+              "ProcessId": "0x6a4",
+              "TargetUserName": "coordA164a92cf1",
+              "TargetUserSid": "S-1-5-21-3592388187-2353680085-815129118-1008",
+              "LogonType": "4",
+              "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+            },
+            "id": 4624,
+            "record_id": 262467
+          },
+          {
+            "provider": "Microsoft-Windows-Security-Auditing",
+            "utc": "2026-10-27T00:46:25.3883332Z",
+            "data": {
+              "ProcessId": "0x6a4",
+              "TargetUserName": "coordA164a92cf1",
+              "TargetUserSid": "S-1-5-21-3592388187-2353680085-815129118-1008",
+              "LogonType": "4",
+              "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+            },
+            "id": 4624,
+            "record_id": 262464
+          },
+          {
+            "provider": "Microsoft-Windows-Security-Auditing",
+            "utc": "2026-10-27T00:46:20.8155829Z",
+            "data": {
+              "ProcessId": "0x6a4",
+              "TargetUserName": "coordA164a92cf1",
+              "TargetUserSid": "S-1-5-21-3592388187-2353680085-815129118-1008",
+              "LogonType": "4",
+              "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+            },
+            "id": 4624,
+            "record_id": 262461
+          },
+          {
+            "provider": "Microsoft-Windows-Security-Auditing",
+            "utc": "2026-10-27T00:46:20.8021316Z",
+            "data": {
+              "ProcessId": "0x6a4",
+              "TargetUserName": "coordA164a92cf1",
+              "TargetUserSid": "S-1-5-21-3592388187-2353680085-815129118-1008",
+              "LogonType": "4",
+              "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+            },
+            "id": 4624,
+            "record_id": 262458
+          },
+          {
+            "provider": "Microsoft-Windows-Security-Auditing",
+            "utc": "2026-10-27T00:46:20.746463Z",
+            "data": {
+              "ProcessId": "0x6a4",
+              "TargetUserName": "coordA164a92cf1",
+              "TargetUserSid": "S-1-5-21-3592388187-2353680085-815129118-1008",
+              "LogonType": "4",
+              "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+            },
+            "id": 4624,
+            "record_id": 262455
+          },
+          {
+            "provider": "Microsoft-Windows-Security-Auditing",
+            "utc": "2026-10-27T00:46:13.6006892Z",
+            "data": {
+              "ProcessId": "0x6a4",
+              "TargetUserName": "coordA164a92cf1",
+              "TargetUserSid": "S-1-5-21-3592388187-2353680085-815129118-1008",
+              "LogonType": "4",
+              "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+            },
+            "id": 4624,
+            "record_id": 262452
+          },
+          {
+            "provider": "Microsoft-Windows-Security-Auditing",
+            "utc": "2026-10-27T00:46:13.5876816Z",
+            "data": {
+              "ProcessId": "0x6a4",
+              "TargetUserName": "coordA164a92cf1",
+              "TargetUserSid": "S-1-5-21-3592388187-2353680085-815129118-1008",
+              "LogonType": "4",
+              "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+            },
+            "id": 4624,
+            "record_id": 262449
+          },
+          {
+            "provider": "Microsoft-Windows-Security-Auditing",
+            "utc": "2026-10-27T00:46:13.5320557Z",
+            "data": {
+              "ProcessId": "0x6a4",
+              "TargetUserName": "coordA164a92cf1",
+              "TargetUserSid": "S-1-5-21-3592388187-2353680085-815129118-1008",
+              "LogonType": "4",
+              "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+            },
+            "id": 4624,
+            "record_id": 262446
+          },
+          {
+            "provider": "Microsoft-Windows-Security-Auditing",
+            "utc": "2026-10-27T00:46:08.1783966Z",
+            "data": {
+              "ProcessId": "0x6a4",
+              "TargetUserName": "coordA164a92cf1",
+              "TargetUserSid": "S-1-5-21-3592388187-2353680085-815129118-1008",
+              "LogonType": "4",
+              "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+            },
+            "id": 4624,
+            "record_id": 262442
+          },
+          {
+            "provider": "Microsoft-Windows-Security-Auditing",
+            "utc": "2026-10-27T00:46:08.165443Z",
+            "data": {
+              "ProcessId": "0x6a4",
+              "TargetUserName": "coordA164a92cf1",
+              "TargetUserSid": "S-1-5-21-3592388187-2353680085-815129118-1008",
+              "LogonType": "4",
+              "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+            },
+            "id": 4624,
+            "record_id": 262439
+          },
+          {
+            "provider": "Microsoft-Windows-Security-Auditing",
+            "utc": "2026-10-27T00:46:08.0404593Z",
+            "data": {
+              "ProcessId": "0x6a4",
+              "TargetUserName": "coordA164a92cf1",
+              "TargetUserSid": "S-1-5-21-3592388187-2353680085-815129118-1008",
+              "LogonType": "4",
+              "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+            },
+            "id": 4624,
+            "record_id": 262436
+          },
+          {
+            "provider": "Microsoft-Windows-Security-Auditing",
+            "utc": "2026-10-27T00:46:06.5019149Z",
+            "data": {
+              "ProcessId": "0x6a4",
+              "TargetUserName": "coordA164a92cf1",
+              "TargetUserSid": "S-1-5-21-3592388187-2353680085-815129118-1008",
+              "LogonType": "2",
+              "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+            },
+            "id": 4624,
+            "record_id": 262431
+          },
+          {
+            "provider": "Microsoft-Windows-Security-Auditing",
+            "utc": "2026-10-27T00:46:06.0364293Z",
+            "data": {
+              "ProcessId": "0x6a4",
+              "TargetUserName": "coordA164a92cf1",
+              "TargetUserSid": "S-1-5-21-3592388187-2353680085-815129118-1008",
+              "LogonType": "2",
+              "ProcessName": "C:\\Windows\\System32\\svchost.exe"
+            },
+            "id": 4624,
+            "record_id": 262427
+          }
+        ],
+        "enabled": true,
+        "record_count": 31563,
+        "scanned": 32,
+        "limit_reached": false
+      },
+      {
+        "name": "Application",
+        "events": [],
+        "enabled": true,
+        "record_count": 42241,
+        "scanned": 0,
+        "limit_reached": false
+      },
+      {
+        "name": "System",
+        "events": [],
+        "enabled": true,
+        "record_count": 9704,
+        "scanned": 0,
+        "limit_reached": false
+      }
+    ],
+    "services": [
+      {
+        "Name": "coord",
+        "State": "Running",
+        "StartName": "NT AUTHORITY\\LocalService",
+        "ProcessId": 9844
+      },
+      {
+        "Name": "Servy",
+        "State": "Running",
+        "StartName": "LocalSystem",
+        "ProcessId": 3224
+      },
+      {
+        "Name": "CoordRelayAgent",
+        "State": "Running",
+        "StartName": "NT AUTHORITY\\LocalService",
+        "ProcessId": 5892
+      },
+      {
+        "Name": "CoordActionRunnerG7",
+        "State": "Stopped",
+        "StartName": ".\\coord_action_g7",
+        "ProcessId": 0
+      }
+    ],
+    "production_listeners": [],
+    "session_id": 0,
+    "policy": [
+      {
+        "Scope": 4,
+        "ExecutionPolicy": 5
+      },
+      {
+        "Scope": 3,
+        "ExecutionPolicy": 5
+      },
+      {
+        "Scope": 0,
+        "ExecutionPolicy": 5
+      },
+      {
+        "Scope": 1,
+        "ExecutionPolicy": 1
+      },
+      {
+        "Scope": 2,
+        "ExecutionPolicy": 5
+      }
+    ]
+  },
+  "runtime_raw": {
+    "state": "PARTIAL_CLEANUP_FAILED",
+    "phase": "completed",
+    "started_at_utc": "2026-10-27T00:46:02.1414121Z",
+    "source_commit": "ea9783268e33e546572fe346335056e28bc4d435",
+    "checks": [
+      {
+        "name": "native-task",
+        "request_utc": "2026-10-27T00:46:08.1442304Z",
+        "instance_id": "{9A0A4010-67BE-4C41-9947-A7A19140A44D}",
+        "task_last_run_utc": "2026-10-27T00:46:46Z",
+        "task_last_result": 0,
+        "native": {
+          "session_id": 0,
+          "wrapper_pid": 4596,
+          "sid": "S-1-5-21-3592388187-2353680085-815129118-1008",
+          "exit_code": 0,
+          "started_at_utc": "2026-10-27T00:46:08.73358Z",
+          "ended_at_utc": "2026-10-27T00:46:09.107277Z",
+          "pid": 1212
+        },
+        "stderr_bytes": 0
+      },
+      {
+        "name": "runner-identity",
+        "request_utc": "2026-10-27T00:46:13.5745976Z",
+        "instance_id": "{14AFB648-FD4B-4987-BBA5-AFEE82B1E0C4}",
+        "task_last_run_utc": "2026-10-27T00:46:46Z",
+        "task_last_result": 0,
+        "native": {
+          "exit_code": 0,
+          "ended_at_utc": "2026-10-27T00:46:14.6158623Z",
+          "session_id": 0,
+          "sid": "S-1-5-21-3592388187-2353680085-815129118-1008",
+          "pid": 1188,
+          "started_at_utc": "2026-10-27T00:46:14.2304579Z",
+          "wrapper_pid": 8048
+        },
+        "stderr_bytes": 75
+      },
+      {
+        "name": "runner-acl",
+        "request_utc": "2026-10-27T00:46:20.7886217Z",
+        "instance_id": "{2A6D0690-0044-4E1C-B5EA-50251C2B64F8}",
+        "task_last_run_utc": "2026-10-27T00:46:46Z",
+        "task_last_result": 0,
+        "native": {
+          "session_id": 0,
+          "sid": "S-1-5-21-3592388187-2353680085-815129118-1008",
+          "pid": 8568,
+          "started_at_utc": "2026-10-27T00:46:21.2978322Z",
+          "ended_at_utc": "2026-10-27T00:46:21.6263071Z",
+          "wrapper_pid": 9440,
+          "exit_code": 0
+        },
+        "stderr_bytes": 253
+      },
+      {
+        "name": "runner-connect",
+        "request_utc": "2026-10-27T00:46:25.4298065Z",
+        "instance_id": "{EFBD18B0-9ED0-4CF7-9CC1-1E06C602D587}",
+        "task_last_run_utc": "2026-10-27T00:46:46Z",
+        "task_last_result": 0,
+        "native": {
+          "session_id": 0,
+          "wrapper_pid": 2096,
+          "pid": 2820,
+          "exit_code": 0,
+          "ended_at_utc": "2026-10-27T00:46:26.2620022Z",
+          "sid": "S-1-5-21-3592388187-2353680085-815129118-1008",
+          "started_at_utc": "2026-10-27T00:46:25.9103984Z"
+        },
+        "stderr_bytes": 75
+      },
+      {
+        "name": "publish-task",
+        "request_utc": "2026-10-27T00:46:30.1641648Z",
+        "instance_id": "{F83A2D12-ADA9-4D38-B270-31EB5B8290B9}",
+        "task_last_run_utc": "2026-10-27T00:46:46Z",
+        "task_last_result": 0,
+        "native": {
+          "session_id": 0,
+          "exit_code": 0,
+          "ended_at_utc": "2026-10-27T00:46:31.1280331Z",
+          "pid": 5224,
+          "started_at_utc": "2026-10-27T00:46:30.7320399Z",
+          "wrapper_pid": 944,
+          "sid": "S-1-5-21-3592388187-2353680085-815129118-1008"
+        },
+        "stderr_bytes": 142
+      },
+      {
+        "name": "publish-index",
+        "request_utc": "2026-10-27T00:46:34.782608Z",
+        "instance_id": "{892F691B-8BCC-44ED-8AE3-5DB364735958}",
+        "task_last_run_utc": "2026-10-27T00:46:46Z",
+        "task_last_result": 0,
+        "native": {
+          "session_id": 0,
+          "sid": "S-1-5-21-3592388187-2353680085-815129118-1008",
+          "pid": 10036,
+          "exit_code": 0,
+          "wrapper_pid": 2512,
+          "started_at_utc": "2026-10-27T00:46:35.4434997Z",
+          "ended_at_utc": "2026-10-27T00:46:35.8295626Z"
+        },
+        "stderr_bytes": 142
+      },
+      {
+        "name": "fence-negative",
+        "request_utc": "2026-10-27T00:46:39.2162633Z",
+        "instance_id": "{B157AB2D-9B97-49C8-B63E-73E8A37F925B}",
+        "task_last_run_utc": "2026-10-27T00:46:46Z",
+        "task_last_result": 0,
+        "native": {
+          "pid": 3076,
+          "ended_at_utc": "2026-10-27T00:46:40.0689178Z",
+          "session_id": 0,
+          "sid": "S-1-5-21-3592388187-2353680085-815129118-1008",
+          "wrapper_pid": 1472,
+          "exit_code": 0,
+          "started_at_utc": "2026-10-27T00:46:39.6920248Z"
+        },
+        "stderr_bytes": 0
+      },
+      {
+        "name": "empty-after-completion",
+        "request_utc": "2026-10-27T00:46:43.6106093Z",
+        "instance_id": "{7502D3CA-7087-4ACB-887E-D2AE13F59A97}",
+        "task_last_run_utc": "2026-10-27T00:46:46Z",
+        "task_last_result": 0,
+        "native": {
+          "session_id": 0,
+          "started_at_utc": "2026-10-27T00:46:44.1405213Z",
+          "wrapper_pid": 7244,
+          "sid": "S-1-5-21-3592388187-2353680085-815129118-1008",
+          "exit_code": 0,
+          "pid": 3100,
+          "ended_at_utc": "2026-10-27T00:46:44.4224737Z"
+        },
+        "stderr_bytes": 75
+      },
+      {
+        "name": "wrong-identity",
+        "request_utc": "2026-10-27T00:46:47.9830169Z",
+        "instance_id": "{37A56346-2E45-4EFA-A786-D5D11638976A}",
+        "task_last_run_utc": "2026-10-27T00:46:46Z",
+        "task_last_result": 1,
+        "native": {
+          "wrapper_pid": 8412,
+          "pid": 2024,
+          "exit_code": 1,
+          "started_at_utc": "2026-10-27T00:46:48.4515767Z",
+          "sid": "S-1-5-21-3592388187-2353680085-815129118-1008",
+          "session_id": 0,
+          "ended_at_utc": "2026-10-27T00:46:48.7673552Z"
+        },
+        "stderr_bytes": 79
+      }
+    ],
+    "production_changes": false,
+    "runner_user": "coordA164a92cf1",
+    "runner_sid": "S-1-5-21-3592388187-2353680085-815129118-1008",
+    "session_id": 0,
+    "inherited_desktop": {
+      "StartUtc": "2026-10-27T00:46:06.0263211Z",
+      "EndUtc": "2026-10-27T00:46:06.4161498Z",
+      "Desktop": "inherited",
+      "ExitHex": "0xC0000142",
+      "Pid": 5216,
+      "Tid": 4124,
+      "ExitCode": -1073741502
+    },
+    "private_desktop": {
+      "StartUtc": "2026-10-27T00:46:06.4249441Z",
+      "EndUtc": "2026-10-27T00:46:06.6020524Z",
+      "Desktop": "private",
+      "ExitHex": "0x00000000",
+      "Pid": 1496,
+      "Tid": 1752,
+      "ExitCode": 0
+    },
+    "batch_right": {
+      "before": [
+        "S-1-5-32-544",
+        "S-1-5-32-551",
+        "S-1-5-32-559"
+      ],
+      "new_sid_rights": [
+        "SeBatchLogonRight"
+      ],
+      "during": [
+        "S-1-5-21-3592388187-2353680085-815129118-1008",
+        "S-1-5-32-544",
+        "S-1-5-32-551",
+        "S-1-5-32-559"
+      ],
+      "deny_unchanged": true
+    },
+    "runner_identity": {
+      "sid": "S-1-5-21-3592388187-2353680085-815129118-1008",
+      "privileged": false
+    },
+    "core_boundary": {
+      "sid": "S-1-5-19",
+      "utc": "2026-10-27T00:46:18.7114649Z",
+      "private_read": false,
+      "public_read": true,
+      "wrapper_pid": 1616
+    },
+    "core_process": {
+      "pid": 8648,
+      "sid": "S-1-5-19"
+    },
+    "signed_health": {
+      "checked_at_unix_ms": 1793061989192,
+      "status": "READY",
+      "core": {
+        "status": "READY",
+        "reason": null
+      },
+      "database": {
+        "status": "READY",
+        "reason": null
+      },
+      "broker": {
+        "status": "READY",
+        "reason": null
+      },
+      "runner": {
+        "status": "READY",
+        "reason": null
+      },
+      "runner_last_seen_unix_ms": 1793061986249
+    },
+    "actions": {
+      "actions": [
+        {
+          "action_kind": "on_task_completed",
+          "attempt_count": 1,
+          "available_at": null,
+          "event_id": "919433b3-fdd5-4d70-8274-0872732e3ea1",
+          "exit_code": 0,
+          "id": "015d5920-771e-4d9a-bbee-d004bc27e63f",
+          "last_error": null,
+          "max_attempts": 2,
+          "output_bytes": 0,
+          "profile_id": "emote",
+          "profile_version": 1,
+          "state": "succeeded",
+          "task_id": "c2603e40-c795-4dcb-a6bf-ff03297e173e"
+        },
+        {
+          "action_kind": "on_batch_completed",
+          "attempt_count": 1,
+          "available_at": null,
+          "event_id": "aefc84df-0fe5-47b5-9250-8684d2c6c9b4",
+          "exit_code": 0,
+          "id": "7a5226e8-7586-4be6-9919-e6d65ba89ada",
+          "last_error": null,
+          "max_attempts": 2,
+          "output_bytes": 0,
+          "profile_id": "emote",
+          "profile_version": 1,
+          "state": "succeeded",
+          "task_id": null
+        }
+      ],
+      "batch_id": "e7f8a90e-acb3-4afb-a966-da8c571f8a74",
+      "truncated": false
+    },
+    "fixture_task_id": "c2603e40-c795-4dcb-a6bf-ff03297e173e",
+    "fixture_task_state": "completed",
+    "outputs": [
+      {
+        "relative_path": "business\\results\\00.json",
+        "sha256": "3cd313892ae993678747694ed4820557a3515bdc27a7d12d38f6dac3856e39f8",
+        "bytes": 410
+      },
+      {
+        "relative_path": "business\\results\\.receipts\\00.json",
+        "sha256": "247e6015ad4076f6d4dc1b5ab8ba5797935cc03d454aa466201aebeed446bb2f",
+        "bytes": 241
+      },
+      {
+        "relative_path": "business\\results\\index.json",
+        "sha256": "58a5934d06ae2f59874eae71966b2dc161f3458fa62804fc854ebe93dd8e823a",
+        "bytes": 349
+      },
+      {
+        "relative_path": "business\\results\\review_queue\\candidates.json",
+        "sha256": "637ab54127880ce1b6d190be10620d241b002f2222320920c3f445a0bd5cea07",
+        "bytes": 178
+      }
+    ],
+    "fence_negative": {
+      "authorize": {
+        "status": 200,
+        "body": "null"
+      },
+      "finish": {
+        "status": 409,
+        "body": ""
+      },
+      "state": "PASS"
+    },
+    "nonce_evidence": "Reused same-candidate target-host B3-A nonce/restart negatives; not rerun",
+    "cleanup": {
+      "state": "FAIL",
+      "batch_holders_after": [
+        "S-1-5-32-544",
+        "S-1-5-32-551",
+        "S-1-5-32-559"
+      ],
+      "deny_holders_after": [],
+      "error": "Disposable profile still loaded or unexpected path"
+    },
+    "ended_at_utc": "2026-10-27T00:46:53.9305803Z"
+  },
+  "cleanup_attempt": {
+    "state": "FAIL",
+    "observed_at_utc": "2026-10-27T00:50:33.9287972Z",
+    "ephemeral_keys_absent": true,
+    "unload_win32": [
+      5,
+      5
+    ],
+    "profile_remaining": [
+      {
+        "SID": "S-1-5-21-3592388187-2353680085-815129118-1008",
+        "Loaded": true,
+        "LocalPath": "C:\\Users\\coordA164a92cf1"
+      }
+    ],
+    "account_count": 0,
+    "task_count": 0,
+    "listener_count": 0
+  },
+  "profile_delete_attempt": {
+    "utc": "2026-10-27T00:51:39.204143Z",
+    "delete_profile_success": false,
+    "win32_error": 87,
+    "profile": [
+      {
+        "SID": "S-1-5-21-3592388187-2353680085-815129118-1008",
+        "Loaded": true,
+        "LocalPath": "C:\\Users\\coordA164a92cf1"
+      }
+    ],
+    "profile_directory_exists": true
+  },
+  "final_state": {
+    "observed_at_utc": "2026-10-27T00:56:04.9354013Z",
+    "production_database": {
+      "completion_action_states": {
+        "failed": 38,
+        "succeeded": 83
+      },
+      "integrity_check": "ok",
+      "journal_mode": "wal",
+      "protected": [
+        {
+          "action_count": 105,
+          "attempt_table_rows": 0,
+          "batch_found": true,
+          "batch_id": "90ce2ca7-184e-4c3d-9d87-56386db25419",
+          "derived_attempts_fingerprint": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "extension_receipt_count": 0,
+          "progress_count": 106,
+          "progress_receipt_count": 145,
+          "protected_fingerprint": "0a604adcb9527722cb2ba55283dd623e1c396edafa1a5853ad79b36b2a7d2361",
+          "task_attempt_max": 2,
+          "task_attempt_sum": 112,
+          "task_count": 121,
+          "task_receipt_count": 105,
+          "task_states": {
+            "completed": 105,
+            "pending": 16
+          }
+        },
+        {
+          "action_count": 11,
+          "attempt_table_rows": 0,
+          "batch_found": true,
+          "batch_id": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e",
+          "derived_attempts_fingerprint": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "extension_receipt_count": 2,
+          "progress_count": 2,
+          "progress_receipt_count": 2,
+          "protected_fingerprint": "dbcfaa4e5a308867157302c1f1e59ac902da985f6b0dfcc392bde3b118bb03e4",
+          "task_attempt_max": 2,
+          "task_attempt_sum": 16,
+          "task_count": 10,
+          "task_receipt_count": 11,
+          "task_states": {
+            "completed": 10
+          }
+        },
+        {
+          "action_count": 5,
+          "attempt_table_rows": 0,
+          "batch_found": true,
+          "batch_id": "d2313c78-22da-4cb8-bcd7-ece9897e0db1",
+          "derived_attempts_fingerprint": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "extension_receipt_count": 4,
+          "progress_count": 4,
+          "progress_receipt_count": 4,
+          "protected_fingerprint": "b2e63e2c5cb5c85afee4bc243b5b48693be6bf5a0f9a93821c4b4a794b540024",
+          "task_attempt_max": 1,
+          "task_attempt_sum": 4,
+          "task_count": 4,
+          "task_receipt_count": 4,
+          "task_states": {
+            "completed": 4
+          }
+        }
+      ],
+      "runner_nonce_rows": 0,
+      "runner_nonces_table": false,
+      "schema_version": 32,
+      "task_attempts_table": false,
+      "user_version": 0
+    },
+    "production_services": [
+      {
+        "Name": "coord",
+        "State": "Stopped",
+        "StartName": "NT AUTHORITY\\LocalService",
+        "ProcessId": 0
+      },
+      {
+        "Name": "Servy",
+        "State": "Running",
+        "StartName": "LocalSystem",
+        "ProcessId": 3224
+      },
+      {
+        "Name": "CoordRelayAgent",
+        "State": "Running",
+        "StartName": "NT AUTHORITY\\LocalService",
+        "ProcessId": 5892
+      },
+      {
+        "Name": "CoordActionRunnerG7",
+        "State": "Stopped",
+        "StartName": ".\\coord_action_g7",
+        "ProcessId": 0
+      }
+    ],
+    "production_listeners": [],
+    "batch_right_holders": [
+      "S-1-5-32-544",
+      "S-1-5-32-551",
+      "S-1-5-32-559"
+    ],
+    "deny_batch_holders": [],
+    "owned_profile": [
+      {
+        "SID": "S-1-5-21-3592388187-2353680085-815129118-1008",
+        "LocalPath": "C:\\Users\\coordA164a92cf1",
+        "Loaded": true
+      }
+    ],
+    "isolated_artifact_acl_admin_system_only": true,
+    "own_account_count": 0,
+    "own_task_count": 0,
+    "own_listener_count": 0,
+    "ephemeral_keys_absent": true
+  },
+  "time_evidence_note": "CIM Task LastRunTime values were inconsistent across distinct instances; retained raw, not used as authoritative start times. Use request/native UTC and Security record IDs.",
+  "nonce_gate": "Reused preceding same-candidate target-host replay/restart evidence, no rerun",
+  "ci_reuse": {
+    "new_full_ci_triggered": false,
+    "run_id": 40377126693,
+    "local_gate": "stage-r5-b3-a-checks.json",
+    "url": "https://github.com/lieyanbang/coord/actions/runs/40377126693"
+  },
+  "system_cleanup_candidate": {
+    "requires_separate_authority": true,
+    "remote_path": "C:\\coord-b3a1-20261027-a\\system-cleanup-candidate.ps1",
+    "task_registered": false,
+    "sha256": "9fa6d2aa08a3f14a8bad3d247a492cc76112cabdb5f0d90c41935d10b38c974f",
+    "local_path": "target/b3-a1-runner-20261027/system-cleanup-candidate.ps1",
+    "executed": false
+  },
+  "remaining": [
+    "One mounted profile from this fixture requires separately authorized SYSTEM-level cleanup investigation",
+    "Servy configuration-copy restoration and used restart budget not verified",
+    "Production publisher pin alignment plan not accepted",
+    "B3-B production authority and live service/SYSTEM acceptance remain separate"
+  ]
+}
