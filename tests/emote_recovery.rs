@@ -391,3 +391,177 @@ fn expired_or_changed_recovery_authority_cannot_publish() {
         .is_err());
     assert!(!f.root.join("business/results/00.json").exists());
 }
+
+#[test]
+fn trusted_emote_workers_keep_the_result_identity_through_resume_release_and_publish() {
+    let f = Recovery::new();
+    let store = f.store();
+    let batch = store
+        .create_batch(
+            "trusted-emote",
+            "",
+            BatchConfig {
+                action_profile: Some("v2".into()),
+                require_progress: true,
+                ..Default::default()
+            },
+        )
+        .unwrap();
+    let batch = Uuid::parse_str(batch["id"].as_str().unwrap()).unwrap();
+    store
+        .add_tasks(
+            batch,
+            vec![TaskInput {
+                key: "00".into(),
+                name: "00".into(),
+                payload: json!({"group_id":"00","source_image_ids":["1"]}),
+            }],
+        )
+        .unwrap();
+    let first = store
+        .claim_trusted(batch, "0000", Some(600))
+        .unwrap()
+        .unwrap();
+    assert_eq!(first.claimed_by.as_deref(), Some("emote-0000"));
+    assert_eq!(
+        store.resume_trusted(batch, "0000").unwrap()["task"]["id"],
+        first.id.to_string()
+    );
+    assert!(store
+        .progress_trusted(
+            first.id,
+            batch,
+            "0001",
+            first.attempt_no,
+            "Wrong worker",
+            Some(600)
+        )
+        .unwrap()
+        .is_none());
+    store
+        .progress_trusted(
+            first.id,
+            batch,
+            "0000",
+            first.attempt_no,
+            "Inspected fixture source and reference",
+            Some(600),
+        )
+        .unwrap()
+        .unwrap();
+    store
+        .release_trusted(
+            first.id,
+            batch,
+            "0000",
+            first.attempt_no,
+            Some("Reassign isolated fixture"),
+        )
+        .unwrap()
+        .unwrap();
+    assert_eq!(
+        store.resume_trusted(batch, "0000").unwrap()["state"],
+        "released"
+    );
+    std::thread::sleep(std::time::Duration::from_millis(130));
+    let task = store
+        .claim_trusted(batch, "0001", Some(600))
+        .unwrap()
+        .unwrap();
+    assert_eq!(task.claimed_by.as_deref(), Some("emote-0001"));
+    assert!(task.attempt_no > first.attempt_no);
+    let mut result = f.result.clone();
+    result["agent_id"] = "emote-0001".into();
+    result["attempt_no"] = task.attempt_no.into();
+    store
+        .progress_trusted(
+            task.id,
+            batch,
+            "0001",
+            task.attempt_no,
+            "Source/reference evidence checked",
+            Some(600),
+        )
+        .unwrap()
+        .unwrap();
+    assert!(store
+        .complete_trusted(
+            task.id,
+            batch,
+            "0001",
+            task.attempt_no,
+            result.clone(),
+            None
+        )
+        .is_err());
+    assert_eq!(
+        store.get_task(task.id).unwrap().unwrap().state.as_str(),
+        "claimed"
+    );
+    result["characters"][0]["notes"] =
+        "Inspected source and reference; identifying features remain insufficient.".into();
+    let accepted = store
+        .complete_trusted(
+            task.id,
+            batch,
+            "0001",
+            task.attempt_no,
+            result.clone(),
+            None,
+        )
+        .unwrap()
+        .unwrap();
+    assert_eq!(accepted["state"], "completed");
+    assert_eq!(
+        store
+            .complete_trusted(
+                task.id,
+                batch,
+                "0001",
+                task.attempt_no,
+                result.clone(),
+                None
+            )
+            .unwrap()
+            .unwrap()["replayed"],
+        true
+    );
+    assert_eq!(
+        store.resume_trusted(batch, "0001").unwrap()["state"],
+        "completed"
+    );
+    let pending = store.begin_action("fixture").unwrap().unwrap();
+    let job = store
+        .runner_action(&pending.id, &pending.lease_token, "fixture", true)
+        .unwrap()
+        .unwrap();
+    let execution = ActionRegistry::load(&f.registry_path)
+        .unwrap()
+        .execute(&job);
+    assert_eq!(execution.state, ActionState::Succeeded);
+    store.finish_action(&job, &execution).unwrap();
+    let published: Value =
+        serde_json::from_slice(&fs::read(f.root.join("business/results/00.json")).unwrap())
+            .unwrap();
+    assert_eq!(published, result);
+    // A batch without the emote preflight keeps its historical raw worker label.
+    let generic = store
+        .create_batch("generic", "", BatchConfig::default())
+        .unwrap();
+    let generic = Uuid::parse_str(generic["id"].as_str().unwrap()).unwrap();
+    store
+        .add_tasks(
+            generic,
+            vec![TaskInput {
+                key: "text".into(),
+                name: "text".into(),
+                payload: json!({}),
+            }],
+        )
+        .unwrap();
+    let text = store
+        .claim_trusted(generic, "0000", Some(600))
+        .unwrap()
+        .unwrap();
+    assert_eq!(text.claimed_by.as_deref(), Some("0000"));
+}

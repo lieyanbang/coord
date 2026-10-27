@@ -1,0 +1,30 @@
+[
+  {
+    "started": "2026-10-27T14:26:28.9169932Z",
+    "command": "cargo fmt --all -- --check",
+    "seconds": 0.6021543,
+    "exit": 0,
+    "log": "docs/verification/stage-b5-d-identity-fmt.log"
+  },
+  {
+    "started": "2026-10-27T14:26:29.6157332Z",
+    "command": "cargo clippy --all-targets --all-features --locked -- -D warnings",
+    "seconds": 5.4821619,
+    "exit": 0,
+    "log": "docs/verification/stage-b5-d-identity-clippy.log"
+  },
+  {
+    "started": "2026-10-27T14:26:35.1035844Z",
+    "command": "cargo test --all-features --locked",
+    "seconds": 57.1348383,
+    "exit": 0,
+    "log": "docs/verification/stage-b5-d-identity-test.log"
+  },
+  {
+    "started": "2026-10-27T14:27:32.2404275Z",
+    "command": "cargo build --release --locked",
+    "seconds": 96.0537961,
+    "exit": 0,
+    "log": "docs/verification/stage-b5-d-identity-build.log"
+  }
+]

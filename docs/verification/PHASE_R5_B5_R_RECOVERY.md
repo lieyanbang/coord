@@ -1,7 +1,7 @@
 # B5-R：证据补充与版本化恢复
 
-2026-10-27；执行分支 `codex/b5-r-recovery-20261027`。
-**进行中：R1 PASS（保留冲突），R2 本地 PASS / Fork CI 待验；R3 PASS；R4/B5-D NOT_RUN。**
+2026-10-28（现场 UTC 仍为10-27）；执行分支 `codex/b5-r-recovery-20261027`。
+**R1/R2/R3 PASS；R4安全Gate PASS、历史恢复PARTIAL（31恢复/7保留）；B5-D准备中。**
 本报告不改变 [旧 B5 BLOCKED 历史](PHASE_R5_B5_ACTION_RECOVERY.md)。
 TASK.md、docs/PLAN.md、用户原工作区成果保持只读/原样。
 
@@ -66,7 +66,7 @@ clippy、93 passed / 8 intentionally ignored、locked release build。
 health monitor、真实低权限发布/索引/崩溃恢复均通过，但最终夹具清理失败：晚发现的
 Core 子进程 Stop-Process 后立即查询，尚未退出。artifact `12740005582` 的 summary
 保留该 FAIL，未把它当作整轮通过。为此分支补上同样的有界退出等待；完整本地
-`-Stage b5-r2-ci-cleanup` 四项再次 exit 0。匹配云端产物仍待验。
+`-Stage b5-r2-ci-cleanup` 四项再次 exit 0。最终 [Fork CI 40516227702](https://github.com/lieyanbang/coord/actions/runs/40516227702) 在 c303c3f897ffa54aecce62bb1130e1d9ab9fae1e 全部success；artifact 12738804725的manifest、四个binary hash在本地和Arasaka均匹配。
 
 ## R3：真实 Runner 令牌和最小 ACL
 
@@ -88,10 +88,26 @@ Core 子进程 Stop-Process 后立即查询，尚未退出。artifact `127400055
 不能打开。敏感 ACL 不变，134 份旧输出字节不变，全部原 ACE/owner/继承边界保留。
 一次性任务已撤销。没有更改数据库、registry、密钥权限或六 worker 绑定。
 
-## R3 / R4 / B5-D
+## R4：真实签名恢复与收尾
 
-尚未执行签名低权限恢复 Canary 或六会话任务分派。R4 一致在线副本已建立，
-8 张原业务表全部原列 changed_or_missing=0；原 24 个 SQL 定义的 hash 精确为
-`678a8a1227dda09cbf98e43b90f348e8b242b2ce66e94cdfec1c23e8ee48dd3a`。
-正式 16 项 pending 和原 38 条失败 Action 不作无差别重放。
-仅 R3/R4 的全部适用真实 Gate 通过后继续 B5-D。
+隔离一致副本通过：真实LocalService Core + 现有Runner原token（SID尾号1004、非管理员）+ 新隔离签名密钥，Broker/原生v2发布07一次succeeded。独立event/receipt/review绑定原accepted result；重复恢复请求返回同一事件。排除组46、原task/failed Action/receipt/其他batch负例均拒绝。原8表全部原列unchanged，134份旧文件逐字节不变。恢复24个定义、撤销父目录临时ACL、封存隔离keys，进程/监听0。
+
+启动失败完整保留：首次无日志退出，未取得原生退出码；采用已验证专属非交互桌面后Core启动。第二次真实Runner identity成功，但PS5返回空ExitCode，且cleanup遇到已退出包装器的空CommandLine；独立清理后改用PS7并检查空值，随后完整闭环PASS。没有将操作脚本错误归因于业务源码或抹掉失败证据。
+
+同版Core + Broker禁用/原profile的forward recovery已在产生新恢复事件的副本实测：认证Scheduler可读、未认证401、DEGRADED，原accepted数据和新输出保留。生产上线前另做SQLite在线一致备份；没有用旧DB覆盖当前库。
+
+生产07 Canary：Action 3e6377a7-a6d0-453b-8251-101696431971，新event a0828737-4d33-4d16-b2bf-90fbce99c8fb，真实服务Runner一次成功。其后30组每批5条恢复并独立读回。首次扩大allowlist被脚本状态检查拒绝（护栏已恢复，authority记录仍为旧07定义），未创建额外Action。改为仅接受精确原24定义或精确本轮已知定义，先在副本验证31项切换/负例/恢复，再继续；未允许未知SQL。
+
+最终原38条failed/2次尝试全部保留，新增31条独立恢复Action和31个event，全部succeeded/attempt1/exit0；正式Action总计98 succeeded/38 failed。任务仍105 completed/16 pending，完成receipt未增加。31组原result与published JSON相同，补证独立保存；旧67个result和134份输出字节不变。7组01/27/37/46/65/76/92没有创建恢复事件。
+
+原24个触发器精确恢复，hash 678a8a1227dda09cbf98e43b90f348e8b242b2ce66e94cdfec1c23e8ee48dd3a，integrity_check=ok。v2 profile保留前置校验，临时recovery policy删除；撤权后恢复请求拒绝。三个原profile与v1 binary/pin逐项未变。服务恢复策略及monitor调度恢复；Core PID5660/LocalService、Runner PID3680/SID1004。14:16:51、14:16:54 UTC两次真实SYSTEM monitor均exit0/READY/failed_checks=[]。
+
+38条精确映射、新旧Action/event、各批ID、hash、护栏和SYSTEM证据见 [生产脱敏证据](PHASE_R5_B5_R_PRODUCTION_20261028.json)。原图、业务原文、完整补证、数据库、配置备份和密钥仅留受限远端。
+
+## B5-D：准入检查与身份兼容修复
+
+通过正常浏览器UI核对原项目六会话worker0000–0005；尚未派发正式任务、开放worker绑定。原会话较早canary范围由本轮正式授权取代；不跨worker、不手写results、实际看图/refs和不确定提交先对账等边界保留。
+
+新鲜副本只圈定16 pending，准备将batch切换v2/profile version2/单次非自动重试Action策略；validator和其他config保留。SQL正反例及恢复通过，但简化claim被拒绝：trusted工具传四位worker，Core直接保存owner，而正式schema/publisher要求emote前缀。这还会造成提交身份不匹配。生产保持冻结，没有让真实会话承担缺陷。
+
+修复仅对启用emote-v2前置校验的批次把四位标签规范化为emote-XXXX，覆盖claim/progress/release/resume/complete；generic及历史B4文字批次保留原标签。针对测试已通过：简化领取/进度/释放/重分配、错误worker拒绝、可纠正前置拒绝、精确完成重放、原生v2发布和generic兼容。完整本地 `scripts/verify.ps1 -Stage b5-d-identity` 四项exit0（94 passed / 8 intentionally ignored）；Fork CI及副本重验待完成，通过前不正式派发。

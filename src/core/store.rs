@@ -1484,6 +1484,29 @@ impl Store {
         Ok(t)
     }
 
+    // Emote result schemas use a namespaced agent ID. Keep generic trusted
+    // batches (including historical text fixtures) on their original labels.
+    fn trusted_agent_id(&self, batch_id: Uuid, worker: &str) -> Result<String> {
+        if worker.len() != 4 || !worker.bytes().all(|b| b.is_ascii_hexdigit()) {
+            return Ok(worker.to_owned());
+        }
+        let config = batch_config(&self.conn.lock(), batch_id, false)?;
+        let emote = config
+            .action_profile
+            .as_deref()
+            .and_then(|id| {
+                self.actions
+                    .as_ref()
+                    .and_then(|registry| registry.profile(id))
+            })
+            .is_some_and(|profile| profile.submission_validation.as_deref() == Some("emote-v2"));
+        Ok(if emote {
+            format!("emote-{}", worker.to_ascii_uppercase())
+        } else {
+            worker.to_owned()
+        })
+    }
+
     /// Trusted-owner claim path. The batch and worker label are supplied by
     /// the authenticated caller; the database keeps the execution fence.
     pub fn claim_trusted(
@@ -1492,6 +1515,8 @@ impl Store {
         agent_id: &str,
         lease_seconds: Option<u64>,
     ) -> Result<Option<Task>> {
+        let resolved_agent = self.trusted_agent_id(batch_id, agent_id)?;
+        let agent_id = resolved_agent.as_str();
         if agent_id.trim().is_empty() || agent_id.len() > 128 {
             anyhow::bail!("worker label must be between 1 and 128 bytes");
         }
@@ -1559,6 +1584,8 @@ impl Store {
         checkpoint: &str,
         lease_seconds: Option<u64>,
     ) -> Result<Option<serde_json::Value>> {
+        let resolved_agent = self.trusted_agent_id(batch_id, agent_id)?;
+        let agent_id = resolved_agent.as_str();
         if checkpoint.trim().is_empty() || checkpoint.len() > 1024 {
             return Ok(None);
         }
@@ -1690,6 +1717,8 @@ impl Store {
         attempt_no: u64,
         reason: Option<&str>,
     ) -> Result<Option<serde_json::Value>> {
+        let resolved_agent = self.trusted_agent_id(batch_id, agent_id)?;
+        let agent_id = resolved_agent.as_str();
         let mut conn = self.conn.lock();
         let tx = conn.transaction_with_behavior(rusqlite::TransactionBehavior::Immediate)?;
         let task = tx.query_row(
@@ -1746,6 +1775,8 @@ impl Store {
     /// Read-only reconciliation for a worker. It never claims or transfers a
     /// task; lease expiry is reported without running the reclaimer.
     pub fn resume_trusted(&self, batch_id: Uuid, agent_id: &str) -> Result<serde_json::Value> {
+        let resolved_agent = self.trusted_agent_id(batch_id, agent_id)?;
+        let agent_id = resolved_agent.as_str();
         let conn = self.conn.lock();
         let active: u64 = conn.query_row(
             "SELECT count(*) FROM tasks WHERE batch_id=?1 AND claimed_by=?2 AND state='claimed' AND lease_until IS NOT NULL AND julianday(lease_until)>julianday('now')",
@@ -1847,6 +1878,8 @@ impl Store {
         result: serde_json::Value,
         ack: Option<AckSpec>,
     ) -> Result<Option<serde_json::Value>> {
+        let resolved_agent = self.trusted_agent_id(batch_id, agent_id)?;
+        let agent_id = resolved_agent.as_str();
         let request =
             serde_json::to_string(&serde_json::json!({"result":result.clone(),"ack":ack.clone()}))?;
         let task = {

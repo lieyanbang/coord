@@ -1,0 +1,779 @@
+{
+  "observed_at_utc": "2026-10-27T14:16:56Z",
+  "r4_safety_gate": "PASS",
+  "historical_recovery": "PARTIAL",
+  "source_commit": "c303c3f897ffa54aecce62bb1130e1d9ab9fae1e",
+  "ci": {
+    "id": 40516227702,
+    "status": "completed",
+    "conclusion": "success",
+    "head_sha": "c303c3f897ffa54aecce62bb1130e1d9ab9fae1e",
+    "html_url": "https://github.com/lieyanbang/coord/actions/runs/40516227702",
+    "updated_at": "2026-10-27T14:06:21Z"
+  },
+  "artifact_id": 12738804725,
+  "matched_binary_hashes": [
+    {
+      "sha256": "cf897ff318b086b76fbb879b52c4fa737c64874a79fbedff5bcb33200acd9dbd",
+      "name": "coord.exe"
+    },
+    {
+      "sha256": "8b0d5f6472ffe758f12a30ba7a0763dcaf9e41a271ddb0ed20d26b4d881ff609",
+      "name": "coord-action-runner.exe"
+    },
+    {
+      "sha256": "e2af597c47b0e8da5700bb626074cb8af338d66916fa0101291a444e552e6849",
+      "name": "coord-emote-action-v2.exe"
+    }
+  ],
+  "visual_review": {
+    "total": 196,
+    "approved": 183,
+    "conflict": 12,
+    "needs_review": 1,
+    "approved_groups": 31,
+    "unsafe_groups": [
+      "01",
+      "27",
+      "37",
+      "46",
+      "65",
+      "76",
+      "92"
+    ]
+  },
+  "task_states": {
+    "completed": 105,
+    "pending": 16
+  },
+  "action_states": {
+    "failed": 38,
+    "succeeded": 98
+  },
+  "recovery_events": 31,
+  "history": [
+    {
+      "group_id": "01",
+      "original_action_id": "5b698cfa-a7d3-4baf-83f9-f471d120fb22",
+      "original_event_id": "89aaac35-f18d-44c6-ac0a-400c701d3d4b",
+      "review_status": "NEEDS_REVIEW",
+      "original_state": "failed",
+      "original_attempts": 2,
+      "recovery": null
+    },
+    {
+      "group_id": "04",
+      "original_action_id": "76b8830c-bcf3-4267-b003-50577e46ca99",
+      "original_event_id": "2ed26098-9383-4ed2-b0ba-fa1c001638a0",
+      "review_status": "APPROVED",
+      "original_state": "failed",
+      "original_attempts": 2,
+      "recovery": {
+        "id": "6bdd7ea2-bd90-4348-8e18-cff44de059b8",
+        "event_id": "6c633eda-e3c3-4470-b8c1-71d63ec4a55b",
+        "state": "succeeded",
+        "attempt_count": 1
+      }
+    },
+    {
+      "group_id": "06",
+      "original_action_id": "9e00bcc6-7509-4251-b94c-96b40e74316a",
+      "original_event_id": "1553119b-1374-429d-b9a3-cb3d089fa6b8",
+      "review_status": "APPROVED",
+      "original_state": "failed",
+      "original_attempts": 2,
+      "recovery": {
+        "id": "9c9e42d9-20e4-4e01-a0d1-c659719cb0d7",
+        "event_id": "ef7ac228-1723-4c45-8787-dd3a2f8e9f1c",
+        "state": "succeeded",
+        "attempt_count": 1
+      }
+    },
+    {
+      "group_id": "07",
+      "original_action_id": "711ec9be-8359-4184-ab72-8da45109cfec",
+      "original_event_id": "b3a574de-7a20-433e-9862-e520ed79b52a",
+      "review_status": "APPROVED",
+      "original_state": "failed",
+      "original_attempts": 2,
+      "recovery": {
+        "id": "3e6377a7-a6d0-453b-8251-101696431971",
+        "event_id": "a0828737-4d33-4d16-b2bf-90fbce99c8fb",
+        "state": "succeeded",
+        "attempt_count": 1
+      }
+    },
+    {
+      "group_id": "11",
+      "original_action_id": "9a927170-07b3-4320-b276-b05852632b66",
+      "original_event_id": "8c83ce8e-7688-42db-8122-8441fdeb8b61",
+      "review_status": "APPROVED",
+      "original_state": "failed",
+      "original_attempts": 2,
+      "recovery": {
+        "id": "40af07f0-2944-4d09-8791-dd08d7e2d2a9",
+        "event_id": "a391ec35-fddc-4e31-a743-5c563507fd30",
+        "state": "succeeded",
+        "attempt_count": 1
+      }
+    },
+    {
+      "group_id": "13",
+      "original_action_id": "0a4c992c-1ec8-4bac-a0cf-393ab746334f",
+      "original_event_id": "d3dda879-88e3-47fd-95a3-855174d3a415",
+      "review_status": "APPROVED",
+      "original_state": "failed",
+      "original_attempts": 2,
+      "recovery": {
+        "id": "cd35030d-4fbb-47f3-8d7d-de30aee268b4",
+        "event_id": "6d341239-51ed-484f-932f-6f141303b16a",
+        "state": "succeeded",
+        "attempt_count": 1
+      }
+    },
+    {
+      "group_id": "14",
+      "original_action_id": "acce7a56-a7a0-4d83-9019-e8130a4228fe",
+      "original_event_id": "45a3c4e0-2297-4765-859d-3cb99d4e00f7",
+      "review_status": "APPROVED",
+      "original_state": "failed",
+      "original_attempts": 2,
+      "recovery": {
+        "id": "41233046-e0e6-49b3-b3fc-4a2fc51da640",
+        "event_id": "7a8315a8-7b10-47e0-8730-d467643e6c87",
+        "state": "succeeded",
+        "attempt_count": 1
+      }
+    },
+    {
+      "group_id": "16",
+      "original_action_id": "f46c4dbf-c8c9-48f9-b54e-b427f24d81df",
+      "original_event_id": "edea24f7-0411-4b9a-928c-e697d7d9f216",
+      "review_status": "APPROVED",
+      "original_state": "failed",
+      "original_attempts": 2,
+      "recovery": {
+        "id": "0757014c-1d08-49a9-ac2a-100c4c6c2b52",
+        "event_id": "049d29ce-d40e-4281-beb6-8a2d101f0f78",
+        "state": "succeeded",
+        "attempt_count": 1
+      }
+    },
+    {
+      "group_id": "25",
+      "original_action_id": "702c73a5-0df0-4dcf-a6fb-a432aa5860f5",
+      "original_event_id": "88e31e37-5c7e-4ec7-a5f7-bd998548063e",
+      "review_status": "APPROVED",
+      "original_state": "failed",
+      "original_attempts": 2,
+      "recovery": {
+        "id": "cbafd5f5-68a8-4b91-a002-8abe26e359e2",
+        "event_id": "49bd24e5-9faa-47ee-bf63-929ad445d9ea",
+        "state": "succeeded",
+        "attempt_count": 1
+      }
+    },
+    {
+      "group_id": "27",
+      "original_action_id": "8b760a1d-1213-4622-8acf-4ffa686b3adb",
+      "original_event_id": "a8fa691b-d29a-43f6-bf63-6658c3c6e976",
+      "review_status": "NEEDS_REVIEW",
+      "original_state": "failed",
+      "original_attempts": 2,
+      "recovery": null
+    },
+    {
+      "group_id": "33",
+      "original_action_id": "33f38960-4789-4294-8ec2-25962b06cec2",
+      "original_event_id": "89962320-849d-4a65-8ace-efd017a35066",
+      "review_status": "APPROVED",
+      "original_state": "failed",
+      "original_attempts": 2,
+      "recovery": {
+        "id": "f7ed58a6-104a-4e86-b5be-9b34b2b2e1c9",
+        "event_id": "f550028b-d855-4916-ba0a-1490b39bb851",
+        "state": "succeeded",
+        "attempt_count": 1
+      }
+    },
+    {
+      "group_id": "35",
+      "original_action_id": "0fef3a2d-4c1d-4f83-b16b-6d85b54e9e78",
+      "original_event_id": "3df277b6-6752-40ff-bcfa-579d9fa4c3a1",
+      "review_status": "APPROVED",
+      "original_state": "failed",
+      "original_attempts": 2,
+      "recovery": {
+        "id": "371696a4-218c-49ed-b9ce-ff458326ee5d",
+        "event_id": "592200d5-2574-4bc0-9563-38a41488bf4d",
+        "state": "succeeded",
+        "attempt_count": 1
+      }
+    },
+    {
+      "group_id": "37",
+      "original_action_id": "5d867770-388f-49ec-bc98-f35ae5421991",
+      "original_event_id": "a04c1568-1fc6-4bfc-9fcf-29c2398f447d",
+      "review_status": "NEEDS_REVIEW",
+      "original_state": "failed",
+      "original_attempts": 2,
+      "recovery": null
+    },
+    {
+      "group_id": "38",
+      "original_action_id": "99faee41-e564-4fec-a4e8-bc053f115e64",
+      "original_event_id": "44f8ce09-a0c3-4441-8454-2b6133db02cc",
+      "review_status": "APPROVED",
+      "original_state": "failed",
+      "original_attempts": 2,
+      "recovery": {
+        "id": "c691dbce-4ff9-4b8e-ad91-b62fea369691",
+        "event_id": "f6a319e4-b8d5-4e53-94d4-54388edf5524",
+        "state": "succeeded",
+        "attempt_count": 1
+      }
+    },
+    {
+      "group_id": "41",
+      "original_action_id": "e23bae44-c278-4112-a454-503fe4b639f5",
+      "original_event_id": "ed980998-de68-4c7e-887e-f558696dff56",
+      "review_status": "APPROVED",
+      "original_state": "failed",
+      "original_attempts": 2,
+      "recovery": {
+        "id": "24f557d1-6610-4324-bab3-f8b648ed13e5",
+        "event_id": "34ff194e-2107-46ef-a08d-7465beb142b6",
+        "state": "succeeded",
+        "attempt_count": 1
+      }
+    },
+    {
+      "group_id": "44",
+      "original_action_id": "b49323ef-f29b-453e-8712-8c5802dd7420",
+      "original_event_id": "ae362214-82cc-4f31-b7dd-41fc7d170bcc",
+      "review_status": "APPROVED",
+      "original_state": "failed",
+      "original_attempts": 2,
+      "recovery": {
+        "id": "935cad65-a7d9-4ac6-b8cb-73c8021a82f8",
+        "event_id": "5944bcc1-8d56-4a98-b2e9-2687394056aa",
+        "state": "succeeded",
+        "attempt_count": 1
+      }
+    },
+    {
+      "group_id": "46",
+      "original_action_id": "c00c0e9f-48bd-417a-b338-883a5e7f363a",
+      "original_event_id": "b717699c-1128-4352-9490-17a2d22f3100",
+      "review_status": "NEEDS_REVIEW",
+      "original_state": "failed",
+      "original_attempts": 2,
+      "recovery": null
+    },
+    {
+      "group_id": "50",
+      "original_action_id": "d7618ad3-6b9e-406b-8bab-93eb778aab3e",
+      "original_event_id": "7e9ee2fb-a9d1-4853-a9bb-f4ae6690e9bb",
+      "review_status": "APPROVED",
+      "original_state": "failed",
+      "original_attempts": 2,
+      "recovery": {
+        "id": "85214b9c-570e-49da-aa28-0a27a5110f04",
+        "event_id": "dc12a216-6f02-4a1f-b9d7-6b4a7194c98d",
+        "state": "succeeded",
+        "attempt_count": 1
+      }
+    },
+    {
+      "group_id": "51",
+      "original_action_id": "105f8155-e653-4eba-bd3e-8afa274f709e",
+      "original_event_id": "f92c3d8f-0d0d-4ab2-aec0-3810182da41d",
+      "review_status": "APPROVED",
+      "original_state": "failed",
+      "original_attempts": 2,
+      "recovery": {
+        "id": "96cc0555-3301-45d0-8017-a28a945a1f07",
+        "event_id": "2d8ba575-9444-4815-a0cb-5856e96a0e43",
+        "state": "succeeded",
+        "attempt_count": 1
+      }
+    },
+    {
+      "group_id": "54",
+      "original_action_id": "02e1c807-e693-492a-85fc-f0ede325a2a0",
+      "original_event_id": "20640e90-d0a5-42b9-8cf7-ef1eda10d93f",
+      "review_status": "APPROVED",
+      "original_state": "failed",
+      "original_attempts": 2,
+      "recovery": {
+        "id": "66e3d321-58db-44db-87e4-12e71c72b31a",
+        "event_id": "c17d1f6b-b581-40db-b84e-57591b496e4a",
+        "state": "succeeded",
+        "attempt_count": 1
+      }
+    },
+    {
+      "group_id": "56",
+      "original_action_id": "7322c021-5650-4d71-bd95-9f185476ff23",
+      "original_event_id": "bad3954a-7069-488d-a5e1-501dff21a794",
+      "review_status": "APPROVED",
+      "original_state": "failed",
+      "original_attempts": 2,
+      "recovery": {
+        "id": "43451d8e-c5e1-47a7-8b7d-315e5ae14d98",
+        "event_id": "9bbb374c-c4b4-4739-9fd2-18fc8a12cbb6",
+        "state": "succeeded",
+        "attempt_count": 1
+      }
+    },
+    {
+      "group_id": "60",
+      "original_action_id": "12123244-e8bd-461e-ac01-e6984ed536cf",
+      "original_event_id": "b8a5735f-753b-4d07-b1cf-9d84391a2392",
+      "review_status": "APPROVED",
+      "original_state": "failed",
+      "original_attempts": 2,
+      "recovery": {
+        "id": "24a4c143-7a82-48eb-bafd-32949f2d368a",
+        "event_id": "20025277-35cf-4612-81f6-83fa27608270",
+        "state": "succeeded",
+        "attempt_count": 1
+      }
+    },
+    {
+      "group_id": "63",
+      "original_action_id": "16713f4e-0627-48ef-844b-2fc8dcd54d8c",
+      "original_event_id": "40287c56-98cf-4a61-9225-cf3ea1eafd6b",
+      "review_status": "APPROVED",
+      "original_state": "failed",
+      "original_attempts": 2,
+      "recovery": {
+        "id": "63f75030-6721-4b45-b3b1-ff026d45bc0a",
+        "event_id": "7a0522eb-5f22-4979-b547-3ae835cea01a",
+        "state": "succeeded",
+        "attempt_count": 1
+      }
+    },
+    {
+      "group_id": "65",
+      "original_action_id": "f5ca49f4-af63-43a5-b6a3-02bcf12edc18",
+      "original_event_id": "ddf66571-10e6-4c12-9ebb-3c32522b0fa6",
+      "review_status": "NEEDS_REVIEW",
+      "original_state": "failed",
+      "original_attempts": 2,
+      "recovery": null
+    },
+    {
+      "group_id": "67",
+      "original_action_id": "f17ed907-9654-4eb8-9013-8be73604abe9",
+      "original_event_id": "2b476ffe-4539-4e3c-891c-27ba6f119c4a",
+      "review_status": "APPROVED",
+      "original_state": "failed",
+      "original_attempts": 2,
+      "recovery": {
+        "id": "40cf84db-ff8b-404c-a99a-9c325e2586ef",
+        "event_id": "9280dff6-1d71-4a82-b671-fafbcf6c3a1d",
+        "state": "succeeded",
+        "attempt_count": 1
+      }
+    },
+    {
+      "group_id": "68",
+      "original_action_id": "4f33ec3d-5da8-4f9e-9455-7f82c278a84c",
+      "original_event_id": "e6dc885e-d742-47d7-b54e-0e96426f73b8",
+      "review_status": "APPROVED",
+      "original_state": "failed",
+      "original_attempts": 2,
+      "recovery": {
+        "id": "de0aada0-4b20-417e-9e70-71152a794527",
+        "event_id": "ffadf241-80d5-442a-987b-7dfdc872d5c2",
+        "state": "succeeded",
+        "attempt_count": 1
+      }
+    },
+    {
+      "group_id": "69",
+      "original_action_id": "af31c120-d924-4504-ba83-a95be6b470ad",
+      "original_event_id": "d890078d-b86a-4bfe-b839-2176bd517659",
+      "review_status": "APPROVED",
+      "original_state": "failed",
+      "original_attempts": 2,
+      "recovery": {
+        "id": "070afc7c-cd29-49ac-9cd7-b2806eae2d4e",
+        "event_id": "d6ac77f9-7969-4c8b-a4fd-5231d7fe38e3",
+        "state": "succeeded",
+        "attempt_count": 1
+      }
+    },
+    {
+      "group_id": "72",
+      "original_action_id": "dac9bfe0-8ca6-4920-99b8-2fa88c29725e",
+      "original_event_id": "a5d41cd7-9853-457e-aaf2-65ed0773172d",
+      "review_status": "APPROVED",
+      "original_state": "failed",
+      "original_attempts": 2,
+      "recovery": {
+        "id": "20c8d1b3-6f20-4304-bced-95345d1fc2b7",
+        "event_id": "5e0947be-f8da-4ba0-8735-3098bfb49e42",
+        "state": "succeeded",
+        "attempt_count": 1
+      }
+    },
+    {
+      "group_id": "75",
+      "original_action_id": "d5e2b1bb-c8d1-420b-a1ad-c6b338dd321a",
+      "original_event_id": "3fbca759-8ec6-4093-a405-09b845149bb5",
+      "review_status": "APPROVED",
+      "original_state": "failed",
+      "original_attempts": 2,
+      "recovery": {
+        "id": "c268a122-e109-47ca-ab5b-47ac0c8a27f8",
+        "event_id": "b271e0ab-d274-4660-85ad-72140ce27c6b",
+        "state": "succeeded",
+        "attempt_count": 1
+      }
+    },
+    {
+      "group_id": "76",
+      "original_action_id": "3f24e54b-6ec1-46cf-b290-b83db59e4e1c",
+      "original_event_id": "bcf70507-a687-4b2f-868d-b1e62f171361",
+      "review_status": "NEEDS_REVIEW",
+      "original_state": "failed",
+      "original_attempts": 2,
+      "recovery": null
+    },
+    {
+      "group_id": "87",
+      "original_action_id": "7e21b688-6a92-4812-ab47-e5cdc8076e1e",
+      "original_event_id": "33fa6075-53eb-44a6-95fe-e7f26220b128",
+      "review_status": "APPROVED",
+      "original_state": "failed",
+      "original_attempts": 2,
+      "recovery": {
+        "id": "5c805ae5-d29f-44e9-8b48-6a37d34b4cfe",
+        "event_id": "c14166e5-e6bb-4aa4-88f2-50b93438323d",
+        "state": "succeeded",
+        "attempt_count": 1
+      }
+    },
+    {
+      "group_id": "88",
+      "original_action_id": "34b0cf3a-4154-43a4-9648-2352cfd986b2",
+      "original_event_id": "4bc02173-8768-4fd0-a566-b8b3f4779129",
+      "review_status": "APPROVED",
+      "original_state": "failed",
+      "original_attempts": 2,
+      "recovery": {
+        "id": "db808487-2ecb-45cd-ba86-ccb812452bdc",
+        "event_id": "e80e0dd2-6508-44f9-a48d-a433b4bd42f7",
+        "state": "succeeded",
+        "attempt_count": 1
+      }
+    },
+    {
+      "group_id": "92",
+      "original_action_id": "c38fa5c8-921f-41fc-8a96-a5424e6c225d",
+      "original_event_id": "499b08e7-a2c4-4867-80ae-88f66d8cecba",
+      "review_status": "NEEDS_REVIEW",
+      "original_state": "failed",
+      "original_attempts": 2,
+      "recovery": null
+    },
+    {
+      "group_id": "95",
+      "original_action_id": "63b98222-94fe-490c-9028-c4ba523d758b",
+      "original_event_id": "fc466734-b47c-4be8-9dd5-03c7df343122",
+      "review_status": "APPROVED",
+      "original_state": "failed",
+      "original_attempts": 2,
+      "recovery": {
+        "id": "7da8b1e1-9379-4ca6-900f-1123f37228b2",
+        "event_id": "b25ba809-bfe1-4c16-b454-7e44534fb2f3",
+        "state": "succeeded",
+        "attempt_count": 1
+      }
+    },
+    {
+      "group_id": "106",
+      "original_action_id": "9d5c0351-4e5c-462a-a524-6173bd4e7c4b",
+      "original_event_id": "b8faef3b-b706-4454-b75d-b185a510d1da",
+      "review_status": "APPROVED",
+      "original_state": "failed",
+      "original_attempts": 2,
+      "recovery": {
+        "id": "3fed7f9d-8ba4-4f3a-9407-5d40bae61fb7",
+        "event_id": "4d07b829-34c3-48a5-a87b-beefda8a8fdf",
+        "state": "succeeded",
+        "attempt_count": 1
+      }
+    },
+    {
+      "group_id": "107",
+      "original_action_id": "6f528042-d483-44b3-b838-45932112f0de",
+      "original_event_id": "7c83f281-7c47-4688-859f-2eaeea233936",
+      "review_status": "APPROVED",
+      "original_state": "failed",
+      "original_attempts": 2,
+      "recovery": {
+        "id": "5a6678ef-b445-4f8a-aee0-85fedb8ce2e8",
+        "event_id": "db72291d-7986-4084-9c3b-2cc1c253fe9b",
+        "state": "succeeded",
+        "attempt_count": 1
+      }
+    },
+    {
+      "group_id": "113",
+      "original_action_id": "e3d5c794-89ea-46f7-add8-0298d61e3ab9",
+      "original_event_id": "dca7d8fc-dd7a-41db-a2b5-1f3bdb5c6db5",
+      "review_status": "APPROVED",
+      "original_state": "failed",
+      "original_attempts": 2,
+      "recovery": {
+        "id": "790c9b52-2ceb-49eb-8f92-e9e8735c7dc1",
+        "event_id": "1214c98e-fadf-49a0-aa35-9f4627ae5752",
+        "state": "succeeded",
+        "attempt_count": 1
+      }
+    },
+    {
+      "group_id": "114",
+      "original_action_id": "d4b4fbb8-63b4-440c-88f8-e34a35865b8d",
+      "original_event_id": "ca9a3729-8985-4aab-8c34-a8c32398cee8",
+      "review_status": "APPROVED",
+      "original_state": "failed",
+      "original_attempts": 2,
+      "recovery": {
+        "id": "4ef0a5e1-9d25-49b9-87a7-1f21dcd0c3ea",
+        "event_id": "dcefc3c5-d429-4556-b9fe-3a4c8244f7c5",
+        "state": "succeeded",
+        "attempt_count": 1
+      }
+    }
+  ],
+  "production_canary": {
+    "action_kind": "on_task_completed",
+    "attempt_count": 1,
+    "available_at": null,
+    "event_id": "a0828737-4d33-4d16-b2bf-90fbce99c8fb",
+    "exit_code": 0,
+    "id": "3e6377a7-a6d0-453b-8251-101696431971",
+    "last_error": null,
+    "max_attempts": 1,
+    "output_bytes": 0,
+    "profile_id": "emote-publisher-v2",
+    "profile_version": 2,
+    "state": "succeeded",
+    "task_id": "1336c492-ea2a-4737-a9b4-7793ef9c2820"
+  },
+  "chunks": [
+    {
+      "groups": [
+        "04",
+        "06",
+        "11",
+        "13",
+        "14"
+      ],
+      "old_rows_and_134_files_unchanged": true,
+      "action_ids": [
+        "6bdd7ea2-bd90-4348-8e18-cff44de059b8",
+        "9c9e42d9-20e4-4e01-a0d1-c659719cb0d7",
+        "40af07f0-2944-4d09-8791-dd08d7e2d2a9",
+        "cd35030d-4fbb-47f3-8d7d-de30aee268b4",
+        "41233046-e0e6-49b3-b3fc-4a2fc51da640"
+      ]
+    },
+    {
+      "groups": [
+        "16",
+        "25",
+        "33",
+        "35",
+        "38"
+      ],
+      "old_rows_and_134_files_unchanged": true,
+      "action_ids": [
+        "0757014c-1d08-49a9-ac2a-100c4c6c2b52",
+        "cbafd5f5-68a8-4b91-a002-8abe26e359e2",
+        "f7ed58a6-104a-4e86-b5be-9b34b2b2e1c9",
+        "371696a4-218c-49ed-b9ce-ff458326ee5d",
+        "c691dbce-4ff9-4b8e-ad91-b62fea369691"
+      ]
+    },
+    {
+      "groups": [
+        "41",
+        "44",
+        "50",
+        "51",
+        "54"
+      ],
+      "old_rows_and_134_files_unchanged": true,
+      "action_ids": [
+        "24f557d1-6610-4324-bab3-f8b648ed13e5",
+        "935cad65-a7d9-4ac6-b8cb-73c8021a82f8",
+        "85214b9c-570e-49da-aa28-0a27a5110f04",
+        "96cc0555-3301-45d0-8017-a28a945a1f07",
+        "66e3d321-58db-44db-87e4-12e71c72b31a"
+      ]
+    },
+    {
+      "groups": [
+        "56",
+        "60",
+        "63",
+        "67",
+        "68"
+      ],
+      "old_rows_and_134_files_unchanged": true,
+      "action_ids": [
+        "43451d8e-c5e1-47a7-8b7d-315e5ae14d98",
+        "24a4c143-7a82-48eb-bafd-32949f2d368a",
+        "63f75030-6721-4b45-b3b1-ff026d45bc0a",
+        "40cf84db-ff8b-404c-a99a-9c325e2586ef",
+        "de0aada0-4b20-417e-9e70-71152a794527"
+      ]
+    },
+    {
+      "groups": [
+        "69",
+        "72",
+        "75",
+        "87",
+        "88"
+      ],
+      "old_rows_and_134_files_unchanged": true,
+      "action_ids": [
+        "070afc7c-cd29-49ac-9cd7-b2806eae2d4e",
+        "20c8d1b3-6f20-4304-bced-95345d1fc2b7",
+        "c268a122-e109-47ca-ab5b-47ac0c8a27f8",
+        "5c805ae5-d29f-44e9-8b48-6a37d34b4cfe",
+        "db808487-2ecb-45cd-ba86-ccb812452bdc"
+      ]
+    },
+    {
+      "groups": [
+        "95",
+        "106",
+        "107",
+        "113",
+        "114"
+      ],
+      "old_rows_and_134_files_unchanged": true,
+      "action_ids": [
+        "7da8b1e1-9379-4ca6-900f-1123f37228b2",
+        "3fed7f9d-8ba4-4f3a-9407-5d40bae61fb7",
+        "5a6678ef-b445-4f8a-aee0-85fedb8ce2e8",
+        "790c9b52-2ceb-49eb-8f92-e9e8735c7dc1",
+        "4ef0a5e1-9d25-49b9-87a7-1f21dcd0c3ea"
+      ]
+    }
+  ],
+  "originals": {
+    "batches": {
+      "original_rows": 5,
+      "changed_or_missing": 0
+    },
+    "tasks": {
+      "original_rows": 149,
+      "changed_or_missing": 0
+    },
+    "task_receipts": {
+      "original_rows": 129,
+      "changed_or_missing": 0
+    },
+    "task_progress": {
+      "original_rows": 117,
+      "changed_or_missing": 0
+    },
+    "task_progress_receipts": {
+      "original_rows": 156,
+      "changed_or_missing": 0
+    },
+    "task_progress_extend_receipts": {
+      "original_rows": 6,
+      "changed_or_missing": 0
+    },
+    "completion_actions": {
+      "original_rows": 121,
+      "changed_or_missing": 0
+    },
+    "task_attempts": {
+      "original_rows": 129,
+      "changed_or_missing": 0
+    }
+  },
+  "guard": {
+    "count": 24,
+    "sha256": "678a8a1227dda09cbf98e43b90f348e8b242b2ce66e94cdfec1c23e8ee48dd3a",
+    "integrity": "ok"
+  },
+  "old_134_files_byte_unchanged": true,
+  "old_67_results_equal": true,
+  "recovery_authority_revoked": true,
+  "after_revoke_denied": {
+    "denied": true,
+    "code": -32000
+  },
+  "three_original_profiles_unchanged": true,
+  "v1_pin_retained": true,
+  "processes": [
+    {
+      "pid": 5660,
+      "parent_pid": 2796,
+      "name": "coord.exe",
+      "sid": "S-1-5-19"
+    },
+    {
+      "pid": 3680,
+      "parent_pid": 6048,
+      "name": "coord-action-runner.exe",
+      "sid": "S-1-5-21-3592388187-2353680085-815129118-1004"
+    }
+  ],
+  "health": {
+    "checked_at_unix_ms": 1793110616134,
+    "status": "READY",
+    "core": {
+      "status": "READY",
+      "reason": null
+    },
+    "database": {
+      "status": "READY",
+      "reason": null
+    },
+    "broker": {
+      "status": "READY",
+      "reason": null
+    },
+    "runner": {
+      "status": "READY",
+      "reason": null
+    },
+    "runner_last_seen_unix_ms": 1793110616086
+  },
+  "system_runs": [
+    {
+      "instance_id": "{334710D5-A06F-4873-B013-F5878214B8F2}",
+      "last_result": 0,
+      "requested_at_utc": "2026-10-27T14:16:50.4574407+00:00",
+      "status": "READY",
+      "checked_at_utc": "2026-10-27T14:16:51.449Z",
+      "failed_checks": []
+    },
+    {
+      "instance_id": "{ED5A192A-CF25-43B9-8D08-FDBA920A06FE}",
+      "last_result": 0,
+      "requested_at_utc": "2026-10-27T14:16:53.6637098+00:00",
+      "status": "READY",
+      "checked_at_utc": "2026-10-27T14:16:54.661Z",
+      "failed_checks": []
+    }
+  ],
+  "isolated_cleanup": {
+    "remaining_processes": 0,
+    "remaining_listeners": 0,
+    "parent_acl_restored": true,
+    "fixture_keys_sealed": true
+  }
+}
