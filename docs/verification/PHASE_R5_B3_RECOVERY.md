@@ -424,3 +424,92 @@ Broker DEGRADED**；保留当前 DB 和护栏，不用旧 G7 EXE 或旧 DB 覆�
 本地和远端候选文件匹配原 manifest；本轮重新只读核验 Fork run 40377126693 的
 job 121763119437 及全部步骤 success。产品源码未改，沿用既有本地 gate 和 CI，
 未因运维诊断重跑完整 Rust/Hosted 测试。
+
+## B3-B — 2026-10-27 03:05–03:39 UTC；生产恢复验收完成
+
+**B3-A2 PASS；B3-B PASS；B3 PASS / PRODUCTION READY，业务仍冻结。**
+03:39:43Z 最终现场读回 Core、SQLite、Broker、Runner 全部 READY。
+本节是后续已执行结果；前文 A1/A2 的 NOT_RUN 和失败记录保留为其发生时的事实。
+本轮依据更新后的 TASK 完成已授权生产恢复，没有改 TASK/PLAN，也没有进入 B4。
+
+### 实际变更与保护
+
+- 生产仅部署经 Fork CI 验证的同包 Core/Runner，文件 hash 分别为
+  `943959b1…` / `72b46d25…`。正式发布器保持 `cac5496e…`，三个原 profile 的
+  版本、参数及 task/batch pin 全部不变；没有使用包内新 publisher 替换它。
+- 写前禁用 Coord monitor，在线一致备份生产 SQLite，quick_check/行计数及原列
+  对照通过。准确的两服务导出、SCM/服务 DACL、Registry、原二进制/文件 ACL、
+  SYSTEM Task XML 和监控脚本保存在 Arasaka
+  `C:\coord-b3a2-20261027-a\production-rollback`，限 Administrators/SYSTEM。
+  备份数据库、服务凭据导出和密钥没有下载或进入 Git。
+- 先安装旧列业务冻结护栏，再以真实 LocalService Core PID 7212 在 Broker 禁用
+  配置下启动，持续 DEGRADED；认证只读 RPC=200、无认证=401，原业务列全部一致。
+  新增 `failure_count` / `interruption_streak` / `needs_attention` 与派生 attempt
+  表后，护栏在事务内升级为 24 个全列触发器。最终只读核对 SQL 精确匹配已审阅
+  定义，SHA256 `678a8a1227dda09cbf98e43b90f348e8b242b2ce66e94cdfec1c23e8ee48dd3a`。
+- 独立管理凭据保留原值，分别使用新建 daemon/monitor 私密目录中的精确 ACL 副本。
+  生产 Ed25519 keypair 仅在 Arasaka 生成；私钥只允许 Runner/SYSTEM/Administrators，
+  Core 只读公钥。真实 LocalService PID 7944 实测私钥不可读、公钥和管理凭据可读。
+  旧 `broker.key` 内容没有读取、复制或哈希，最终 SDDL 与写前相同。
+- 保留真实既有低权限账户 `coord_action_g7`，SID 尾号 1004，非管理员；账户密码、
+  SCM 登录身份及 RequiredPrivileges 未改。仅更新 Coord 自身服务参数、日志路径、
+  签名配置和匹配的监控脚本/管理凭据路径；最终恢复原启动模式、Servy 健康/恢复
+  策略与原计划触发器。没有改其他服务、Linux 配置、Access 或 OAuth 策略。
+
+### 真实现场验收
+
+| Gate | 证据与结果 |
+| --- | --- |
+| 真实 Runner 服务身份/ACL | 同一既有 SCM 账户运行 identity、ACL、signed-once 探针；真实 native PIDs 9248 / 6520 / 7416，均 exit 0、SID 尾号 1004、privileged=false；管理 RPC/DB/配置写入拒绝符合边界 |
+| 连续生产进程 | 最终 Core PID 9844 / SID S-1-5-19，Runner PID 4616 / SID 尾号 1004；Servy 包装进程分别 9036 / 7376；最终服务直接执行候选 EXE，没有遗留探针包装器 |
+| 监听与管理认证 | Core PID 9844 独占 127.0.0.1:7777 / :7779；认证只读 skip_reclaim RPC 200、无认证 401；整体及四组件 READY |
+| 两次实际 SYSTEM 监控 | 03:31:21–23Z Instance FE14A16C-7EC7-4E27-BF11-A7F03D7CC0A9 / native PID 10044；03:31:25–27Z Instance 08AA6BE8-A39F-4B50-97C0-F628E5ADF9ED / PID 3048；均真实 SYSTEM SID、PS5 native exit 0、LastTaskResult 0，内容 READY，无失败检查 |
+| 恢复原监控任务 | 03:36:23Z Instance 21DB2D94-F4D4-472B-909D-E3F1F8E3171D，原直接 PS5 action 再次 exit 0/READY；两个原触发器启用。03:39:15Z 定时运行仍 READY、失败计数 0、LastTaskResult 0 |
+| 恢复策略与预算 | Core/Runner 分别 33/31 个导出配置字段与最终模型一致；原 RestartProcess、max 3、10 秒 heartbeat 保留；只读实际计数均 0。monitor 每小时最多 3 次、10 分钟冷却，原恢复历史保留；计数 0 不解释为历史没有重启 |
+| Linux/Relay | Relay/Feathers/OpenResty PID 127496 / 127510 / 109204、NRestarts=0，与写前一致；Sidecar 200/READY/connected。03:38:12Z 既有认证 Sidecar → 原 Arasaka Relay → 生产 Core 的 tasks/list skip_reclaim 请求实际 200/state=ok，无 claim |
+| OAuth/Access 原路线 | 两个公开 OAuth metadata endpoint 均 200；既有插件请求到达原逻辑授权层。无 worker 的列表按原策略拒绝，正式 Batch 状态查询也未成功；四个原 binding 均在本轮前过期，策略 mtime 仍 10-25。保留拒绝，没有刷新/延长业务授权或声称真实 ChatGPT 业务调用通过 |
+| 数据与清理 | integrity_check=ok，七张原业务表全部旧列逐值一致，包含私下比较的 fences/receipt；迁移后全部受保护指纹一致。临时账户/profile/hive/任务/服务/进程及 19777/19779 均为 0 |
+
+正式 Batch 仍是 121 tasks、105 completed / 16 pending；两个旧 Canary 完整保留。
+全库原有 145 tasks、125 receipts、112 progress、151 progress receipts、6 extension
+receipts、121 actions 的原列均不变。历史 Action 仍 38 failed / 83 succeeded，
+没有新增 attempt、重放或业务副作用。签名 nonce 是预期维护数据，独立于冻结业务表。
+
+### 保留的失败与真实恢复
+
+首次监控验收由一次性 PS7 包装器派生 PS5，PS5 在该上下文找不到 `Get-Acl`，
+配置检查返回 native 2，未更新健康内容。改由 Task Scheduler 直接启动 PS5 后
+同一逻辑通过；未改产品代码、全局 module path 或安全校验。该次按既定方案实际
+退回同版兼容 Core，Runner 停止、monitor 禁用、当前 DB 保留且原列一致。
+回退检查点记录还发现一次性脚本给 PSCustomObject 直接新增 failure 属性失败；
+修正为 Add-Member 后补齐状态记录。原失败证据全部保留。
+
+第二次完整行校验检测到无关 `OCI-A1-Grabber` 记录变化，保守回退后私下逐列核对：
+PID 始终 10060、所有配置一致，仅 Servy Host 维护的 RestartAttempts 从 1 归零及
+更新时间变化，符合已核实的稳定窗口重置语义。其他八条完整记录一致；全部九条
+无关服务配置和 PID 一致。没有控制/导入该服务或把它恢复成旧运行计数。
+随后按相同签名配置受控启动并完成最终验收；不能把九条完整记录都宣称字节一致。
+
+两次恢复均保留现有生产 DB 与护栏，使用**同版候选兼容 Core + Broker 禁用**；
+没有恢复旧 G7 EXE、旧数据库或在线 Servy 快照。最终 checkpoint 为
+`B3_PASS_PRODUCTION_READY_BUSINESS_FROZEN`。
+
+### 交付与停止线
+
+结构化生产证据见
+[PHASE_R5_B3_B_EVIDENCE_20261027.json](PHASE_R5_B3_B_EVIDENCE_20261027.json)。
+原始记录与一次性操作源码保存在 `target/b3-a2-b-20261027/` 和 Arasaka
+`C:\coord-b3a2-20261027-a`；私密备份留在远端受保护目录。
+
+产品源码与正式脚本没有修改，复用 `stage-r5-b3-a-checks.json` 的
+fmt/clippy/locked tests/release（全部 exit 0、88 passed / 8 intentionally ignored）
+及本轮只读回查成功的
+[Fork Actions 40377126693](https://github.com/lieyanbang/coord/actions/runs/40377126693)
+（job 121763119437 全步骤 success）。仅提交证据文档，使用 `[skip ci]`，
+没有重跑无代码变化的完整 Rust/Hosted 测试。
+
+到此停止 B3。B4 真实 ChatGPT 会话、OAuth refresh/上下文恢复以及正式 Batch 解冻
+和处理均 **NOT_RUN**，需后续新任务；原四个业务 binding 的过期状态也未改变。
+后续恢复业务必须先取得有效的获准身份窗口、确认新鲜状态并明确处理 24 个业务
+护栏，不能直接 claim/retry 或重放历史 38 条失败 Action。
+本地原有 3989 条脏/未跟踪状态、TASK/PLAN/.gitignore 内容及 Git 历史保留。

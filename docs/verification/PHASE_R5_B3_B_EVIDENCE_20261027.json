@@ -1,0 +1,1291 @@
+{
+  "schema": "coord-b3-production-acceptance-v1",
+  "state": "B3 PASS / PRODUCTION READY",
+  "business": "FROZEN; B4 and formal processing NOT_RUN",
+  "completed_observation_utc": "2026-10-27T03:39:43.442369Z",
+  "scope": "Current read-only TASK authorization covers A2 plus gated B3-B production only",
+  "source_commit": "ea9783268e33e546572fe346335056e28bc4d435",
+  "evidence_branch": "codex/b3-a2-b-20261027",
+  "a2_evidence": "PHASE_R5_B3_A2_EVIDENCE_20261027.json",
+  "artifacts": {
+    "monitor_sha256": "efcee606cf5cb2483f0985b7e939fa661bf13b4035fb81a164a81b4cb7af6a25",
+    "core_sha256": "943959b12ce75f8de716320e9fe15e72e3ea2911dbf096bedc6dc4bcfc22f3bc",
+    "runner_sha256": "72b46d25722842a30afd6cd3db32c9df5e15ae28fd0a9cf9a2ddb7a14dcb4baa",
+    "zip_sha256": "c4edd881f2f52da702389fc37615c2eb1350d96728fa6bec82378e0064ba49a3",
+    "all_original_profile_versions_parameters_and_pins_retained": true,
+    "publisher_retained_sha256": "cac5496ed1dea50f837f28403feb62515de1ba1459ea2557abe6097ec07bec55"
+  },
+  "implementation_changes": [
+    "Installed verified matched Core and Runner binaries only; publisher retained",
+    "Compatible Core first; additively migrated scheduler columns/derived tables without changing any original business column",
+    "21 old-schema business guards upgraded atomically to 24 all-column guards; guard remains active",
+    "Generated production Ed25519 pair on Arasaka only; precise Runner private/Core public ACL; disabled legacy Bearer fallback",
+    "Independent management key value retained via separate daemon/monitor copies with role-specific ACL",
+    "Updated only Coord service arguments/logs and matched health monitor/key path; restored original identities/start modes/health/recovery and task triggers"
+  ],
+  "production_backup": {
+    "includes": [
+      "Exact two service exports and SCM configuration/DACL",
+      "Original registry, binaries, file ACL map and SYSTEM Task XML",
+      "Original monitor and monitor recovery history"
+    ],
+    "database_consistency": {
+      "quick_check": "ok",
+      "user_table_count": 8,
+      "row_counts_match": true,
+      "size_bytes": 2949120
+    },
+    "servy": "Servy-before.private.db; never restored over shared live database",
+    "database": "coord-before.db",
+    "root": "C:\\coord-b3a2-20261027-a\\production-rollback",
+    "access": "Administrators and SYSTEM; private databases/service credential exports remain on Arasaka"
+  },
+  "compatible_stage": {
+    "stable_health": {
+      "checked_at_unix_ms": 1793070404533,
+      "status": "DEGRADED",
+      "core": {
+        "status": "READY",
+        "reason": null
+      },
+      "database": {
+        "status": "READY",
+        "reason": null
+      },
+      "broker": {
+        "status": "UNAVAILABLE",
+        "reason": "not_configured"
+      },
+      "runner": {
+        "status": "UNAVAILABLE",
+        "reason": "broker_unavailable"
+      },
+      "runner_last_seen_unix_ms": null
+    },
+    "guard_after_migration": {
+      "state": "PASS",
+      "triggers": [
+        "coord_b3_hold_batches_delete",
+        "coord_b3_hold_batches_insert",
+        "coord_b3_hold_batches_update",
+        "coord_b3_hold_completion_actions_delete",
+        "coord_b3_hold_completion_actions_insert",
+        "coord_b3_hold_completion_actions_update",
+        "coord_b3_hold_task_attempts_delete",
+        "coord_b3_hold_task_attempts_insert",
+        "coord_b3_hold_task_attempts_update",
+        "coord_b3_hold_task_progress_delete",
+        "coord_b3_hold_task_progress_extend_receipts_delete",
+        "coord_b3_hold_task_progress_extend_receipts_insert",
+        "coord_b3_hold_task_progress_extend_receipts_update",
+        "coord_b3_hold_task_progress_insert",
+        "coord_b3_hold_task_progress_receipts_delete",
+        "coord_b3_hold_task_progress_receipts_insert",
+        "coord_b3_hold_task_progress_receipts_update",
+        "coord_b3_hold_task_progress_update",
+        "coord_b3_hold_task_receipts_delete",
+        "coord_b3_hold_task_receipts_insert",
+        "coord_b3_hold_task_receipts_update",
+        "coord_b3_hold_tasks_delete",
+        "coord_b3_hold_tasks_insert",
+        "coord_b3_hold_tasks_update"
+      ],
+      "trigger_count": 24,
+      "sql_sha256": "678a8a1227dda09cbf98e43b90f348e8b242b2ce66e94cdfec1c23e8ee48dd3a",
+      "upgrade_after_additive_migration": true,
+      "policy": "Existing-column values immutable; no-op updates allowed. New migration columns are initialized before atomic upgrade covers all columns. Business INSERT/DELETE blocked; agents/nonces remain available; existing derived INSERT OR IGNORE rows allowed on restart"
+    },
+    "core": {
+      "pid": 7212,
+      "executable": "C:\\ProgramData\\coord\\bin\\coord.exe",
+      "sid": "S-1-5-19",
+      "parent_pid": 5044
+    },
+    "original_values": {
+      "state": "PASS",
+      "all_original_values_equal": true,
+      "includes_fences_and_receipts_compared_privately": true,
+      "no_credential_values_or_derived_hashes_emitted": true,
+      "integrity_check": "ok",
+      "tables": [
+        {
+          "table": "batches",
+          "rows": 4,
+          "original_columns": 6,
+          "new_columns": [],
+          "all_original_values_equal": true
+        },
+        {
+          "table": "tasks",
+          "rows": 145,
+          "original_columns": 27,
+          "new_columns": [
+            "failure_count",
+            "interruption_streak",
+            "needs_attention"
+          ],
+          "all_original_values_equal": true
+        },
+        {
+          "table": "task_receipts",
+          "rows": 125,
+          "original_columns": 6,
+          "new_columns": [],
+          "all_original_values_equal": true
+        },
+        {
+          "table": "task_progress",
+          "rows": 112,
+          "original_columns": 8,
+          "new_columns": [],
+          "all_original_values_equal": true
+        },
+        {
+          "table": "task_progress_receipts",
+          "rows": 151,
+          "original_columns": 7,
+          "new_columns": [],
+          "all_original_values_equal": true
+        },
+        {
+          "table": "task_progress_extend_receipts",
+          "rows": 6,
+          "original_columns": 5,
+          "new_columns": [],
+          "all_original_values_equal": true
+        },
+        {
+          "table": "completion_actions",
+          "rows": 121,
+          "original_columns": 22,
+          "new_columns": [],
+          "all_original_values_equal": true
+        }
+      ]
+    },
+    "state": "PASS_COMPATIBLE_DEGRADED",
+    "unauthenticated_rpc": {
+      "read_only_skip_reclaim": true,
+      "state": "PASS",
+      "authenticated": false,
+      "http_status": 401
+    },
+    "started_at_utc": "2026-10-27T03:05:56.6719014Z",
+    "ended_at_utc": "2026-10-27T03:06:44.8509452Z",
+    "authenticated_rpc": {
+      "read_only_skip_reclaim": true,
+      "state": "PASS",
+      "authenticated": true,
+      "http_status": 200
+    }
+  },
+  "signed_service_stage": {
+    "localservice_task_exit": 0,
+    "key_material": "Generated on Arasaka; no private/public credential bytes or hashes exported; old broker.key content never opened/copied/hashed",
+    "real_existing_scm_runner_probes": [
+      {
+        "service_control_note": null,
+        "authority": "Real existing SCM account and fresh captured native exit, not an operator signer",
+        "native": {
+          "started_at_utc": "2026-10-27T03:15:57.6894368Z",
+          "wrapper_sid": "S-1-5-21-3592388187-2353680085-815129118-1004",
+          "wrapper_pid": 1108,
+          "native_pid": 9248,
+          "native_exit": 0,
+          "ended_at_utc": "2026-10-27T03:15:58.0342829Z"
+        },
+        "state": "PASS",
+        "actual_runner_identity": {
+          "sid": "S-1-5-21-3592388187-2353680085-815129118-1004",
+          "privileged": false
+        },
+        "name": "runner-identity"
+      },
+      {
+        "service_control_note": null,
+        "authority": "Real existing SCM account and fresh captured native exit, not an operator signer",
+        "native": {
+          "started_at_utc": "2026-10-27T03:16:02.4050831Z",
+          "wrapper_sid": "S-1-5-21-3592388187-2353680085-815129118-1004",
+          "wrapper_pid": 844,
+          "native_pid": 6520,
+          "native_exit": 0,
+          "ended_at_utc": "2026-10-27T03:16:02.7607106Z"
+        },
+        "state": "PASS",
+        "actual_runner_identity": {
+          "sid": "S-1-5-21-3592388187-2353680085-815129118-1004",
+          "privileged": false
+        },
+        "name": "runner-acl"
+      },
+      {
+        "service_control_note": null,
+        "authority": "Real existing SCM account and fresh captured native exit, not an operator signer",
+        "native": {
+          "started_at_utc": "2026-10-27T03:16:11.5239858Z",
+          "wrapper_sid": "S-1-5-21-3592388187-2353680085-815129118-1004",
+          "wrapper_pid": 6888,
+          "native_pid": 7416,
+          "native_exit": 0,
+          "ended_at_utc": "2026-10-27T03:16:11.8467405Z"
+        },
+        "state": "PASS",
+        "actual_runner_identity": {
+          "sid": "S-1-5-21-3592388187-2353680085-815129118-1004",
+          "privileged": false
+        },
+        "name": "runner-signed-once"
+      }
+    ],
+    "localservice_key_boundary": {
+      "public_read": true,
+      "management_read": true,
+      "utc": "2026-10-27T03:15:50.1350613Z",
+      "private_read": false,
+      "pid": 7944,
+      "sid": "S-1-5-19"
+    },
+    "started_at_utc": "2026-10-27T03:15:46.8287769Z",
+    "localservice_task_instance": "{8FB40161-5F14-4931-B8C2-2340451ACA82}",
+    "state": "PASS_SIGNED_RUNNING",
+    "ended_at_utc": "2026-10-27T03:16:21.6320128Z"
+  },
+  "windows_final": {
+    "key_acl_metadata": [
+      {
+        "role": "private",
+        "sddl": "O:BAG:S-1-5-21-3592388187-2353680085-815129118-513D:PAI(A;;FA;;;SY)(A;;FA;;;BA)(A;;FR;;;S-1-5-21-3592388187-2353680085-815129118-1004)",
+        "path": "C:\\ProgramData\\coord\\g7\\runner-private\\r5-20261027.pk8"
+      },
+      {
+        "role": "public",
+        "sddl": "O:BAG:S-1-5-21-3592388187-2353680085-815129118-513D:PAI(A;;FA;;;SY)(A;;FR;;;LS)(A;;FA;;;BA)(A;;FR;;;S-1-5-21-3592388187-2353680085-815129118-1004)",
+        "path": "C:\\ProgramData\\coord\\g7\\broker-public\\r5-20261027.pub"
+      }
+    ],
+    "listeners": [
+      {
+        "LocalAddress": "127.0.0.1",
+        "LocalPort": 7779,
+        "OwningProcess": 9844
+      },
+      {
+        "LocalAddress": "127.0.0.1",
+        "LocalPort": 7777,
+        "OwningProcess": 9844
+      }
+    ],
+    "service_configuration": [
+      {
+        "service": "coord",
+        "field_count": 33,
+        "all_configuration_fields_match": true,
+        "selected": {
+          "Name": "coord",
+          "ExecutablePath": "C:\\ProgramData\\coord\\bin\\coord.exe",
+          "StartupDirectory": "C:\\ProgramData\\coord",
+          "Parameters": "serve --addr 127.0.0.1:7777 --db C:\\ProgramData\\coord\\data\\coord.db --actions-config \"C:\\ProgramData\\coord\\g7\\config\\registry-production.json\"",
+          "StartupType": 2,
+          "UserAccount": null,
+          "RunAsLocalSystem": null,
+          "EnableHealthMonitoring": true,
+          "HeartbeatInterval": 10,
+          "MaxFailedChecks": 2,
+          "RecoveryAction": 2,
+          "MaxRestartAttempts": 3,
+          "RecoveryOnCleanExit": false,
+          "StdoutPath": "C:\\ProgramData\\coord\\g7\\r5-runtime-20261027\\core-logs\\final.stdout.log",
+          "StderrPath": "C:\\ProgramData\\coord\\g7\\r5-runtime-20261027\\core-logs\\final.stderr.log"
+        }
+      },
+      {
+        "service": "CoordActionRunnerG7",
+        "field_count": 31,
+        "all_configuration_fields_match": true,
+        "selected": {
+          "Name": "CoordActionRunnerG7",
+          "ExecutablePath": "C:\\ProgramData\\coord\\g7\\bin\\coord-action-runner.exe",
+          "StartupDirectory": "C:\\ProgramData\\coord\\g7",
+          "Parameters": "--registry \"C:\\ProgramData\\coord\\g7\\config\\registry-production.json\" --private-key-file \"C:\\ProgramData\\coord\\g7\\runner-private\\r5-20261027.pk8\"",
+          "StartupType": 2,
+          "UserAccount": null,
+          "RunAsLocalSystem": null,
+          "EnableHealthMonitoring": true,
+          "HeartbeatInterval": 10,
+          "MaxFailedChecks": 3,
+          "RecoveryAction": 2,
+          "MaxRestartAttempts": 3,
+          "RecoveryOnCleanExit": false,
+          "StdoutPath": "C:\\ProgramData\\coord\\g7\\r5-runtime-20261027\\runner-logs\\final.stdout.log",
+          "StderrPath": "C:\\ProgramData\\coord\\g7\\r5-runtime-20261027\\runner-logs\\final.stderr.log"
+        }
+      }
+    ],
+    "restart_budgets": {
+      "core": {
+        "Success": true,
+        "ErrorMessage": null,
+        "Data": null,
+        "UpdateData": null,
+        "RestartAttempts": {
+          "Attempts": 0,
+          "UpdatedAtUtc": "2026-10-27T02:55:02.5222153Z"
+        }
+      },
+      "runner": {
+        "Success": true,
+        "ErrorMessage": null,
+        "Data": null,
+        "UpdateData": null,
+        "RestartAttempts": {
+          "Attempts": 0,
+          "UpdatedAtUtc": "2026-10-25T05:43:30.515007Z"
+        }
+      }
+    },
+    "health": {
+      "checked_at_unix_ms": 1793072192311,
+      "status": "READY",
+      "core": {
+        "status": "READY",
+        "reason": null
+      },
+      "database": {
+        "status": "READY",
+        "reason": null
+      },
+      "broker": {
+        "status": "READY",
+        "reason": null
+      },
+      "runner": {
+        "status": "READY",
+        "reason": null
+      },
+      "runner_last_seen_unix_ms": 1793072192156
+    },
+    "system_monitor_two_native_exits": [
+      {
+        "instance_id": "{FE14A16C-7EC7-4E27-BF11-A7F03D7CC0A9}",
+        "requested_at_utc": "2026-10-27T03:31:21.5139879Z",
+        "actual": {
+          "started_at_utc": "2026-10-27T03:31:21.7786279Z",
+          "wrapper_sid": "S-1-5-18",
+          "wrapper_pid": 6820,
+          "native_pid": 10044,
+          "native_sid": "S-1-5-18",
+          "native_exit": 0,
+          "status": {
+            "status": "READY",
+            "checked_at_utc": "2026-10-27T03:31:23.088Z",
+            "checked_at_unix_ms": 1793071883088,
+            "last_success_at_utc": "2026-10-27T03:31:23.088Z",
+            "consecutive_failures": 0,
+            "latency_ms": 8,
+            "tasks_list_latency_ms": 5,
+            "sqlite_latency_ms": 1,
+            "runner_consecutive_failures": 0,
+            "checks": {
+              "tasks_list": "PASS",
+              "sqlite_read_only": "PASS"
+            },
+            "components": {
+              "core": {
+                "status": "READY",
+                "reason": null
+              },
+              "database": {
+                "status": "READY",
+                "reason": null
+              },
+              "broker": {
+                "status": "READY",
+                "reason": null
+              },
+              "runner": {
+                "status": "READY",
+                "reason": null
+              },
+              "runner_last_seen_unix_ms": 1793071883066
+            },
+            "failed_checks": []
+          },
+          "ended_at_utc": "2026-10-27T03:31:23.3603377Z"
+        },
+        "round": 1,
+        "last_task_result": 0
+      },
+      {
+        "instance_id": "{08AA6BE8-A39F-4B50-97C0-F628E5ADF9ED}",
+        "requested_at_utc": "2026-10-27T03:31:25.1721388Z",
+        "actual": {
+          "started_at_utc": "2026-10-27T03:31:25.4235058Z",
+          "wrapper_sid": "S-1-5-18",
+          "wrapper_pid": 6764,
+          "native_pid": 3048,
+          "native_sid": "S-1-5-18",
+          "native_exit": 0,
+          "status": {
+            "status": "READY",
+            "checked_at_utc": "2026-10-27T03:31:26.847Z",
+            "checked_at_unix_ms": 1793071886847,
+            "last_success_at_utc": "2026-10-27T03:31:26.847Z",
+            "consecutive_failures": 0,
+            "latency_ms": 8,
+            "tasks_list_latency_ms": 4,
+            "sqlite_latency_ms": 1,
+            "runner_consecutive_failures": 0,
+            "checks": {
+              "tasks_list": "PASS",
+              "sqlite_read_only": "PASS"
+            },
+            "components": {
+              "core": {
+                "status": "READY",
+                "reason": null
+              },
+              "database": {
+                "status": "READY",
+                "reason": null
+              },
+              "broker": {
+                "status": "READY",
+                "reason": null
+              },
+              "runner": {
+                "status": "READY",
+                "reason": null
+              },
+              "runner_last_seen_unix_ms": 1793071886653
+            },
+            "failed_checks": []
+          },
+          "ended_at_utc": "2026-10-27T03:31:27.0620177Z"
+        },
+        "round": 2,
+        "last_task_result": 0
+      }
+    ],
+    "services": [
+      {
+        "Name": "coord",
+        "State": "Running",
+        "StartName": "NT AUTHORITY\\LocalService",
+        "StartMode": "Auto",
+        "ProcessId": 9036,
+        "PathName": "\"C:\\ProgramData\\Servy\\Servy.Service.CLI.exe\" \"coord\""
+      },
+      {
+        "Name": "Servy",
+        "State": "Running",
+        "StartName": "LocalSystem",
+        "StartMode": "Auto",
+        "ProcessId": 3224,
+        "PathName": "\"C:\\ProgramData\\Servy\\Servy.Host.exe\""
+      },
+      {
+        "Name": "CoordRelayAgent",
+        "State": "Running",
+        "StartName": "NT AUTHORITY\\LocalService",
+        "StartMode": "Auto",
+        "ProcessId": 5892,
+        "PathName": "\"C:\\ProgramData\\Servy\\Servy.Service.CLI.exe\" \"CoordRelayAgent\""
+      },
+      {
+        "Name": "CoordActionRunnerG7",
+        "State": "Running",
+        "StartName": ".\\coord_action_g7",
+        "StartMode": "Auto",
+        "ProcessId": 7376,
+        "PathName": "\"C:\\ProgramData\\Servy\\Servy.Service.CLI.exe\" \"CoordActionRunnerG7\""
+      }
+    ],
+    "stable_seconds_after_final_start": 70.199538,
+    "other_servy": {
+      "semantics": "Full private row comparison; only Host-maintained RestartAttempts and RestartAttemptsUpdatedAtTicks may change on unrelated services; no unrelated import/control calls",
+      "independent_runtime_counter_changes": [
+        {
+          "name": "OCI-A1-Grabber",
+          "before": {
+            "Pid": 10060,
+            "RestartAttempts": 1,
+            "RestartAttemptsUpdatedAtTicks": 639286661019393485
+          },
+          "after": {
+            "Pid": 10060,
+            "RestartAttempts": 0,
+            "RestartAttemptsUpdatedAtTicks": 639286682019418456
+          }
+        }
+      ],
+      "other_nine_configuration_and_pids_unchanged": true,
+      "unchanged_full_records": 8
+    },
+    "old_broker_acl_unchanged": true,
+    "monitor_final": {
+      "principal": "SYSTEM",
+      "enabled_triggers": 2,
+      "actions": [
+        {
+          "Execute": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+          "Arguments": "-NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"C:\\ProgramData\\coord\\health\\coord-health-monitor.ps1\" -RpcAuthKeyFile \"C:\\ProgramData\\coord\\g7\\r5-monitor-private-20261027\\management.key\" -MaxRestartsPerHour 3 -RestartCooldownMinutes 10"
+        }
+      ],
+      "state": "Ready",
+      "last_task_result": 0
+    },
+    "state": "PASS_WINDOWS_PRODUCTION_READY",
+    "observed_at_utc": "2026-10-27T03:36:33.8472347Z",
+    "restored_direct_system_task": {
+      "requested_at_utc": "2026-10-27T03:36:23.1836359Z",
+      "status": {
+        "status": "READY",
+        "checked_at_utc": "2026-10-27T03:36:24.211Z",
+        "checked_at_unix_ms": 1793072184211,
+        "last_success_at_utc": "2026-10-27T03:36:24.211Z",
+        "consecutive_failures": 0,
+        "latency_ms": 9,
+        "tasks_list_latency_ms": 5,
+        "sqlite_latency_ms": 2,
+        "runner_consecutive_failures": 0,
+        "checks": {
+          "tasks_list": "PASS",
+          "sqlite_read_only": "PASS"
+        },
+        "components": {
+          "core": {
+            "status": "READY",
+            "reason": null
+          },
+          "database": {
+            "status": "READY",
+            "reason": null
+          },
+          "broker": {
+            "status": "READY",
+            "reason": null
+          },
+          "runner": {
+            "status": "READY",
+            "reason": null
+          },
+          "runner_last_seen_unix_ms": 1793072184090
+        },
+        "failed_checks": []
+      },
+      "instance_id": "{21DB2D94-F4D4-472B-909D-E3F1F8E3171D}",
+      "last_task_result": 0,
+      "native_launch": "Original direct Windows PowerShell 5.1 action, no wrapper"
+    },
+    "actual_processes": {
+      "core": {
+        "parent_pid": 9036,
+        "executable": "C:\\ProgramData\\coord\\bin\\coord.exe",
+        "sid": "S-1-5-19",
+        "pid": 9844
+      },
+      "runner": {
+        "parent_pid": 7376,
+        "created_at_utc": "2026-10-27T03:35:09.391562Z",
+        "sid": "S-1-5-21-3592388187-2353680085-815129118-1004",
+        "pid": 4616
+      }
+    }
+  },
+  "protected_data_final": {
+    "monitor_fresh_scheduled_status": {
+      "task_state": "Ready",
+      "status": {
+        "status": "READY",
+        "checked_at_utc": "2026-10-27T03:39:15.917Z",
+        "checked_at_unix_ms": 1793072355917,
+        "last_success_at_utc": "2026-10-27T03:39:15.917Z",
+        "consecutive_failures": 0,
+        "latency_ms": 7,
+        "tasks_list_latency_ms": 4,
+        "sqlite_latency_ms": 1,
+        "runner_consecutive_failures": 0,
+        "checks": {
+          "tasks_list": "PASS",
+          "sqlite_read_only": "PASS"
+        },
+        "components": {
+          "core": {
+            "status": "READY",
+            "reason": null
+          },
+          "database": {
+            "status": "READY",
+            "reason": null
+          },
+          "broker": {
+            "status": "READY",
+            "reason": null
+          },
+          "runner": {
+            "status": "READY",
+            "reason": null
+          },
+          "runner_last_seen_unix_ms": 1793072355709
+        },
+        "failed_checks": []
+      },
+      "task_result": 0
+    },
+    "cleanup": {
+      "hives": 0,
+      "lowpriv_temp_processes": 0,
+      "tasks": 0,
+      "disposable_services": 0,
+      "accounts": 0,
+      "profiles": 0,
+      "temporary_ports": 0
+    },
+    "integrity": "ok",
+    "historic_failed_actions": "All original columns/attempts unchanged; no replay or new side effects",
+    "nonces": "Expected fresh signed polling state; not business mutation",
+    "freeze": {
+      "state": "PASS",
+      "read_only": true,
+      "triggers": 24,
+      "reviewed_sql_exact": true,
+      "sql_sha256": "678a8a1227dda09cbf98e43b90f348e8b242b2ce66e94cdfec1c23e8ee48dd3a",
+      "no_write_probe": true
+    },
+    "post_migration_fingerprints_unchanged": true,
+    "historical_action_states": {
+      "failed": 38,
+      "succeeded": 83
+    },
+    "runner_nonce_rows": 120,
+    "protected_batches": [
+      {
+        "action_count": 105,
+        "attempt_table_rows": 105,
+        "batch_found": true,
+        "batch_id": "90ce2ca7-184e-4c3d-9d87-56386db25419",
+        "derived_attempts_fingerprint": "d53f9c9683905890fe2dc4a8a07539136826ab73e304b51a34d91ba0ec14f059",
+        "extension_receipt_count": 0,
+        "progress_count": 106,
+        "progress_receipt_count": 145,
+        "protected_fingerprint": "a880c0db9afe89eca0abeee0257cdbd5ae3840027a2f72c3f9a07d871a878f8d",
+        "task_attempt_max": 2,
+        "task_attempt_sum": 112,
+        "task_count": 121,
+        "task_receipt_count": 105,
+        "task_states": {
+          "completed": 105,
+          "pending": 16
+        }
+      },
+      {
+        "action_count": 11,
+        "attempt_table_rows": 10,
+        "batch_found": true,
+        "batch_id": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e",
+        "derived_attempts_fingerprint": "6a490e3bb07783f5fbfbcde378677290996dc70f6dc82b1a79fa4fd8eded8eef",
+        "extension_receipt_count": 2,
+        "progress_count": 2,
+        "progress_receipt_count": 2,
+        "protected_fingerprint": "41d686091d4f6faefe270a4d18f3e812ec6ac8d39ffd03fbb0ad147ee570e236",
+        "task_attempt_max": 2,
+        "task_attempt_sum": 16,
+        "task_count": 10,
+        "task_receipt_count": 11,
+        "task_states": {
+          "completed": 10
+        }
+      },
+      {
+        "action_count": 5,
+        "attempt_table_rows": 4,
+        "batch_found": true,
+        "batch_id": "d2313c78-22da-4cb8-bcd7-ece9897e0db1",
+        "derived_attempts_fingerprint": "de7c734a9e92f82bd0863c69e0c92cc2304cf6a400d0b9ac621af97c1e678000",
+        "extension_receipt_count": 4,
+        "progress_count": 4,
+        "progress_receipt_count": 4,
+        "protected_fingerprint": "90694ba2f953d229ecc2a61228797151f2e92a50564896944ca3f5e386211dda",
+        "task_attempt_max": 1,
+        "task_attempt_sum": 4,
+        "task_count": 4,
+        "task_receipt_count": 4,
+        "task_states": {
+          "completed": 4
+        }
+      }
+    ],
+    "original_column_comparison": {
+      "state": "PASS",
+      "all_original_values_equal": true,
+      "includes_fences_and_receipts_compared_privately": true,
+      "no_credential_values_or_derived_hashes_emitted": true,
+      "integrity_check": "ok",
+      "tables": [
+        {
+          "table": "batches",
+          "rows": 4,
+          "original_columns": 6,
+          "new_columns": [],
+          "all_original_values_equal": true
+        },
+        {
+          "table": "tasks",
+          "rows": 145,
+          "original_columns": 27,
+          "new_columns": [
+            "failure_count",
+            "interruption_streak",
+            "needs_attention"
+          ],
+          "all_original_values_equal": true
+        },
+        {
+          "table": "task_receipts",
+          "rows": 125,
+          "original_columns": 6,
+          "new_columns": [],
+          "all_original_values_equal": true
+        },
+        {
+          "table": "task_progress",
+          "rows": 112,
+          "original_columns": 8,
+          "new_columns": [],
+          "all_original_values_equal": true
+        },
+        {
+          "table": "task_progress_receipts",
+          "rows": 151,
+          "original_columns": 7,
+          "new_columns": [],
+          "all_original_values_equal": true
+        },
+        {
+          "table": "task_progress_extend_receipts",
+          "rows": 6,
+          "original_columns": 5,
+          "new_columns": [],
+          "all_original_values_equal": true
+        },
+        {
+          "table": "completion_actions",
+          "rows": 121,
+          "original_columns": 22,
+          "new_columns": [],
+          "all_original_values_equal": true
+        }
+      ]
+    },
+    "formal_batch": "121 tasks; 105 completed / 16 pending; unchanged"
+  },
+  "external": {
+    "authenticated_sidecar_relay_core": {
+      "state": "PASS",
+      "requested_at_utc": "2026-10-27T03:38:11.762Z",
+      "ended_at_utc": "2026-10-27T03:38:12.226Z",
+      "http_status": 200,
+      "relay_state": "ok",
+      "code": null,
+      "returned_task_count": 1,
+      "request_id": "b304faef-e5fc-4224-9a09-69918ac764c6",
+      "method": "tasks/list",
+      "skip_reclaim": true,
+      "route": "Existing authenticated local Sidecar client -> existing Arasaka Relay -> production Core; protected batches filtered by original policy",
+      "claims_sent": 0,
+      "credential_material_exported": false
+    },
+    "existing_connector_readback": {
+      "read_only": true,
+      "claim_calls": 0,
+      "token_material_exported": false,
+      "tasks_list_without_worker": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Request rejected: logical_worker_required."
+          }
+        ],
+        "structuredContent": {
+          "error_code": "INVALID_ARGUMENT"
+        },
+        "isError": true
+      },
+      "formal_status_existing_worker": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Coord MCP operation failed; no success is being reported."
+          }
+        ],
+        "structuredContent": {
+          "error_code": "INVALID_ARGUMENT"
+        },
+        "isError": true
+      },
+      "interpretation": "Authenticated connector reaches existing logical authorization. No successful business query claimed: all four unchanged bindings expired before this B3 window. No policy renewal or business resume attempted."
+    },
+    "acceptance": "PASS for unchanged infrastructure, existing authenticated two-hop read route, public metadata and existing authorization denials. Successful ChatGPT business RPC/OAuth refresh NOT_RUN; no expired binding renewal.",
+    "linux_before": {
+      "observed_at_utc": "2026-10-27T12:30:07.340623+10:00",
+      "host": "instance-20260424-1840",
+      "services": {
+        "coord-relay.service": {
+          "exit_code": 0,
+          "properties": [
+            "MainPID=127496",
+            "NRestarts=0",
+            "ActiveState=active",
+            "SubState=running"
+          ]
+        },
+        "feathersjsapp.service": {
+          "exit_code": 0,
+          "properties": [
+            "MainPID=127510",
+            "NRestarts=0",
+            "ActiveState=active",
+            "SubState=running"
+          ]
+        },
+        "openresty.service": {
+          "exit_code": 0,
+          "properties": [
+            "MainPID=109204",
+            "NRestarts=0",
+            "ActiveState=active",
+            "SubState=running"
+          ]
+        }
+      },
+      "sidecar_health": {
+        "http_status": 200,
+        "body": {
+          "state": "READY",
+          "agentConnected": true,
+          "lastHeartbeat": "2026-10-27T02:30:03.532Z",
+          "pending": 0
+        }
+      }
+    },
+    "linux_final": {
+      "observed_at_utc": "2026-10-27T13:39:39.124371+10:00",
+      "host": "instance-20260424-1840",
+      "services": {
+        "coord-relay.service": {
+          "exit_code": 0,
+          "properties": [
+            "MainPID=127496",
+            "NRestarts=0",
+            "ActiveState=active",
+            "SubState=running"
+          ]
+        },
+        "feathersjsapp.service": {
+          "exit_code": 0,
+          "properties": [
+            "MainPID=127510",
+            "NRestarts=0",
+            "ActiveState=active",
+            "SubState=running"
+          ]
+        },
+        "openresty.service": {
+          "exit_code": 0,
+          "properties": [
+            "MainPID=109204",
+            "NRestarts=0",
+            "ActiveState=active",
+            "SubState=running"
+          ]
+        }
+      },
+      "sidecar_health": {
+        "http_status": 200,
+        "body": {
+          "state": "READY",
+          "agentConnected": true,
+          "lastHeartbeat": "2026-10-27T03:39:37.805Z",
+          "pending": 0
+        }
+      }
+    },
+    "policy_metadata": {
+      "observed_at_utc": "2026-10-27T13:34:02.723866+10:00",
+      "policy_path": "/etc/coord-relay/identity.json",
+      "policy_mtime_utc": "2026-10-25T17:59:15.841005+10:00",
+      "enabled": true,
+      "mode": "logical",
+      "bindings": [
+        {
+          "id": "g7-operator",
+          "batch_id": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e",
+          "not_before": 1792907222904,
+          "expires_at": 1792993523904,
+          "expired": true,
+          "worker_ids": [
+            "0000",
+            "0001",
+            "0002",
+            "0003",
+            "0004",
+            "0005"
+          ],
+          "scopes": [
+            "coord:read",
+            "coord:claim",
+            "coord:progress",
+            "coord:extend",
+            "coord:submit",
+            "coord:failure"
+          ]
+        },
+        {
+          "id": "g7-browser",
+          "batch_id": "d2313c78-22da-4cb8-bcd7-ece9897e0db1",
+          "not_before": 1792907222904,
+          "expires_at": 1792993523904,
+          "expired": true,
+          "worker_ids": [
+            "0000",
+            "0001",
+            "0002",
+            "0003",
+            "0004",
+            "0005"
+          ],
+          "scopes": [
+            "coord:read",
+            "coord:claim",
+            "coord:progress",
+            "coord:extend",
+            "coord:submit",
+            "coord:failure"
+          ]
+        },
+        {
+          "id": "g7-browser-reconnect",
+          "batch_id": "d2313c78-22da-4cb8-bcd7-ece9897e0db1",
+          "not_before": 1792907222904,
+          "expires_at": 1792993523904,
+          "expired": true,
+          "worker_ids": [
+            "0000",
+            "0001"
+          ],
+          "scopes": [
+            "coord:read",
+            "coord:claim",
+            "coord:progress",
+            "coord:extend",
+            "coord:submit",
+            "coord:failure"
+          ]
+        },
+        {
+          "id": "emote-initial-v1",
+          "batch_id": "90ce2ca7-184e-4c3d-9d87-56386db25419",
+          "not_before": 1792915124865,
+          "expires_at": 1792958324865,
+          "expired": true,
+          "worker_ids": [
+            "0000",
+            "0001",
+            "0002",
+            "0003",
+            "0004",
+            "0005"
+          ],
+          "scopes": [
+            "coord:read",
+            "coord:claim",
+            "coord:progress",
+            "coord:extend",
+            "coord:submit",
+            "coord:failure"
+          ]
+        }
+      ]
+    },
+    "public_oauth_metadata": [
+      {
+        "url": "https://lieyanbang.com/app/CoordMCP/.well-known/oauth-protected-resource/mcp",
+        "metadata": {
+          "resource": "https://lieyanbang.com/app/CoordMCP/",
+          "authorization_servers": [
+            "https://lieyanbang.com/app/CoordMCP"
+          ],
+          "scopes_supported": [
+            "coord",
+            "offline_access"
+          ],
+          "bearer_methods_supported": [
+            "header"
+          ]
+        },
+        "status": 200
+      },
+      {
+        "url": "https://lieyanbang.com/app/CoordMCP/.well-known/oauth-authorization-server",
+        "metadata": {
+          "issuer": "https://lieyanbang.com/app/CoordMCP",
+          "authorization_endpoint": "https://lieyanbang.com/app/CoordMCP/oauth/authorize",
+          "token_endpoint": "https://lieyanbang.com/app/CoordMCP/oauth/token",
+          "registration_endpoint": "https://lieyanbang.com/app/CoordMCP/oauth/register",
+          "response_types_supported": [
+            "code"
+          ],
+          "authorization_response_iss_parameter_supported": true,
+          "grant_types_supported": [
+            "authorization_code",
+            "refresh_token"
+          ],
+          "token_endpoint_auth_methods_supported": [
+            "none"
+          ],
+          "code_challenge_methods_supported": [
+            "S256"
+          ],
+          "scopes_supported": [
+            "coord",
+            "offline_access"
+          ],
+          "client_id_metadata_document_supported": false
+        },
+        "status": 200
+      }
+    ]
+  },
+  "retained_failures": [
+    {
+      "failure": "First SYSTEM PS5 monitor exited 2 before health because one-off PS7 launcher context could not resolve Get-Acl in PS5",
+      "evidence": "production-final-failed-summary.json; monitor-diagnose[-v2/-v3].raw.json",
+      "fallback": "Same candidate compatible Core reached DEGRADED with old business columns unchanged. Fixed one-off checkpoint property assignment using Add-Member; original failure retained",
+      "correction": "Direct Task Scheduler PS5 context passed; no product code or global module/policy edit"
+    },
+    {
+      "failure": "Full-record assertion detected OCI-A1-Grabber runtime budget reset 1 -> 0",
+      "evidence": "production-final-v2-summary.json; servy-diff.raw.json",
+      "fallback": "Same candidate DEGRADED; Runner stopped, current DB retained, monitor disabled. After evidence distinguished runtime from configuration, controlled same-config resume completed.",
+      "correction": "Private full-column comparison proved identical native PID 10060 and all unrelated configuration fields. Eight unrelated full records identical; ninth differs only Host-maintained restart count/time. No unrelated control/import/change"
+    }
+  ],
+  "rollback": {
+    "method": "Stop Coord Runner, disable monitor, keep same verified new Core and current frozen DB, restore compatible Broker-disabled registry and supervised Core recovery",
+    "never": [
+      "Old G7 binary restore",
+      "Stale production DB restore",
+      "Shared Servy database restore",
+      "Other service restart/import",
+      "Old broker key access or ACL expansion"
+    ],
+    "executed_for_acceptance_failures": true
+  },
+  "verification_reuse": {
+    "fork": "https://github.com/lieyanbang/coord",
+    "reason": "No source/formal-script change; docs-only evidence commits use [skip ci] per current TASK",
+    "current_read_only_ci_confirmation": true,
+    "product_source_and_formal_scripts_changed": false,
+    "steps": [
+      {
+        "name": "Set up job",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Run actions/checkout@v4",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Run dtolnay/rust-toolchain@stable",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Run Swatinem/rust-cache@v2",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Run actions/setup-python@v5",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Run actions/setup-node@v4",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "fmt",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "clippy",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "test",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "release build",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "health monitor authentication and recovery",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Dedicated low-privilege Action Runner rehearsal",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Coord MCP test dependencies",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "relay protocol and lease-fencing tests",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Coord MCP OAuth and HTTP tests",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Phase G request and result utility tests",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Package matched R5-1B binaries and manifest",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Run actions/upload-artifact@v4",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Run actions/upload-artifact@v4",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Post Run actions/setup-node@v4",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Post Run actions/setup-python@v5",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Post Run Swatinem/rust-cache@v2",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Post Run actions/checkout@v4",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Complete job",
+        "status": "completed",
+        "conclusion": "success"
+      }
+    ],
+    "job": 121763119437,
+    "run_url": "https://github.com/lieyanbang/coord/actions/runs/40377126693",
+    "local_checks": "fmt/clippy/locked tests/release all exit 0; 88 passed, 8 intentionally ignored",
+    "new_ci_triggered": false,
+    "local_gate": "stage-r5-b3-a-checks.json"
+  },
+  "preservation": {
+    "protected_file_baseline": [
+      {
+        "path": ".gitignore",
+        "sha256": "34CC463BB9DF5DC625FB3152E23A4849397A7505EEFB6686B840178E5BD7CFD8"
+      },
+      {
+        "path": "docs/PLAN.md",
+        "sha256": "E138D86D63001865B66329375E17F297D6CB67D0A77F517D1566C5C234636C52"
+      },
+      {
+        "path": "TASK.md",
+        "sha256": "91A77E0DD1A1016A2088C9B2542D3F9C720FF77B8F485E1001DDC5F0C2BD35FF"
+      }
+    ],
+    "unrelated_processes_services_and_linux_configuration_untouched": true,
+    "history_rewrite": false,
+    "original_git_status_entries": 3989,
+    "original_status_entries_unchanged_before_final_evidence": true,
+    "task_plan_read_only": true
+  },
+  "remaining": [
+    "B4 real ChatGPT sessions/OAuth refresh/context-loss acceptance NOT_RUN; requires a new task",
+    "All four existing business bindings expired before B3; future authorized business testing needs an approved valid identity window without weakening existing protection",
+    "Formal Batch remains frozen with 24 exact guards; any business resumption/unfreeze requires a separately scoped task and fresh observation",
+    "Historical 38 failed Actions remain preserved; B3 does not authorize replay or repair of those business outcomes"
+  ],
+  "raw_evidence_roots": [
+    "D:\\project\\coord\\target\\b3-a2-b-20261027",
+    "Arasaka C:\\coord-b3a2-20261027-a"
+  ],
+  "operational_source_manifest": [
+    {
+      "sha256": "307d442b0a49a718703748358c1e05ed581a50eee88a0efb934421d5f8f49f00",
+      "file": "production-common.ps1"
+    },
+    {
+      "sha256": "8fbdcf0fbf177e576fb646fc3f18754ae73599d80d9882bd447978834d859999",
+      "file": "production-compat.ps1"
+    },
+    {
+      "sha256": "6f5ff75b86db7eddb572ef3735e994498252a74e6b34c31d6827f636c9f46acf",
+      "file": "production-signed.ps1"
+    },
+    {
+      "sha256": "e485536d17b2b6a1b10b4e99f9a4d1bde9877832468e9049204fdb7294d1a9e2",
+      "file": "production-resume-v2.ps1"
+    },
+    {
+      "sha256": "153fef3c4f4dd7c9ffff30fad2e2dc0070f3e1e1e0a821eb4b640bb5dd56f801",
+      "file": "production-final-v3.ps1"
+    },
+    {
+      "sha256": "834a412a6c1fdf4795e4ca13a9eb417d0d693ce8ab94b82604a23b55c09307d6",
+      "file": "b3-close.ps1"
+    },
+    {
+      "sha256": "d1684bd936a57095d8859ade46508efbb98a0f50f50eca3243dd00ac60ac79b0",
+      "file": "maintenance-freeze.py"
+    },
+    {
+      "sha256": "a4e0e4f621c41f2d738fc1d7b2489edcfa912bdffc5c7ff89fea7efd60d6c6a3",
+      "file": "compare-original-columns.py"
+    },
+    {
+      "sha256": "5f03eee6f005706b7a2d28f2eef08d916b2144e460661e6c8b188f5d0ba7f20d",
+      "file": "final-freeze-readonly.py"
+    },
+    {
+      "sha256": "9280d7cb447bb258356422ff6cd3ed8780609335c456bd6093dbb33cad712bfb",
+      "file": "servy-diff.py"
+    }
+  ]
+}

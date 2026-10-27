@@ -239,3 +239,39 @@ production routes, OAuth grants, formal Batch state, services, Canary, and
 remote Runner were not touched. That boundary is **NOT_RUN**, not inferred as
 PASS from the synthetic local MCP lifecycle. `TASK.md` remains byte-for-byte
 unchanged.
+
+## Phase R5 B3 production recovery (2026-10-27)
+
+**B3 PASS / PRODUCTION READY; business remains FROZEN.** This subsequent
+authorized deployment supersedes the earlier R4 non-deployment observation for
+B3 only. A2 closed the isolated Servy/SCM restore, real retry-budget semantics
+and old publisher compatibility gates. The verified Core/Runner artifact from
+`ea9783268e33e546572fe346335056e28bc4d435` is now deployed on Arasaka with
+independent management authentication and a locally generated signed Runner
+identity; the original publisher and all three profile pins remain unchanged.
+
+At 03:39:43Z, actual LocalService Core PID 9844 and existing low-privilege
+Runner PID 4616 report all components READY. Two fresh SYSTEM PS5 monitor runs
+captured real native SID/exit 0 and READY contents; the restored direct PS5 task
+and later scheduled run also passed. Authentication 200/401, loopback listener
+ownership, existing authenticated Sidecar/Relay/Core read RPC, Linux services,
+public OAuth metadata, exact service configuration and key ACL boundaries pass.
+Same-version compatible-Core recovery was actually exercised on acceptance
+failures without restoring an old database or old G7 executable.
+
+All original columns of seven business tables, formal Batch 105 completed / 16
+pending, two old Canaries and historical 38 failed / 83 succeeded Actions are
+unchanged. Twenty-four verified business guards remain active. The original
+four business bindings expired before B3; their existing authorization denials
+were retained. No successful ChatGPT business query, OAuth refresh, B4 session,
+formal claim, unfreeze or failed-Action replay is claimed. These require a new
+task and valid authorized identity window. Phase R overall remains PARTIAL
+until its remaining separately scoped gates pass.
+
+No new product source/formal-script changes or full CI rerun: the existing
+local locked gate and [Fork run 40377126693](https://github.com/lieyanbang/coord/actions/runs/40377126693)
+were reused and the cloud results read back. TASK/PLAN, unrelated services,
+old broker key and existing Git work were preserved. Exact evidence, retained
+failures, backups and safe recovery are in
+[PHASE_R5_B3_RECOVERY.md](PHASE_R5_B3_RECOVERY.md) and
+[PHASE_R5_B3_B_EVIDENCE_20261027.json](PHASE_R5_B3_B_EVIDENCE_20261027.json).
