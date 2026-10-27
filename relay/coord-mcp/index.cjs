@@ -76,7 +76,7 @@ const TOOLS = [
   },
   {
     name: 'coord_claim',
-    description: 'Claim the next ready task from exactly one batch. Repeating the call returns the worker current live claim. The lease token remains inside coord; claim returns task_id and attempt_no.',
+    description: 'Claim the next ready task from exactly one batch. Repeating the call returns the worker current live claim. The lease token remains inside coord; the returned task uses id and attempt_no. Pass that id as task_id to progress, complete or release.',
     inputSchema: objectSchema({ batch_id: stringSchema('Required batch UUID; claims never spill into another batch.', 36), worker_id: WORKER_ID_PROPERTY, lease_seconds: integerSchema('Requested lease duration.', 1, 600) }, ['batch_id', 'worker_id']),
     annotations: { title: 'Claim coord task', readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
   },
