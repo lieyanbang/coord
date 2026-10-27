@@ -1,7 +1,7 @@
 # B5-R：证据补充与版本化恢复
 
 2026-10-27；执行分支 `codex/b5-r-recovery-20261027`。
-**进行中：R1 PASS（保留冲突），R2 本地 PASS / Fork CI 待验；R3/R4/B5-D NOT_RUN。**
+**进行中：R1 PASS（保留冲突），R2 本地 PASS / Fork CI 待验；R3 PASS；R4/B5-D NOT_RUN。**
 本报告不改变 [旧 B5 BLOCKED 历史](PHASE_R5_B5_ACTION_RECOVERY.md)。
 TASK.md、docs/PLAN.md、用户原工作区成果保持只读/原样。
 
@@ -61,10 +61,37 @@ Action ID/原结果 hash/补证 hash，且限时有效。独立 outbox/event 与
 `pwsh -NoProfile -File scripts/verify.ps1 -Stage b5-r2` 全部 exit 0：fmt、locked
 clippy、93 passed / 8 intentionally ignored、locked release build。
 命令/退出码/日志见 `stage-b5-r2-checks.json` 及同名前缀日志。
-Fork CI 和匹配产物待验；当前不宣称生产 Gate PASS。
+首轮 [Fork CI 40514410347](https://github.com/lieyanbang/coord/actions/runs/40514410347)
+在 `5a1373464c7dabf6f64e7d58a41c70e4c9590c7d` 的 fmt/clippy/93 tests/release/
+health monitor、真实低权限发布/索引/崩溃恢复均通过，但最终夹具清理失败：晚发现的
+Core 子进程 Stop-Process 后立即查询，尚未退出。artifact `12740005582` 的 summary
+保留该 FAIL，未把它当作整轮通过。为此分支补上同样的有界退出等待；完整本地
+`-Stage b5-r2-ci-cleanup` 四项再次 exit 0。匹配云端产物仍待验。
+
+## R3：真实 Runner 令牌和最小 ACL
+
+隔离正例/反例/撤销均通过。管理调用方不能打开服务进程令牌，保留两次拒绝；
+一次性 SYSTEM 任务取得**现有 Runner PID 4616** 的令牌，以线程 impersonation
+执行全部 I/O。核验 SID 尾号 1004、没有 Administrators；没有密码或私钥读取。
+输入读取、输出创建和清理通过；输入写入、受限文件打开被拒绝；撤销后再次拒绝，
+原 SDDL 精确恢复。该证据证明 OS ACL，R4 仍另需真实签名 Broker/Runner 发布。
+
+生产先备份全部精确目标 ACL。首次方案被旧输出写保护探针拒绝：134 份旧发布
+文件 owner 本来就是当前 Runner，新增 CREATOR OWNER 继承会恢复其数据写权限。
+完整撤回后，原 ACL mismatch=0，输出 content changes=0；未强行继续。
+修正版对旧发布文件增加 Runner Write/Delete deny，保留原 ACE、owner、继承边界；
+输入/refs 1670 个必要文件只加 Read/Execute，输出目录允许创建，CREATOR OWNER
+只用于其新建文件的写入和清理；31 份合格 supplement 只读。
+
+13:53Z 前生产实际令牌验证：results、.receipts、.reviews、review_queue 均可创建/
+清理自己的临时标记；输入/refs 可读，输入和旧输出不能写；Broker/管理凭据与 DB
+不能打开。敏感 ACL 不变，134 份旧输出字节不变，全部原 ACE/owner/继承边界保留。
+一次性任务已撤销。没有更改数据库、registry、密钥权限或六 worker 绑定。
 
 ## R3 / R4 / B5-D
 
-尚未执行生产 ACL 修复、签名低权限恢复 Canary 或六会话任务分派。
+尚未执行签名低权限恢复 Canary 或六会话任务分派。R4 一致在线副本已建立，
+8 张原业务表全部原列 changed_or_missing=0；原 24 个 SQL 定义的 hash 精确为
+`678a8a1227dda09cbf98e43b90f348e8b242b2ce66e94cdfec1c23e8ee48dd3a`。
 正式 16 项 pending 和原 38 条失败 Action 不作无差别重放。
 仅 R3/R4 的全部适用真实 Gate 通过后继续 B5-D。

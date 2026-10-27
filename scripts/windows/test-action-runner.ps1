@@ -397,6 +397,14 @@ with sqlite3.connect(sys.argv[1]) as db:
                 try { Stop-Process -Id $fixtureCore.ProcessId -Force -Confirm:$false } catch {
                     if ($_.FullyQualifiedErrorId -notlike 'NoProcessFoundForGivenId,*') { throw }
                 }
+                # Stop-Process returns before the kernel process object is
+                # necessarily reaped. The late-discovered child needs the same
+                # bounded exit wait as the original recorded Core PID above.
+                for ($attempt = 0; $attempt -lt 100; $attempt++) {
+                    $remainingCore = Get-CimInstance Win32_Process -Filter ('ProcessId=' + $fixtureCore.ProcessId)
+                    if (-not $remainingCore -or $remainingCore.CreationDate -ne $fixtureCore.CreationDate) { break }
+                    Start-Sleep -Milliseconds 100
+                }
             }
             if (@(Get-CimInstance Win32_Process | Where-Object { $_.ExecutablePath -eq $fixtureCorePath -and $_.CommandLine -like ('*' + $databasePath + '*') }).Count -gt 0) { throw 'Exact disposable Core process remained after task cleanup.' }
         } catch { Add-CleanupFailure 'cleanup-localservice-core-process' $_ }
