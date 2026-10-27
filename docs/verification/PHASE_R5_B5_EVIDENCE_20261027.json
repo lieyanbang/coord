@@ -1,0 +1,4308 @@
+{
+  "observed_at_utc": "2026-10-27T12:50:32.163325+00:00",
+  "batch_id": "90ce2ca7-184e-4c3d-9d87-56386db25419",
+  "stage_states": {
+    "B5-A": "PASS",
+    "B5-B": "PARTIAL/BLOCKED",
+    "B5-C": "BLOCKED/NOT_RUN",
+    "B5-D": "NOT_RUN"
+  },
+  "reconciled": 38,
+  "repaired": 0,
+  "still_failed": 38,
+  "uncertain": 0,
+  "classifications": {
+    "A": 0,
+    "B": 0,
+    "C": 0,
+    "D": 0,
+    "E": 38
+  },
+  "field_failure_counts": {
+    "low_confidence_notes_20_2000": 196
+  },
+  "batch_counts": [
+    {
+      "batch_id": "538fef02-5e14-4ece-aaa3-48c417fcd6b8",
+      "state": "completed",
+      "n": 4
+    },
+    {
+      "batch_id": "90ce2ca7-184e-4c3d-9d87-56386db25419",
+      "state": "completed",
+      "n": 105
+    },
+    {
+      "batch_id": "90ce2ca7-184e-4c3d-9d87-56386db25419",
+      "state": "pending",
+      "n": 16
+    },
+    {
+      "batch_id": "d2313c78-22da-4cb8-bcd7-ece9897e0db1",
+      "state": "completed",
+      "n": 4
+    },
+    {
+      "batch_id": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e",
+      "state": "completed",
+      "n": 10
+    },
+    {
+      "batch_id": "ee52bcae-f269-498b-b7ed-d740e1b137ab",
+      "state": "completed",
+      "n": 1
+    }
+  ],
+  "action_totals": [
+    {
+      "batch_id": "90ce2ca7-184e-4c3d-9d87-56386db25419",
+      "state": "failed",
+      "n": 38
+    },
+    {
+      "batch_id": "90ce2ca7-184e-4c3d-9d87-56386db25419",
+      "state": "succeeded",
+      "n": 67
+    },
+    {
+      "batch_id": "d2313c78-22da-4cb8-bcd7-ece9897e0db1",
+      "state": "succeeded",
+      "n": 5
+    },
+    {
+      "batch_id": "ddb65e62-2847-4dbb-a188-40f2c20c9c8e",
+      "state": "succeeded",
+      "n": 11
+    }
+  ],
+  "active_tasks": [],
+  "rpc_action_metadata_count": 105,
+  "rpc_action_truncated": false,
+  "batch_validator_configured": true,
+  "batch_action_profile": "emote-publisher-v1",
+  "batch_failure_count": 112,
+  "batch_needs_attention": 0,
+  "inputs": {
+    "manifest_files": 1673,
+    "validation": {
+      "missing": [],
+      "mismatch": []
+    }
+  },
+  "publisher_sha256": "cac5496ed1dea50f837f28403feb62515de1ba1459ea2557abe6097ec07bec55",
+  "isolated_positive_control": {
+    "action_id": "b0dd254e-1aea-4d23-b9fb-09f4e0931736",
+    "event_id": "2a2ff2d1-149a-40f5-aa14-6b40d4b2ce93",
+    "task_id": "046df6fa-0389-45f5-b1e9-3407f5d6b9f4",
+    "group_id": "73",
+    "historical_state": "succeeded",
+    "historical_exit": 0,
+    "historical_output_bytes": 0,
+    "receipt_verified": true,
+    "exit_code": 0,
+    "stderr_bytes": 0,
+    "stdout_bytes": 0,
+    "stderr": "",
+    "result_agent_matches_owner": true,
+    "result_source_matches_input": true,
+    "files_created": [
+      "results\\73.json",
+      "results\\.receipts\\73.json"
+    ]
+  },
+  "rows": [
+    {
+      "id": "f46c4dbf-c8c9-48f9-b54e-b427f24d81df",
+      "event_id": "edea24f7-0411-4b9a-928c-e697d7d9f216",
+      "task_id": "05be8952-5d51-4792-b1a5-e5e66480cf06",
+      "profile_id": "emote-publisher-v1",
+      "profile_version": 1,
+      "action_kind": "on_task_completed",
+      "state": "failed",
+      "attempt_count": 2,
+      "max_attempts": 2,
+      "last_error": "nonzero_exit_retryable",
+      "exit_code": 1,
+      "output_bytes": 55,
+      "created_at": "2026-10-25T08:40:07.645604+00:00",
+      "updated_at": "2026-10-25T08:40:08.332653800+00:00",
+      "group_id": "16",
+      "task_state": "completed",
+      "task_attempt_no": 1,
+      "payload_result_equal": true,
+      "event_id_equal": true,
+      "receipt_count": 1,
+      "completion_receipt_result_equal": true,
+      "outputs": [
+        {
+          "path": "results/16.json",
+          "exists": false
+        },
+        {
+          "path": "results/.receipts/16.json",
+          "exists": false
+        }
+      ],
+      "classification": "E",
+      "classification_scope": "Unrecoverable under immutable accepted-result and existing publisher contract; not a claim of permanent impossibility",
+      "receipt_fence_verified": true,
+      "isolated_exit_code": 1,
+      "isolated_stderr": "Error: invalid character or incomplete review evidence",
+      "field_issues": [
+        {
+          "character_index": 2,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 39,
+          "visual_description_trimmed_chars": 39,
+          "notes_chars": 18,
+          "notes_trimmed_chars": 18,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 4,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 40,
+          "visual_description_trimmed_chars": 40,
+          "notes_chars": 14,
+          "notes_trimmed_chars": 14,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        }
+      ]
+    },
+    {
+      "id": "e23bae44-c278-4112-a454-503fe4b639f5",
+      "event_id": "ed980998-de68-4c7e-887e-f558696dff56",
+      "task_id": "15aa65f4-acea-479b-8c6c-ac613cab9aa3",
+      "profile_id": "emote-publisher-v1",
+      "profile_version": 1,
+      "action_kind": "on_task_completed",
+      "state": "failed",
+      "attempt_count": 2,
+      "max_attempts": 2,
+      "last_error": "nonzero_exit_retryable",
+      "exit_code": 1,
+      "output_bytes": 55,
+      "created_at": "2026-10-25T08:41:28.953962500+00:00",
+      "updated_at": "2026-10-25T08:41:29.552879400+00:00",
+      "group_id": "41",
+      "task_state": "completed",
+      "task_attempt_no": 1,
+      "payload_result_equal": true,
+      "event_id_equal": true,
+      "receipt_count": 1,
+      "completion_receipt_result_equal": true,
+      "outputs": [
+        {
+          "path": "results/41.json",
+          "exists": false
+        },
+        {
+          "path": "results/.receipts/41.json",
+          "exists": false
+        }
+      ],
+      "classification": "E",
+      "classification_scope": "Unrecoverable under immutable accepted-result and existing publisher contract; not a claim of permanent impossibility",
+      "receipt_fence_verified": true,
+      "isolated_exit_code": 1,
+      "isolated_stderr": "Error: invalid character or incomplete review evidence",
+      "field_issues": [
+        {
+          "character_index": 4,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 38,
+          "visual_description_trimmed_chars": 38,
+          "notes_chars": 15,
+          "notes_trimmed_chars": 15,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 5,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 41,
+          "visual_description_trimmed_chars": 41,
+          "notes_chars": 14,
+          "notes_trimmed_chars": 14,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 7,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 45,
+          "visual_description_trimmed_chars": 45,
+          "notes_chars": 16,
+          "notes_trimmed_chars": 16,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        }
+      ]
+    },
+    {
+      "id": "711ec9be-8359-4184-ab72-8da45109cfec",
+      "event_id": "b3a574de-7a20-433e-9862-e520ed79b52a",
+      "task_id": "1336c492-ea2a-4737-a9b4-7793ef9c2820",
+      "profile_id": "emote-publisher-v1",
+      "profile_version": 1,
+      "action_kind": "on_task_completed",
+      "state": "failed",
+      "attempt_count": 2,
+      "max_attempts": 2,
+      "last_error": "nonzero_exit_retryable",
+      "exit_code": 1,
+      "output_bytes": 55,
+      "created_at": "2026-10-25T08:42:11.204313400+00:00",
+      "updated_at": "2026-10-25T08:42:11.572847200+00:00",
+      "group_id": "07",
+      "task_state": "completed",
+      "task_attempt_no": 1,
+      "payload_result_equal": true,
+      "event_id_equal": true,
+      "receipt_count": 1,
+      "completion_receipt_result_equal": true,
+      "outputs": [
+        {
+          "path": "results/07.json",
+          "exists": false
+        },
+        {
+          "path": "results/.receipts/07.json",
+          "exists": false
+        }
+      ],
+      "classification": "E",
+      "classification_scope": "Unrecoverable under immutable accepted-result and existing publisher contract; not a claim of permanent impossibility",
+      "receipt_fence_verified": true,
+      "isolated_exit_code": 1,
+      "isolated_stderr": "Error: invalid character or incomplete review evidence",
+      "field_issues": [
+        {
+          "character_index": 7,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 45,
+          "visual_description_trimmed_chars": 45,
+          "notes_chars": 19,
+          "notes_trimmed_chars": 19,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        }
+      ]
+    },
+    {
+      "id": "4f33ec3d-5da8-4f9e-9455-7f82c278a84c",
+      "event_id": "e6dc885e-d742-47d7-b54e-0e96426f73b8",
+      "task_id": "17e6edd2-fce7-41e1-8a07-2a207e4ca772",
+      "profile_id": "emote-publisher-v1",
+      "profile_version": 1,
+      "action_kind": "on_task_completed",
+      "state": "failed",
+      "attempt_count": 2,
+      "max_attempts": 2,
+      "last_error": "nonzero_exit_retryable",
+      "exit_code": 1,
+      "output_bytes": 55,
+      "created_at": "2026-10-25T08:42:36.885744800+00:00",
+      "updated_at": "2026-10-25T08:42:37.309113200+00:00",
+      "group_id": "68",
+      "task_state": "completed",
+      "task_attempt_no": 1,
+      "payload_result_equal": true,
+      "event_id_equal": true,
+      "receipt_count": 1,
+      "completion_receipt_result_equal": true,
+      "outputs": [
+        {
+          "path": "results/68.json",
+          "exists": false
+        },
+        {
+          "path": "results/.receipts/68.json",
+          "exists": false
+        }
+      ],
+      "classification": "E",
+      "classification_scope": "Unrecoverable under immutable accepted-result and existing publisher contract; not a claim of permanent impossibility",
+      "receipt_fence_verified": true,
+      "isolated_exit_code": 1,
+      "isolated_stderr": "Error: invalid character or incomplete review evidence",
+      "field_issues": [
+        {
+          "character_index": 0,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 37,
+          "visual_description_trimmed_chars": 37,
+          "notes_chars": 14,
+          "notes_trimmed_chars": 14,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 3,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 40,
+          "visual_description_trimmed_chars": 40,
+          "notes_chars": 13,
+          "notes_trimmed_chars": 13,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 5,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 31,
+          "visual_description_trimmed_chars": 31,
+          "notes_chars": 19,
+          "notes_trimmed_chars": 19,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        }
+      ]
+    },
+    {
+      "id": "702c73a5-0df0-4dcf-a6fb-a432aa5860f5",
+      "event_id": "88e31e37-5c7e-4ec7-a5f7-bd998548063e",
+      "task_id": "1d14f34f-1af1-4963-a413-db28d81f78c9",
+      "profile_id": "emote-publisher-v1",
+      "profile_version": 1,
+      "action_kind": "on_task_completed",
+      "state": "failed",
+      "attempt_count": 2,
+      "max_attempts": 2,
+      "last_error": "nonzero_exit_retryable",
+      "exit_code": 1,
+      "output_bytes": 55,
+      "created_at": "2026-10-25T08:43:39.493551200+00:00",
+      "updated_at": "2026-10-25T08:43:39.868569900+00:00",
+      "group_id": "25",
+      "task_state": "completed",
+      "task_attempt_no": 1,
+      "payload_result_equal": true,
+      "event_id_equal": true,
+      "receipt_count": 1,
+      "completion_receipt_result_equal": true,
+      "outputs": [
+        {
+          "path": "results/25.json",
+          "exists": false
+        },
+        {
+          "path": "results/.receipts/25.json",
+          "exists": false
+        }
+      ],
+      "classification": "E",
+      "classification_scope": "Unrecoverable under immutable accepted-result and existing publisher contract; not a claim of permanent impossibility",
+      "receipt_fence_verified": true,
+      "isolated_exit_code": 1,
+      "isolated_stderr": "Error: invalid character or incomplete review evidence",
+      "field_issues": [
+        {
+          "character_index": 2,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 38,
+          "visual_description_trimmed_chars": 38,
+          "notes_chars": 8,
+          "notes_trimmed_chars": 8,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 3,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 36,
+          "visual_description_trimmed_chars": 36,
+          "notes_chars": 15,
+          "notes_trimmed_chars": 15,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 5,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 39,
+          "visual_description_trimmed_chars": 39,
+          "notes_chars": 17,
+          "notes_trimmed_chars": 17,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 6,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 40,
+          "visual_description_trimmed_chars": 40,
+          "notes_chars": 14,
+          "notes_trimmed_chars": 14,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 7,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 42,
+          "visual_description_trimmed_chars": 42,
+          "notes_chars": 15,
+          "notes_trimmed_chars": 15,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        }
+      ]
+    },
+    {
+      "id": "02e1c807-e693-492a-85fc-f0ede325a2a0",
+      "event_id": "20640e90-d0a5-42b9-8cf7-ef1eda10d93f",
+      "task_id": "1cf664c0-3b25-4791-a55d-b73ead64a3ec",
+      "profile_id": "emote-publisher-v1",
+      "profile_version": 1,
+      "action_kind": "on_task_completed",
+      "state": "failed",
+      "attempt_count": 2,
+      "max_attempts": 2,
+      "last_error": "nonzero_exit_retryable",
+      "exit_code": 1,
+      "output_bytes": 55,
+      "created_at": "2026-10-25T08:44:06.205071200+00:00",
+      "updated_at": "2026-10-25T08:44:06.602149600+00:00",
+      "group_id": "54",
+      "task_state": "completed",
+      "task_attempt_no": 1,
+      "payload_result_equal": true,
+      "event_id_equal": true,
+      "receipt_count": 1,
+      "completion_receipt_result_equal": true,
+      "outputs": [
+        {
+          "path": "results/54.json",
+          "exists": false
+        },
+        {
+          "path": "results/.receipts/54.json",
+          "exists": false
+        }
+      ],
+      "classification": "E",
+      "classification_scope": "Unrecoverable under immutable accepted-result and existing publisher contract; not a claim of permanent impossibility",
+      "receipt_fence_verified": true,
+      "isolated_exit_code": 1,
+      "isolated_stderr": "Error: invalid character or incomplete review evidence",
+      "field_issues": [
+        {
+          "character_index": 0,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 44,
+          "visual_description_trimmed_chars": 44,
+          "notes_chars": 14,
+          "notes_trimmed_chars": 14,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        }
+      ]
+    },
+    {
+      "id": "dac9bfe0-8ca6-4920-99b8-2fa88c29725e",
+      "event_id": "a5d41cd7-9853-457e-aaf2-65ed0773172d",
+      "task_id": "20aca05b-fb4c-4185-9420-c49f7fafcc86",
+      "profile_id": "emote-publisher-v1",
+      "profile_version": 1,
+      "action_kind": "on_task_completed",
+      "state": "failed",
+      "attempt_count": 2,
+      "max_attempts": 2,
+      "last_error": "nonzero_exit_retryable",
+      "exit_code": 1,
+      "output_bytes": 55,
+      "created_at": "2026-10-25T08:44:42.451628600+00:00",
+      "updated_at": "2026-10-25T08:44:42.944911600+00:00",
+      "group_id": "72",
+      "task_state": "completed",
+      "task_attempt_no": 1,
+      "payload_result_equal": true,
+      "event_id_equal": true,
+      "receipt_count": 1,
+      "completion_receipt_result_equal": true,
+      "outputs": [
+        {
+          "path": "results/72.json",
+          "exists": false
+        },
+        {
+          "path": "results/.receipts/72.json",
+          "exists": false
+        }
+      ],
+      "classification": "E",
+      "classification_scope": "Unrecoverable under immutable accepted-result and existing publisher contract; not a claim of permanent impossibility",
+      "receipt_fence_verified": true,
+      "isolated_exit_code": 1,
+      "isolated_stderr": "Error: invalid character or incomplete review evidence",
+      "field_issues": [
+        {
+          "character_index": 3,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 45,
+          "visual_description_trimmed_chars": 45,
+          "notes_chars": 19,
+          "notes_trimmed_chars": 19,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 4,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 36,
+          "visual_description_trimmed_chars": 36,
+          "notes_chars": 19,
+          "notes_trimmed_chars": 19,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 6,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 42,
+          "visual_description_trimmed_chars": 42,
+          "notes_chars": 11,
+          "notes_trimmed_chars": 11,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 8,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 39,
+          "visual_description_trimmed_chars": 39,
+          "notes_chars": 12,
+          "notes_trimmed_chars": 12,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        }
+      ]
+    },
+    {
+      "id": "af31c120-d924-4504-ba83-a95be6b470ad",
+      "event_id": "d890078d-b86a-4bfe-b839-2176bd517659",
+      "task_id": "22f86218-21ad-4545-a4c8-099f96da8583",
+      "profile_id": "emote-publisher-v1",
+      "profile_version": 1,
+      "action_kind": "on_task_completed",
+      "state": "failed",
+      "attempt_count": 2,
+      "max_attempts": 2,
+      "last_error": "nonzero_exit_retryable",
+      "exit_code": 1,
+      "output_bytes": 55,
+      "created_at": "2026-10-25T08:45:36.492645500+00:00",
+      "updated_at": "2026-10-25T08:45:37.004620800+00:00",
+      "group_id": "69",
+      "task_state": "completed",
+      "task_attempt_no": 1,
+      "payload_result_equal": true,
+      "event_id_equal": true,
+      "receipt_count": 1,
+      "completion_receipt_result_equal": true,
+      "outputs": [
+        {
+          "path": "results/69.json",
+          "exists": false
+        },
+        {
+          "path": "results/.receipts/69.json",
+          "exists": false
+        }
+      ],
+      "classification": "E",
+      "classification_scope": "Unrecoverable under immutable accepted-result and existing publisher contract; not a claim of permanent impossibility",
+      "receipt_fence_verified": true,
+      "isolated_exit_code": 1,
+      "isolated_stderr": "Error: invalid character or incomplete review evidence",
+      "field_issues": [
+        {
+          "character_index": 1,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 37,
+          "visual_description_trimmed_chars": 37,
+          "notes_chars": 14,
+          "notes_trimmed_chars": 14,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 2,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 39,
+          "visual_description_trimmed_chars": 39,
+          "notes_chars": 16,
+          "notes_trimmed_chars": 16,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 3,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 48,
+          "visual_description_trimmed_chars": 48,
+          "notes_chars": 16,
+          "notes_trimmed_chars": 16,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 5,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 38,
+          "visual_description_trimmed_chars": 38,
+          "notes_chars": 16,
+          "notes_trimmed_chars": 16,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        }
+      ]
+    },
+    {
+      "id": "e3d5c794-89ea-46f7-add8-0298d61e3ab9",
+      "event_id": "dca7d8fc-dd7a-41db-a2b5-1f3bdb5c6db5",
+      "task_id": "2c577c6f-963f-4b07-8bb6-e10c610b782f",
+      "profile_id": "emote-publisher-v1",
+      "profile_version": 1,
+      "action_kind": "on_task_completed",
+      "state": "failed",
+      "attempt_count": 2,
+      "max_attempts": 2,
+      "last_error": "nonzero_exit_retryable",
+      "exit_code": 1,
+      "output_bytes": 55,
+      "created_at": "2026-10-25T08:46:31.151406100+00:00",
+      "updated_at": "2026-10-25T08:46:31.567632700+00:00",
+      "group_id": "113",
+      "task_state": "completed",
+      "task_attempt_no": 1,
+      "payload_result_equal": true,
+      "event_id_equal": true,
+      "receipt_count": 1,
+      "completion_receipt_result_equal": true,
+      "outputs": [
+        {
+          "path": "results/113.json",
+          "exists": false
+        },
+        {
+          "path": "results/.receipts/113.json",
+          "exists": false
+        }
+      ],
+      "classification": "E",
+      "classification_scope": "Unrecoverable under immutable accepted-result and existing publisher contract; not a claim of permanent impossibility",
+      "receipt_fence_verified": true,
+      "isolated_exit_code": 1,
+      "isolated_stderr": "Error: invalid character or incomplete review evidence",
+      "field_issues": [
+        {
+          "character_index": 1,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 39,
+          "visual_description_trimmed_chars": 39,
+          "notes_chars": 14,
+          "notes_trimmed_chars": 14,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 5,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 36,
+          "visual_description_trimmed_chars": 36,
+          "notes_chars": 12,
+          "notes_trimmed_chars": 12,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        }
+      ]
+    },
+    {
+      "id": "0a4c992c-1ec8-4bac-a0cf-393ab746334f",
+      "event_id": "d3dda879-88e3-47fd-95a3-855174d3a415",
+      "task_id": "32d42337-2916-4658-b15f-996c88bfbdc2",
+      "profile_id": "emote-publisher-v1",
+      "profile_version": 1,
+      "action_kind": "on_task_completed",
+      "state": "failed",
+      "attempt_count": 2,
+      "max_attempts": 2,
+      "last_error": "nonzero_exit_retryable",
+      "exit_code": 1,
+      "output_bytes": 55,
+      "created_at": "2026-10-25T08:47:30.211734600+00:00",
+      "updated_at": "2026-10-25T08:47:30.590643400+00:00",
+      "group_id": "13",
+      "task_state": "completed",
+      "task_attempt_no": 1,
+      "payload_result_equal": true,
+      "event_id_equal": true,
+      "receipt_count": 1,
+      "completion_receipt_result_equal": true,
+      "outputs": [
+        {
+          "path": "results/13.json",
+          "exists": false
+        },
+        {
+          "path": "results/.receipts/13.json",
+          "exists": false
+        }
+      ],
+      "classification": "E",
+      "classification_scope": "Unrecoverable under immutable accepted-result and existing publisher contract; not a claim of permanent impossibility",
+      "receipt_fence_verified": true,
+      "isolated_exit_code": 1,
+      "isolated_stderr": "Error: invalid character or incomplete review evidence",
+      "field_issues": [
+        {
+          "character_index": 0,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 42,
+          "visual_description_trimmed_chars": 42,
+          "notes_chars": 12,
+          "notes_trimmed_chars": 12,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 2,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 32,
+          "visual_description_trimmed_chars": 32,
+          "notes_chars": 14,
+          "notes_trimmed_chars": 14,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 3,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 45,
+          "visual_description_trimmed_chars": 45,
+          "notes_chars": 11,
+          "notes_trimmed_chars": 11,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 4,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 38,
+          "visual_description_trimmed_chars": 38,
+          "notes_chars": 7,
+          "notes_trimmed_chars": 7,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 5,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 39,
+          "visual_description_trimmed_chars": 39,
+          "notes_chars": 13,
+          "notes_trimmed_chars": 13,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 8,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 38,
+          "visual_description_trimmed_chars": 38,
+          "notes_chars": 13,
+          "notes_trimmed_chars": 13,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        }
+      ]
+    },
+    {
+      "id": "d5e2b1bb-c8d1-420b-a1ad-c6b338dd321a",
+      "event_id": "3fbca759-8ec6-4093-a405-09b845149bb5",
+      "task_id": "3668199d-3128-4682-b586-ed96f1aa07ed",
+      "profile_id": "emote-publisher-v1",
+      "profile_version": 1,
+      "action_kind": "on_task_completed",
+      "state": "failed",
+      "attempt_count": 2,
+      "max_attempts": 2,
+      "last_error": "nonzero_exit_retryable",
+      "exit_code": 1,
+      "output_bytes": 55,
+      "created_at": "2026-10-25T08:48:31.948467300+00:00",
+      "updated_at": "2026-10-25T08:48:32.456545100+00:00",
+      "group_id": "75",
+      "task_state": "completed",
+      "task_attempt_no": 1,
+      "payload_result_equal": true,
+      "event_id_equal": true,
+      "receipt_count": 1,
+      "completion_receipt_result_equal": true,
+      "outputs": [
+        {
+          "path": "results/75.json",
+          "exists": false
+        },
+        {
+          "path": "results/.receipts/75.json",
+          "exists": false
+        }
+      ],
+      "classification": "E",
+      "classification_scope": "Unrecoverable under immutable accepted-result and existing publisher contract; not a claim of permanent impossibility",
+      "receipt_fence_verified": true,
+      "isolated_exit_code": 1,
+      "isolated_stderr": "Error: invalid character or incomplete review evidence",
+      "field_issues": [
+        {
+          "character_index": 1,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 36,
+          "visual_description_trimmed_chars": 36,
+          "notes_chars": 11,
+          "notes_trimmed_chars": 11,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 2,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 32,
+          "visual_description_trimmed_chars": 32,
+          "notes_chars": 11,
+          "notes_trimmed_chars": 11,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 3,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 39,
+          "visual_description_trimmed_chars": 39,
+          "notes_chars": 15,
+          "notes_trimmed_chars": 15,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 5,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 42,
+          "visual_description_trimmed_chars": 42,
+          "notes_chars": 14,
+          "notes_trimmed_chars": 14,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 6,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 32,
+          "visual_description_trimmed_chars": 32,
+          "notes_chars": 14,
+          "notes_trimmed_chars": 14,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 7,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 34,
+          "visual_description_trimmed_chars": 34,
+          "notes_chars": 15,
+          "notes_trimmed_chars": 15,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 8,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 39,
+          "visual_description_trimmed_chars": 39,
+          "notes_chars": 12,
+          "notes_trimmed_chars": 12,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        }
+      ]
+    },
+    {
+      "id": "acce7a56-a7a0-4d83-9019-e8130a4228fe",
+      "event_id": "45a3c4e0-2297-4765-859d-3cb99d4e00f7",
+      "task_id": "36000db1-f41c-45ae-93d4-6a1eb56e3b1f",
+      "profile_id": "emote-publisher-v1",
+      "profile_version": 1,
+      "action_kind": "on_task_completed",
+      "state": "failed",
+      "attempt_count": 2,
+      "max_attempts": 2,
+      "last_error": "nonzero_exit_retryable",
+      "exit_code": 1,
+      "output_bytes": 55,
+      "created_at": "2026-10-25T08:48:55.075039+00:00",
+      "updated_at": "2026-10-25T08:48:55.517690500+00:00",
+      "group_id": "14",
+      "task_state": "completed",
+      "task_attempt_no": 1,
+      "payload_result_equal": true,
+      "event_id_equal": true,
+      "receipt_count": 1,
+      "completion_receipt_result_equal": true,
+      "outputs": [
+        {
+          "path": "results/14.json",
+          "exists": false
+        },
+        {
+          "path": "results/.receipts/14.json",
+          "exists": false
+        }
+      ],
+      "classification": "E",
+      "classification_scope": "Unrecoverable under immutable accepted-result and existing publisher contract; not a claim of permanent impossibility",
+      "receipt_fence_verified": true,
+      "isolated_exit_code": 1,
+      "isolated_stderr": "Error: invalid character or incomplete review evidence",
+      "field_issues": [
+        {
+          "character_index": 1,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 35,
+          "visual_description_trimmed_chars": 35,
+          "notes_chars": 10,
+          "notes_trimmed_chars": 10,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        }
+      ]
+    },
+    {
+      "id": "7e21b688-6a92-4812-ab47-e5cdc8076e1e",
+      "event_id": "33fa6075-53eb-44a6-95fe-e7f26220b128",
+      "task_id": "37f759a6-f6d6-4335-8224-885ab2c039e3",
+      "profile_id": "emote-publisher-v1",
+      "profile_version": 1,
+      "action_kind": "on_task_completed",
+      "state": "failed",
+      "attempt_count": 2,
+      "max_attempts": 2,
+      "last_error": "nonzero_exit_retryable",
+      "exit_code": 1,
+      "output_bytes": 55,
+      "created_at": "2026-10-25T08:49:36.239835200+00:00",
+      "updated_at": "2026-10-25T08:49:36.685701900+00:00",
+      "group_id": "87",
+      "task_state": "completed",
+      "task_attempt_no": 1,
+      "payload_result_equal": true,
+      "event_id_equal": true,
+      "receipt_count": 1,
+      "completion_receipt_result_equal": true,
+      "outputs": [
+        {
+          "path": "results/87.json",
+          "exists": false
+        },
+        {
+          "path": "results/.receipts/87.json",
+          "exists": false
+        }
+      ],
+      "classification": "E",
+      "classification_scope": "Unrecoverable under immutable accepted-result and existing publisher contract; not a claim of permanent impossibility",
+      "receipt_fence_verified": true,
+      "isolated_exit_code": 1,
+      "isolated_stderr": "Error: invalid character or incomplete review evidence",
+      "field_issues": [
+        {
+          "character_index": 2,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 39,
+          "visual_description_trimmed_chars": 39,
+          "notes_chars": 16,
+          "notes_trimmed_chars": 16,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 3,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 36,
+          "visual_description_trimmed_chars": 36,
+          "notes_chars": 15,
+          "notes_trimmed_chars": 15,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 5,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 36,
+          "visual_description_trimmed_chars": 36,
+          "notes_chars": 11,
+          "notes_trimmed_chars": 11,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 7,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 37,
+          "visual_description_trimmed_chars": 37,
+          "notes_chars": 11,
+          "notes_trimmed_chars": 11,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 9,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 35,
+          "visual_description_trimmed_chars": 35,
+          "notes_chars": 16,
+          "notes_trimmed_chars": 16,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        }
+      ]
+    },
+    {
+      "id": "0fef3a2d-4c1d-4f83-b16b-6d85b54e9e78",
+      "event_id": "3df277b6-6752-40ff-bcfa-579d9fa4c3a1",
+      "task_id": "3d1c12a9-0481-4fd5-9a5d-7def27f84220",
+      "profile_id": "emote-publisher-v1",
+      "profile_version": 1,
+      "action_kind": "on_task_completed",
+      "state": "failed",
+      "attempt_count": 2,
+      "max_attempts": 2,
+      "last_error": "nonzero_exit_retryable",
+      "exit_code": 1,
+      "output_bytes": 55,
+      "created_at": "2026-10-25T08:50:50.685852900+00:00",
+      "updated_at": "2026-10-25T08:50:51.194110500+00:00",
+      "group_id": "35",
+      "task_state": "completed",
+      "task_attempt_no": 1,
+      "payload_result_equal": true,
+      "event_id_equal": true,
+      "receipt_count": 1,
+      "completion_receipt_result_equal": true,
+      "outputs": [
+        {
+          "path": "results/35.json",
+          "exists": false
+        },
+        {
+          "path": "results/.receipts/35.json",
+          "exists": false
+        }
+      ],
+      "classification": "E",
+      "classification_scope": "Unrecoverable under immutable accepted-result and existing publisher contract; not a claim of permanent impossibility",
+      "receipt_fence_verified": true,
+      "isolated_exit_code": 1,
+      "isolated_stderr": "Error: invalid character or incomplete review evidence",
+      "field_issues": [
+        {
+          "character_index": 0,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 39,
+          "visual_description_trimmed_chars": 39,
+          "notes_chars": 16,
+          "notes_trimmed_chars": 16,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 3,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 36,
+          "visual_description_trimmed_chars": 36,
+          "notes_chars": 11,
+          "notes_trimmed_chars": 11,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 4,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 44,
+          "visual_description_trimmed_chars": 44,
+          "notes_chars": 18,
+          "notes_trimmed_chars": 18,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 6,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 43,
+          "visual_description_trimmed_chars": 43,
+          "notes_chars": 11,
+          "notes_trimmed_chars": 11,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 8,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 44,
+          "visual_description_trimmed_chars": 44,
+          "notes_chars": 10,
+          "notes_trimmed_chars": 10,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 10,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 49,
+          "visual_description_trimmed_chars": 49,
+          "notes_chars": 18,
+          "notes_trimmed_chars": 18,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        }
+      ]
+    },
+    {
+      "id": "f17ed907-9654-4eb8-9013-8be73604abe9",
+      "event_id": "2b476ffe-4539-4e3c-891c-27ba6f119c4a",
+      "task_id": "4ec36f4b-c831-4f69-b8e4-12a81fe94285",
+      "profile_id": "emote-publisher-v1",
+      "profile_version": 1,
+      "action_kind": "on_task_completed",
+      "state": "failed",
+      "attempt_count": 2,
+      "max_attempts": 2,
+      "last_error": "nonzero_exit_retryable",
+      "exit_code": 1,
+      "output_bytes": 55,
+      "created_at": "2026-10-25T08:51:50.053621100+00:00",
+      "updated_at": "2026-10-25T08:51:50.399483300+00:00",
+      "group_id": "67",
+      "task_state": "completed",
+      "task_attempt_no": 1,
+      "payload_result_equal": true,
+      "event_id_equal": true,
+      "receipt_count": 1,
+      "completion_receipt_result_equal": true,
+      "outputs": [
+        {
+          "path": "results/67.json",
+          "exists": false
+        },
+        {
+          "path": "results/.receipts/67.json",
+          "exists": false
+        }
+      ],
+      "classification": "E",
+      "classification_scope": "Unrecoverable under immutable accepted-result and existing publisher contract; not a claim of permanent impossibility",
+      "receipt_fence_verified": true,
+      "isolated_exit_code": 1,
+      "isolated_stderr": "Error: invalid character or incomplete review evidence",
+      "field_issues": [
+        {
+          "character_index": 0,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 44,
+          "visual_description_trimmed_chars": 44,
+          "notes_chars": 16,
+          "notes_trimmed_chars": 16,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 1,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 40,
+          "visual_description_trimmed_chars": 40,
+          "notes_chars": 16,
+          "notes_trimmed_chars": 16,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 2,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 36,
+          "visual_description_trimmed_chars": 36,
+          "notes_chars": 16,
+          "notes_trimmed_chars": 16,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 3,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 36,
+          "visual_description_trimmed_chars": 36,
+          "notes_chars": 16,
+          "notes_trimmed_chars": 16,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 5,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 37,
+          "visual_description_trimmed_chars": 37,
+          "notes_chars": 16,
+          "notes_trimmed_chars": 16,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 6,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 40,
+          "visual_description_trimmed_chars": 40,
+          "notes_chars": 16,
+          "notes_trimmed_chars": 16,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 7,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 34,
+          "visual_description_trimmed_chars": 34,
+          "notes_chars": 16,
+          "notes_trimmed_chars": 16,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        }
+      ]
+    },
+    {
+      "id": "7322c021-5650-4d71-bd95-9f185476ff23",
+      "event_id": "bad3954a-7069-488d-a5e1-501dff21a794",
+      "task_id": "4fb48d5c-7b37-4d96-bc6c-13b16f22b857",
+      "profile_id": "emote-publisher-v1",
+      "profile_version": 1,
+      "action_kind": "on_task_completed",
+      "state": "failed",
+      "attempt_count": 2,
+      "max_attempts": 2,
+      "last_error": "nonzero_exit_retryable",
+      "exit_code": 1,
+      "output_bytes": 55,
+      "created_at": "2026-10-25T08:51:55.680778100+00:00",
+      "updated_at": "2026-10-25T08:51:56.030344500+00:00",
+      "group_id": "56",
+      "task_state": "completed",
+      "task_attempt_no": 1,
+      "payload_result_equal": true,
+      "event_id_equal": true,
+      "receipt_count": 1,
+      "completion_receipt_result_equal": true,
+      "outputs": [
+        {
+          "path": "results/56.json",
+          "exists": false
+        },
+        {
+          "path": "results/.receipts/56.json",
+          "exists": false
+        }
+      ],
+      "classification": "E",
+      "classification_scope": "Unrecoverable under immutable accepted-result and existing publisher contract; not a claim of permanent impossibility",
+      "receipt_fence_verified": true,
+      "isolated_exit_code": 1,
+      "isolated_stderr": "Error: invalid character or incomplete review evidence",
+      "field_issues": [
+        {
+          "character_index": 0,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 56,
+          "visual_description_trimmed_chars": 56,
+          "notes_chars": 19,
+          "notes_trimmed_chars": 19,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 1,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 38,
+          "visual_description_trimmed_chars": 38,
+          "notes_chars": 15,
+          "notes_trimmed_chars": 15,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 2,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 48,
+          "visual_description_trimmed_chars": 48,
+          "notes_chars": 17,
+          "notes_trimmed_chars": 17,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 4,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 40,
+          "visual_description_trimmed_chars": 40,
+          "notes_chars": 12,
+          "notes_trimmed_chars": 12,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 7,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 41,
+          "visual_description_trimmed_chars": 41,
+          "notes_chars": 10,
+          "notes_trimmed_chars": 10,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 9,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 41,
+          "visual_description_trimmed_chars": 41,
+          "notes_chars": 12,
+          "notes_trimmed_chars": 12,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        }
+      ]
+    },
+    {
+      "id": "5d867770-388f-49ec-bc98-f35ae5421991",
+      "event_id": "a04c1568-1fc6-4bfc-9fcf-29c2398f447d",
+      "task_id": "1839062f-926a-4142-8c54-caa12e2af4bf",
+      "profile_id": "emote-publisher-v1",
+      "profile_version": 1,
+      "action_kind": "on_task_completed",
+      "state": "failed",
+      "attempt_count": 2,
+      "max_attempts": 2,
+      "last_error": "nonzero_exit_retryable",
+      "exit_code": 1,
+      "output_bytes": 55,
+      "created_at": "2026-10-25T08:53:17.885382600+00:00",
+      "updated_at": "2026-10-25T08:53:18.344504300+00:00",
+      "group_id": "37",
+      "task_state": "completed",
+      "task_attempt_no": 2,
+      "payload_result_equal": true,
+      "event_id_equal": true,
+      "receipt_count": 1,
+      "completion_receipt_result_equal": true,
+      "outputs": [
+        {
+          "path": "results/37.json",
+          "exists": false
+        },
+        {
+          "path": "results/.receipts/37.json",
+          "exists": false
+        }
+      ],
+      "classification": "E",
+      "classification_scope": "Unrecoverable under immutable accepted-result and existing publisher contract; not a claim of permanent impossibility",
+      "receipt_fence_verified": true,
+      "isolated_exit_code": 1,
+      "isolated_stderr": "Error: invalid character or incomplete review evidence",
+      "field_issues": [
+        {
+          "character_index": 1,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 37,
+          "visual_description_trimmed_chars": 37,
+          "notes_chars": 17,
+          "notes_trimmed_chars": 17,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 3,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 44,
+          "visual_description_trimmed_chars": 44,
+          "notes_chars": 12,
+          "notes_trimmed_chars": 12,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 6,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 34,
+          "visual_description_trimmed_chars": 34,
+          "notes_chars": 16,
+          "notes_trimmed_chars": 16,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        }
+      ]
+    },
+    {
+      "id": "9e00bcc6-7509-4251-b94c-96b40e74316a",
+      "event_id": "1553119b-1374-429d-b9a3-cb3d089fa6b8",
+      "task_id": "52fe89e0-e822-46f5-aca5-0ce0c83deb07",
+      "profile_id": "emote-publisher-v1",
+      "profile_version": 1,
+      "action_kind": "on_task_completed",
+      "state": "failed",
+      "attempt_count": 2,
+      "max_attempts": 2,
+      "last_error": "nonzero_exit_retryable",
+      "exit_code": 1,
+      "output_bytes": 55,
+      "created_at": "2026-10-25T08:54:16.769326800+00:00",
+      "updated_at": "2026-10-25T08:54:17.162314400+00:00",
+      "group_id": "06",
+      "task_state": "completed",
+      "task_attempt_no": 1,
+      "payload_result_equal": true,
+      "event_id_equal": true,
+      "receipt_count": 1,
+      "completion_receipt_result_equal": true,
+      "outputs": [
+        {
+          "path": "results/06.json",
+          "exists": false
+        },
+        {
+          "path": "results/.receipts/06.json",
+          "exists": false
+        }
+      ],
+      "classification": "E",
+      "classification_scope": "Unrecoverable under immutable accepted-result and existing publisher contract; not a claim of permanent impossibility",
+      "receipt_fence_verified": true,
+      "isolated_exit_code": 1,
+      "isolated_stderr": "Error: invalid character or incomplete review evidence",
+      "field_issues": [
+        {
+          "character_index": 0,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 44,
+          "visual_description_trimmed_chars": 44,
+          "notes_chars": 14,
+          "notes_trimmed_chars": 14,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 2,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 32,
+          "visual_description_trimmed_chars": 32,
+          "notes_chars": 19,
+          "notes_trimmed_chars": 19,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 3,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 38,
+          "visual_description_trimmed_chars": 38,
+          "notes_chars": 12,
+          "notes_trimmed_chars": 12,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 4,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 32,
+          "visual_description_trimmed_chars": 32,
+          "notes_chars": 12,
+          "notes_trimmed_chars": 12,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 5,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 41,
+          "visual_description_trimmed_chars": 41,
+          "notes_chars": 13,
+          "notes_trimmed_chars": 13,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 6,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 30,
+          "visual_description_trimmed_chars": 30,
+          "notes_chars": 18,
+          "notes_trimmed_chars": 18,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 7,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 41,
+          "visual_description_trimmed_chars": 41,
+          "notes_chars": 10,
+          "notes_trimmed_chars": 10,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 8,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 36,
+          "visual_description_trimmed_chars": 36,
+          "notes_chars": 17,
+          "notes_trimmed_chars": 17,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 9,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 38,
+          "visual_description_trimmed_chars": 38,
+          "notes_chars": 10,
+          "notes_trimmed_chars": 10,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        }
+      ]
+    },
+    {
+      "id": "f5ca49f4-af63-43a5-b6a3-02bcf12edc18",
+      "event_id": "ddf66571-10e6-4c12-9ebb-3c32522b0fa6",
+      "task_id": "57771d84-8716-47bb-b0d5-0e6304db6515",
+      "profile_id": "emote-publisher-v1",
+      "profile_version": 1,
+      "action_kind": "on_task_completed",
+      "state": "failed",
+      "attempt_count": 2,
+      "max_attempts": 2,
+      "last_error": "nonzero_exit_retryable",
+      "exit_code": 1,
+      "output_bytes": 55,
+      "created_at": "2026-10-25T08:55:14.257001100+00:00",
+      "updated_at": "2026-10-25T08:55:14.731887200+00:00",
+      "group_id": "65",
+      "task_state": "completed",
+      "task_attempt_no": 1,
+      "payload_result_equal": true,
+      "event_id_equal": true,
+      "receipt_count": 1,
+      "completion_receipt_result_equal": true,
+      "outputs": [
+        {
+          "path": "results/65.json",
+          "exists": false
+        },
+        {
+          "path": "results/.receipts/65.json",
+          "exists": false
+        }
+      ],
+      "classification": "E",
+      "classification_scope": "Unrecoverable under immutable accepted-result and existing publisher contract; not a claim of permanent impossibility",
+      "receipt_fence_verified": true,
+      "isolated_exit_code": 1,
+      "isolated_stderr": "Error: invalid character or incomplete review evidence",
+      "field_issues": [
+        {
+          "character_index": 0,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 47,
+          "visual_description_trimmed_chars": 47,
+          "notes_chars": 12,
+          "notes_trimmed_chars": 12,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 1,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 41,
+          "visual_description_trimmed_chars": 41,
+          "notes_chars": 19,
+          "notes_trimmed_chars": 19,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 2,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 34,
+          "visual_description_trimmed_chars": 34,
+          "notes_chars": 10,
+          "notes_trimmed_chars": 10,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 3,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 45,
+          "visual_description_trimmed_chars": 45,
+          "notes_chars": 12,
+          "notes_trimmed_chars": 12,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 5,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 40,
+          "visual_description_trimmed_chars": 40,
+          "notes_chars": 19,
+          "notes_trimmed_chars": 19,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 7,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 42,
+          "visual_description_trimmed_chars": 42,
+          "notes_chars": 17,
+          "notes_trimmed_chars": 17,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        }
+      ]
+    },
+    {
+      "id": "8b760a1d-1213-4622-8acf-4ffa686b3adb",
+      "event_id": "a8fa691b-d29a-43f6-bf63-6658c3c6e976",
+      "task_id": "5d31c109-7a40-4dbc-903a-7e81fad572f0",
+      "profile_id": "emote-publisher-v1",
+      "profile_version": 1,
+      "action_kind": "on_task_completed",
+      "state": "failed",
+      "attempt_count": 2,
+      "max_attempts": 2,
+      "last_error": "nonzero_exit_retryable",
+      "exit_code": 1,
+      "output_bytes": 55,
+      "created_at": "2026-10-25T08:55:57.804944800+00:00",
+      "updated_at": "2026-10-25T08:55:58.166290+00:00",
+      "group_id": "27",
+      "task_state": "completed",
+      "task_attempt_no": 1,
+      "payload_result_equal": true,
+      "event_id_equal": true,
+      "receipt_count": 1,
+      "completion_receipt_result_equal": true,
+      "outputs": [
+        {
+          "path": "results/27.json",
+          "exists": false
+        },
+        {
+          "path": "results/.receipts/27.json",
+          "exists": false
+        }
+      ],
+      "classification": "E",
+      "classification_scope": "Unrecoverable under immutable accepted-result and existing publisher contract; not a claim of permanent impossibility",
+      "receipt_fence_verified": true,
+      "isolated_exit_code": 1,
+      "isolated_stderr": "Error: invalid character or incomplete review evidence",
+      "field_issues": [
+        {
+          "character_index": 0,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 45,
+          "visual_description_trimmed_chars": 45,
+          "notes_chars": 18,
+          "notes_trimmed_chars": 18,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 1,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 42,
+          "visual_description_trimmed_chars": 42,
+          "notes_chars": 18,
+          "notes_trimmed_chars": 18,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 2,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 36,
+          "visual_description_trimmed_chars": 36,
+          "notes_chars": 18,
+          "notes_trimmed_chars": 18,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 3,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 33,
+          "visual_description_trimmed_chars": 33,
+          "notes_chars": 18,
+          "notes_trimmed_chars": 18,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 4,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 30,
+          "visual_description_trimmed_chars": 30,
+          "notes_chars": 18,
+          "notes_trimmed_chars": 18,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 5,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 40,
+          "visual_description_trimmed_chars": 40,
+          "notes_chars": 18,
+          "notes_trimmed_chars": 18,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 6,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 38,
+          "visual_description_trimmed_chars": 38,
+          "notes_chars": 18,
+          "notes_trimmed_chars": 18,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 7,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 39,
+          "visual_description_trimmed_chars": 39,
+          "notes_chars": 18,
+          "notes_trimmed_chars": 18,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        }
+      ]
+    },
+    {
+      "id": "76b8830c-bcf3-4267-b003-50577e46ca99",
+      "event_id": "2ed26098-9383-4ed2-b0ba-fa1c001638a0",
+      "task_id": "5e18774a-1a0e-4649-876e-1fe5b93f8b5f",
+      "profile_id": "emote-publisher-v1",
+      "profile_version": 1,
+      "action_kind": "on_task_completed",
+      "state": "failed",
+      "attempt_count": 2,
+      "max_attempts": 2,
+      "last_error": "nonzero_exit_retryable",
+      "exit_code": 1,
+      "output_bytes": 55,
+      "created_at": "2026-10-25T08:56:13.187909700+00:00",
+      "updated_at": "2026-10-25T08:56:13.600315500+00:00",
+      "group_id": "04",
+      "task_state": "completed",
+      "task_attempt_no": 1,
+      "payload_result_equal": true,
+      "event_id_equal": true,
+      "receipt_count": 1,
+      "completion_receipt_result_equal": true,
+      "outputs": [
+        {
+          "path": "results/04.json",
+          "exists": false
+        },
+        {
+          "path": "results/.receipts/04.json",
+          "exists": false
+        }
+      ],
+      "classification": "E",
+      "classification_scope": "Unrecoverable under immutable accepted-result and existing publisher contract; not a claim of permanent impossibility",
+      "receipt_fence_verified": true,
+      "isolated_exit_code": 1,
+      "isolated_stderr": "Error: invalid character or incomplete review evidence",
+      "field_issues": [
+        {
+          "character_index": 0,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 40,
+          "visual_description_trimmed_chars": 40,
+          "notes_chars": 11,
+          "notes_trimmed_chars": 11,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 3,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 38,
+          "visual_description_trimmed_chars": 38,
+          "notes_chars": 19,
+          "notes_trimmed_chars": 19,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 4,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 42,
+          "visual_description_trimmed_chars": 42,
+          "notes_chars": 11,
+          "notes_trimmed_chars": 11,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 5,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 40,
+          "visual_description_trimmed_chars": 40,
+          "notes_chars": 14,
+          "notes_trimmed_chars": 14,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 8,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 38,
+          "visual_description_trimmed_chars": 38,
+          "notes_chars": 11,
+          "notes_trimmed_chars": 11,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 9,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 39,
+          "visual_description_trimmed_chars": 39,
+          "notes_chars": 15,
+          "notes_trimmed_chars": 15,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        }
+      ]
+    },
+    {
+      "id": "99faee41-e564-4fec-a4e8-bc053f115e64",
+      "event_id": "44f8ce09-a0c3-4441-8454-2b6133db02cc",
+      "task_id": "66d39658-fec9-4ba2-bbba-c67fb07f4bcc",
+      "profile_id": "emote-publisher-v1",
+      "profile_version": 1,
+      "action_kind": "on_task_completed",
+      "state": "failed",
+      "attempt_count": 2,
+      "max_attempts": 2,
+      "last_error": "nonzero_exit_retryable",
+      "exit_code": 1,
+      "output_bytes": 55,
+      "created_at": "2026-10-25T08:57:14.153735900+00:00",
+      "updated_at": "2026-10-25T08:57:14.636799700+00:00",
+      "group_id": "38",
+      "task_state": "completed",
+      "task_attempt_no": 1,
+      "payload_result_equal": true,
+      "event_id_equal": true,
+      "receipt_count": 1,
+      "completion_receipt_result_equal": true,
+      "outputs": [
+        {
+          "path": "results/38.json",
+          "exists": false
+        },
+        {
+          "path": "results/.receipts/38.json",
+          "exists": false
+        }
+      ],
+      "classification": "E",
+      "classification_scope": "Unrecoverable under immutable accepted-result and existing publisher contract; not a claim of permanent impossibility",
+      "receipt_fence_verified": true,
+      "isolated_exit_code": 1,
+      "isolated_stderr": "Error: invalid character or incomplete review evidence",
+      "field_issues": [
+        {
+          "character_index": 2,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 31,
+          "visual_description_trimmed_chars": 31,
+          "notes_chars": 18,
+          "notes_trimmed_chars": 18,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 3,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 41,
+          "visual_description_trimmed_chars": 41,
+          "notes_chars": 18,
+          "notes_trimmed_chars": 18,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 6,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 42,
+          "visual_description_trimmed_chars": 42,
+          "notes_chars": 18,
+          "notes_trimmed_chars": 18,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 7,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 35,
+          "visual_description_trimmed_chars": 35,
+          "notes_chars": 11,
+          "notes_trimmed_chars": 11,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 8,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 38,
+          "visual_description_trimmed_chars": 38,
+          "notes_chars": 17,
+          "notes_trimmed_chars": 17,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        }
+      ]
+    },
+    {
+      "id": "5b698cfa-a7d3-4baf-83f9-f471d120fb22",
+      "event_id": "89aaac35-f18d-44c6-ac0a-400c701d3d4b",
+      "task_id": "6c4ef684-19ca-44d7-aab2-76b4eecd45c8",
+      "profile_id": "emote-publisher-v1",
+      "profile_version": 1,
+      "action_kind": "on_task_completed",
+      "state": "failed",
+      "attempt_count": 2,
+      "max_attempts": 2,
+      "last_error": "nonzero_exit_retryable",
+      "exit_code": 1,
+      "output_bytes": 55,
+      "created_at": "2026-10-25T08:58:19.650156300+00:00",
+      "updated_at": "2026-10-25T08:58:20.085833400+00:00",
+      "group_id": "01",
+      "task_state": "completed",
+      "task_attempt_no": 1,
+      "payload_result_equal": true,
+      "event_id_equal": true,
+      "receipt_count": 1,
+      "completion_receipt_result_equal": true,
+      "outputs": [
+        {
+          "path": "results/01.json",
+          "exists": false
+        },
+        {
+          "path": "results/.receipts/01.json",
+          "exists": false
+        }
+      ],
+      "classification": "E",
+      "classification_scope": "Unrecoverable under immutable accepted-result and existing publisher contract; not a claim of permanent impossibility",
+      "receipt_fence_verified": true,
+      "isolated_exit_code": 1,
+      "isolated_stderr": "Error: invalid character or incomplete review evidence",
+      "field_issues": [
+        {
+          "character_index": 1,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 38,
+          "visual_description_trimmed_chars": 38,
+          "notes_chars": 16,
+          "notes_trimmed_chars": 16,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 2,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 35,
+          "visual_description_trimmed_chars": 35,
+          "notes_chars": 18,
+          "notes_trimmed_chars": 18,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 4,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 42,
+          "visual_description_trimmed_chars": 42,
+          "notes_chars": 9,
+          "notes_trimmed_chars": 9,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 5,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 33,
+          "visual_description_trimmed_chars": 33,
+          "notes_chars": 15,
+          "notes_trimmed_chars": 15,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 6,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 42,
+          "visual_description_trimmed_chars": 42,
+          "notes_chars": 16,
+          "notes_trimmed_chars": 16,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 7,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 38,
+          "visual_description_trimmed_chars": 38,
+          "notes_chars": 19,
+          "notes_trimmed_chars": 19,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 8,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 37,
+          "visual_description_trimmed_chars": 37,
+          "notes_chars": 13,
+          "notes_trimmed_chars": 13,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        }
+      ]
+    },
+    {
+      "id": "6f528042-d483-44b3-b838-45932112f0de",
+      "event_id": "7c83f281-7c47-4688-859f-2eaeea233936",
+      "task_id": "793e282f-b79d-4444-9582-8b8451cfe3da",
+      "profile_id": "emote-publisher-v1",
+      "profile_version": 1,
+      "action_kind": "on_task_completed",
+      "state": "failed",
+      "attempt_count": 2,
+      "max_attempts": 2,
+      "last_error": "nonzero_exit_retryable",
+      "exit_code": 1,
+      "output_bytes": 55,
+      "created_at": "2026-10-25T08:59:19.393888100+00:00",
+      "updated_at": "2026-10-25T08:59:19.921164500+00:00",
+      "group_id": "107",
+      "task_state": "completed",
+      "task_attempt_no": 1,
+      "payload_result_equal": true,
+      "event_id_equal": true,
+      "receipt_count": 1,
+      "completion_receipt_result_equal": true,
+      "outputs": [
+        {
+          "path": "results/107.json",
+          "exists": false
+        },
+        {
+          "path": "results/.receipts/107.json",
+          "exists": false
+        }
+      ],
+      "classification": "E",
+      "classification_scope": "Unrecoverable under immutable accepted-result and existing publisher contract; not a claim of permanent impossibility",
+      "receipt_fence_verified": true,
+      "isolated_exit_code": 1,
+      "isolated_stderr": "Error: invalid character or incomplete review evidence",
+      "field_issues": [
+        {
+          "character_index": 0,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 51,
+          "visual_description_trimmed_chars": 51,
+          "notes_chars": 16,
+          "notes_trimmed_chars": 16,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 1,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 44,
+          "visual_description_trimmed_chars": 44,
+          "notes_chars": 16,
+          "notes_trimmed_chars": 16,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 2,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 45,
+          "visual_description_trimmed_chars": 45,
+          "notes_chars": 19,
+          "notes_trimmed_chars": 19,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 3,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 39,
+          "visual_description_trimmed_chars": 39,
+          "notes_chars": 14,
+          "notes_trimmed_chars": 14,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 4,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 37,
+          "visual_description_trimmed_chars": 37,
+          "notes_chars": 11,
+          "notes_trimmed_chars": 11,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 6,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 39,
+          "visual_description_trimmed_chars": 39,
+          "notes_chars": 14,
+          "notes_trimmed_chars": 14,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 7,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 46,
+          "visual_description_trimmed_chars": 46,
+          "notes_chars": 13,
+          "notes_trimmed_chars": 13,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        }
+      ]
+    },
+    {
+      "id": "c00c0e9f-48bd-417a-b338-883a5e7f363a",
+      "event_id": "b717699c-1128-4352-9490-17a2d22f3100",
+      "task_id": "83ef7376-3ded-4bce-853c-ba4e7a3ff60a",
+      "profile_id": "emote-publisher-v1",
+      "profile_version": 1,
+      "action_kind": "on_task_completed",
+      "state": "failed",
+      "attempt_count": 2,
+      "max_attempts": 2,
+      "last_error": "nonzero_exit_retryable",
+      "exit_code": 1,
+      "output_bytes": 55,
+      "created_at": "2026-10-25T09:00:28.363817+00:00",
+      "updated_at": "2026-10-25T09:00:28.826076400+00:00",
+      "group_id": "46",
+      "task_state": "completed",
+      "task_attempt_no": 1,
+      "payload_result_equal": true,
+      "event_id_equal": true,
+      "receipt_count": 1,
+      "completion_receipt_result_equal": true,
+      "outputs": [
+        {
+          "path": "results/46.json",
+          "exists": false
+        },
+        {
+          "path": "results/.receipts/46.json",
+          "exists": false
+        }
+      ],
+      "classification": "E",
+      "classification_scope": "Unrecoverable under immutable accepted-result and existing publisher contract; not a claim of permanent impossibility",
+      "receipt_fence_verified": true,
+      "isolated_exit_code": 1,
+      "isolated_stderr": "Error: invalid character or incomplete review evidence",
+      "field_issues": [
+        {
+          "character_index": 1,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 43,
+          "visual_description_trimmed_chars": 43,
+          "notes_chars": 10,
+          "notes_trimmed_chars": 10,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 2,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 33,
+          "visual_description_trimmed_chars": 33,
+          "notes_chars": 17,
+          "notes_trimmed_chars": 17,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 3,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 49,
+          "visual_description_trimmed_chars": 49,
+          "notes_chars": 14,
+          "notes_trimmed_chars": 14,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 6,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 41,
+          "visual_description_trimmed_chars": 41,
+          "notes_chars": 14,
+          "notes_trimmed_chars": 14,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 7,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 41,
+          "visual_description_trimmed_chars": 41,
+          "notes_chars": 14,
+          "notes_trimmed_chars": 14,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 8,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 49,
+          "visual_description_trimmed_chars": 49,
+          "notes_chars": 16,
+          "notes_trimmed_chars": 16,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        }
+      ]
+    },
+    {
+      "id": "9a927170-07b3-4320-b276-b05852632b66",
+      "event_id": "8c83ce8e-7688-42db-8122-8441fdeb8b61",
+      "task_id": "85276579-af48-4337-8803-63596775380a",
+      "profile_id": "emote-publisher-v1",
+      "profile_version": 1,
+      "action_kind": "on_task_completed",
+      "state": "failed",
+      "attempt_count": 2,
+      "max_attempts": 2,
+      "last_error": "nonzero_exit_retryable",
+      "exit_code": 1,
+      "output_bytes": 55,
+      "created_at": "2026-10-25T09:01:30.444799100+00:00",
+      "updated_at": "2026-10-25T09:01:30.949194+00:00",
+      "group_id": "11",
+      "task_state": "completed",
+      "task_attempt_no": 1,
+      "payload_result_equal": true,
+      "event_id_equal": true,
+      "receipt_count": 1,
+      "completion_receipt_result_equal": true,
+      "outputs": [
+        {
+          "path": "results/11.json",
+          "exists": false
+        },
+        {
+          "path": "results/.receipts/11.json",
+          "exists": false
+        }
+      ],
+      "classification": "E",
+      "classification_scope": "Unrecoverable under immutable accepted-result and existing publisher contract; not a claim of permanent impossibility",
+      "receipt_fence_verified": true,
+      "isolated_exit_code": 1,
+      "isolated_stderr": "Error: invalid character or incomplete review evidence",
+      "field_issues": [
+        {
+          "character_index": 8,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 48,
+          "visual_description_trimmed_chars": 48,
+          "notes_chars": 17,
+          "notes_trimmed_chars": 17,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        }
+      ]
+    },
+    {
+      "id": "3f24e54b-6ec1-46cf-b290-b83db59e4e1c",
+      "event_id": "bcf70507-a687-4b2f-868d-b1e62f171361",
+      "task_id": "881eb2c0-fafd-4d8d-be30-519685b1cc10",
+      "profile_id": "emote-publisher-v1",
+      "profile_version": 1,
+      "action_kind": "on_task_completed",
+      "state": "failed",
+      "attempt_count": 2,
+      "max_attempts": 2,
+      "last_error": "nonzero_exit_retryable",
+      "exit_code": 1,
+      "output_bytes": 55,
+      "created_at": "2026-10-25T09:01:44.593564+00:00",
+      "updated_at": "2026-10-25T09:01:45.129215+00:00",
+      "group_id": "76",
+      "task_state": "completed",
+      "task_attempt_no": 1,
+      "payload_result_equal": true,
+      "event_id_equal": true,
+      "receipt_count": 1,
+      "completion_receipt_result_equal": true,
+      "outputs": [
+        {
+          "path": "results/76.json",
+          "exists": false
+        },
+        {
+          "path": "results/.receipts/76.json",
+          "exists": false
+        }
+      ],
+      "classification": "E",
+      "classification_scope": "Unrecoverable under immutable accepted-result and existing publisher contract; not a claim of permanent impossibility",
+      "receipt_fence_verified": true,
+      "isolated_exit_code": 1,
+      "isolated_stderr": "Error: invalid character or incomplete review evidence",
+      "field_issues": [
+        {
+          "character_index": 0,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 38,
+          "visual_description_trimmed_chars": 38,
+          "notes_chars": 18,
+          "notes_trimmed_chars": 18,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 2,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 36,
+          "visual_description_trimmed_chars": 36,
+          "notes_chars": 16,
+          "notes_trimmed_chars": 16,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 4,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 36,
+          "visual_description_trimmed_chars": 36,
+          "notes_chars": 15,
+          "notes_trimmed_chars": 15,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 5,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 39,
+          "visual_description_trimmed_chars": 39,
+          "notes_chars": 18,
+          "notes_trimmed_chars": 18,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 9,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 41,
+          "visual_description_trimmed_chars": 41,
+          "notes_chars": 13,
+          "notes_trimmed_chars": 13,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        }
+      ]
+    },
+    {
+      "id": "c38fa5c8-921f-41fc-8a96-a5424e6c225d",
+      "event_id": "499b08e7-a2c4-4867-80ae-88f66d8cecba",
+      "task_id": "8e89911c-f0df-4ba4-b0ff-ab91f1004244",
+      "profile_id": "emote-publisher-v1",
+      "profile_version": 1,
+      "action_kind": "on_task_completed",
+      "state": "failed",
+      "attempt_count": 2,
+      "max_attempts": 2,
+      "last_error": "nonzero_exit_retryable",
+      "exit_code": 1,
+      "output_bytes": 55,
+      "created_at": "2026-10-25T09:02:56.754401+00:00",
+      "updated_at": "2026-10-25T09:02:57.211345300+00:00",
+      "group_id": "92",
+      "task_state": "completed",
+      "task_attempt_no": 1,
+      "payload_result_equal": true,
+      "event_id_equal": true,
+      "receipt_count": 1,
+      "completion_receipt_result_equal": true,
+      "outputs": [
+        {
+          "path": "results/92.json",
+          "exists": false
+        },
+        {
+          "path": "results/.receipts/92.json",
+          "exists": false
+        }
+      ],
+      "classification": "E",
+      "classification_scope": "Unrecoverable under immutable accepted-result and existing publisher contract; not a claim of permanent impossibility",
+      "receipt_fence_verified": true,
+      "isolated_exit_code": 1,
+      "isolated_stderr": "Error: invalid character or incomplete review evidence",
+      "field_issues": [
+        {
+          "character_index": 0,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 40,
+          "visual_description_trimmed_chars": 40,
+          "notes_chars": 17,
+          "notes_trimmed_chars": 17,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 1,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 42,
+          "visual_description_trimmed_chars": 42,
+          "notes_chars": 15,
+          "notes_trimmed_chars": 15,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 2,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 39,
+          "visual_description_trimmed_chars": 39,
+          "notes_chars": 8,
+          "notes_trimmed_chars": 8,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 3,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 35,
+          "visual_description_trimmed_chars": 35,
+          "notes_chars": 9,
+          "notes_trimmed_chars": 9,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 4,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 29,
+          "visual_description_trimmed_chars": 29,
+          "notes_chars": 19,
+          "notes_trimmed_chars": 19,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 6,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 36,
+          "visual_description_trimmed_chars": 36,
+          "notes_chars": 8,
+          "notes_trimmed_chars": 8,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 7,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 38,
+          "visual_description_trimmed_chars": 38,
+          "notes_chars": 14,
+          "notes_trimmed_chars": 14,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 8,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 45,
+          "visual_description_trimmed_chars": 45,
+          "notes_chars": 7,
+          "notes_trimmed_chars": 7,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 9,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 32,
+          "visual_description_trimmed_chars": 32,
+          "notes_chars": 12,
+          "notes_trimmed_chars": 12,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        }
+      ]
+    },
+    {
+      "id": "16713f4e-0627-48ef-844b-2fc8dcd54d8c",
+      "event_id": "40287c56-98cf-4a61-9225-cf3ea1eafd6b",
+      "task_id": "911c7d81-3689-40fe-a17c-d4e44ead19f5",
+      "profile_id": "emote-publisher-v1",
+      "profile_version": 1,
+      "action_kind": "on_task_completed",
+      "state": "failed",
+      "attempt_count": 2,
+      "max_attempts": 2,
+      "last_error": "nonzero_exit_retryable",
+      "exit_code": 1,
+      "output_bytes": 55,
+      "created_at": "2026-10-25T09:04:03.499885400+00:00",
+      "updated_at": "2026-10-25T09:04:03.897152800+00:00",
+      "group_id": "63",
+      "task_state": "completed",
+      "task_attempt_no": 1,
+      "payload_result_equal": true,
+      "event_id_equal": true,
+      "receipt_count": 1,
+      "completion_receipt_result_equal": true,
+      "outputs": [
+        {
+          "path": "results/63.json",
+          "exists": false
+        },
+        {
+          "path": "results/.receipts/63.json",
+          "exists": false
+        }
+      ],
+      "classification": "E",
+      "classification_scope": "Unrecoverable under immutable accepted-result and existing publisher contract; not a claim of permanent impossibility",
+      "receipt_fence_verified": true,
+      "isolated_exit_code": 1,
+      "isolated_stderr": "Error: invalid character or incomplete review evidence",
+      "field_issues": [
+        {
+          "character_index": 0,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 47,
+          "visual_description_trimmed_chars": 47,
+          "notes_chars": 8,
+          "notes_trimmed_chars": 8,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 1,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 42,
+          "visual_description_trimmed_chars": 42,
+          "notes_chars": 15,
+          "notes_trimmed_chars": 15,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 6,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 34,
+          "visual_description_trimmed_chars": 34,
+          "notes_chars": 11,
+          "notes_trimmed_chars": 11,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 7,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 38,
+          "visual_description_trimmed_chars": 38,
+          "notes_chars": 11,
+          "notes_trimmed_chars": 11,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 8,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 43,
+          "visual_description_trimmed_chars": 43,
+          "notes_chars": 10,
+          "notes_trimmed_chars": 10,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 9,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 38,
+          "visual_description_trimmed_chars": 38,
+          "notes_chars": 8,
+          "notes_trimmed_chars": 8,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 10,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 38,
+          "visual_description_trimmed_chars": 38,
+          "notes_chars": 10,
+          "notes_trimmed_chars": 10,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        }
+      ]
+    },
+    {
+      "id": "d7618ad3-6b9e-406b-8bab-93eb778aab3e",
+      "event_id": "7e9ee2fb-a9d1-4853-a9bb-f4ae6690e9bb",
+      "task_id": "930ad818-e57a-48e6-b783-b8b144b1172a",
+      "profile_id": "emote-publisher-v1",
+      "profile_version": 1,
+      "action_kind": "on_task_completed",
+      "state": "failed",
+      "attempt_count": 2,
+      "max_attempts": 2,
+      "last_error": "nonzero_exit_retryable",
+      "exit_code": 1,
+      "output_bytes": 55,
+      "created_at": "2026-10-25T09:05:13.291062400+00:00",
+      "updated_at": "2026-10-25T09:05:13.753053400+00:00",
+      "group_id": "50",
+      "task_state": "completed",
+      "task_attempt_no": 1,
+      "payload_result_equal": true,
+      "event_id_equal": true,
+      "receipt_count": 1,
+      "completion_receipt_result_equal": true,
+      "outputs": [
+        {
+          "path": "results/50.json",
+          "exists": false
+        },
+        {
+          "path": "results/.receipts/50.json",
+          "exists": false
+        }
+      ],
+      "classification": "E",
+      "classification_scope": "Unrecoverable under immutable accepted-result and existing publisher contract; not a claim of permanent impossibility",
+      "receipt_fence_verified": true,
+      "isolated_exit_code": 1,
+      "isolated_stderr": "Error: invalid character or incomplete review evidence",
+      "field_issues": [
+        {
+          "character_index": 4,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 46,
+          "visual_description_trimmed_chars": 46,
+          "notes_chars": 15,
+          "notes_trimmed_chars": 15,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        }
+      ]
+    },
+    {
+      "id": "63b98222-94fe-490c-9028-c4ba523d758b",
+      "event_id": "fc466734-b47c-4be8-9dd5-03c7df343122",
+      "task_id": "9616343d-56a3-45d7-ae32-fca793d538b6",
+      "profile_id": "emote-publisher-v1",
+      "profile_version": 1,
+      "action_kind": "on_task_completed",
+      "state": "failed",
+      "attempt_count": 2,
+      "max_attempts": 2,
+      "last_error": "nonzero_exit_retryable",
+      "exit_code": 1,
+      "output_bytes": 55,
+      "created_at": "2026-10-25T09:05:22.802789200+00:00",
+      "updated_at": "2026-10-25T09:05:23.222106500+00:00",
+      "group_id": "95",
+      "task_state": "completed",
+      "task_attempt_no": 1,
+      "payload_result_equal": true,
+      "event_id_equal": true,
+      "receipt_count": 1,
+      "completion_receipt_result_equal": true,
+      "outputs": [
+        {
+          "path": "results/95.json",
+          "exists": false
+        },
+        {
+          "path": "results/.receipts/95.json",
+          "exists": false
+        }
+      ],
+      "classification": "E",
+      "classification_scope": "Unrecoverable under immutable accepted-result and existing publisher contract; not a claim of permanent impossibility",
+      "receipt_fence_verified": true,
+      "isolated_exit_code": 1,
+      "isolated_stderr": "Error: invalid character or incomplete review evidence",
+      "field_issues": [
+        {
+          "character_index": 0,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 43,
+          "visual_description_trimmed_chars": 43,
+          "notes_chars": 16,
+          "notes_trimmed_chars": 16,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 2,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 41,
+          "visual_description_trimmed_chars": 41,
+          "notes_chars": 9,
+          "notes_trimmed_chars": 9,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 3,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 41,
+          "visual_description_trimmed_chars": 41,
+          "notes_chars": 14,
+          "notes_trimmed_chars": 14,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 5,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 36,
+          "visual_description_trimmed_chars": 36,
+          "notes_chars": 10,
+          "notes_trimmed_chars": 10,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 7,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 42,
+          "visual_description_trimmed_chars": 42,
+          "notes_chars": 13,
+          "notes_trimmed_chars": 13,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 8,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 40,
+          "visual_description_trimmed_chars": 40,
+          "notes_chars": 10,
+          "notes_trimmed_chars": 10,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        }
+      ]
+    },
+    {
+      "id": "34b0cf3a-4154-43a4-9648-2352cfd986b2",
+      "event_id": "4bc02173-8768-4fd0-a566-b8b3f4779129",
+      "task_id": "af03c398-f985-4a49-b18a-5c4d7284a8e2",
+      "profile_id": "emote-publisher-v1",
+      "profile_version": 1,
+      "action_kind": "on_task_completed",
+      "state": "failed",
+      "attempt_count": 2,
+      "max_attempts": 2,
+      "last_error": "nonzero_exit_retryable",
+      "exit_code": 1,
+      "output_bytes": 55,
+      "created_at": "2026-10-25T09:08:53.403578700+00:00",
+      "updated_at": "2026-10-25T09:08:53.914909500+00:00",
+      "group_id": "88",
+      "task_state": "completed",
+      "task_attempt_no": 1,
+      "payload_result_equal": true,
+      "event_id_equal": true,
+      "receipt_count": 1,
+      "completion_receipt_result_equal": true,
+      "outputs": [
+        {
+          "path": "results/88.json",
+          "exists": false
+        },
+        {
+          "path": "results/.receipts/88.json",
+          "exists": false
+        }
+      ],
+      "classification": "E",
+      "classification_scope": "Unrecoverable under immutable accepted-result and existing publisher contract; not a claim of permanent impossibility",
+      "receipt_fence_verified": true,
+      "isolated_exit_code": 1,
+      "isolated_stderr": "Error: invalid character or incomplete review evidence",
+      "field_issues": [
+        {
+          "character_index": 0,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 43,
+          "visual_description_trimmed_chars": 43,
+          "notes_chars": 11,
+          "notes_trimmed_chars": 11,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 2,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 45,
+          "visual_description_trimmed_chars": 45,
+          "notes_chars": 14,
+          "notes_trimmed_chars": 14,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 3,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 36,
+          "visual_description_trimmed_chars": 36,
+          "notes_chars": 14,
+          "notes_trimmed_chars": 14,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 4,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 45,
+          "visual_description_trimmed_chars": 45,
+          "notes_chars": 18,
+          "notes_trimmed_chars": 18,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 6,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 41,
+          "visual_description_trimmed_chars": 41,
+          "notes_chars": 12,
+          "notes_trimmed_chars": 12,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 7,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 46,
+          "visual_description_trimmed_chars": 46,
+          "notes_chars": 17,
+          "notes_trimmed_chars": 17,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 8,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 43,
+          "visual_description_trimmed_chars": 43,
+          "notes_chars": 8,
+          "notes_trimmed_chars": 8,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 9,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 41,
+          "visual_description_trimmed_chars": 41,
+          "notes_chars": 19,
+          "notes_trimmed_chars": 19,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 10,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 39,
+          "visual_description_trimmed_chars": 39,
+          "notes_chars": 13,
+          "notes_trimmed_chars": 13,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        }
+      ]
+    },
+    {
+      "id": "105f8155-e653-4eba-bd3e-8afa274f709e",
+      "event_id": "f92c3d8f-0d0d-4ab2-aec0-3810182da41d",
+      "task_id": "b6644ae2-e25a-4cb5-997f-a00a67da1443",
+      "profile_id": "emote-publisher-v1",
+      "profile_version": 1,
+      "action_kind": "on_task_completed",
+      "state": "failed",
+      "attempt_count": 2,
+      "max_attempts": 2,
+      "last_error": "nonzero_exit_retryable",
+      "exit_code": 1,
+      "output_bytes": 55,
+      "created_at": "2026-10-25T09:12:18.656743200+00:00",
+      "updated_at": "2026-10-25T09:12:19.203038300+00:00",
+      "group_id": "51",
+      "task_state": "completed",
+      "task_attempt_no": 1,
+      "payload_result_equal": true,
+      "event_id_equal": true,
+      "receipt_count": 1,
+      "completion_receipt_result_equal": true,
+      "outputs": [
+        {
+          "path": "results/51.json",
+          "exists": false
+        },
+        {
+          "path": "results/.receipts/51.json",
+          "exists": false
+        }
+      ],
+      "classification": "E",
+      "classification_scope": "Unrecoverable under immutable accepted-result and existing publisher contract; not a claim of permanent impossibility",
+      "receipt_fence_verified": true,
+      "isolated_exit_code": 1,
+      "isolated_stderr": "Error: invalid character or incomplete review evidence",
+      "field_issues": [
+        {
+          "character_index": 1,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 46,
+          "visual_description_trimmed_chars": 46,
+          "notes_chars": 9,
+          "notes_trimmed_chars": 9,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 2,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 33,
+          "visual_description_trimmed_chars": 33,
+          "notes_chars": 14,
+          "notes_trimmed_chars": 14,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 3,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 40,
+          "visual_description_trimmed_chars": 40,
+          "notes_chars": 8,
+          "notes_trimmed_chars": 8,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 4,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 37,
+          "visual_description_trimmed_chars": 37,
+          "notes_chars": 10,
+          "notes_trimmed_chars": 10,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 5,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 49,
+          "visual_description_trimmed_chars": 49,
+          "notes_chars": 11,
+          "notes_trimmed_chars": 11,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 6,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 43,
+          "visual_description_trimmed_chars": 43,
+          "notes_chars": 11,
+          "notes_trimmed_chars": 11,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 7,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 43,
+          "visual_description_trimmed_chars": 43,
+          "notes_chars": 8,
+          "notes_trimmed_chars": 8,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 8,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 37,
+          "visual_description_trimmed_chars": 37,
+          "notes_chars": 18,
+          "notes_trimmed_chars": 18,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 9,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 39,
+          "visual_description_trimmed_chars": 39,
+          "notes_chars": 14,
+          "notes_trimmed_chars": 14,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 10,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 38,
+          "visual_description_trimmed_chars": 38,
+          "notes_chars": 17,
+          "notes_trimmed_chars": 17,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        }
+      ]
+    },
+    {
+      "id": "b49323ef-f29b-453e-8712-8c5802dd7420",
+      "event_id": "ae362214-82cc-4f31-b7dd-41fc7d170bcc",
+      "task_id": "b981e0f2-3820-4cc0-8f63-8935011b7ee4",
+      "profile_id": "emote-publisher-v1",
+      "profile_version": 1,
+      "action_kind": "on_task_completed",
+      "state": "failed",
+      "attempt_count": 2,
+      "max_attempts": 2,
+      "last_error": "nonzero_exit_retryable",
+      "exit_code": 1,
+      "output_bytes": 55,
+      "created_at": "2026-10-25T09:13:32.283916+00:00",
+      "updated_at": "2026-10-25T09:13:32.884730+00:00",
+      "group_id": "44",
+      "task_state": "completed",
+      "task_attempt_no": 1,
+      "payload_result_equal": true,
+      "event_id_equal": true,
+      "receipt_count": 1,
+      "completion_receipt_result_equal": true,
+      "outputs": [
+        {
+          "path": "results/44.json",
+          "exists": false
+        },
+        {
+          "path": "results/.receipts/44.json",
+          "exists": false
+        }
+      ],
+      "classification": "E",
+      "classification_scope": "Unrecoverable under immutable accepted-result and existing publisher contract; not a claim of permanent impossibility",
+      "receipt_fence_verified": true,
+      "isolated_exit_code": 1,
+      "isolated_stderr": "Error: invalid character or incomplete review evidence",
+      "field_issues": [
+        {
+          "character_index": 1,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 45,
+          "visual_description_trimmed_chars": 45,
+          "notes_chars": 10,
+          "notes_trimmed_chars": 10,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 4,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 38,
+          "visual_description_trimmed_chars": 38,
+          "notes_chars": 11,
+          "notes_trimmed_chars": 11,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 5,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 42,
+          "visual_description_trimmed_chars": 42,
+          "notes_chars": 17,
+          "notes_trimmed_chars": 17,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 6,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 36,
+          "visual_description_trimmed_chars": 36,
+          "notes_chars": 10,
+          "notes_trimmed_chars": 10,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 9,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 49,
+          "visual_description_trimmed_chars": 49,
+          "notes_chars": 17,
+          "notes_trimmed_chars": 17,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        }
+      ]
+    },
+    {
+      "id": "9d5c0351-4e5c-462a-a524-6173bd4e7c4b",
+      "event_id": "b8faef3b-b706-4454-b75d-b185a510d1da",
+      "task_id": "bbc4425d-f3e9-41ba-a745-830331838203",
+      "profile_id": "emote-publisher-v1",
+      "profile_version": 1,
+      "action_kind": "on_task_completed",
+      "state": "failed",
+      "attempt_count": 2,
+      "max_attempts": 2,
+      "last_error": "nonzero_exit_retryable",
+      "exit_code": 1,
+      "output_bytes": 55,
+      "created_at": "2026-10-25T09:14:14.703526800+00:00",
+      "updated_at": "2026-10-25T09:14:15.224193200+00:00",
+      "group_id": "106",
+      "task_state": "completed",
+      "task_attempt_no": 1,
+      "payload_result_equal": true,
+      "event_id_equal": true,
+      "receipt_count": 1,
+      "completion_receipt_result_equal": true,
+      "outputs": [
+        {
+          "path": "results/106.json",
+          "exists": false
+        },
+        {
+          "path": "results/.receipts/106.json",
+          "exists": false
+        }
+      ],
+      "classification": "E",
+      "classification_scope": "Unrecoverable under immutable accepted-result and existing publisher contract; not a claim of permanent impossibility",
+      "receipt_fence_verified": true,
+      "isolated_exit_code": 1,
+      "isolated_stderr": "Error: invalid character or incomplete review evidence",
+      "field_issues": [
+        {
+          "character_index": 0,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 48,
+          "visual_description_trimmed_chars": 48,
+          "notes_chars": 17,
+          "notes_trimmed_chars": 17,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 1,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 37,
+          "visual_description_trimmed_chars": 37,
+          "notes_chars": 17,
+          "notes_trimmed_chars": 17,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 2,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 40,
+          "visual_description_trimmed_chars": 40,
+          "notes_chars": 17,
+          "notes_trimmed_chars": 17,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 3,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 45,
+          "visual_description_trimmed_chars": 45,
+          "notes_chars": 17,
+          "notes_trimmed_chars": 17,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 4,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 44,
+          "visual_description_trimmed_chars": 44,
+          "notes_chars": 17,
+          "notes_trimmed_chars": 17,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 6,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 46,
+          "visual_description_trimmed_chars": 46,
+          "notes_chars": 17,
+          "notes_trimmed_chars": 17,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        }
+      ]
+    },
+    {
+      "id": "33f38960-4789-4294-8ec2-25962b06cec2",
+      "event_id": "89962320-849d-4a65-8ace-efd017a35066",
+      "task_id": "bce27c0f-3c34-48eb-ae06-47b7a0ccd7d8",
+      "profile_id": "emote-publisher-v1",
+      "profile_version": 1,
+      "action_kind": "on_task_completed",
+      "state": "failed",
+      "attempt_count": 2,
+      "max_attempts": 2,
+      "last_error": "nonzero_exit_retryable",
+      "exit_code": 1,
+      "output_bytes": 55,
+      "created_at": "2026-10-25T09:14:44.972046200+00:00",
+      "updated_at": "2026-10-25T09:14:45.511938200+00:00",
+      "group_id": "33",
+      "task_state": "completed",
+      "task_attempt_no": 1,
+      "payload_result_equal": true,
+      "event_id_equal": true,
+      "receipt_count": 1,
+      "completion_receipt_result_equal": true,
+      "outputs": [
+        {
+          "path": "results/33.json",
+          "exists": false
+        },
+        {
+          "path": "results/.receipts/33.json",
+          "exists": false
+        }
+      ],
+      "classification": "E",
+      "classification_scope": "Unrecoverable under immutable accepted-result and existing publisher contract; not a claim of permanent impossibility",
+      "receipt_fence_verified": true,
+      "isolated_exit_code": 1,
+      "isolated_stderr": "Error: invalid character or incomplete review evidence",
+      "field_issues": [
+        {
+          "character_index": 1,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 42,
+          "visual_description_trimmed_chars": 42,
+          "notes_chars": 15,
+          "notes_trimmed_chars": 15,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 2,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 46,
+          "visual_description_trimmed_chars": 46,
+          "notes_chars": 12,
+          "notes_trimmed_chars": 12,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 6,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 40,
+          "visual_description_trimmed_chars": 40,
+          "notes_chars": 16,
+          "notes_trimmed_chars": 16,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 8,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 39,
+          "visual_description_trimmed_chars": 39,
+          "notes_chars": 18,
+          "notes_trimmed_chars": 18,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        }
+      ]
+    },
+    {
+      "id": "12123244-e8bd-461e-ac01-e6984ed536cf",
+      "event_id": "b8a5735f-753b-4d07-b1cf-9d84391a2392",
+      "task_id": "a99b1b8a-6a47-4bc4-8186-29c2ce24d06b",
+      "profile_id": "emote-publisher-v1",
+      "profile_version": 1,
+      "action_kind": "on_task_completed",
+      "state": "failed",
+      "attempt_count": 2,
+      "max_attempts": 2,
+      "last_error": "nonzero_exit_retryable",
+      "exit_code": 1,
+      "output_bytes": 55,
+      "created_at": "2026-10-25T09:18:51.540783800+00:00",
+      "updated_at": "2026-10-25T09:18:52.086026500+00:00",
+      "group_id": "60",
+      "task_state": "completed",
+      "task_attempt_no": 2,
+      "payload_result_equal": true,
+      "event_id_equal": true,
+      "receipt_count": 1,
+      "completion_receipt_result_equal": true,
+      "outputs": [
+        {
+          "path": "results/60.json",
+          "exists": false
+        },
+        {
+          "path": "results/.receipts/60.json",
+          "exists": false
+        }
+      ],
+      "classification": "E",
+      "classification_scope": "Unrecoverable under immutable accepted-result and existing publisher contract; not a claim of permanent impossibility",
+      "receipt_fence_verified": true,
+      "isolated_exit_code": 1,
+      "isolated_stderr": "Error: invalid character or incomplete review evidence",
+      "field_issues": [
+        {
+          "character_index": 1,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 42,
+          "visual_description_trimmed_chars": 42,
+          "notes_chars": 19,
+          "notes_trimmed_chars": 19,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 2,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 38,
+          "visual_description_trimmed_chars": 38,
+          "notes_chars": 19,
+          "notes_trimmed_chars": 19,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 3,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 30,
+          "visual_description_trimmed_chars": 30,
+          "notes_chars": 19,
+          "notes_trimmed_chars": 19,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 5,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 32,
+          "visual_description_trimmed_chars": 32,
+          "notes_chars": 19,
+          "notes_trimmed_chars": 19,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 6,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 42,
+          "visual_description_trimmed_chars": 42,
+          "notes_chars": 19,
+          "notes_trimmed_chars": 19,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        }
+      ]
+    },
+    {
+      "id": "d4b4fbb8-63b4-440c-88f8-e34a35865b8d",
+      "event_id": "ca9a3729-8985-4aab-8c34-a8c32398cee8",
+      "task_id": "af3e6165-6995-40fc-a2be-81b06fe15e3c",
+      "profile_id": "emote-publisher-v1",
+      "profile_version": 1,
+      "action_kind": "on_task_completed",
+      "state": "failed",
+      "attempt_count": 2,
+      "max_attempts": 2,
+      "last_error": "nonzero_exit_retryable",
+      "exit_code": 1,
+      "output_bytes": 55,
+      "created_at": "2026-10-25T09:23:24.405564200+00:00",
+      "updated_at": "2026-10-25T09:23:24.867346200+00:00",
+      "group_id": "114",
+      "task_state": "completed",
+      "task_attempt_no": 2,
+      "payload_result_equal": true,
+      "event_id_equal": true,
+      "receipt_count": 1,
+      "completion_receipt_result_equal": true,
+      "outputs": [
+        {
+          "path": "results/114.json",
+          "exists": false
+        },
+        {
+          "path": "results/.receipts/114.json",
+          "exists": false
+        }
+      ],
+      "classification": "E",
+      "classification_scope": "Unrecoverable under immutable accepted-result and existing publisher contract; not a claim of permanent impossibility",
+      "receipt_fence_verified": true,
+      "isolated_exit_code": 1,
+      "isolated_stderr": "Error: invalid character or incomplete review evidence",
+      "field_issues": [
+        {
+          "character_index": 0,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 43,
+          "visual_description_trimmed_chars": 43,
+          "notes_chars": 16,
+          "notes_trimmed_chars": 16,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 1,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 37,
+          "visual_description_trimmed_chars": 37,
+          "notes_chars": 16,
+          "notes_trimmed_chars": 16,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 2,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 40,
+          "visual_description_trimmed_chars": 40,
+          "notes_chars": 16,
+          "notes_trimmed_chars": 16,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 3,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 40,
+          "visual_description_trimmed_chars": 40,
+          "notes_chars": 16,
+          "notes_trimmed_chars": 16,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 5,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 45,
+          "visual_description_trimmed_chars": 45,
+          "notes_chars": 16,
+          "notes_trimmed_chars": 16,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 6,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 37,
+          "visual_description_trimmed_chars": 37,
+          "notes_chars": 16,
+          "notes_trimmed_chars": 16,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 7,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 46,
+          "visual_description_trimmed_chars": 46,
+          "notes_chars": 16,
+          "notes_trimmed_chars": 16,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        },
+        {
+          "character_index": 8,
+          "failed_checks": [
+            "low_confidence_notes_20_2000"
+          ],
+          "visual_description_chars": 39,
+          "visual_description_trimmed_chars": 39,
+          "notes_chars": 16,
+          "notes_trimmed_chars": 16,
+          "confidence_below_0_6": true,
+          "local_character_id_ascii": true
+        }
+      ]
+    }
+  ],
+  "all_67_success_outputs_match": true,
+  "output_inventory_exact": true,
+  "output_file_count": 134,
+  "index_exists": false,
+  "review_queue_exists": false,
+  "protected_tables": {
+    "tasks": {
+      "removed_or_changed": 0,
+      "added_or_changed": 0
+    },
+    "agents": {
+      "removed_or_changed": 0,
+      "added_or_changed": 0
+    },
+    "batches": {
+      "removed_or_changed": 0,
+      "added_or_changed": 0
+    },
+    "task_receipts": {
+      "removed_or_changed": 0,
+      "added_or_changed": 0
+    },
+    "task_progress": {
+      "removed_or_changed": 0,
+      "added_or_changed": 0
+    },
+    "task_progress_receipts": {
+      "removed_or_changed": 0,
+      "added_or_changed": 0
+    },
+    "task_progress_extend_receipts": {
+      "removed_or_changed": 0,
+      "added_or_changed": 0
+    },
+    "completion_actions": {
+      "removed_or_changed": 0,
+      "added_or_changed": 0
+    },
+    "task_attempts": {
+      "removed_or_changed": 0,
+      "added_or_changed": 0
+    }
+  },
+  "runner_nonce_changes": {
+    "removed_or_changed": 120,
+    "added_or_changed": 120
+  },
+  "freeze": {
+    "count": 24,
+    "sql_sha256": "678a8a1227dda09cbf98e43b90f348e8b242b2ce66e94cdfec1c23e8ee48dd3a"
+  },
+  "integrity": "ok",
+  "production_recovery_attempts": 0,
+  "temporary_bindings_added": 0,
+  "processes_started_are_bounded_diagnostics": true,
+  "operator_production_mutations": 0,
+  "final_closure": {
+    "observed_at_utc": "2026-10-27T12:55:32.401684+00:00",
+    "read_only": true,
+    "protected_tables": {
+      "tasks": {
+        "removed_or_changed": 0,
+        "added_or_changed": 0
+      },
+      "agents": {
+        "removed_or_changed": 0,
+        "added_or_changed": 0
+      },
+      "batches": {
+        "removed_or_changed": 0,
+        "added_or_changed": 0
+      },
+      "task_receipts": {
+        "removed_or_changed": 0,
+        "added_or_changed": 0
+      },
+      "task_progress": {
+        "removed_or_changed": 0,
+        "added_or_changed": 0
+      },
+      "task_progress_receipts": {
+        "removed_or_changed": 0,
+        "added_or_changed": 0
+      },
+      "task_progress_extend_receipts": {
+        "removed_or_changed": 0,
+        "added_or_changed": 0
+      },
+      "completion_actions": {
+        "removed_or_changed": 0,
+        "added_or_changed": 0
+      },
+      "task_attempts": {
+        "removed_or_changed": 0,
+        "added_or_changed": 0
+      }
+    },
+    "task_states": [
+      [
+        "completed",
+        105
+      ],
+      [
+        "pending",
+        16
+      ]
+    ],
+    "action_states": [
+      [
+        "failed",
+        38
+      ],
+      [
+        "succeeded",
+        67
+      ]
+    ],
+    "freeze": {
+      "count": 24,
+      "sql_sha256": "678a8a1227dda09cbf98e43b90f348e8b242b2ce66e94cdfec1c23e8ee48dd3a"
+    },
+    "integrity": "ok",
+    "health": {
+      "checked_at_unix_ms": 1793105732484,
+      "status": "READY",
+      "core": {
+        "status": "READY",
+        "reason": null
+      },
+      "database": {
+        "status": "READY",
+        "reason": null
+      },
+      "broker": {
+        "status": "READY",
+        "reason": null
+      },
+      "runner": {
+        "status": "READY",
+        "reason": null
+      },
+      "runner_last_seen_unix_ms": 1793105732284
+    }
+  },
+  "final_service_metadata": {
+    "observed_at_utc": "2026-10-27T12:51:52.2496057Z",
+    "health": {
+      "checked_at_unix_ms": 1793105512313,
+      "status": "READY",
+      "core": {
+        "status": "READY",
+        "reason": null
+      },
+      "database": {
+        "status": "READY",
+        "reason": null
+      },
+      "broker": {
+        "status": "READY",
+        "reason": null
+      },
+      "runner": {
+        "status": "READY",
+        "reason": null
+      },
+      "runner_last_seen_unix_ms": 1793105512267
+    },
+    "monitor_last_result": 0,
+    "services": [
+      {
+        "Name": "coord",
+        "State": "Running",
+        "StartName": "NT AUTHORITY\\LocalService",
+        "ProcessId": 9036
+      },
+      {
+        "Name": "Servy",
+        "State": "Running",
+        "StartName": "LocalSystem",
+        "ProcessId": 3224
+      },
+      {
+        "Name": "CoordRelayAgent",
+        "State": "Running",
+        "StartName": "NT AUTHORITY\\LocalService",
+        "ProcessId": 3672
+      },
+      {
+        "Name": "CoordActionRunnerG7",
+        "State": "Running",
+        "StartName": ".\\coord_action_g7",
+        "ProcessId": 7376
+      }
+    ],
+    "processes": [
+      {
+        "parent_pid": 9036,
+        "pid": 9844,
+        "sid": "S-1-5-19",
+        "name": "coord.exe"
+      },
+      {
+        "parent_pid": 7376,
+        "pid": 4616,
+        "sid": "S-1-5-21-3592388187-2353680085-815129118-1004",
+        "name": "coord-action-runner.exe"
+      }
+    ],
+    "listeners": [
+      {
+        "LocalAddress": "127.0.0.1",
+        "LocalPort": 7779,
+        "OwningProcess": 9844
+      },
+      {
+        "LocalAddress": "127.0.0.1",
+        "LocalPort": 7777,
+        "OwningProcess": 9844
+      }
+    ],
+    "profiles": {
+      "emote-publisher-v1": {
+        "task_pin": "cac5496ed1dea50f837f28403feb62515de1ba1459ea2557abe6097ec07bec55",
+        "version": 1,
+        "batch_pin": "cac5496ed1dea50f837f28403feb62515de1ba1459ea2557abe6097ec07bec55",
+        "actual_pin": "cac5496ed1dea50f837f28403feb62515de1ba1459ea2557abe6097ec07bec55"
+      },
+      "g7-canary-v1": {
+        "task_pin": "cac5496ed1dea50f837f28403feb62515de1ba1459ea2557abe6097ec07bec55",
+        "version": 1,
+        "batch_pin": "cac5496ed1dea50f837f28403feb62515de1ba1459ea2557abe6097ec07bec55",
+        "actual_pin": "cac5496ed1dea50f837f28403feb62515de1ba1459ea2557abe6097ec07bec55"
+      },
+      "g7-browser-v1": {
+        "task_pin": "cac5496ed1dea50f837f28403feb62515de1ba1459ea2557abe6097ec07bec55",
+        "version": 1,
+        "batch_pin": "cac5496ed1dea50f837f28403feb62515de1ba1459ea2557abe6097ec07bec55",
+        "actual_pin": "cac5496ed1dea50f837f28403feb62515de1ba1459ea2557abe6097ec07bec55"
+      }
+    },
+    "all_windows_bindings_expired": true,
+    "binding_count": 5,
+    "old_broker_acl_exact": true,
+    "active_b5_diagnostics": [],
+    "system_status": "READY",
+    "consecutive_failures": 0
+  },
+  "linux_health_and_expiry": {
+    "observed_at_utc": "2026-10-27T12:52:15.755843+00:00",
+    "services": {
+      "coord-relay.service": [
+        "MainPID=145972",
+        "NRestarts=0",
+        "ActiveState=active",
+        "SubState=running"
+      ],
+      "feathersjsapp.service": [
+        "MainPID=145985",
+        "NRestarts=0",
+        "ActiveState=active",
+        "SubState=running"
+      ],
+      "openresty.service": [
+        "MainPID=109204",
+        "NRestarts=0",
+        "ActiveState=active",
+        "SubState=running"
+      ]
+    },
+    "route_config": {
+      "agentHost": "100.116.134.114",
+      "agentPort": 13012,
+      "clientHost": "127.0.0.1",
+      "clientPort": 13013
+    },
+    "policy": {
+      "binding_count": 5,
+      "all_expired": true
+    },
+    "sidecar_health": {
+      "http_status": 200,
+      "body": {
+        "state": "READY",
+        "agentConnected": true,
+        "lastHeartbeat": "2026-10-27T12:52:11.652Z",
+        "pending": 0
+      }
+    }
+  },
+  "runner_business_acl_gate": {
+    "state": "BLOCKED_METADATA",
+    "input_files_audited": 1673,
+    "input_files_missing_current_runner_allow_ace": 1673,
+    "input_reparse_count": 0,
+    "current_runner_sid_suffix": "1004",
+    "runner_account": "coord_action_g7",
+    "runner_group_names": [
+      "Users"
+    ],
+    "observed_allow_sids": "Administrators, SYSTEM, original local user SID suffix 1001",
+    "runner_production_io_probe": "NOT_RUN",
+    "permissions_changed": false
+  },
+  "batch_validator": {
+    "required": [
+      "schema_version",
+      "group_id",
+      "agent_id",
+      "attempt_no",
+      "source_image_ids",
+      "characters",
+      "uncertain"
+    ],
+    "equals": null,
+    "nested_evidence_validated_by_core": false
+  },
+  "diagnostic_limitations": [
+    "The historical binary was executed offline under the SSH administrator identity against a consistent DB copy and isolated output root. This is not signed Broker or low-privilege Runner acceptance.",
+    "No recovery interface or production action exception was implemented because all 38 immutable results violate the pinned publisher evidence rule.",
+    "Current ACL metadata is an additional readiness blocker, separate from the reproduced historical semantic failures."
+  ]
+}
