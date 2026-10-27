@@ -73,7 +73,7 @@ fn unique(values: &[String]) -> bool {
 fn numeric(value: &str) -> bool {
     !value.is_empty() && value.bytes().all(|byte| byte.is_ascii_digit())
 }
-fn group(value: &str) -> bool {
+pub(super) fn group(value: &str) -> bool {
     (value.len() == 2 || value.len() == 3)
         && numeric(value)
         && value.parse::<u32>().is_ok_and(|number| {
@@ -85,7 +85,7 @@ fn group(value: &str) -> bool {
                 }
         })
 }
-fn ref_file(root: &Path, value: &str) -> Result<()> {
+fn ref_file(root: Option<&Path>, value: &str) -> Result<()> {
     if value.len() > 512
         || !value.starts_with("refs/")
         || value.contains(['\\', ':'])
@@ -95,6 +95,9 @@ fn ref_file(root: &Path, value: &str) -> Result<()> {
     {
         bail!("unsafe reference path");
     }
+    let Some(root) = root else {
+        return Ok(());
+    };
     let refs = safe_existing_path(&root.join("refs"))?;
     let path = safe_existing_path(&root.join(value))?;
     if !path.starts_with(refs) || !path.is_file() {
@@ -102,7 +105,7 @@ fn ref_file(root: &Path, value: &str) -> Result<()> {
     }
     Ok(())
 }
-fn candidates(root: &Path, values: &[Candidate]) -> Result<()> {
+fn candidates(root: Option<&Path>, values: &[Candidate]) -> Result<()> {
     if values.len() > 20 {
         bail!("too many reference candidates");
     }
@@ -120,7 +123,7 @@ fn candidates(root: &Path, values: &[Candidate]) -> Result<()> {
     }
     Ok(())
 }
-fn paths(root: &Path, values: &[String]) -> Result<()> {
+fn paths(root: Option<&Path>, values: &[String]) -> Result<()> {
     if values.is_empty() || !unique(values) {
         bail!("checked paths must be nonempty and unique");
     }
@@ -143,6 +146,16 @@ fn valid_agent_id(id: &str) -> bool {
 /// Same required fields, coverage, evidence and bounds as G4's Python validator;
 /// additionally enforces the schema's candidate icon shape and all reparse ancestors.
 pub fn validate_result(root: &Path, value: &Value, proof: &Value) -> Result<()> {
+    validate_inner(Some(root), value, proof)
+}
+
+/// Submission preflight shares every semantic rule with the publisher. Core
+/// does not require filesystem access to the private images/reference library.
+pub fn validate_semantics(value: &Value, proof: &Value) -> Result<()> {
+    validate_inner(None, value, proof)
+}
+
+fn validate_inner(root: Option<&Path>, value: &Value, proof: &Value) -> Result<()> {
     let result: EmoteResult =
         serde_json::from_value(value.clone()).context("strict emote schema")?;
     let input = &proof["input"];
@@ -227,7 +240,7 @@ pub fn validate_result(root: &Path, value: &Value, proof: &Value) -> Result<()> 
     Ok(())
 }
 
-fn read_json(path: &Path) -> Result<Value> {
+pub(super) fn read_json(path: &Path) -> Result<Value> {
     let safe = safe_existing_path(path)?;
     if !safe.is_file() || fs::metadata(&safe)?.len() > 4 * 1024 * 1024 {
         bail!("invalid bounded JSON input");
@@ -272,7 +285,7 @@ pub fn publish_new(path: &Path, bytes: &[u8]) -> Result<()> {
     let _ = fs::remove_file(temporary);
     result
 }
-fn proof_valid(event: &Value, proof: &Value) -> Result<()> {
+pub(super) fn proof_valid(event: &Value, proof: &Value) -> Result<()> {
     if proof["receipt_confirmed"] != true
         || proof["batch_id"] != event["batch_id"]
         || !proof["task_id"].is_string()
@@ -286,6 +299,20 @@ fn proof_valid(event: &Value, proof: &Value) -> Result<()> {
     Ok(())
 }
 pub fn execute(root: &Path, event: &Value) -> Result<()> {
+    execute_using(root, event, validate_result, |outputs| {
+        for (path, bytes) in outputs {
+            publish_new(path, bytes)?;
+        }
+        Ok(())
+    })
+}
+
+pub(super) fn execute_using(
+    root: &Path,
+    event: &Value,
+    validate: impl Fn(&Path, &Value, &Value) -> Result<()>,
+    publish: impl Fn(&[(std::path::PathBuf, Vec<u8>)]) -> Result<()>,
+) -> Result<()> {
     let root = safe_existing_path(root)?;
     let results = root.join("results");
     safe_existing_path(&results)?;
@@ -306,7 +333,7 @@ pub fn execute(root: &Path, event: &Value) -> Result<()> {
                 bail!("task event fence mismatch");
             }
             let result = &event["result"];
-            validate_result(&root, result, proof)?;
+            validate(&root, result, proof)?;
             let bytes = serde_json::to_vec(result)?;
             let digest = sha256(&bytes)?;
             if proof["result_sha256"] != digest {
@@ -316,11 +343,13 @@ pub fn execute(root: &Path, event: &Value) -> Result<()> {
             let receipt = json!({"schema_version":1,"task_id":proof["task_id"],"batch_id":proof["batch_id"],"agent_id":proof["agent_id"],"attempt_no":proof["attempt_no"],"result_sha256":digest});
             // Receipt and result are individually atomic. Idempotent replay
             // repairs an interrupted pair only when the bytes match exactly.
-            publish_new(&results.join(format!("{group}.json")), &bytes)?;
-            publish_new(
-                &results.join(".receipts").join(format!("{group}.json")),
-                &serde_json::to_vec(&receipt)?,
-            )?;
+            publish(&[
+                (results.join(format!("{group}.json")), bytes),
+                (
+                    results.join(".receipts").join(format!("{group}.json")),
+                    serde_json::to_vec(&receipt)?,
+                ),
+            ])?;
         }
         Some("on_batch_completed") => {
             let mut entries = Vec::new();
@@ -334,7 +363,7 @@ pub fn execute(root: &Path, event: &Value) -> Result<()> {
                     bail!("invalid/duplicate authorized group");
                 }
                 let result = read_json(&results.join(format!("{group}.json")))?;
-                validate_result(&root, &result, proof)?;
+                validate(&root, &result, proof)?;
                 let digest = sha256(&serde_json::to_vec(&result)?)?;
                 let receipt = read_json(&results.join(".receipts").join(format!("{group}.json")))?;
                 for key in [
@@ -385,11 +414,13 @@ pub fn execute(root: &Path, event: &Value) -> Result<()> {
             }
             let index = json!({"schema_version":1,"state":"STRUCTURALLY_COMPLETE","scope":"Receipt-checked preliminary index; no global character merge.","expected_groups":proofs.len(),"available_results":entries.len(),"missing_groups":[],"results":entries});
             let review = json!({"schema_version":1,"state":"candidate_review","candidate_count":candidates.len(),"candidates":candidates,"missing_groups":[],"note":"Candidates only; do not assign global IDs or merge automatically."});
-            publish_new(&results.join("index.json"), &serde_json::to_vec(&index)?)?;
-            publish_new(
-                &results.join("review_queue/candidates.json"),
-                &serde_json::to_vec(&review)?,
-            )?;
+            publish(&[
+                (results.join("index.json"), serde_json::to_vec(&index)?),
+                (
+                    results.join("review_queue/candidates.json"),
+                    serde_json::to_vec(&review)?,
+                ),
+            ])?;
         }
         _ => bail!("unsupported completion action"),
     }

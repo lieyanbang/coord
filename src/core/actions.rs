@@ -43,6 +43,27 @@ pub struct ActionProfile {
     pub version: u32,
     pub on_task_completed: Option<ActionCommand>,
     pub on_batch_completed: Option<ActionCommand>,
+    #[serde(default)]
+    pub submission_validation: Option<String>,
+    #[serde(default)]
+    pub recovery: Option<RecoveryPolicy>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct RecoveryPolicy {
+    pub batch_id: uuid::Uuid,
+    pub source_profile: String,
+    pub expires_at: chrono::DateTime<chrono::Utc>,
+    pub actions: BTreeMap<String, RecoveryTarget>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct RecoveryTarget {
+    pub result_sha256: String,
+    pub result_storage_sha256: String,
+    pub supplement_sha256: String,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -180,6 +201,42 @@ impl ActionRegistry {
             }
             if profile.on_task_completed.is_none() && profile.on_batch_completed.is_none() {
                 bail!("action profile must define at least one completion action");
+            }
+            if profile
+                .submission_validation
+                .as_deref()
+                .is_some_and(|v| v != "emote-v2")
+            {
+                bail!("unsupported submission validation version");
+            }
+            if let Some(recovery) = &profile.recovery {
+                let command = profile
+                    .on_task_completed
+                    .as_ref()
+                    .context("recovery task command required")?;
+                if profile.version != 2
+                    || profile.submission_validation.as_deref() != Some("emote-v2")
+                    || command.max_attempts != 1
+                    || !command.include_result
+                    || command.idempotent
+                    || !file.profiles.contains_key(&recovery.source_profile)
+                    || recovery.actions.is_empty()
+                    || recovery.actions.len() > 1000
+                {
+                    bail!("recovery requires v2, one non-retried receipt-backed execution, and an exact source allowlist");
+                }
+                for (id, target) in &recovery.actions {
+                    uuid::Uuid::parse_str(id)?;
+                    for hash in [
+                        &target.result_sha256,
+                        &target.result_storage_sha256,
+                        &target.supplement_sha256,
+                    ] {
+                        if hash.len() != 64 || !hash.bytes().all(|b| b.is_ascii_hexdigit()) {
+                            bail!("invalid recovery hash");
+                        }
+                    }
+                }
             }
         }
         let mut profiles = file.profiles;

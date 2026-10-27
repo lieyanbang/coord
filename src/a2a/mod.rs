@@ -529,6 +529,21 @@ async fn dispatch(state: &AppState, method: &str, params: Value) -> Result<Value
                 .create_batch(&p.name, &p.description, p.config)
                 .map_err(MethodError::internal)
         }
+        "actions/recover" => {
+            #[derive(Deserialize)]
+            #[serde(deny_unknown_fields)]
+            struct P {
+                original_action_id: Uuid,
+                profile_id: String,
+            }
+            let p: P = serde_json::from_value(params).map_err(MethodError::bad_params)?;
+            let result = state
+                .store
+                .recover_action(p.original_action_id, &p.profile_id)
+                .map_err(MethodError::internal)?;
+            state.bus.notify();
+            Ok(result)
+        }
         "actions/status" => {
             #[derive(Deserialize)]
             #[serde(deny_unknown_fields)]

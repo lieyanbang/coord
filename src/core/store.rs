@@ -780,6 +780,34 @@ impl Store {
             if let Some((owner,prior,response)) = tx.query_row("SELECT agent_id,request,response FROM task_receipts WHERE task_id=?1 AND lease_token=?2 AND operation='complete'",params![id.to_string(),lease_token],|r| Ok((r.get::<_,String>(0)?,r.get::<_,String>(1)?,r.get::<_,String>(2)?))).optional()? {
                 return if owner==agent_id && prior==request { { let value:serde_json::Value=serde_json::from_str(&response)?; if let Some(id)=value.get("submitted").and_then(|v|v.as_str()){Ok(CompleteOutcome::Submitted{submission_id:id.into()})}else{Ok(CompleteOutcome::Completed { ack: Box::new(serde_json::from_value(value)?) })} } } else { Ok(CompleteOutcome::NotInClaimedState) };
             }
+            // Rejection leaves ownership, attempts and receipts untouched, so
+            // workers can correct evidence under the same live claim.
+            let task = tx
+                .query_row(
+                    &format!("SELECT {TASK_COLUMNS} FROM tasks WHERE id=?1"),
+                    [id.to_string()],
+                    row_to_task,
+                )
+                .optional()?;
+            if let Some(task) = task.as_ref().filter(|t| {
+                t.state == TaskState::Claimed
+                    && t.claimed_by.as_deref() == Some(agent_id)
+                    && t.lease_token.as_deref() == Some(lease_token)
+                    && t.lease_until.is_some_and(|until| until > now)
+            }) {
+                if let Some(batch) = task.batch_id {
+                    let config = batch_config(&tx, batch, false)?;
+                    let profile = config
+                        .action_profile
+                        .as_deref()
+                        .and_then(|id| self.actions.as_ref()?.profile(id));
+                    if profile
+                        .is_some_and(|p| p.submission_validation.as_deref() == Some("emote-v2"))
+                    {
+                        super::emote::validate_semantics(&result,&serde_json::json!({"input":task.payload,"agent_id":agent_id,"attempt_no":task.attempt_no})).context("emote-v2 submission rejected; correct evidence and resubmit under the live claim")?;
+                    }
+                }
+            }
             let batch: Option<String> = tx
                 .query_row(
                     "SELECT batch_id FROM tasks WHERE id=?1",
@@ -2027,6 +2055,90 @@ impl Store {
 }
 
 impl Store {
+    /// Create an independent recovery event; never resets or edits its failed
+    /// source. The registry is an operator-controlled, expiring exact allowlist.
+    pub fn recover_action(
+        &self,
+        original_action_id: Uuid,
+        profile_id: &str,
+    ) -> Result<serde_json::Value> {
+        let registry = self.actions.as_ref().context("actions disabled")?;
+        let profile = registry
+            .profile(profile_id)
+            .context("recovery profile missing")?;
+        let policy = profile
+            .recovery
+            .as_ref()
+            .context("profile has no recovery authority")?;
+        if policy.expires_at <= Utc::now() {
+            anyhow::bail!("recovery authority expired");
+        }
+        let source = original_action_id.to_string();
+        let target = policy
+            .actions
+            .get(&source)
+            .context("source Action is not allowlisted")?;
+        let command = profile
+            .on_task_completed
+            .as_ref()
+            .context("task command missing")?;
+        let mut conn = self.conn.lock();
+        let tx = conn.transaction_with_behavior(rusqlite::TransactionBehavior::Immediate)?;
+        if let Some((id,event,state))=tx.query_row("SELECT a.id,a.event_id,a.state FROM action_recoveries r JOIN completion_actions a ON a.id=r.recovery_action_id WHERE r.original_action_id=?1",[&source],|r|Ok((r.get::<_,String>(0)?,r.get::<_,String>(1)?,r.get::<_,String>(2)?))).optional()? {
+            let payload:String=tx.query_row("SELECT payload FROM completion_actions WHERE id=?1",[&id],|r|r.get(0))?;
+            let p:serde_json::Value=serde_json::from_str(&payload)?;
+            if p["recovery"]["supplement_sha256"]!=target.supplement_sha256 || p["recovery"]["result_sha256"]!=target.result_sha256 { anyhow::bail!("existing recovery binding conflict"); }
+            return Ok(serde_json::json!({"id":id,"event_id":event,"state":state,"replayed":true}));
+        }
+        let (event,batch,task,source_profile,state,kind,payload):(String,String,String,String,String,String,String)=tx.query_row("SELECT event_id,batch_id,task_id,profile_id,state,action_kind,payload FROM completion_actions WHERE id=?1",[&source],|r|Ok((r.get(0)?,r.get(1)?,r.get(2)?,r.get(3)?,r.get(4)?,r.get(5)?,r.get(6)?)))?;
+        if batch != policy.batch_id.to_string()
+            || source_profile != policy.source_profile
+            || state != "failed"
+            || kind != "on_task_completed"
+        {
+            anyhow::bail!("source is not an authorized failed task Action");
+        }
+        let mut payload: serde_json::Value = serde_json::from_str(&payload)?;
+        if !payload["recovery"].is_null() {
+            anyhow::bail!("cannot chain recovery events");
+        }
+        let accepted = tx.query_row(
+            &format!("SELECT {TASK_COLUMNS} FROM tasks WHERE id=?1"),
+            [&task],
+            row_to_task,
+        )?;
+        let result = accepted
+            .result
+            .as_ref()
+            .context("missing accepted result")?;
+        let storage: String =
+            tx.query_row("SELECT result FROM tasks WHERE id=?1", [&task], |r| {
+                r.get(0)
+            })?;
+        if accepted.state != TaskState::Completed
+            || accepted.batch_id != Some(policy.batch_id)
+            || payload["attempt_no"] != accepted.attempt_no
+            || payload["result"] != *result
+            || target.result_sha256
+                != super::windows_security::sha256(&serde_json::to_vec(result)?)?
+            || target.result_storage_sha256 != super::windows_security::sha256(storage.as_bytes())?
+        {
+            anyhow::bail!("accepted source changed or hash binding mismatch");
+        }
+        let id = Uuid::new_v4().to_string();
+        let new_event = Uuid::new_v4().to_string();
+        payload["event_id"] = new_event.clone().into();
+        payload["recovery"] = serde_json::json!({"schema_version":1,"batch_id":batch,"task_id":task,"original_action_id":source,"original_event_id":event,"result_sha256":target.result_sha256,"result_storage_sha256":target.result_storage_sha256,"supplement_sha256":target.supplement_sha256});
+        let now = Utc::now().to_rfc3339();
+        tx.execute("INSERT INTO completion_actions(id,event_id,event_key,batch_id,task_id,profile_id,profile_version,action_kind,payload,state,idempotent,max_attempts,created_at,updated_at) VALUES(?1,?2,?3,?4,?5,?6,?7,'on_task_completed',?8,'pending',?9,?10,?11,?11)",params![id,new_event,format!("recovery:{source}"),batch,task,profile_id,profile.version,serde_json::to_string(&payload)?,command.idempotent,command.max_attempts,now])?;
+        tx.execute(
+            "INSERT INTO action_recoveries VALUES(?1,?2,?3)",
+            params![source, id, now],
+        )?;
+        tx.commit()?;
+        Ok(serde_json::json!({"id":id,"event_id":new_event,"state":"pending","replayed":false}))
+    }
+
     pub fn begin_action(&self, lease_owner: &str) -> Result<Option<super::actions::ActionJob>> {
         if self.actions.is_none() || lease_owner.is_empty() || lease_owner.len() > 128 {
             return Ok(None);
@@ -2066,7 +2178,8 @@ impl Store {
                    AND (action_kind!='on_batch_completed' OR NOT EXISTS(
                      SELECT 1 FROM completion_actions task_action
                      WHERE task_action.batch_id=completion_actions.batch_id
-                       AND task_action.action_kind='on_task_completed' AND task_action.state!='succeeded'))
+                       AND task_action.action_kind='on_task_completed' AND task_action.state!='succeeded'
+                       AND NOT EXISTS(SELECT 1 FROM action_recoveries r JOIN completion_actions recovered ON recovered.id=r.recovery_action_id WHERE r.original_action_id=task_action.id AND recovered.state='succeeded')))
                  ORDER BY created_at,id LIMIT 1",
                 [],
                 |row| {
@@ -2182,6 +2295,33 @@ impl Store {
         };
         let mut payload: serde_json::Value = serde_json::from_str(&payload)?;
         if authorize {
+            if let Some(recovery) = payload.get("recovery") {
+                let policy = self
+                    .actions
+                    .as_ref()
+                    .and_then(|r| r.profile(&profile_id))
+                    .and_then(|p| p.recovery.as_ref())
+                    .context("recovery authority removed")?;
+                let source = recovery["original_action_id"]
+                    .as_str()
+                    .context("source action")?;
+                let target = policy
+                    .actions
+                    .get(source)
+                    .context("recovery no longer allowlisted")?;
+                if policy.expires_at <= Utc::now()
+                    || recovery["batch_id"] != policy.batch_id.to_string()
+                    || recovery["result_sha256"] != target.result_sha256
+                    || recovery["result_storage_sha256"] != target.result_storage_sha256
+                    || recovery["supplement_sha256"] != target.supplement_sha256
+                {
+                    anyhow::bail!("recovery authority expired or changed");
+                }
+                let linked:bool=conn.query_row("SELECT EXISTS(SELECT 1 FROM action_recoveries r JOIN completion_actions a ON a.id=r.original_action_id WHERE r.original_action_id=?1 AND r.recovery_action_id=?2 AND a.state='failed' AND a.profile_id=?3 AND a.event_id=?4)",params![source,id,policy.source_profile,recovery["original_event_id"].as_str()],|r|r.get(0))?;
+                if !linked {
+                    anyhow::bail!("recovery source audit binding mismatch");
+                }
+            }
             let batch = payload["batch_id"]
                 .as_str()
                 .context("action batch missing")?;
@@ -2254,7 +2394,11 @@ impl Store {
                 {
                     anyhow::bail!("completion event does not match current attempt/result");
                 }
-                proofs.push(serde_json::json!({"task_id":task.id,"batch_id":task.batch_id,"agent_id":owner,
+                let storage: String =
+                    conn.query_row("SELECT result FROM tasks WHERE id=?1", [&task_id], |r| {
+                        r.get(0)
+                    })?;
+                proofs.push(serde_json::json!({"task_id":task.id,"batch_id":task.batch_id,"agent_id":owner,"result_storage_sha256":super::windows_security::sha256(storage.as_bytes())?,
                     "attempt_no":task.attempt_no,"input":redact_action_secrets(serde_json::json!({"group_id":task.payload.get("group_id"),"source_image_ids":task.payload.get("source_image_ids")})),"receipt_confirmed":true,
                     "result_sha256":super::windows_security::sha256(&serde_json::to_vec(&redact_action_secrets(result))?)?}));
             }
@@ -2874,6 +3018,11 @@ CREATE TABLE IF NOT EXISTS completion_actions (
 );
 CREATE INDEX IF NOT EXISTS idx_completion_actions_ready ON completion_actions(state, available_at, created_at);
 CREATE INDEX IF NOT EXISTS idx_completion_actions_batch ON completion_actions(batch_id, created_at);
+CREATE TABLE IF NOT EXISTS action_recoveries (
+    original_action_id TEXT PRIMARY KEY REFERENCES completion_actions(id),
+    recovery_action_id TEXT NOT NULL UNIQUE REFERENCES completion_actions(id),
+    created_at TEXT NOT NULL
+);
 "#;
 
 fn write_ack(

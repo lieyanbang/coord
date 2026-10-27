@@ -6,6 +6,7 @@
 pub mod action_runner;
 pub mod actions;
 pub mod emote;
+pub mod emote_v2;
 pub mod store;
 pub mod types;
 pub mod validator;

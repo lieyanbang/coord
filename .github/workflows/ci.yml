@@ -60,7 +60,7 @@ jobs:
         run: |
           $stage = 'target/r5-1b-artifact'
           New-Item -ItemType Directory -Path $stage -Force | Out-Null
-          $names = @('coord.exe', 'coord-action-runner.exe', 'coord-emote-action.exe')
+          $names = @('coord.exe', 'coord-action-runner.exe', 'coord-emote-action.exe', 'coord-emote-action-v2.exe')
           $files = @()
           foreach ($name in $names) {
             $source = Join-Path 'target/release' $name
