@@ -2431,9 +2431,25 @@ impl Store {
                     conn.query_row("SELECT result FROM tasks WHERE id=?1", [&task_id], |r| {
                         r.get(0)
                     })?;
-                proofs.push(serde_json::json!({"task_id":task.id,"batch_id":task.batch_id,"agent_id":owner,"result_storage_sha256":super::windows_security::sha256(storage.as_bytes())?,
+                let mut proof = serde_json::json!({"task_id":task.id,"batch_id":task.batch_id,"agent_id":owner,"result_storage_sha256":super::windows_security::sha256(storage.as_bytes())?,
                     "attempt_no":task.attempt_no,"input":redact_action_secrets(serde_json::json!({"group_id":task.payload.get("group_id"),"source_image_ids":task.payload.get("source_image_ids")})),"receipt_confirmed":true,
-                    "result_sha256":super::windows_security::sha256(&serde_json::to_vec(&redact_action_secrets(result))?)?}));
+                    "result_sha256":super::windows_security::sha256(&serde_json::to_vec(&redact_action_secrets(result))?)?});
+                if payload["task_id"].is_null() {
+                    let mut statement = conn.prepare("SELECT recovered.payload FROM action_recoveries r JOIN completion_actions recovered ON recovered.id=r.recovery_action_id WHERE recovered.task_id=?1 AND recovered.state='succeeded' ORDER BY recovered.id")?;
+                    let rows = statement
+                        .query_map([&task_id], |row| row.get::<_, String>(0))?
+                        .collect::<rusqlite::Result<Vec<_>>>()?;
+                    let mut recoveries = Vec::new();
+                    for row in rows {
+                        let recovery: serde_json::Value = serde_json::from_str(&row)?;
+                        let source = recovery
+                            .get("recovery")
+                            .context("successful recovery lacks source")?;
+                        recoveries.push(source.clone());
+                    }
+                    proof["recoveries"] = serde_json::json!(recoveries);
+                }
+                proofs.push(proof);
             }
             payload["authorization"] =
                 serde_json::json!({"schema_version":1,"event_id":event_id,"tasks":proofs});

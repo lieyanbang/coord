@@ -34,8 +34,10 @@ impl Recovery {
             "business/refs/arknights/icons",
             "business/results/.receipts",
             "business/results/.reviews",
+            "business/results/.corrections",
             "business/results/review_queue",
             "supplements",
+            "supplements/qa",
         ] {
             fs::create_dir_all(root.join(p)).unwrap();
         }
@@ -174,6 +176,266 @@ impl Recovery {
             event,
         )
     }
+}
+
+fn correction_fixture(f: &Recovery) -> (Value, Value, Value) {
+    let mut effective = f.result.clone();
+    effective["characters"][0]["notes"] =
+        "Reference and source were independently checked; identity remains a candidate.".into();
+    effective["characters"][0]["game"] = "arknights".into();
+    effective["characters"][0]["reference_match"]["match_status"] = "candidate".into();
+    effective["characters"][0]["reference_match"]["candidates"] = json!([{"game":"arknights","operator_name":"Fixture Identity","icon_path":"refs/arknights/icons/one.png","visual_notes":""}]);
+    let correction_id = Uuid::new_v4();
+    let qa = json!({"schema_version":1,"status":"APPROVED","reviewer":"independent-qa","correction_id":correction_id,"group_id":"00","accepted_result_sha256":hash(&f.result),"effective_result_sha256":hash(&effective)});
+    let qa_bytes = serde_json::to_vec(&qa).unwrap();
+    fs::write(f.root.join("supplements/qa/record.json"), &qa_bytes).unwrap();
+    let record = json!({"schema_version":2,"status":"APPROVED","revision":1,"correction_id":correction_id,"author":"editor","group_id":"00","batch_id":f.recovery["batch_id"],"task_id":f.recovery["task_id"],"original_action_id":f.recovery["original_action_id"],"original_event_id":f.recovery["original_event_id"],"accepted_result_sha256":hash(&f.result),"accepted_result_storage_sha256":f.recovery["result_storage_sha256"],"changes":[{"field":"characters","before":f.result["characters"],"after":effective["characters"]}],"evidence":[{"path":"task/00/1.webp","sha256":file_sha256(&f.root.join("business/task/00/1.webp")).unwrap()},{"path":"refs/arknights/icons/one.png","sha256":file_sha256(&f.root.join("business/refs/arknights/icons/one.png")).unwrap()}],"qa":{"path":"qa/record.json","sha256":sha256(&qa_bytes).unwrap(),"reviewer":"independent-qa"}});
+    let mut event = f.event.clone();
+    event["recovery"]["supplement_sha256"] = hash(&record).into();
+    f.write_supplement(&record);
+    (record, event, effective)
+}
+
+#[test]
+fn correction_publishes_effective_value_and_preserves_original_history() {
+    let f = Recovery::new();
+    let before = f.store().action_status(f.batch).unwrap();
+    let (record, event, effective) = correction_fixture(&f);
+    f.run(&event).unwrap();
+    f.run(&event).unwrap();
+    assert_eq!(before, f.store().action_status(f.batch).unwrap());
+    assert_eq!(
+        serde_json::from_slice::<Value>(
+            &fs::read(f.root.join("business/results/00.json")).unwrap()
+        )
+        .unwrap(),
+        f.result
+    );
+    let receipt = fs::read(f.root.join("business/results/.receipts/00.json")).unwrap();
+    let event_id = Uuid::new_v4();
+    let mut proof = event["authorization"]["tasks"][0].clone();
+    proof["recoveries"] = json!([event["recovery"]]);
+    let batch = json!({"action_kind":"on_batch_completed","event_id":event_id,"batch_id":f.batch,"authorization":{"schema_version":1,"event_id":event_id,"tasks":[proof]}});
+    f.run(&batch).unwrap();
+    let index: Value =
+        serde_json::from_slice(&fs::read(f.root.join("business/results/index.json")).unwrap())
+            .unwrap();
+    assert_eq!(index["results"][0]["sha256"], hash(&f.result));
+    assert_eq!(index["results"][0]["effective_sha256"], hash(&effective));
+    assert_eq!(
+        index["results"][0]["correction"]["correction_id"],
+        record["correction_id"]
+    );
+    assert_eq!(
+        index["results"][0]["correction"]["qa_sha256"],
+        record["qa"]["sha256"]
+    );
+    assert_eq!(
+        fs::read(f.root.join("business/results/.receipts/00.json")).unwrap(),
+        receipt
+    );
+    fs::remove_file(f.root.join("business/results/.corrections/00.json")).unwrap();
+    assert!(
+        f.run(&batch).is_err(),
+        "a missing authorized correction must not fall back"
+    );
+}
+
+#[test]
+fn correction_rejects_wrong_bindings_evidence_and_conflicting_values() {
+    let f = Recovery::new();
+    let (record, event, _) = correction_fixture(&f);
+    for case in [
+        "task",
+        "event",
+        "storage",
+        "before",
+        "missing_image",
+        "missing_ref",
+        "author",
+        "qa_hash",
+        "status",
+    ] {
+        let mut changed = record.clone();
+        match case {
+            "task" => changed["task_id"] = json!(Uuid::new_v4()),
+            "event" => changed["original_event_id"] = json!(Uuid::new_v4()),
+            "storage" => changed["accepted_result_storage_sha256"] = "0".repeat(64).into(),
+            "before" => changed["changes"][0]["before"] = json!([]),
+            "missing_image" => {
+                changed["evidence"].as_array_mut().unwrap().remove(0);
+            }
+            "missing_ref" => {
+                changed["evidence"].as_array_mut().unwrap().pop();
+            }
+            "author" => changed["author"] = "independent-qa".into(),
+            "qa_hash" => changed["qa"]["sha256"] = "0".repeat(64).into(),
+            "status" => changed["status"] = "CONFLICT".into(),
+            _ => unreachable!(),
+        }
+        f.write_supplement(&changed);
+        let mut changed_event = event.clone();
+        changed_event["recovery"]["supplement_sha256"] = hash(&changed).into();
+        assert!(f.run(&changed_event).is_err(), "{case}");
+        assert!(!f.root.join("business/results/00.json").exists(), "{case}");
+    }
+    f.write_supplement(&record);
+    fs::write(f.root.join("business/task/00/1.webp"), b"changed").unwrap();
+    assert!(f.run(&event).is_err());
+}
+
+#[test]
+fn correction_can_record_unchecked_reference_without_asserting_identity() {
+    let f = Recovery::new();
+    let (mut record, mut event, mut effective) = correction_fixture(&f);
+    let character = &mut effective["characters"][0];
+    character["game"] = "unknown".into();
+    character["reference_match"] = json!({"match_status":"no_match","candidates":[],"checked_paths":[],"conclusion":"No reference was checked for this corrected image."});
+    character["notes"] = "The source was examined; no reference identity has been verified.".into();
+    record["changes"][0]["after"] = effective["characters"].clone();
+    let qa_path = f.root.join("supplements/qa/record.json");
+    let mut qa: Value = serde_json::from_slice(&fs::read(&qa_path).unwrap()).unwrap();
+    qa["effective_result_sha256"] = hash(&effective).into();
+    let bytes = serde_json::to_vec(&qa).unwrap();
+    fs::write(&qa_path, &bytes).unwrap();
+    record["qa"]["sha256"] = sha256(&bytes).unwrap().into();
+    record["evidence"].as_array_mut().unwrap().pop();
+    f.write_supplement(&record);
+    event["recovery"]["supplement_sha256"] = hash(&record).into();
+    f.run(&event).unwrap();
+
+    let mut invalid = record.clone();
+    invalid["changes"][0]["after"][0]["game"] = "arknights".into();
+    f.write_supplement(&invalid);
+    event["recovery"]["supplement_sha256"] = hash(&invalid).into();
+    assert!(f
+        .run(&event)
+        .unwrap_err()
+        .to_string()
+        .contains("unchecked correction"));
+}
+
+#[test]
+fn correction_concurrent_retry_conflict_and_partial_are_safe() {
+    let f = Recovery::new();
+    let (record, event, _) = correction_fixture(&f);
+    let root = f.root.clone();
+    let handles: Vec<_> = (0..8)
+        .map(|_| {
+            let root = root.clone();
+            let event = event.clone();
+            std::thread::spawn(move || {
+                emote_v2::execute(&root.join("business"), &root.join("supplements"), &event)
+            })
+        })
+        .collect();
+    let outcomes: Vec<_> = handles.into_iter().map(|h| h.join().unwrap()).collect();
+    assert!(outcomes.iter().any(Result::is_ok));
+    f.run(&event).unwrap();
+    let mut other = record.clone();
+    other["revision"] = json!(2);
+    f.write_supplement(&other);
+    let mut other_event = event.clone();
+    other_event["recovery"]["supplement_sha256"] = hash(&other).into();
+    assert!(f.run(&other_event).is_err());
+    f.write_supplement(&record);
+    fs::write(
+        f.root.join("business/results/.corrections/00.lock"),
+        b"interrupted",
+    )
+    .unwrap();
+    assert!(f.run(&event).is_err());
+    let id = Uuid::new_v4();
+    let batch = json!({"action_kind":"on_batch_completed","event_id":id,"batch_id":f.batch,"authorization":{"schema_version":1,"event_id":id,"tasks":[event["authorization"]["tasks"][0]]}});
+    assert!(f.run(&batch).is_err());
+}
+
+#[test]
+fn correction_preserves_a_preexisting_v2_receipt_and_indexes_corrected_candidates() {
+    let f = Recovery::new();
+    f.run(&f.event).unwrap();
+    let receipt_path = f.root.join("business/results/.receipts/00.json");
+    let review_path = f.root.join("business/results/.reviews/00.json");
+    let receipt = fs::read(&receipt_path).unwrap();
+    let review = fs::read(&review_path).unwrap();
+    let (_, event, effective) = correction_fixture(&f);
+    f.run(&event).unwrap();
+    assert_eq!(fs::read(receipt_path).unwrap(), receipt);
+    assert_eq!(fs::read(review_path).unwrap(), review);
+
+    let mut other_result = effective.clone();
+    other_result["group_id"] = "01".into();
+    let mut other_proof = event["authorization"]["tasks"][0].clone();
+    other_proof["task_id"] = json!(Uuid::new_v4());
+    other_proof["input"]["group_id"] = "01".into();
+    other_proof["result_sha256"] = hash(&other_result).into();
+    let mut other_event = event.clone();
+    other_event.as_object_mut().unwrap().remove("recovery");
+    other_event["task_id"] = other_proof["task_id"].clone();
+    other_event["result"] = other_result;
+    other_event["authorization"]["tasks"] = json!([other_proof]);
+    coord::core::emote::execute(&f.root.join("business"), &other_event).unwrap();
+    let id = Uuid::new_v4();
+    let mut proof = event["authorization"]["tasks"][0].clone();
+    proof["recoveries"] = json!([event["recovery"]]);
+    let batch = json!({"action_kind":"on_batch_completed","event_id":id,"batch_id":f.batch,"authorization":{"schema_version":1,"event_id":id,"tasks":[proof,other_proof]}});
+    f.run(&batch).unwrap();
+    let queue: Value = serde_json::from_slice(
+        &fs::read(f.root.join("business/results/review_queue/candidates.json")).unwrap(),
+    )
+    .unwrap();
+    assert_eq!(queue["candidate_count"], 1);
+    assert_eq!(
+        queue["candidates"][0]["groups"][0]["local_characters"][0]["operator_name"],
+        "Fixture Identity"
+    );
+}
+
+#[test]
+fn correction_can_regroup_images_and_keep_unobservable_fields_uncertain() {
+    let mut f = Recovery::new();
+    fs::write(f.root.join("business/task/00/2.webp"), b"second image").unwrap();
+    f.result["source_image_ids"] = json!(["1", "2"]);
+    let mut second = f.result["characters"][0].clone();
+    second["local_character_id"] = "c2".into();
+    second["image_ids"] = json!(["2"]);
+    second["representative_image_id"] = "2".into();
+    f.result["characters"].as_array_mut().unwrap().push(second);
+    f.recovery["result_sha256"] = hash(&f.result).into();
+    f.event["result"] = f.result.clone();
+    f.event["recovery"] = f.recovery.clone();
+    f.event["authorization"]["tasks"][0]["result_sha256"] = hash(&f.result).into();
+    f.event["authorization"]["tasks"][0]["input"]["source_image_ids"] = json!(["1", "2"]);
+    let (mut record, mut event, mut effective) = correction_fixture(&f);
+    effective["characters"][0]["image_ids"] = json!(["1", "2"]);
+    effective["characters"].as_array_mut().unwrap().pop();
+    effective["uncertain"] = json!([{"image_id":"2","visible_features":"The subject is visible but the eye is closed.","reference_candidates":[],"checked_paths":["refs/arknights/icons/one.png"],"check_conclusion":"Reference cannot establish the hidden eye colour.","reason":"The relevant feature is obscured in the source.","review_priority":"medium"}]);
+    record["changes"][0]["after"] = effective["characters"].clone();
+    record["changes"]
+        .as_array_mut()
+        .unwrap()
+        .push(json!({"field":"uncertain","before":[],"after":effective["uncertain"]}));
+    record["evidence"].as_array_mut().unwrap().push(json!({"path":"task/00/2.webp","sha256":file_sha256(&f.root.join("business/task/00/2.webp")).unwrap()}));
+    let qa_path = f.root.join("supplements/qa/record.json");
+    let mut qa: Value = serde_json::from_slice(&fs::read(&qa_path).unwrap()).unwrap();
+    qa["effective_result_sha256"] = hash(&effective).into();
+    let bytes = serde_json::to_vec(&qa).unwrap();
+    fs::write(qa_path, &bytes).unwrap();
+    record["qa"]["sha256"] = sha256(&bytes).unwrap().into();
+    event["recovery"]["supplement_sha256"] = hash(&record).into();
+    f.write_supplement(&record);
+    f.run(&event).unwrap();
+    let id = Uuid::new_v4();
+    let mut proof = event["authorization"]["tasks"][0].clone();
+    proof["recoveries"] = json!([event["recovery"]]);
+    let batch = json!({"action_kind":"on_batch_completed","event_id":id,"batch_id":f.batch,"authorization":{"schema_version":1,"event_id":id,"tasks":[proof]}});
+    f.run(&batch).unwrap();
+    let index: Value =
+        serde_json::from_slice(&fs::read(f.root.join("business/results/index.json")).unwrap())
+            .unwrap();
+    assert_eq!(index["results"][0]["character_count"], 1);
+    assert_eq!(index["results"][0]["uncertain_count"], 1);
+    assert_eq!(index["results"][0]["effective_sha256"], hash(&effective));
 }
 impl Drop for Recovery {
     fn drop(&mut self) {
@@ -363,6 +625,14 @@ fn v2_index_accepts_legacy_receipts_and_review_overlays_without_mutating_results
         serde_json::from_slice(&fs::read(f.root.join("business/results/index.json")).unwrap())
             .unwrap();
     assert_eq!(index["available_results"], 2);
+    // Business publication completion does not assert independent full-batch QA.
+    assert_eq!(index["state"], "STRUCTURALLY_COMPLETE");
+    assert!(index["scope"].as_str().unwrap().contains("preliminary"));
+    let mut effective = f.result.clone();
+    effective["characters"][0]["notes"] = f.supplement["entries"][0]["review_notes"].clone();
+    assert_eq!(index["results"][0]["sha256"], hash(&f.result));
+    assert_eq!(index["results"][0]["effective_sha256"], hash(&effective));
+    assert!(index["results"][1].get("effective_sha256").is_none());
     let review_path = f.root.join("business/results/.reviews/00.json");
     let mut review: Value = serde_json::from_slice(&fs::read(&review_path).unwrap()).unwrap();
     review["supplement"]["review_status"] = "CONFLICT".into();

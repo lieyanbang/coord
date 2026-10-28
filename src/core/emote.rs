@@ -146,16 +146,27 @@ fn valid_agent_id(id: &str) -> bool {
 /// Same required fields, coverage, evidence and bounds as G4's Python validator;
 /// additionally enforces the schema's candidate icon shape and all reparse ancestors.
 pub fn validate_result(root: &Path, value: &Value, proof: &Value) -> Result<()> {
-    validate_inner(Some(root), value, proof)
+    validate_inner(Some(root), value, proof, false)
+}
+
+// Corrections may record that no reference could actually be checked. They
+// must not use this exception to assert a candidate or a known game.
+pub(super) fn validate_correction(root: &Path, value: &Value, proof: &Value) -> Result<()> {
+    validate_inner(Some(root), value, proof, true)
 }
 
 /// Submission preflight shares every semantic rule with the publisher. Core
 /// does not require filesystem access to the private images/reference library.
 pub fn validate_semantics(value: &Value, proof: &Value) -> Result<()> {
-    validate_inner(None, value, proof)
+    validate_inner(None, value, proof, false)
 }
 
-fn validate_inner(root: Option<&Path>, value: &Value, proof: &Value) -> Result<()> {
+fn validate_inner(
+    root: Option<&Path>,
+    value: &Value,
+    proof: &Value,
+    allow_unchecked: bool,
+) -> Result<()> {
     let result: EmoteResult =
         serde_json::from_value(value.clone()).context("strict emote schema")?;
     let input = &proof["input"];
@@ -217,7 +228,16 @@ fn validate_inner(root: Option<&Path>, value: &Value, proof: &Value) -> Result<(
             bail!("invalid checked reference conclusion");
         }
         candidates(root, &reference.candidates)?;
-        paths(root, &reference.checked_paths)?;
+        if reference.checked_paths.is_empty() && allow_unchecked {
+            if reference.match_status != "no_match"
+                || !reference.candidates.is_empty()
+                || character.game != "unknown"
+            {
+                bail!("unchecked correction cannot assert an identity");
+            }
+        } else {
+            paths(root, &reference.checked_paths)?;
+        }
     }
     let mut uncertain_ids = BTreeSet::new();
     for item in &result.uncertain {
@@ -231,7 +251,13 @@ fn validate_inner(root: Option<&Path>, value: &Value, proof: &Value) -> Result<(
             bail!("invalid uncertain evidence");
         }
         candidates(root, &item.reference_candidates)?;
-        paths(root, &item.checked_paths)?;
+        if item.checked_paths.is_empty() && allow_unchecked {
+            if !item.reference_candidates.is_empty() {
+                bail!("unchecked correction cannot assert a reference candidate");
+            }
+        } else {
+            paths(root, &item.checked_paths)?;
+        }
         covered.insert(item.image_id.clone());
     }
     if covered != allowed {
@@ -299,18 +325,26 @@ pub(super) fn proof_valid(event: &Value, proof: &Value) -> Result<()> {
     Ok(())
 }
 pub fn execute(root: &Path, event: &Value) -> Result<()> {
-    execute_using(root, event, validate_result, |outputs| {
-        for (path, bytes) in outputs {
-            publish_new(path, bytes)?;
-        }
-        Ok(())
-    })
+    execute_using(
+        root,
+        event,
+        |root, result, proof| {
+            validate_result(root, result, proof)?;
+            Ok((result.clone(), None))
+        },
+        |outputs| {
+            for (path, bytes) in outputs {
+                publish_new(path, bytes)?;
+            }
+            Ok(())
+        },
+    )
 }
 
 pub(super) fn execute_using(
     root: &Path,
     event: &Value,
-    validate: impl Fn(&Path, &Value, &Value) -> Result<()>,
+    validate: impl Fn(&Path, &Value, &Value) -> Result<(Value, Option<Value>)>,
     publish: impl Fn(&[(std::path::PathBuf, Vec<u8>)]) -> Result<()>,
 ) -> Result<()> {
     let root = safe_existing_path(root)?;
@@ -363,7 +397,7 @@ pub(super) fn execute_using(
                     bail!("invalid/duplicate authorized group");
                 }
                 let result = read_json(&results.join(format!("{group}.json")))?;
-                validate(&root, &result, proof)?;
+                let (effective, correction) = validate(&root, &result, proof)?;
                 let digest = sha256(&serde_json::to_vec(&result)?)?;
                 let receipt = read_json(&results.join(".receipts").join(format!("{group}.json")))?;
                 for key in [
@@ -380,8 +414,15 @@ pub(super) fn execute_using(
                 if proof["result_sha256"] != digest {
                     bail!("published result digest mismatch");
                 }
-                entries.push(json!({"group_id":group,"path":format!("{group}.json"),"sha256":digest,"character_count":result["characters"].as_array().unwrap().len(),"uncertain_count":result["uncertain"].as_array().unwrap().len()}));
-                for character in result["characters"].as_array().unwrap() {
+                let mut entry = json!({"group_id":group,"path":format!("{group}.json"),"sha256":digest,"character_count":effective["characters"].as_array().unwrap().len(),"uncertain_count":effective["uncertain"].as_array().unwrap().len()});
+                if effective != result {
+                    entry["effective_sha256"] = json!(sha256(&serde_json::to_vec(&effective)?)?);
+                }
+                if let Some(correction) = correction {
+                    entry["correction"] = correction;
+                }
+                entries.push(entry);
+                for character in effective["characters"].as_array().unwrap() {
                     for candidate in character["reference_match"]["candidates"]
                         .as_array()
                         .unwrap()
