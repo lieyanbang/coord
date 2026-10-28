@@ -1,0 +1,30 @@
+[
+  {
+    "log": "docs/verification/stage-emote-m2-m5-fmt.log",
+    "seconds": 0.4537364,
+    "command": "cargo fmt --all -- --check",
+    "exit": 0,
+    "started": "2026-10-28T15:46:41.9502535Z"
+  },
+  {
+    "log": "docs/verification/stage-emote-m2-m5-clippy.log",
+    "seconds": 1.4594698,
+    "command": "cargo clippy --all-targets --all-features --locked -- -D warnings",
+    "exit": 0,
+    "started": "2026-10-28T15:46:42.4656457Z"
+  },
+  {
+    "log": "docs/verification/stage-emote-m2-m5-test.log",
+    "seconds": 48.1453421,
+    "command": "cargo test --all-features --locked",
+    "exit": 0,
+    "started": "2026-10-28T15:46:43.9282019Z"
+  },
+  {
+    "log": "docs/verification/stage-emote-m2-m5-build.log",
+    "seconds": 0.5453795,
+    "command": "cargo build --release --locked",
+    "exit": 0,
+    "started": "2026-10-28T15:47:32.0763087Z"
+  }
+]

@@ -26,6 +26,9 @@ struct Recovery {
 }
 impl Recovery {
     fn new() -> Self {
+        Self::setup(false)
+    }
+    fn setup(with_batch_action: bool) -> Self {
         let root = std::env::temp_dir().join(format!("coord-review-{}", Uuid::new_v4()));
         for p in [
             "trusted/bin",
@@ -65,6 +68,9 @@ impl Recovery {
             false,
         );
         let mut registry = json!({"version":1,"allowed_root":root.join("trusted"),"isolated_in_process":true,"profiles":{"v1":{"version":1,"on_task_completed":v1},"v2":{"version":2,"submission_validation":"emote-v2","on_task_completed":v2}}});
+        if with_batch_action {
+            registry["profiles"]["v1"]["on_batch_completed"] = v2;
+        }
         let registry_path = root.join("registry.json");
         fs::write(&registry_path, serde_json::to_vec(&registry).unwrap()).unwrap();
         let db = root.join("state.db");
@@ -118,10 +124,14 @@ impl Recovery {
             .unwrap()
             .execute(&original);
         store.finish_action(&original, &outcome).unwrap();
-        assert_eq!(
-            store.action_status(batch).unwrap()["actions"][0]["state"],
-            "failed"
-        );
+        let status = store.action_status(batch).unwrap();
+        let source = status["actions"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|a| a["id"] == original.id)
+            .unwrap();
+        assert_eq!(source["state"], "failed");
         let storage: String = rusqlite::Connection::open(&db)
             .unwrap()
             .query_row(
@@ -485,6 +495,43 @@ fn independent_recovery_preserves_source_and_receipt_and_replays_only_its_new_ev
     assert_eq!(published["characters"][0]["notes"], "short");
     assert!(f.run(&job.payload).is_ok());
     assert!(f.run(&f.event).is_err()); // same source with a different publication event cannot overwrite provenance
+}
+
+#[test]
+fn last_recovery_releases_only_preliminary_batch_index() {
+    let f = Recovery::setup(true);
+    let store = f.store();
+    assert!(store.begin_action("fixture").unwrap().is_none());
+    store
+        .recover_action(Uuid::parse_str(&f.source).unwrap(), "v2")
+        .unwrap();
+    let recovery = store.begin_action("fixture").unwrap().unwrap();
+    let recovery = store
+        .runner_action(&recovery.id, &recovery.lease_token, "fixture", true)
+        .unwrap()
+        .unwrap();
+    let outcome = ActionRegistry::load(&f.registry_path)
+        .unwrap()
+        .execute(&recovery);
+    assert_eq!(outcome.state, ActionState::Succeeded);
+    store.finish_action(&recovery, &outcome).unwrap();
+    let pending = store.begin_action("fixture").unwrap().unwrap();
+    assert_eq!(pending.action_kind, "on_batch_completed");
+    let job = store
+        .runner_action(&pending.id, &pending.lease_token, "fixture", true)
+        .unwrap()
+        .unwrap();
+    let outcome = ActionRegistry::load(&f.registry_path)
+        .unwrap()
+        .execute(&job);
+    assert_eq!(outcome.state, ActionState::Succeeded);
+    store.finish_action(&job, &outcome).unwrap();
+    let index: Value =
+        serde_json::from_slice(&fs::read(f.root.join("business/results/index.json")).unwrap())
+            .unwrap();
+    assert_eq!(index["state"], "STRUCTURALLY_COMPLETE");
+    assert!(index["scope"].as_str().unwrap().contains("preliminary"));
+    assert!(!f.root.join("business/final-v1").exists());
 }
 
 #[test]
