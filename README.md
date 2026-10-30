@@ -132,29 +132,41 @@ Historical upstream packages remain documented by [DmarshalTU/coord](https://git
 
 ## Quickstart
 
-```bash
-# 1. start the daemon (long-lived; run it once and forget it)
-coord serve --vault ~/coord-vault
+From your project directory, with `coord` on PATH:
 
-# 2. in your project, scaffold .mcp.json + AGENTS.md
-cd ~/code/my-project
+```powershell
+# 1. scaffold the MCP config and client guide
 coord init
 
-# 3. open Claude Code / Cursor / Codex in the project — coord shows up as an MCP server
+# 2. start one daemon in a long-lived terminal, or reuse the project's daemon
+coord serve --db .coord/coord.db
+```
 
-# 4. watch it live
+Register `coord mcp` in your IDE's MCP settings (see [Setup per IDE](#setup-per-ide)).
+In a second terminal you can watch the same daemon:
+
+```powershell
 coord top
 ```
+
+Local task collaboration needs only the daemon and MCP bridge. Vault output is
+optional (`coord serve --db .coord/coord.db --vault .coord/vault`); OAuth, Relay
+and Action Runner are needed only for their respective remote/action scenarios.
+The default endpoint is `http://127.0.0.1:7777/`. For another project daemon,
+use a distinct `serve --addr`/`--db` and set `COORD_URL` in its clients.
 
 `coord init` drops two files:
 
 - **`.mcp.json`** — Claude-Code-style MCP config pointing at `coord mcp`.
   Claude Code picks it up automatically. Cursor, Codex, and Gemini CLI
   accept it with one extra step (see [Setup per IDE](#setup-per-ide)).
-- **`AGENTS.md`** — the protocol every agent in this project should follow
-  (handles, heartbeats, scanning the bulletin, posting acks, using
-  `coord wait`). Pasted as `CLAUDE.md` / `.cursorrules` / system prompt for
-  IDEs that look elsewhere — see below.
+- **`AGENTS.md`** — a short client guide to local tasks, batches, checkpoints,
+  lease loss and recovery. It is independent of this repository's development
+  instructions. Load it as project context in clients that look elsewhere.
+
+Existing files are preserved by default. `--force` replaces them;
+`--no-mcp` and `--no-agents` skip the respective file, including with `--force`.
+An optional directory argument scaffolds elsewhere: `coord init C:\code\my-project`.
 
 If you'd rather do it by hand, the Quickstart above is just:
 
@@ -166,6 +178,54 @@ If you'd rather do it by hand, the Quickstart above is just:
 }
 ```
 
+## Choose an MCP workflow
+
+These are existing interfaces with different claim and ownership semantics.
+The names below are for local `coord mcp`; a remote Relay exposes its own
+schemas (see [API workflow map](docs/API.md#default-mcp-workflows)).
+
+| Scenario | Claim | Result and authoritative state |
+| --- | --- | --- |
+| Local tasks selected by ID | `tasks_claim {id, agent_id}` | `tasks_complete`; `tasks_get` / `tasks_list` |
+| Generic Batch, next ready item | `claim_task {agent_id, batch_id}` | `submit_result` / `report_failure`; `get_task` / `get_progress` |
+| Trusted Worker Batch | `coord_claim {batch_id, worker_id}` | `coord_complete` / `coord_release`; `coord_resume` / `coord_status` |
+
+For a local task, choose a stable label, find an existing task with `tasks_list`,
+or create new work with `tasks_send`. Replace `TASK_ID` and `TOKEN` below with
+the actual values returned by send/claim:
+
+```text
+agents_heartbeat {id:"ledger-otter", name:"Local agent"}
+tasks_send {name:"Check the build", kind:"task"}
+tasks_claim {id:"TASK_ID", agent_id:"ledger-otter", lease_seconds:600}
+tasks_complete {id:"TASK_ID", agent_id:"ledger-otter", lease_token:"TOKEN", result:{summary:"Build checked"}, post_ack:true, ack_name:"Build checked"}
+tasks_get {id:"TASK_ID"}
+```
+
+For a Batch, the manager creates/enqueues work through `batches/create` and
+`batches/add_tasks` over HTTP. Workers call `claim_task` with that `batch_id`
+and submit using the returned task's `id` and `lease_token`. Omitting `batch_id`
+permits the global queue, including standalone tasks. Each call can claim
+another item; an empty claim means no item is ready now. `get_progress
+{batch_id}` establishes batch status, including backoff and validation work.
+
+For trusted cooperation, `coord_claim` returns the worker's existing live claim
+or one ready task from exactly the named batch. Pass its returned `id` as
+`task_id`, along with `batch_id`, `worker_id` and `attempt_no`, to
+`coord_progress` with a new `checkpoint`, `coord_complete` with `result`, or
+`coord_release` with `reason`. Coord manages lease tokens and progress IDs.
+After reconnecting, call `coord_resume {batch_id, worker_id}` before continuing;
+it reads the checkpoint without claiming work. `coord_status {batch_id}` reads
+batch totals. Worker labels are trusted coordination labels, not separate
+security identities. These six tools are available locally as well as through
+the optional authenticated Relay.
+
+Renew before lease expiry; stop writes when ownership is lost. Heartbeats do
+not renew leases. `submitted` means validation is pending, so read the eventual
+task state before claiming success. On an uncertain result, reconcile state
+before retrying; exact completion replay is idempotent, while external actions
+need their own idempotency keys. See [progress, failure and recovery](docs/API.md#progress-failure-and-recovery).
+
 ## Setup per IDE
 
 Anything that speaks MCP can drive `coord` (`tasks_send`, `tasks_claim`,
@@ -175,10 +235,10 @@ differs.
 
 ### Claude Code
 
-`coord init` is enough. Claude Code reads `.mcp.json` from the project root
+Claude Code reads `.mcp.json` from the project root
 on next launch. Confirm with `claude mcp list` — you should see `coord`.
-Drop `AGENTS.md` (which `coord init` writes for you) at the project root and
-Claude Code reads it as the agent protocol.
+Load the generated guide into Claude Code's project context, for example by
+adding `@AGENTS.md` to your existing `CLAUDE.md`.
 
 You can also register `coord` globally instead of per project:
 

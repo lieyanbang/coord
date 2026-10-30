@@ -1,0 +1,14 @@
+  wrote   target/client-onboarding-smoke-20261031\.mcp.json
+  wrote   target/client-onboarding-smoke-20261031\AGENTS.md
+
+scaffolded coord into target/client-onboarding-smoke-20261031 (2 written, 0 skipped)
+
+next steps:
+  1. Reuse the project's daemon, or start one from target/client-onboarding-smoke-20261031:
+       coord serve --db .coord/coord.db
+  2. Register `coord mcp` in your client's MCP settings.
+     Claude Code reads .mcp.json; other clients use their own config.
+     Read AGENTS.md for task, batch and recovery workflows.
+  3. Watch it live:
+       coord top
+Release init readback: PASS (client guide matches template; MCP command/args unchanged).

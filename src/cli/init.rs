@@ -3,10 +3,10 @@
 //! Drops two files into the target directory:
 //!
 //! * `.mcp.json` — Claude-Code-style MCP server config that points at
-//!   `coord mcp`. Cursor, Codex CLI, and other MCP clients accept the
-//!   same format (or a near variant) so this works out of the box.
-//! * `AGENTS.md` — the protocol every agent in this project should
-//!   follow when calling `coord` (heartbeat, scan bulletin, post acks).
+//!   `coord mcp`. Other clients register that command in their own
+//!   MCP settings.
+//! * `AGENTS.md` — a short client guide to claims, progress, results
+//!   and recovery, independent of coord's repository development rules.
 //!
 //! `--force` overwrites existing files. Without it, present files are
 //! left alone and reported.
@@ -81,11 +81,18 @@ pub fn run(args: &InitArgs) -> Result<()> {
     );
     println!();
     println!("next steps:");
-    println!("  1. Start the daemon (in a long-lived terminal):");
-    println!("       coord serve --vault .coord/vault");
-    println!("  2. In your IDE / agent, point it at this project's .mcp.json");
-    println!("     (Claude Code picks it up automatically; see README for");
-    println!("     Cursor / Codex / Gemini configs).");
+    println!(
+        "  1. Reuse the project's daemon, or start one from {}:",
+        root.display()
+    );
+    println!("       coord serve --db .coord/coord.db");
+    println!("  2. Register `coord mcp` in your client's MCP settings.");
+    if !args.no_mcp {
+        println!("     Claude Code reads .mcp.json; other clients use their own config.");
+    }
+    if !args.no_agents {
+        println!("     Read AGENTS.md for task, batch and recovery workflows.");
+    }
     println!("  3. Watch it live:");
     println!("       coord top");
     Ok(())
@@ -126,4 +133,4 @@ const MCP_JSON: &str = r#"{
 }
 "#;
 
-const AGENTS_MD: &str = include_str!("../../AGENTS.md");
+const AGENTS_MD: &str = include_str!("client-agents.md");

@@ -6,6 +6,84 @@ owner; keep it on loopback or behind an authenticated local proxy. New trusted
 scheduler methods reject network peers that connect directly. Agent/worker IDs
 are collaboration labels; they do not authenticate separate conversations.
 
+## Default MCP workflows
+
+For local use, start `coord serve` and register `coord mcp` in your MCP client.
+The bridge connects to `http://127.0.0.1:7777/`; override with `COORD_URL` or
+`coord mcp --url URL`. No Relay, OAuth or Action Runner is required. Batch
+creation/enqueue remains a manager operation over HTTP JSON-RPC.
+
+| Scenario | Local MCP claim | HTTP method | Ownership and scope |
+| --- | --- | --- | --- |
+| Select one task by ID | `tasks_claim {id, agent_id, lease_seconds?}` | `tasks/claim` | Caller keeps the returned token; claims exactly that ID. |
+| Receive next ready generic task | `claim_task {agent_id, batch_id?, lease_seconds?}` | `scheduler/claim` | Caller keeps the token; explicit batch restricts selection, omitted batch permits the global queue (including standalone tasks). Repeated calls can claim additional work. |
+| Trusted Worker Batch | `coord_claim {batch_id, worker_id, lease_seconds?}` | `scheduler/trusted_claim` | Core keeps the token; returns the worker's live claim or one ready task from exactly that batch. |
+
+Local tools use snake_case arguments. A claim returns a task with `id` and
+`attempt_no`; trusted writes call that ID `task_id`. For ID-selected tasks use
+`tasks_send` only for new work, `tasks_list` to find work, `tasks_complete` to
+finish, and `tasks_get` to read state. Add `post_ack:true, ack_name` to completion
+when watchers need an atomic acknowledgement; discover it with
+`tasks_list {kind:"ack"}` and follow `fixed_bug_id` to the source task.
+
+Generic workers use `submit_result {id, agent_id, lease_token, result}` or
+`report_failure {id, agent_id, lease_token, error}`. Read `get_task {id}` for
+one task and `get_progress {batch_id}` for a consistent batch snapshot. Trusted
+workers use the six `coord_*` tools in [Trusted scheduler API](#trusted-scheduler-api-phase-r).
+An empty claim is not terminal: other tasks may be leased, submitted or in
+backoff. Only authoritative batch status establishes whether all work is done;
+failed/cancelled work is not a successful completion.
+
+**Remote Relay names are distinct.** `coord_claim_task` selects an explicit ID;
+`coord_claim_next` requires an allowed `batch_id` and never draws from the global
+queue. Both use the Relay-authenticated agent identity and require a UUID
+`request_id`; they are token-based calls, separate from trusted `coord_claim`.
+Legacy Relay writes such as `coord_submit_result` also require `request_id`.
+The local `claim_task`/`submit_result` schemas do not take that Relay parameter.
+Use the connected tool schema: logical Relay mode additionally requires its
+authorized `batch_id` and `worker_id` on worker calls. Remote read tools redact
+tokens; a worker label is not a credential or independent conversation identity.
+
+## Progress, failure and recovery
+
+- Token-based callers retain the exact `id`, `agent_id`, `lease_token`,
+  `attempt_no` and deadline from their own claim. Renew using `tasks_extend` or
+  `extend_lease {id, agent_id, lease_token, lease_seconds}` before expiry.
+  `agents_heartbeat {id, name}` records presence only.
+- To persist a token-based checkpoint, call `coord_report_progress` with
+  `id, agent_id, lease_token, attempt_no, sequence, request_id, checkpoint`.
+  Start sequence at 1 and increment by one for each checkpoint on that attempt;
+  use a fresh UUID request ID for each new operation. This alone does not renew
+  the lease. For `require_progress` batches follow it with
+  `coord_extend_lease_progress {id, agent_id, lease_token, attempt_no,
+  progress_sequence, request_id, lease_seconds}`, using that fresh sequence and
+  a separate request ID. Ordinary `extend_lease` is rejected for these batches.
+  `coord_agent_status {agent_id, batch_id}` reads claims/checkpoints without tokens.
+- Trusted workers pass `task_id, batch_id, worker_id, attempt_no` on writes.
+  `coord_progress` with a new checkpoint saves progress and renews the lease;
+  repeating the identical latest checkpoint replays its prior response rather
+  than renewing again. Core supplies request IDs and sequences. On reconnect,
+  read `coord_resume {batch_id, worker_id}` and continue only an `active`
+  attempt; released, expired or reassigned work must go through normal claim.
+- On lease loss stop writes and external effects. Never read a newer claim's
+  token to submit work from an older attempt. Token-based clients can continue
+  only if they retained their exact still-live fence; otherwise allow normal
+  reclaim/claim. When stopping voluntarily, trusted workers use `coord_release`
+  with a reason; token-only callers save a checkpoint and let the lease expire.
+  Neither interruption path consumes the business failure budget.
+- A real execution failure uses token-fenced `report_failure` and bounded
+  retry/backoff. The six trusted tools have no business-failure shortcut:
+  trusted-only workers checkpoint the error and release with a reason for
+  manager review. This does not count a business failure; do not submit a
+  success result to hide the error. A configured validator can also reject a
+  submitted result.
+- After an uncertain write, reconcile task/attempt state and receipts before
+  retrying. An exact completion replay preserves the accepted result and ack;
+  changed content conflicts. Preserve request IDs and content when reconciling
+  progress receipts. Do not blindly repeat claim-next or external effects.
+  `submitted` releases the execution lease but awaits validation; read current
+  task/progress for the verdict. External effects require business idempotency.
+
 ## Fenced single-task lifecycle (Stage B)
 
 `tasks/send`, `tasks/get`, filtered/long-poll `tasks/list`, announcement kinds,
@@ -218,8 +296,10 @@ new generation that uses the same worker label.
 | `scheduler/trusted_status` | `batch_id` | Batch state totals plus distinct live `active_claims`, interruption alerts and total business `failure_count`. |
 
 These six methods are exposed as `coord_claim`, `coord_progress`,
-`coord_complete`, `coord_release`, `coord_resume`, and `coord_status` by the
-Coord MCP Relay. Relay OAuth/Cloudflare Access authenticates the owner. The
+`coord_complete`, `coord_release`, `coord_resume`, and `coord_status` by both
+local `coord mcp` and the optional Coord MCP Relay. The local tools use the
+parameters above; the Relay also accepts `worker_id` on status and requires it
+in logical mode. Relay OAuth/Cloudflare Access authenticates the owner. The
 default trusted-owner path uses the private local Relay bearer and authenticated
 connector; a v2 logical identity policy additionally signs and restricts each
 call to a batch, worker label, operation scopes and expiry. Set
