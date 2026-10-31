@@ -1,0 +1,58 @@
+[
+  {
+    "seconds": 0.7694821,
+    "log": "docs/verification/stage-g6-generic-workers-final-fmt.log",
+    "started": "2026-10-31T06:04:41.5052993Z",
+    "command": "cargo fmt --all -- --check",
+    "exit": 0
+  },
+  {
+    "seconds": 1.108929,
+    "log": "docs/verification/stage-g6-generic-workers-final-clippy.log",
+    "started": "2026-10-31T06:04:42.3365405Z",
+    "command": "cargo clippy --all-targets --all-features --locked -- -D warnings",
+    "exit": 0
+  },
+  {
+    "seconds": 45.5153521,
+    "log": "docs/verification/stage-g6-generic-workers-final-test.log",
+    "started": "2026-10-31T06:04:43.4481408Z",
+    "command": "cargo test --all-features --locked",
+    "exit": 0
+  },
+  {
+    "seconds": 0.610812,
+    "log": "docs/verification/stage-g6-generic-workers-final-build.log",
+    "started": "2026-10-31T06:05:28.9655129Z",
+    "command": "cargo build --release --locked",
+    "exit": 0
+  },
+  {
+    "seconds": 38.3514339,
+    "log": "docs/verification/stage-g6-generic-workers-final-health-monitor.log",
+    "started": "2026-10-31T06:05:29.5806622Z",
+    "command": "powershell.exe -NoLogo -NoProfile -File scripts/windows/test-coord-health-monitor.ps1",
+    "exit": 0
+  },
+  {
+    "seconds": 8.8957214,
+    "log": "docs/verification/stage-g6-generic-workers-final-relay-tests.log",
+    "started": "2026-10-31T06:06:07.9430431Z",
+    "command": "node --test relay/relay.test.mjs relay/live-coord.test.mjs relay/logical-workers.test.mjs relay/generic-workers.test.mjs",
+    "exit": 0
+  },
+  {
+    "seconds": 1.5564647,
+    "log": "docs/verification/stage-g6-generic-workers-final-coord-mcp-tests.log",
+    "started": "2026-10-31T06:06:16.8416026Z",
+    "command": "npm test --prefix relay/coord-mcp",
+    "exit": 0
+  },
+  {
+    "seconds": 0.2190096,
+    "log": "docs/verification/stage-g6-generic-workers-final-phase-g-tools.log",
+    "started": "2026-10-31T06:06:18.4003973Z",
+    "command": "python -m unittest discover -s scripts/phase_g -p test_phase_g_tools.py -v",
+    "exit": 0
+  }
+]

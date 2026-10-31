@@ -22,17 +22,17 @@ No additional scheduler, identity database or service was introduced.
 | Relay / real Core / independent HTTP MCP SDK | 29 tests; generic `writer-1`/`writer-2`, same-worker recovery, progress, completion, fail, release, restart, old fences, multiple allowed batches, forged/missing declarations and read-only expiry checks | PASS |
 | MCP schema / OAuth / Access regression | 19 tests; old tools retained and new `coord_fail` published | PASS |
 | Host OAuth implementation | Retrieved only the deployed host's OAuth source module; isolated DCR, S256 PKCE, resource/scope binding, owner JWT/JWKS, CSRF, one-time code, refresh and expiry tests | PASS, isolated |
-| Historical compatibility | Newly built `e6deb80` executable created active four-hex and Emote claims; two SQLite online backup copies survived candidate upgrade and baseline rollback with identical task/attempt/checkpoint history; new failure records remained readable | PASS, synthetic copies |
+| Historical compatibility | Newly built `e6deb80` executable created active four-hex and Emote claims; online copies survived upgrade/rollback with identical task/attempt/checkpoint history. A private consistent copy of the actual production database also passed candidate reads and deployed-old-binary rollback: 149 tasks, 14 historical Emote batch/worker pairs, all original business rows unchanged | PASS, isolated copies |
 | Optional business consumers | Emote/recovery, Actions/Runner, Vault/TUI, announcements and cancellation/failure tests remain in the Rust regression; failed terminal batches never emit the batch success Action | PASS, automated |
 | Windows health monitor | Authentication, bounded recovery, Runner security errors and Broker failure isolation tested against isolated fixtures | PASS |
 | Business request/result helpers | Existing Python suite, 8 tests | PASS |
 | Capacity | Current Release, 100 / 1,000 / 10,000 tasks and six independent MCP processes; unique claims and receipts match, no SQLite busy errors; raw measurements in `generic-workers-capacity.json` | PASS |
-| Real deployment inspection | Arasaka Core/Broker/Runner and Linux reverse Relay READY; Core/Broker listeners remain loopback; existing Feathers/OpenResty/OAuth chain retained | READ ONLY, 2026-10-31 05:13 UTC |
+| Production deployment | User subsequently authorized deployment. Verified CI Core and matched JavaScript installed on Arasaka/Linux; original Runner, publisher pins, registry, OAuth, keys and routes retained. Original business rows and all 24 SQL guards remain unchanged | PASS, code deployment |
 | Public OAuth | HTTPS discovery returned `coord` / `offline_access`, S256 metadata and expected unauthenticated 401 resource challenge | PASS, read only |
-| Actual ChatGPT Web | Logged-in Work UI lists the installed Coord plugin; deployed MCP source still has the four-hex schema and no trusted fail tool | Discovery only |
-| New actual Web read/write flow | Requires a publicly reachable isolated candidate endpoint and its approved tool snapshot; the existing URL serves the previous production version | EXTERNAL DEPENDENCY |
-| Production / formal Emote Batch | No deployment, task/Action write, binding/permission change or production migration performed | NOT RUN |
-| Hosted low-privilege Runner rehearsal | CI-only existing Windows workflow; authoritative result and matched artifact belong to the delivered commit's Fork checks | See commit checks |
+| Actual ChatGPT Web | Old Coord installation removed first. Replacement `Coord Worker` installed through normal OAuth owner consent; authorized list, `writer-1` claim, durable progress and a second conversation's same-attempt/checkpoint recovery succeeded. Wrong/missing scope requests were rejected; `coord_fail` appears in the actual tool set | PASS for observed calls |
+| New actual Web completion/failure/release | ChatGPT requested interactive approval for `coord_complete`; the user was asked in this Codex session, but no confirmation arrived. Completion and subsequent Web writes were not executed; the obsolete pending request was declined/stopped during safe closeout | EXTERNAL BLOCKER: interactive platform approval |
+| Formal Emote Batch | No formal task/Action write, resume, guard removal or key change. The global production freeze rejected synthetic batch creation without inserting data; Web tests instead use a separate CI-built Core/database through a temporary loopback-only SSH test route | PROTECTED |
+| Hosted low-privilege Runner rehearsal | Fork run [41173683782](https://github.com/lieyanbang/coord/actions/runs/41173683782), implementation `cf4e85773c67d0847e3391acbd5576f7e59fcde7`, all steps successful; verified matched artifact `13032368115` | PASS |
 
 The Core schema remains backward compatible. Worker IDs use the bounded ASCII
 contract in `docs/API.md`; existing four-hex ownership is recovered without
@@ -47,11 +47,24 @@ can conservatively reject new IDs. Preserve both journal files together; a
 compacted journal intentionally fails closed with older Relay binaries, so
 Relay rollback needs a compatible forward fix. Core rollback was exercised.
 
-Full local logs remain in the isolated checkout's `docs/verification/` and
-`target/`; GitHub Actions reruns the checked-in Windows regression, health
-monitor, low-privilege Runner, Relay/MCP and Python checks on the delivered
-commit. Simulated OAuth/SDK tests do not establish actual ChatGPT Web writes or
-production acceptance. No Release, tag or upstream write is part of delivery.
+The complete final local command group is recorded in
+`stage-g6-generic-workers-final-checks.json`; all eight commands exited zero.
+GitHub Actions independently passed the checked-in Windows regression, health
+monitor, low-privilege Runner, Relay/MCP and Python checks for the deployed
+implementation. `generic-workers-production.json` separates deployment,
+database-copy compatibility and observed real Web results. Private database
+copies, credentials and OAuth state are not Git artifacts. Simulated OAuth/SDK
+tests do not establish unperformed real Web writes. No Release, tag or upstream
+write is part of delivery.
+
+Closeout restored the original Windows Agent production URL and both identity
+policies exactly, revoked the test binding, and stopped the isolated Core and
+SSH forward. Core/SQLite/Broker/existing Runner and Relay were READY; public
+OAuth metadata returned HTTP 200 and the Sidecar had no pending requests.
+Every original business row and all 24 SQL guards still matched the private
+pre-deployment snapshot. The new plugin remains installed, but has no temporary
+test or formal Emote authority. The remaining Web writes require a fresh bounded
+isolated session and actual user approval; do not approve the obsolete request.
 
 ## Historical Windows MVP acceptance — 2026-10-21
 

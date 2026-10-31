@@ -1,0 +1,63 @@
+{
+  "implementation_commit": "cf4e85773c67d0847e3391acbd5576f7e59fcde7",
+  "date_utc": "2026-10-31",
+  "authorization": "User explicitly authorized production deployment and removal of the old MCP plugin in this Codex session.",
+  "ci": {
+    "run_id": 41173683782,
+    "job_id": 124456725313,
+    "conclusion": "success",
+    "artifact_id": 13032368115,
+    "artifact_sha256": "8f55b83a4d7f8519379a12d57abd02e5cee32d04ddb77ba68730506aac19c7f4",
+    "core_sha256": "d109eabf872b77bef446293318dac1cfb36ad5c3f047f1998239bb20efb49fd4",
+    "includes_low_privilege_runner_rehearsal": true
+  },
+  "production": {
+    "core": "PASS: installed the verified CI coord.exe; Core, SQLite, Broker and existing Runner became READY",
+    "relay": "PASS: Windows Agent, Linux Sidecar and Feathers facade updated; deployed JavaScript hashes equal the implementation source",
+    "preserved": ["existing Runner and publisher binaries", "profile pins and registry", "service identities and file ACLs", "OAuth implementation and state", "keys", "OpenResty routes", "other host applications"],
+    "private_backups": ["C:\\ProgramData\\coord\\backup\\generic-20261031-cf4e857", "/var/backups/coord-generic-20261031-cf4e857"],
+    "sqlite_online_backup_quick_check": "ok",
+    "original_rows": {"batches": 5, "tasks": 149, "task_attempts": 145, "task_progress": 133, "task_progress_receipts": 176, "task_progress_extend_receipts": 6, "task_receipts": 145, "completion_actions": 169, "action_recoveries": 31},
+    "all_original_business_rows_unchanged": true,
+    "original_24_sql_guards_unchanged": true,
+    "formal_emote_resumed": false,
+    "public_discovery": "PASS: HTTPS OAuth metadata and expected unauthenticated MCP 401",
+    "restart_observation": "Brief 502 responses during shared Feathers restarts; recovered to normal OAuth discovery and MCP challenge. No OAuth POST was blindly replayed."
+  },
+  "actual_database_copy_compatibility": {
+    "state": "PASS",
+    "tasks_read": 149,
+    "historical_emote_batch_worker_pairs": 14,
+    "all_original_business_tables_unchanged": true,
+    "upgrade_and_deployed_binary_rollback": true,
+    "baseline_recovery_outputs_identical_after_rollback": true,
+    "action_execution": "Disabled: queue-only local profiles, no Runner, unchanged SQL guards. Private database files are excluded from Git."
+  },
+  "web": {
+    "old_plugin": "Uninstalled before deployment; the platform retained its reserved name, so the replacement is Coord Worker",
+    "replacement_plugin_id": "plugin_asdk_app_6ae582aaf2d48191b769acad0fe95425",
+    "connection": "PASS: real ChatGPT UI registration and existing-owner OAuth consent, no token-store or cookie inspection",
+    "test_batch_id": "81f45c0f-2025-46d8-88e8-014a15f74530",
+    "isolation": "CI-built Core on a separate local database, loopback-only SSH forwarding to the deployed Windows Agent; real public HTTPS, host OAuth, facade, Sidecar and Agent remain in the path",
+    "production_database_writes": "None; a frozen batches/create was rejected without inserting data. No guard was removed or weakened.",
+    "state": "PARTIAL_REAL_WEB: completion and subsequent writes blocked by uncompleted interactive platform approval",
+    "observed": ["authorized scoped list", "writer-1 claim, attempt 1", "durable progress", "new conversation resumed the same attempt and checkpoint", "batch status", "wrong worker and fabricated batch rejected", "missing declaration rejected", "missing dependent batch rejected by tool schema", "coord_fail discovered in the actual approved tool set"],
+    "write_chat": "https://chatgpt.com/c/6ae583d8-ce88-83ec-95bf-a03a6b0abff0",
+    "read_only_chat": "https://chatgpt.com/c/6ae585a7-370c-83ec-91a3-44975e41b40e",
+    "denial_evidence_limit": "Wrong worker and fabricated batch yielded generic INVALID_ARGUMENT to Web; no internal authorization reason inferred. Missing batch was a schema-level rejection, not a direct server authorization test.",
+    "not_executed": ["real Web complete", "real Web fail/release and remaining write checks"],
+    "platform_approval": "The complete call required an interactive ChatGPT approval. The user was asked in this Codex session; no approval arrived during independent verification. The obsolete pending call was declined and stopped after revoking its test authority. No approval bypass or CLI substitute was used.",
+    "isolated_final_evidence": {"claim_attempts": 1, "progress_receipts": 1, "completion_or_failure_receipts": 0, "checkpoint": "web durable generic draft"},
+    "temporary_route_and_authority": "CLOSED: original Windows Agent URL and both identity policies restored exactly; test Core and SSH forward stopped; new plugin remains installed without temporary or formal Emote authority"
+  },
+  "closeout": {
+    "production_health": "READY: Core, SQLite, Broker, existing Runner, Windows Agent, Linux Sidecar; public OAuth metadata HTTP 200",
+    "sidecar_pending_requests": 0,
+    "system_monitor_enabled": true,
+    "all_original_business_rows_and_24_guards_unchanged": true,
+    "original_agent_route_and_both_policies_restored_exactly": true,
+    "temporary_processes_stopped": true,
+    "original_dirty_worktree_preserved": true,
+    "external_dependency": "A fresh bounded isolated Web write session and actual interactive platform approval are required for the remaining Web-only completion/failure/release checks. Automated real-Core/Relay/independent-SDK coverage for those operations passed."
+  }
+}
