@@ -2,6 +2,8 @@
 
 适用实现：长期入口授权版本（logical 策略 `version: 3`，兼容旧 version 1/2）。本指南依据实际源码；旧临时验收策略不是日常任务管理流程。
 
+对应源码分支：`codex/trusted-entry-20261031`。检查源码或重新部署前核对分支，避免用旧工作树覆盖已部署的授权修正。
+
 ## 1. 先区分管理者与 Worker
 
 | 角色 | 接口 | 能做什么 |
@@ -192,6 +194,7 @@ Invoke-CoordRpc 'tasks/list' @{ batch_id = $BatchId; state = 'failed'; limit = 1
 | `logical_worker_or_batch_denied`／工具参数拒绝 | 对照实际 schema、入口资源范围和规范化 Worker；不要改填其他人的身份尝试越权 |
 | 管理 RPC 创建被数据库冻结保护拒绝 | 保留错误并报告管理员；不删保护、不直写生产数据库 |
 | 工具中没有“创建任务” | 这是 Worker 接口边界，使用受信管理端 RPC |
+| `coord_response_too_large` | 当前远程响应上限为 64 KiB；单项 payload 应保持简短，用路径／链接引用大材料。列表可减小 limit；单项已超限时，减小 limit 也无效。若领取响应超限，先对账，不盲目再领；由任务管理者处理输入大小，不把它误判为权限错误 |
 | 任务长时间无法领取 | 核对活跃租约、失败退避、验证状态、取消状态及 `needs_attention`，不要重复建相同任务 |
 | `-32001` 冲突 | 可能是旧 attempt、输入 key 冲突或结果不一致；先回读，不替换他人的执行凭据 |
 

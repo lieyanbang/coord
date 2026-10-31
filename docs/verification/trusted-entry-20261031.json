@@ -1,0 +1,44 @@
+{
+  "implementation_commit": "a1fa9fef7268e300b22623c6456432a126a5c34a",
+  "date": "2026-10-31",
+  "authorization_model": "Persistent revocable authenticated entry grant; arbitrary valid worker labels; shared pool includes future batches. Task ownership still expires through leases and attempt fencing.",
+  "compatibility": "Version-1/2 policies remain supported; production migrated from expired version-2 bindings to version 3. OAuth expiry and 60-second signed request lifetime remain transport protections, not business grant renewal.",
+  "local_validation": {
+    "release_build": "PASS cargo build --release --locked",
+    "format": "PASS cargo fmt --all -- --check",
+    "clippy": "PASS cargo clippy --all-targets --all-features --locked -- -D warnings",
+    "rust": {"passed": 113, "failed": 0, "ignored": 8},
+    "relay": {"passed": 32, "failed": 0, "includes": ["version-1/2 compatibility", "version-3 independent HTTP MCP through signed Relay and real Rust Core", "new batch after startup and unregistered worker", "fencing, failures, release and restart recovery", "long-lived entry, revocation, untrusted client and scope rejection"]},
+    "mcp_oauth": {"passed": 19, "failed": 0}
+  },
+  "ci_run": "https://github.com/lieyanbang/coord/actions/runs/41183940724",
+  "ci_conclusion": "success; matched implementation commit, including Release build, low-privilege Runner rehearsal and all Relay/MCP tests",
+  "deployment": {
+    "identity_module_sha256": "94f3bc9524cac284c41f487127820c846e666f492552b6c754b7475c3134b70e",
+    "updated": ["Windows Agent identity module and policy", "Linux Sidecar identity module", "MCP facade identity module and policy"],
+    "rust_core": "Rust source unchanged; current source Release built locally. Existing verified production Core retained; no unnecessary binary replacement or database migration.",
+    "client": "Current Coord Worker ChatGPT Web OAuth client, identified by the previously verified actual-client hash and verified again through live connector and Web calls",
+    "grant": {"id": "chatgpt-web", "policy_version": 3, "batch_id": "*", "worker_ids": ["*"], "scopes": ["coord:read", "coord:claim", "coord:progress", "coord:submit", "coord:failure", "coord:release"], "business_expiration": null},
+    "backups": ["C:\\ProgramData\\coord\\backup\\trusted-entry-a1fa9fe", "/var/backups/coord-trusted-entry-a1fa9fe"],
+    "preserved": ["all existing rows in nine business tables", "three publication Action guards", "pending formal Emote publication Action", "Runner and publisher binaries", "keys, OAuth state, service identities and ACLs"],
+    "health": "Core, SQLite, Broker and Runner READY; Agent, Linux Sidecar and facade services running"
+  },
+  "actual_connector": {
+    "qa_batch_id": "f8daa808-0cce-4f5c-85d4-36f51b1556f4",
+    "status": "PASS new unregistered label: 10 pending, 0 claimed, 0 active claims",
+    "get": "PASS one existing QA task read through unregistered label without lease token",
+    "list": "PASS an existing small batch listed through another unregistered label",
+    "writes": "None: no claims, QA execution or publication"
+  },
+  "actual_chatgpt_web": {
+    "state": "PASS read-only coord_status through current Coord Worker plugin in Work mode",
+    "chat": "https://chatgpt.com/c/6ae5a4d8-8a74-83ec-a15a-97d60adbde31",
+    "worker_id": "web-unregistered-label",
+    "result": "10 pending, 0 active claims; no 403",
+    "limit": "No production claim/write performed. Initial ordinary Chat mode displayed Unable to load this response; Work mode completed and showed successful tool result."
+  },
+  "separate_existing_input_limit": {
+    "state": "Not changed by authorization fix",
+    "detail": "Some of the ten QA task payloads are 76499-96898 UTF-8 bytes, exceeding the existing 64-KiB remote response bound. QA list failed even with limit=1 when the returned item was oversized; a small QA task get and another batch list succeeded. Task manager must shorten oversized payloads or separately authorize an interface-size change before safe remote claims. No task content was altered or claimed."
+  }
+}
