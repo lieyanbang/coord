@@ -40,14 +40,14 @@
     "test_batch_id": "81f45c0f-2025-46d8-88e8-014a15f74530",
     "isolation": "CI-built Core on a separate local database, loopback-only SSH forwarding to the deployed Windows Agent; real public HTTPS, host OAuth, facade, Sidecar and Agent remain in the path",
     "production_database_writes": "None; a frozen batches/create was rejected without inserting data. No guard was removed or weakened.",
-    "state": "PARTIAL_REAL_WEB: completion and subsequent writes blocked by uncompleted interactive platform approval",
-    "observed": ["authorized scoped list", "writer-1 claim, attempt 1", "durable progress", "new conversation resumed the same attempt and checkpoint", "batch status", "wrong worker and fabricated batch rejected", "missing declaration rejected", "missing dependent batch rejected by tool schema", "coord_fail discovered in the actual approved tool set"],
+    "state": "PASS: actual ChatGPT Web read/write acceptance on the isolated database through deployed HTTPS/OAuth/Relay",
+    "observed": ["authorized scoped list", "writer-1 and writer-2 simultaneously owned distinct tasks", "durable progress", "new conversation resumed the same attempt and checkpoint", "expired attempt recovered without blind resubmission", "completion and accepted result readback", "trusted business failure", "identical failure replay returned replayed=true without double counting", "second failure reached the configured terminal limit", "release preserved checkpoint and failure budget", "another worker reclaimed the released task", "old released attempt completion rejected with -32001", "current attempt completed successfully", "failed batch outcome distinct from legacy completed status", "wrong worker and fabricated batch rejected", "missing declaration rejected", "missing dependent batch rejected by tool schema", "coord_fail discovered in the actual approved tool set", "post-revocation status rejected with FORBIDDEN identity_binding_missing_or_expired"],
     "write_chat": "https://chatgpt.com/c/6ae583d8-ce88-83ec-95bf-a03a6b0abff0",
     "read_only_chat": "https://chatgpt.com/c/6ae585a7-370c-83ec-91a3-44975e41b40e",
     "denial_evidence_limit": "Wrong worker and fabricated batch yielded generic INVALID_ARGUMENT to Web; no internal authorization reason inferred. Missing batch was a schema-level rejection, not a direct server authorization test.",
-    "not_executed": ["real Web complete", "real Web fail/release and remaining write checks"],
-    "platform_approval": "The complete call required an interactive ChatGPT approval. The user was asked in this Codex session; no approval arrived during independent verification. The obsolete pending call was declined and stopped after revoking its test authority. No approval bypass or CLI substitute was used.",
-    "isolated_final_evidence": {"claim_attempts": 1, "progress_receipts": 1, "completion_or_failure_receipts": 0, "checkpoint": "web durable generic draft"},
+    "not_executed": ["formal Emote work or production business task writes: outside this acceptance scope"],
+    "platform_approval": "The user explicitly authorized clicking Allow once in this Codex session. Fresh valid attempts were reconciled and the normal Web approval buttons used for the bounded isolated writes. Global/plugin default permissions were not changed; no approval bypass or CLI substitute was used.",
+    "isolated_final_evidence": {"tasks": 3, "completed": 2, "failed": 1, "active_claims": 0, "attempts": 6, "progress_receipts": 3, "completion_receipts": 2, "trusted_failure_receipts": 2, "completion_actions": 0, "batch_outcome": "failed", "all_succeeded": false, "detail": "generic-workers-web.json"},
     "temporary_route_and_authority": "CLOSED: original Windows Agent URL and both identity policies restored exactly; test Core and SSH forward stopped; new plugin remains installed without temporary or formal Emote authority"
   },
   "closeout": {
@@ -58,6 +58,6 @@
     "original_agent_route_and_both_policies_restored_exactly": true,
     "temporary_processes_stopped": true,
     "original_dirty_worktree_preserved": true,
-    "external_dependency": "A fresh bounded isolated Web write session and actual interactive platform approval are required for the remaining Web-only completion/failure/release checks. Automated real-Core/Relay/independent-SDK coverage for those operations passed."
+    "external_dependency": "None remaining for the authorized refactor and bounded acceptance. Formal Emote processing remains frozen and is not authorized by this task."
   }
 }

@@ -1,0 +1,26 @@
+{
+  "state": "PASS",
+  "source": "Authoritative isolated SQLite rows and CI-built Core RPC after actual ChatGPT Web tool operations",
+  "implementation_commit": "cf4e85773c67d0847e3391acbd5576f7e59fcde7",
+  "batch_id": "81f45c0f-2025-46d8-88e8-014a15f74530",
+  "states": {"completed": 2, "failed": 1},
+  "outcome": "failed",
+  "all_succeeded": false,
+  "completion_actions": 0,
+  "receipts": {"complete": 2, "trusted_failure": 2},
+  "progress_receipts": 3,
+  "attempts": [
+    {"task_id": "0487cb17-77ab-4c20-ad24-a69ab7d23f79", "attempt_no": 1, "worker": "writer-1", "state": "expired", "checkpoint": "web durable generic draft"},
+    {"task_id": "0487cb17-77ab-4c20-ad24-a69ab7d23f79", "attempt_no": 2, "worker": "writer-1", "state": "completed", "checkpoint": "web refreshed generic draft"},
+    {"task_id": "43674f02-2021-4606-b3d7-8bbdd7b2d4d8", "attempt_no": 1, "worker": "writer-2", "state": "failed", "checkpoint": null},
+    {"task_id": "43674f02-2021-4606-b3d7-8bbdd7b2d4d8", "attempt_no": 2, "worker": "writer-2", "state": "failed", "checkpoint": null},
+    {"task_id": "48ab42e7-be6c-4073-a299-226b9c599440", "attempt_no": 1, "worker": "writer-1", "state": "released", "checkpoint": "web release checkpoint"},
+    {"task_id": "48ab42e7-be6c-4073-a299-226b9c599440", "attempt_no": 2, "worker": "writer-2", "state": "completed", "checkpoint": "web release checkpoint"}
+  ],
+  "release_failure_budget_unchanged": true,
+  "accepted_result_after_release_matches": true,
+  "same_failure_replay_observed_in_web": true,
+  "stale_complete_observed_in_web": "Rejected once with -32001; current attempt remained active and later completed",
+  "post_revocation_observed_in_web": "FORBIDDEN identity_binding_missing_or_expired; no retry or identity change",
+  "production_business_database_used_for_writes": false
+}

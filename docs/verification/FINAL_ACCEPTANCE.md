@@ -29,8 +29,8 @@ No additional scheduler, identity database or service was introduced.
 | Capacity | Current Release, 100 / 1,000 / 10,000 tasks and six independent MCP processes; unique claims and receipts match, no SQLite busy errors; raw measurements in `generic-workers-capacity.json` | PASS |
 | Production deployment | User subsequently authorized deployment. Verified CI Core and matched JavaScript installed on Arasaka/Linux; original Runner, publisher pins, registry, OAuth, keys and routes retained. Original business rows and all 24 SQL guards remain unchanged | PASS, code deployment |
 | Public OAuth | HTTPS discovery returned `coord` / `offline_access`, S256 metadata and expected unauthenticated 401 resource challenge | PASS, read only |
-| Actual ChatGPT Web | Old Coord installation removed first. Replacement `Coord Worker` installed through normal OAuth owner consent; authorized list, `writer-1` claim, durable progress and a second conversation's same-attempt/checkpoint recovery succeeded. Wrong/missing scope requests were rejected; `coord_fail` appears in the actual tool set | PASS for observed calls |
-| New actual Web completion/failure/release | ChatGPT requested interactive approval for `coord_complete`; the user was asked in this Codex session, but no confirmation arrived. Completion and subsequent Web writes were not executed; the obsolete pending request was declined/stopped during safe closeout | EXTERNAL BLOCKER: interactive platform approval |
+| Actual ChatGPT Web | Old Coord installation removed first. Replacement `Coord Worker` installed through normal OAuth owner consent; scoped list, two distinct simultaneous string-worker claims, durable progress, cross-conversation recovery and scope rejection tested | PASS, isolated database through deployed HTTPS/OAuth/Relay |
+| Actual Web completion/failure/release | User authorized normal Allow once confirmations. Actual completion/result readback, failure replay without double counting, terminal retry limit, release/checkpoint recovery, reassignment, stale-attempt rejection and final batch outcome passed. Three tasks ended as two completed/one intentionally failed; six attempts, three progress receipts, four completion/failure receipts, zero Actions | PASS, authoritative SQLite/RPC reconciliation in `generic-workers-web.json` |
 | Formal Emote Batch | No formal task/Action write, resume, guard removal or key change. The global production freeze rejected synthetic batch creation without inserting data; Web tests instead use a separate CI-built Core/database through a temporary loopback-only SSH test route | PROTECTED |
 | Hosted low-privilege Runner rehearsal | Fork run [41173683782](https://github.com/lieyanbang/coord/actions/runs/41173683782), implementation `cf4e85773c67d0847e3391acbd5576f7e59fcde7`, all steps successful; verified matched artifact `13032368115` | PASS |
 
@@ -63,8 +63,10 @@ SSH forward. Core/SQLite/Broker/existing Runner and Relay were READY; public
 OAuth metadata returned HTTP 200 and the Sidecar had no pending requests.
 Every original business row and all 24 SQL guards still matched the private
 pre-deployment snapshot. The new plugin remains installed, but has no temporary
-test or formal Emote authority. The remaining Web writes require a fresh bounded
-isolated session and actual user approval; do not approve the obsolete request.
+test or formal Emote authority. A final actual Web status call after revocation
+was rejected with `FORBIDDEN identity_binding_missing_or_expired`, once and
+without retry. No remaining external blocker affects this refactor's scoped
+acceptance; formal Emote processing remains frozen and outside the authority.
 
 ## Historical Windows MVP acceptance — 2026-10-21
 
