@@ -35,7 +35,8 @@ function logicalAgentId(worker) {
 }
 
 function validatePolicy(config, key) {
-  const logical = config?.version === 2 && config.mode === 'logical';
+  const persistent = config?.version === 3 && config.mode === 'logical';
+  const logical = persistent || (config?.version === 2 && config.mode === 'logical');
   if (!exact(config, ['version', 'enabled', 'signing_key_file', 'legacy_client_sha256', 'bindings', ...(logical ? ['mode'] : [])])
       || (!logical && config.version !== 1) || typeof config.enabled !== 'boolean'
       || typeof config.signing_key_file !== 'string' || !path.isAbsolute(config.signing_key_file)
@@ -45,20 +46,23 @@ function validatePolicy(config, key) {
   if (!HASH.test(key || '')) throw new Error('identity_signing_key_invalid');
   const ids = new Set(); const clients = new Set(); const agents = new Set(); const tokens = new Set(); const pairs = new Set();
   for (const b of config.bindings) {
-    if (!exact(b, ['id', 'client_sha256', 'batch_id', 'scopes', 'not_before', 'expires_at', ...(logical ? ['worker_ids'] : ['token_sha256', 'agent_id'])])
+    if (!exact(b, ['id', 'client_sha256', 'batch_id', 'scopes', ...(!persistent ? ['not_before', 'expires_at'] : []), ...(logical ? ['worker_ids'] : ['token_sha256', 'agent_id'])])
         || typeof b.id !== 'string' || !/^[a-zA-Z0-9_-]{1,64}$/.test(b.id)
         || typeof b.client_sha256 !== 'string' || !HASH.test(b.client_sha256)
-        || typeof b.batch_id !== 'string' || !UUID.test(b.batch_id) || !Array.isArray(b.scopes) || b.scopes.length === 0
+        || typeof b.batch_id !== 'string' || !(UUID.test(b.batch_id) || (persistent && b.batch_id === '*')) || !Array.isArray(b.scopes) || b.scopes.length === 0
         || !b.scopes.every(s => VALID_SCOPES.has(s)) || new Set(b.scopes).size !== b.scopes.length
-        || !Number.isSafeInteger(b.not_before) || !Number.isSafeInteger(b.expires_at)
-        || b.not_before < 0 || b.expires_at <= b.not_before || b.expires_at - b.not_before > 86_400_000
+        || (!persistent && (!Number.isSafeInteger(b.not_before) || !Number.isSafeInteger(b.expires_at)
+          || b.not_before < 0 || b.expires_at <= b.not_before || b.expires_at - b.not_before > 86_400_000))
         || ids.has(b.id)) throw new Error('identity_binding_invalid_or_shared');
     if (logical) {
       const pair = `${b.client_sha256}:${b.batch_id}`;
       if (!Array.isArray(b.worker_ids) || b.worker_ids.length < 1 || b.worker_ids.length > 64
           || !b.worker_ids.every(w => typeof w === 'string' && (w === '*' || normalizeWorkerId(w) === w))
           || (b.worker_ids.includes('*') && b.worker_ids.length !== 1)
-          || new Set(b.worker_ids).size !== b.worker_ids.length || pairs.has(pair)) throw new Error('logical_binding_invalid');
+          || (persistent && (b.worker_ids.length !== 1 || b.worker_ids[0] !== '*'))
+          || new Set(b.worker_ids).size !== b.worker_ids.length || pairs.has(pair)
+          || (persistent && config.bindings.some(other => other !== b && other.client_sha256 === b.client_sha256
+            && (other.batch_id === '*' || b.batch_id === '*')))) throw new Error('logical_binding_invalid');
       pairs.add(pair);
     } else if (typeof b.token_sha256 !== 'string' || !HASH.test(b.token_sha256)
         || typeof b.agent_id !== 'string' || !/^A[0-5]$/.test(b.agent_id)
@@ -66,7 +70,7 @@ function validatePolicy(config, key) {
         || config.legacy_client_sha256.includes(b.client_sha256)) throw new Error('identity_binding_invalid_or_shared');
     ids.add(b.id); clients.add(b.client_sha256); agents.add(b.agent_id); tokens.add(b.token_sha256);
   }
-  return { ...config, key };
+  return { ...config, bindings: persistent ? config.bindings.map(binding => ({ ...binding, not_before: 0, expires_at: Number.MAX_SAFE_INTEGER })) : config.bindings, key };
 }
 
 async function loadPolicy(file) {
@@ -93,10 +97,10 @@ function resolvePrincipal(policy, authInfo, now = Date.now(), declaration) {
     if (!exact(declaration, ['worker_id', 'batch_id']) || typeof declaration.worker_id !== 'string'
         || !normalizeWorkerId(declaration.worker_id) || !UUID.test(declaration.batch_id)) throw new Error('logical_worker_invalid');
     const worker = normalizeWorkerId(declaration.worker_id);
-    const b = policy.bindings.find(b => b.client_sha256 === client && b.batch_id === declaration.batch_id
+    const b = policy.bindings.find(b => b.client_sha256 === client && (b.batch_id === declaration.batch_id || b.batch_id === '*')
       && (b.worker_ids.includes(worker) || b.worker_ids.includes('*')));
     if (!b || now < b.not_before || now >= b.expires_at) throw new Error('logical_worker_or_batch_denied');
-    return { binding_id: b.id, agent_id: logicalAgentId(worker), worker_id: worker, batch_id: b.batch_id,
+    return { binding_id: b.id, agent_id: logicalAgentId(worker), worker_id: worker, batch_id: declaration.batch_id,
       scopes: [...b.scopes], issued_at: now, expires_at: Math.min(b.expires_at, authInfo.expiresAt, now + 60_000) };
   }
   if (declaration) throw new Error('logical_worker_disabled');
@@ -129,7 +133,7 @@ function verifyRequest(request, policy, now = Date.now()) {
   const b = policy.bindings.find(item => item.id === p.binding_id);
   const expected = signature(request, p, policy.key);
   if (!crypto.timingSafeEqual(Buffer.from(expected, 'hex'), Buffer.from(proof, 'hex'))
-      || !b || b.batch_id !== p.batch_id
+      || !b || !UUID.test(p.batch_id) || (b.batch_id !== '*' && b.batch_id !== p.batch_id)
       || (logical ? !normalizeWorkerId(p.worker_id) || normalizeWorkerId(p.worker_id) !== p.worker_id || !(b.worker_ids.includes(p.worker_id) || b.worker_ids.includes('*')) || p.agent_id !== logicalAgentId(p.worker_id) : b.agent_id !== p.agent_id)
       || JSON.stringify(b.scopes) !== JSON.stringify(p.scopes)
       || !Number.isSafeInteger(p.issued_at) || !Number.isSafeInteger(p.expires_at)
@@ -147,7 +151,7 @@ function verifyRequest(request, policy, now = Date.now()) {
 }
 
 function protectedBatch(policy, batchId) {
-  return Boolean(policy && policy.bindings.some(b => b.batch_id === batchId));
+  return Boolean(policy && batchId && policy.bindings.some(b => b.batch_id === batchId || b.batch_id === '*'));
 }
 
 module.exports = { SCOPES, WORKER_ID_PATTERN, normalizeWorkerId, hash, loadPolicy, validatePolicy, resolvePrincipal, signRequest, verifyRequest, protectedBatch };

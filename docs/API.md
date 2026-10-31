@@ -46,6 +46,19 @@ tokens; a worker label is not a credential or independent conversation identity.
 
 ## Progress, failure and recovery
 
+### Persistent remote entry authorization
+
+Logical identity policy version 3 trusts an authenticated OAuth client until
+explicit revocation. A binding contains `id`, `client_sha256`, `batch_id`,
+`worker_ids:["*"]` and `scopes`, without `not_before` or `expires_at`.
+`batch_id:"*"` covers the shared task pool, including newly created batches;
+an explicit UUID can restrict another entry. Each tool still names one batch,
+and list queries are filtered to that batch. Worker labels are not registered
+identities or credentials. New batches and labels require no policy reload.
+Version 1/2 policies remain compatible. OAuth expiry, bounded signed transport
+requests, task leases and fencing remain enforced independently of the permanent
+entry grant. See `COORD_USAGE.md` for setup and operational examples.
+
 - Token-based callers retain the exact `id`, `agent_id`, `lease_token`,
   `attempt_no` and deadline from their own claim. Renew using `tasks_extend` or
   `extend_lease {id, agent_id, lease_token, lease_seconds}` before expiry.

@@ -18,7 +18,7 @@ import { validateRpcRequest } from './protocol.mjs';
 import identity from './identity.cjs';
 import mcp from './coord-mcp/index.cjs';
 
-test('independent HTTP MCP client runs generic workers across signed Relay and Rust with scope isolation', { timeout: 40_000 }, async () => {
+for (const persistent of [false, true]) test(`independent HTTP MCP client runs generic workers with ${persistent ? 'persistent entry authorization' : 'legacy batch scope isolation'}`, { timeout: 40_000 }, async () => {
   const folder = await mkdtemp(join(tmpdir(), 'coord-generic-http-'));
   const coordPort = await reservePort();
   const coordUrl = `http://127.0.0.1:${coordPort}/`;
@@ -52,10 +52,12 @@ test('independent HTTP MCP client runs generic workers across signed Relay and R
     }
     const now = Date.now();
     const auth = { clientId: 'generic-test-owner', expiresAt: now + 600_000 };
-    const policy = identity.validatePolicy({ version: 2, mode: 'logical', enabled: true,
+    const policy = identity.validatePolicy({ version: persistent ? 3 : 2, mode: 'logical', enabled: true,
       signing_key_file: fileURLToPath(new URL('./synthetic-key', import.meta.url)),
       legacy_client_sha256: [identity.hash('legacy-test-owner')],
-      bindings: batches.slice(0, 2).map((batch_id, index) => ({ id: `allowed-${index}`, client_sha256: identity.hash(auth.clientId),
+      bindings: persistent ? [{ id: 'trusted-entry', client_sha256: identity.hash(auth.clientId), batch_id: '*', worker_ids: ['*'],
+        scopes: ['coord:read', 'coord:claim', 'coord:progress', 'coord:submit', 'coord:failure', 'coord:release'] }]
+        : batches.slice(0, 2).map((batch_id, index) => ({ id: `allowed-${index}`, client_sha256: identity.hash(auth.clientId),
         worker_ids: index === 0 ? ['writer-1', 'writer-2', 'ABCD'] : ['writer-1'], batch_id,
         scopes: ['coord:read', 'coord:claim', 'coord:progress', 'coord:submit', 'coord:failure', 'coord:release'],
         not_before: now - 1000, expires_at: now + 600_000 })) }, 'ac'.repeat(32));
@@ -96,8 +98,16 @@ test('independent HTTP MCP client runs generic workers across signed Relay and R
     }
     await tool('coord_tasks_list', {}, true);
     await tool('coord_tasks_list', { worker_id: 'writer-1' }, true);
-    await tool('coord_tasks_list', { ...scope, batch_id: batches[2] }, true);
-    await tool('coord_tasks_list', { worker_id: 'writer-2', batch_id: batches[1] }, true);
+    await tool('coord_tasks_list', { ...scope, batch_id: batches[2] }, !persistent);
+    await tool('coord_tasks_list', { worker_id: 'writer-2', batch_id: batches[1] }, !persistent);
+    if (persistent) {
+      const added = await direct('batches/create', { name: 'created-after-entry-startup' });
+      await direct('batches/add_tasks', { batch_id: added.id, tasks: [{ key: 'new', name: 'new shared work' }] });
+      const listed = await tool('coord_tasks_list', { worker_id: 'new-worker-unregistered', batch_id: added.id });
+      assert.equal(listed.length, 1);
+      assert.equal(listed[0].batch_id, added.id);
+      await tool('coord_get_task', { ...scope, id: listed[0].id }, true);
+    }
     await tool('coord_tasks_list', { ...scope, agent_id: 'admin' }, true);
     const principal = identity.resolvePrincipal(policy, auth, Date.now(), scope);
     const forged = identity.signRequest({ requestId: randomUUID(), method: 'tasks/list', params: { batch_id: batches[2], skip_reclaim: true } }, principal, policy);
