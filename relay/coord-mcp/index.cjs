@@ -34,12 +34,12 @@ const TASK_ID_PROPERTY = stringSchema('coord task UUID.', 36);
 const LEASE_TOKEN_PROPERTY = stringSchema('The lease token returned by this agent claim. Never substitute a token from another task or attempt.', 36);
 const ATTEMPT_NO_PROPERTY = integerSchema('The attempt number returned by the exact current task claim.', 1, 1000000000);
 const PROGRESS_SEQUENCE_PROPERTY = integerSchema('The next monotonically increasing checkpoint number for this task attempt.', 1, 1000000000);
-const WORKER_ID_PROPERTY = { type: 'string', pattern: '^[0-9A-Fa-f]{4}$', description: 'Stable collaboration label, not a credential.' };
+const WORKER_ID_PROPERTY = { type: 'string', pattern: identity.WORKER_ID_PATTERN, minLength: 1, maxLength: 64, description: 'Stable label, not a credential. ASCII letters, digits, underscore and hyphen; case-sensitive except four-hex and emote-hex historical labels.' };
 
 const TOOLS = [
   {
     name: 'coord_tasks_list',
-    description: 'List coord tasks without reclaiming expired leases. Lease tokens are always removed from this result.',
+    description: 'List authorized coord tasks without reclaiming expired leases. Logical mode requires worker_id and batch_id and returns only that authorized batch. Lease tokens are always removed.',
     inputSchema: objectSchema({
       limit: integerSchema('Maximum number of tasks to return.', 1, 100),
       kind: stringSchema('Optional task kind filter.', 64),
@@ -91,6 +91,12 @@ const TOOLS = [
     description: 'Complete this exact attempt. Exact result retries reconcile to the stored outcome; changed results conflict. External effects still need business idempotency.',
     inputSchema: objectSchema({ task_id: TASK_ID_PROPERTY, batch_id: stringSchema('Batch UUID.', 36), worker_id: WORKER_ID_PROPERTY, attempt_no: ATTEMPT_NO_PROPERTY, result: {}, ack: { type: 'object', additionalProperties: false, properties: { name: stringSchema('Short acknowledgement title.', 256), priority: { type: 'string', enum: [...PRIORITIES] }, payload: { type: 'object', additionalProperties: true } }, required: ['name'] } }, ['task_id', 'batch_id', 'worker_id', 'attempt_no', 'result']),
     annotations: { title: 'Complete coord task', readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
+  },
+  {
+    name: 'coord_fail',
+    description: 'Report a business failure for this exact attempt, consuming the existing retry budget. Exact retries reconcile to the stored receipt; changed details conflict. Use release for an interruption.',
+    inputSchema: objectSchema({ task_id: TASK_ID_PROPERTY, batch_id: stringSchema('Batch UUID.', 36), worker_id: WORKER_ID_PROPERTY, attempt_no: ATTEMPT_NO_PROPERTY, error: stringSchema('Business failure detail, up to 4096 UTF-8 bytes.', 4096) }, ['task_id', 'batch_id', 'worker_id', 'attempt_no', 'error']),
+    annotations: { title: 'Fail coord task', readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
   },
   {
     name: 'coord_release',
@@ -184,9 +190,7 @@ const TOOLS = [
 // Optional declarations preserve legacy calls. Logical mode requires an exact
 // allowed batch on every worker operation; the label never authenticates a user.
 for (const tool of TOOLS) {
-  if (tool.name === 'coord_tasks_list') continue;
-  tool.inputSchema.properties.worker_id = { type: 'string', pattern: '^[0-9A-Fa-f]{4}$',
-    description: 'Optional four-hex logical worker label, not a credential. Requires batch_id; canonicalized to uppercase.' };
+  tool.inputSchema.properties.worker_id = WORKER_ID_PROPERTY;
   tool.inputSchema.properties.batch_id ??= stringSchema('Allowed batch UUID; required with worker_id.', 36);
   tool.inputSchema.dependentRequired = { worker_id: ['batch_id'] };
   tool.description += ' In trusted logical mode supply worker_id and batch_id on every call; another conversation of the same OAuth owner can impersonate this label.';
@@ -197,6 +201,7 @@ const TRUSTED_TOOL_METHODS = Object.freeze({
   coord_claim: 'scheduler/trusted_claim',
   coord_progress: 'scheduler/trusted_progress',
   coord_complete: 'scheduler/trusted_complete',
+  coord_fail: 'scheduler/trusted_fail',
   coord_release: 'scheduler/trusted_release',
   coord_resume: 'scheduler/trusted_resume',
   coord_status: 'scheduler/trusted_status',
@@ -251,16 +256,16 @@ function validateToolInput(name, args) {
   if (TRUSTED_TOOL_METHODS[name]) {
     const tool = TOOLS.find(item => item.name === name);
     if (!hasExactKeys(args, Object.keys(tool.inputSchema.properties), tool.inputSchema.required)
-        || typeof args.worker_id !== 'string' || !/^[0-9A-Fa-f]{4}$/.test(args.worker_id)
+        || !identity.normalizeWorkerId(args.worker_id)
         || !validUuid(args.batch_id)) throw new ToolInputError('invalid_trusted_arguments');
-    const worker_id = args.worker_id.toUpperCase();
+    const worker_id = identity.normalizeWorkerId(args.worker_id);
     const batch_id = args.batch_id.toLowerCase();
     const params = { ...args, worker_id, batch_id };
     delete params.request_id;
     if (name === 'coord_claim') {
       if (params.lease_seconds !== undefined && (!Number.isInteger(params.lease_seconds) || params.lease_seconds < 1 || params.lease_seconds > 600)) throw new ToolInputError('invalid_lease_seconds');
       params.lease_seconds ??= 300;
-    } else if (name === 'coord_progress' || name === 'coord_complete' || name === 'coord_release') {
+    } else if (name === 'coord_progress' || name === 'coord_complete' || name === 'coord_release' || name === 'coord_fail') {
       if (!validUuid(params.task_id) || !Number.isInteger(params.attempt_no) || params.attempt_no < 1 || params.attempt_no > 1000000000) throw new ToolInputError('invalid_attempt');
       if (name === 'coord_progress') {
         if (typeof params.checkpoint !== 'string' || params.checkpoint.trim().length < 1 || params.checkpoint.length > 1024
@@ -274,6 +279,8 @@ function validateToolInput(name, args) {
               || (params.ack.priority !== undefined && !PRIORITIES.has(params.ack.priority))
               || (params.ack.payload !== undefined && (!isRecord(params.ack.payload) || jsonBytes(params.ack.payload) > MAX_ACK_PAYLOAD_BYTES))) throw new ToolInputError('invalid_ack');
         }
+      } else if (name === 'coord_fail') {
+        if (typeof params.error !== 'string' || !params.error.trim() || Buffer.byteLength(params.error) > 4096) throw new ToolInputError('invalid_failure');
       } else if (params.reason !== undefined && (typeof params.reason !== 'string' || params.reason.length > 1024)) {
         throw new ToolInputError('invalid_release_reason');
       }
@@ -289,13 +296,13 @@ function validateToolInput(name, args) {
     };
   }
   if (isRecord(args) && Object.hasOwn(args, 'worker_id')) {
-    if (name === 'coord_tasks_list' || typeof args.worker_id !== 'string'
-        || !/^[0-9A-Fa-f]{4}$/.test(args.worker_id) || !validUuid(args.batch_id)) throw new ToolInputError('invalid_logical_worker_or_batch');
+    if (!identity.normalizeWorkerId(args.worker_id) || !validUuid(args.batch_id)) throw new ToolInputError('invalid_logical_worker_or_batch');
     const clean = { ...args };
     delete clean.worker_id;
-    if (!['coord_claim_next', 'coord_agent_status'].includes(name)) delete clean.batch_id;
+    if (!['coord_claim_next', 'coord_agent_status', 'coord_tasks_list'].includes(name)) delete clean.batch_id;
+    if (clean.batch_id !== undefined) clean.batch_id = clean.batch_id.toLowerCase();
     const call = validateLegacyToolInput(name, clean);
-    return { ...call, logical: { worker_id: args.worker_id.toUpperCase(), batch_id: args.batch_id } };
+    return { ...call, logical: { worker_id: identity.normalizeWorkerId(args.worker_id), batch_id: args.batch_id.toLowerCase() } };
   }
   return validateLegacyToolInput(name, args);
 }
@@ -305,7 +312,8 @@ function validateLegacyToolInput(name, args) {
 
   switch (name) {
     case 'coord_tasks_list': {
-      if (!hasExactKeys(args, ['limit', 'kind', 'priority', 'state'])) throw new ToolInputError('invalid_list_arguments');
+      if (!hasExactKeys(args, ['limit', 'kind', 'priority', 'state', 'batch_id'])) throw new ToolInputError('invalid_list_arguments');
+      if (args.batch_id !== undefined && !validUuid(args.batch_id)) throw new ToolInputError('invalid_batch_id');
       if (args.limit !== undefined && (!Number.isInteger(args.limit) || args.limit < 1 || args.limit > 100)) throw new ToolInputError('invalid_limit');
       if (args.kind !== undefined && (typeof args.kind !== 'string' || args.kind.length > 64)) throw new ToolInputError('invalid_kind');
       if (args.priority !== undefined && !PRIORITIES.has(args.priority)) throw new ToolInputError('invalid_priority');
@@ -571,7 +579,7 @@ function createCoordMcpServer(authInfo, sidecar, loadSdk, identityPolicy = null)
     const instructions = [
       'This endpoint exposes only the listed coord task operations. It cannot create or cancel tasks or batches, and it does not forward arbitrary JSON-RPC.',
       'Read task details before acting. List/get results never contain lease tokens; use only the token returned by this client claim for the same task attempt.',
-      'State-changing calls require a caller-supplied UUID request_id. On an uncertain result, do not retry automatically; inspect task state before deciding whether a new request is appropriate.',
+      'Legacy token-based writes require a caller-supplied UUID request_id; trusted coord_claim/progress/complete/fail/release manage transport IDs internally. On an uncertain result, inspect task state and receipts before deciding whether another request is appropriate.',
     ].join(' ');
     const server = new sdk.Server(
       { name: 'coord-mcp', version: '1.0.0' },

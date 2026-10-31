@@ -18,22 +18,31 @@ loopback only.
   `agents/heartbeat`, `tasks/claim`, `tasks/extend`, `tasks/complete`,
   `scheduler/claim`, `scheduler/extend`, `scheduler/submit`, and
   `scheduler/failure`, `scheduler/progress`, `scheduler/extend_progress`, and
-  `scheduler/agent_status`, plus the six fixed `scheduler/trusted_*` methods.
+  `scheduler/agent_status`, plus the seven fixed `scheduler/trusted_*` methods.
   `tasks/list` requires `skip_reclaim: true`; the relay denies task creation,
   cancellation, arbitrary methods, unknown parameters, and caller-selected
   authenticated agent identities.
-- The six `coord_claim`, `coord_progress`, `coord_complete`, `coord_release`,
+- The `coord_claim`, `coord_progress`, `coord_complete`, `coord_fail`, `coord_release`,
   `coord_resume`, and `coord_status` MCP tools use OAuth/Cloudflare Access as
   the owner boundary. Core persists attempt/checkpoint state and never returns
   a lease token to these tools. The default trusted-owner path relies on the
   authenticated OAuth request, the private local Relay bearer and the
   authenticated connector. If a v2 logical identity policy is enabled, each
   call also carries a signed worker/batch/scope/expiry binding that the sidecar
-  verifies. Use `worker_ids: ["*"]` for any four-hex collaboration label within
+  verifies. Worker labels match `^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$`; generic
+  strings such as `writer-1` are case-sensitive and keep their names. Four-hex
+  labels and historical `emote-XXXX` IDs keep their canonical recovery behavior.
+  Use `worker_ids: ["*"]` for any valid collaboration label within
   that binding, or an explicit list for a stricter profile. The label does not
   identify a separate conversation. See
   [`IDENTITY_BINDINGS.md`](../docs/phase-g/IDENTITY_BINDINGS.md) for the legacy
   strict policy. Real ChatGPT conversation isolation remains unavailable.
+- Logical `coord_tasks_list` requires `worker_id` and `batch_id`. The OAuth
+  client must have a live binding for that batch, worker and `coord:read` scope.
+  SQL filters before LIMIT, and the Windows Agent independently verifies every
+  returned task belongs to the signed batch. Multiple authorized batches are
+  queried separately. Missing declarations never fall back to a global list;
+  explicitly approved legacy clients retain their existing list permissions.
 - Progress-required batches can call `scheduler/progress` with the current
   task, lease token, attempt number, next sequence and a short checkpoint, then
   `scheduler/extend_progress` with that unconsumed sequence. The batch's
@@ -46,6 +55,8 @@ loopback only.
   and persists the checkpoint; `scheduler/trusted_complete` is fenced by
   `task_id` and integer `attempt_no`; `scheduler/trusted_release` requeues a
   live attempt without consuming business failure budget;
+  `scheduler/trusted_fail` uses the existing failure budget/backoff and stores
+  a receipt, so identical retries do not count another failure;
   `scheduler/trusted_resume` reads durable checkpoint/disposition without
   reclaiming; and `scheduler/trusted_status` distinguishes state totals from
   live `active_claims`. Resume never wakes a model or transfers a task.
@@ -55,11 +66,21 @@ loopback only.
   A repeated ID returns `uncertain` rather than being replayed. Calls that time
   out or lose their connector return `outcome_unknown`; coord's lease token
   fencing remains authoritative for claims and submissions.
-- The append-only journal contains only internally generated request IDs, keyed HMAC-SHA256 of method,
+- The journal contains only request IDs, keyed HMAC-SHA256 of method,
   parameters and authenticated identity, method name, state, and time. It never
   stores parameters, results,
-  bearer secrets, or lease tokens. Journal corruption or its 100,000 unique-ID
-  ceiling fails closed; no automatic pruning can reopen an old request ID.
+  bearer secrets, or lease tokens. It compacts to at most 100,000 recent records
+  (configurable as `maxJournalEntries`, 16..100000), rather than stopping after
+  that many cumulative requests. Retired IDs are recorded in a fixed 8 MiB,
+  seven-hash conservative filter persisted before replacing the journal.
+  A retired ID returns `uncertain/request_id_retired_reconcile`, including for
+  uncertain calls; it is never dispatched again. Hash collisions can reject a
+  genuinely new ID conservatively. Reconcile authoritative Core state before
+  choosing a new request ID; external effects must never be blindly replayed.
+  Keep `requests.ndjson` and `requests.ndjson.retired` together in backups.
+  A missing/truncated filter after compaction fails closed. Old Relay versions
+  reject the compaction marker: rolling back Core is compatible, but a compacted
+  journal requires this Relay version or a compatible forward fix.
 - Legacy responses redact `lease_token` for tasks not claimed by
   `coord-relay-agent`; bound reads strip all lease-token fields and legacy
   bound claims expose only that worker's lease. Trusted responses strip all
@@ -86,13 +107,16 @@ protected main-RPC path still require the G6-B/D host acceptance checks.
 
 ## Local test
 
-Node.js 22 or newer is required. No npm install is needed.
+Node.js 22 or newer is required. The independent HTTP MCP client uses the
+existing Coord MCP test dependencies.
 
 ```powershell
 node --check relay/protocol.mjs
 node --check relay/server.mjs
 node --check relay/agent.mjs
-node --test relay/relay.test.mjs relay/live-coord.test.mjs
+npm ci --prefix relay/coord-mcp --ignore-scripts --no-audit --no-fund
+$env:COORD_TEST_BIN = (Resolve-Path target/release/coord.exe).Path
+node --test relay/relay.test.mjs relay/live-coord.test.mjs relay/logical-workers.test.mjs relay/generic-workers.test.mjs
 ```
 
 The tests use loopback listeners and temporary state; they do not reach the
@@ -104,7 +128,7 @@ production server or production coord database.
 - Sidecar configuration and separate agent/client credentials:
   `/etc/coord-relay` (root-owned; secret files group-readable only by
   `coord-relay`).
-- Append-only request journal: `/var/lib/coord-relay/requests.ndjson`.
+- Compacted request journal and retired-ID filter: `/var/lib/coord-relay/requests.ndjson{,.retired}`.
 - Service logs: `journalctl -u coord-relay.service`.
 - Sidecar agent socket: `100.116.134.114:13012/tcp`.
 - Local client API: `127.0.0.1:13013/tcp`.

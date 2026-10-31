@@ -10,3 +10,4 @@
 # Editor cruft
 .DS_Store
 *.swp
+/relay/coord-mcp/node_modules/

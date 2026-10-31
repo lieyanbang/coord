@@ -63,6 +63,28 @@ pub const DEFAULT_LEASE_SECONDS: u64 = 300;
 /// loop. Callers that need this much wall-clock should re-extend.
 pub const MAX_LEASE_SECONDS: u64 = 3_600;
 
+pub fn normalize_worker_id(worker: &str) -> Option<String> {
+    if worker.is_empty()
+        || worker.len() > 64
+        || !worker.as_bytes()[0].is_ascii_alphanumeric()
+        || !worker
+            .bytes()
+            .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'_' | b'-'))
+    {
+        return None;
+    }
+    if worker.len() == 4 && worker.bytes().all(|byte| byte.is_ascii_hexdigit()) {
+        Some(worker.to_ascii_uppercase())
+    } else if worker.len() == 10
+        && worker[..6].eq_ignore_ascii_case("emote-")
+        && worker[6..].bytes().all(|byte| byte.is_ascii_hexdigit())
+    {
+        Some(format!("emote-{}", worker[6..].to_ascii_uppercase()))
+    } else {
+        Some(worker.to_owned())
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Task {
     pub id: Uuid,

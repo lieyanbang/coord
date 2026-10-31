@@ -278,7 +278,9 @@ async function main() {
 
     const tools = await mcpPost(appEndpoint, tokens.access_token, { jsonrpc: '2.0', id: 3, method: 'tools/list', params: {} });
     assert.equal(tools.status, 200);
-    assert.equal(parseSseOrJson(await tools.text()).result.tools.length, 7);
+    const publishedTools = parseSseOrJson(await tools.text()).result.tools;
+    assert.equal(publishedTools.length, 17);
+    assert.ok(publishedTools.some(tool => tool.name === 'coord_fail'));
 
     const tasks = await mcpPost(appEndpoint, tokens.access_token, {
       jsonrpc: '2.0',

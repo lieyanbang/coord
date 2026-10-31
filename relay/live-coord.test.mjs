@@ -130,7 +130,9 @@ test('isolated coord lease fencing and submit replay across the authenticated re
     const afterStale = await directRpc(coordUrl, 'tasks/get', { id: staleTask.id });
     assert.equal(afterStale.state, 'claimed');
     assert.equal(afterStale.claimed_by, 'f2-test-new');
-    assert.equal(afterStale.lease_token, newClaim.lease_token);
+    assert.equal(afterStale.attempt_no, newClaim.attempt_no);
+    assert.equal(afterStale.lease_until, newClaim.lease_until);
+    assert.equal(Object.hasOwn(afterStale, 'lease_token'), false);
 
     const completeTask = await directRpc(coordUrl, 'tasks/send', { name: 'F2 relay completion fixture', kind: 'task', priority: 'normal', payload: { fixture: true } });
     const goodClaim = await relayRpc(relayUrl, randomUUID(), 'tasks/claim', { id: completeTask.id, agentId: COORD_AGENT_ID, leaseSeconds: 600 });
@@ -208,7 +210,7 @@ test('synthetic OAuth-bound relay exercises progress, extend, submit, next claim
     assert.doesNotMatch(JSON.stringify(globalLegacy.body), /lease_token|payload|synthetic/);
     const untouched = await directRpc(coordUrl, 'tasks/list', { skip_reclaim: true, limit: 100 });
     assert.equal(untouched.length, 3);
-    assert.ok(untouched.every(task => task.state === 'pending' && task.lease_token === null && task.claimed_by === null));
+    assert.ok(untouched.every(task => task.state === 'pending' && !Object.hasOwn(task, 'lease_token') && task.claimed_by === null));
     const old = await claim(0, 1);
     const progressId = randomUUID();
     const checkpoint = await invoke(0, 'scheduler/progress', { id: old.id, agent_id: 'A0', lease_token: old.lease_token, attempt_no: old.attempt_no, sequence: 1, request_id: progressId, checkpoint: 'Synthetic checkpoint; not liveness evidence.' }, progressId);
@@ -260,7 +262,7 @@ test('synthetic OAuth-bound relay exercises progress, extend, submit, next claim
     await directRpc(coordUrl, 'tasks/list', { skip_reclaim: false, limit: 100 });
     const disconnected = await directRpc(coordUrl, 'tasks/get', { id: next.id });
     assert.equal(disconnected.state, 'pending');
-    assert.equal(disconnected.lease_token, null);
+    assert.equal(Object.hasOwn(disconnected, 'lease_token'), false);
     const final = await directRpc(coordUrl, 'tasks/get', { id: current.id });
     assert.equal(final.result.completed, 1);
     assert.equal(final.state, 'completed');
@@ -432,7 +434,7 @@ test('Phase R trusted lifecycle survives stateless MCP calls and Core plus Relay
     assert.equal(first.attempt_no, 1);
     assert.doesNotMatch(JSON.stringify(first), /lease_token|leaseToken/);
     const internalClaim = await directRpc(coordUrl, 'tasks/get', { id: firstTaskId });
-    assert.equal(typeof internalClaim.lease_token, 'string');
+    assert.equal(Object.hasOwn(internalClaim, 'lease_token'), false);
     await toolJson('coord_progress', {
       batch_id: batch.id, worker_id: '0001', task_id: firstTaskId,
       attempt_no: first.attempt_no, checkpoint: 'Core and Relay integration checkpoint',
@@ -529,7 +531,7 @@ test('Phase R trusted lifecycle survives stateless MCP calls and Core plus Relay
     assert.equal(status.failure_count, 0);
 
     const journal = await readFile(relayJournal, 'utf8');
-    assert.equal(journal.includes(internalClaim.lease_token), false);
+    assert.doesNotMatch(journal, /"lease_token"|"leaseToken"/);
     assert.equal(journal.includes(JSON.stringify(firstResult)), false);
   } finally {
     await stopRelay();

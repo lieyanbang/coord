@@ -198,7 +198,7 @@ test('OAuth facade publishes coord scope and only accepts coord bearer tokens', 
 });
 
 test('strict tool allowlist maps only fixed coord RPCs and fences mutating inputs', () => {
-  assert.equal(TOOLS.length, 16);
+  assert.equal(TOOLS.length, 17);
   assert.ok(TOOLS.every((tool) => tool.inputSchema.additionalProperties === false));
   assert.ok(!TOOLS.some((tool) => /create|cancel|batch_status/i.test(tool.name)));
 

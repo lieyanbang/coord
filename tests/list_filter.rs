@@ -45,6 +45,7 @@ fn filter_pushdown_finds_match_beyond_naive_limit() {
         state: Some("completed".into()),
         kind: Some("ack".into()),
         priority: None,
+        batch_id: None,
     };
     let found = store.list_tasks_filtered(50, &pending).unwrap();
     let ids: Vec<String> = found.iter().map(|t| t.id.to_string()).collect();

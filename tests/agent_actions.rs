@@ -403,6 +403,51 @@ fn validator_pass_enqueues_the_task_action_and_batch_action_once() {
 }
 
 #[test]
+fn failed_terminal_batch_never_enqueues_the_success_action() {
+    let harness = Harness::new(
+        "action_child_echo_stdin",
+        true,
+        1,
+        2_000,
+        32_768,
+        true,
+        true,
+    );
+    let batch = harness.create_batch(None);
+    harness.add_task(batch, "accepted");
+    let failed_id = harness.add_task(batch, "failed");
+    let accepted = harness.claim(batch, "writer-1");
+    assert_ne!(accepted.id, failed_id);
+    harness.complete(&accepted, json!({"accepted":true}));
+    for _ in 0..3 {
+        std::thread::sleep(std::time::Duration::from_millis(150));
+        let failed = harness.claim(batch, "writer-2");
+        assert!(harness
+            .store()
+            .report_failure(
+                failed.id,
+                "writer-2",
+                failed.lease_token.as_deref().unwrap(),
+                json!("failed")
+            )
+            .unwrap());
+        let database = Connection::open(&harness.db_path).unwrap();
+        database
+            .execute(
+                "UPDATE tasks SET available_at=NULL WHERE id=?1",
+                [failed.id.to_string()],
+            )
+            .unwrap();
+    }
+    let progress = harness.store().get_batch_status(batch).unwrap();
+    assert_eq!(progress["active"], 0);
+    assert_eq!(progress["outcome"], "failed");
+    let actions = harness.store().action_status(batch).unwrap();
+    assert_eq!(actions["actions"].as_array().unwrap().len(), 1);
+    assert_eq!(actions["actions"][0]["action_kind"], "on_task_completed");
+}
+
+#[test]
 fn idempotent_action_lease_recovers_after_restart_and_fences_stale_worker() {
     let mut harness = Harness::new(
         "action_child_append_effect_marker",

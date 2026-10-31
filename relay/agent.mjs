@@ -297,6 +297,12 @@ class RelayAgent {
       if (!fresh.ok) return { state: 'not_dispatched', code: fresh.code };
     }
     const outcome = await this.dispatchCoord(request, shutdownSignal);
+    if (request.identity && request.method === 'tasks/list' && outcome.state === 'ok') {
+      const result = outcome.response.result;
+      if (!Array.isArray(result) || result.some(task => task?.batch_id !== auth.batchId)) {
+        return { state: 'not_dispatched', code: 'identity_list_scope_mismatch' };
+      }
+    }
     if (policy && !request.identity && request.method === 'tasks/list' && outcome.state === 'ok') {
       const result = outcome.response.result;
       if (!Array.isArray(result)) return { state: 'uncertain', code: 'invalid_coord_response' };

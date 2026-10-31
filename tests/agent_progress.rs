@@ -154,12 +154,18 @@ fn progress_lease_budget_is_a_hard_total_cap() {
         json!({"agent_id":"agent-a","batch_id":batch_id,"lease_seconds":600}),
     )["task"]
         .clone();
+    assert_eq!(
+        (chrono::DateTime::parse_from_rfc3339(task["lease_until"].as_str().unwrap()).unwrap()
+            - chrono::DateTime::parse_from_rfc3339(task["claimed_at"].as_str().unwrap()).unwrap())
+        .num_seconds(),
+        1
+    );
     thread::sleep(Duration::from_millis(1_100));
-    let progress = daemon.rpc(
+    let progress = daemon.request(
         "scheduler/progress",
         progress_params(&task, "agent-a", 1, Uuid::new_v4()),
     );
-    assert_eq!(progress["ok"], true);
+    assert!(progress.get("error").is_some());
     let extension = daemon.request(
         "scheduler/extend_progress",
         json!({

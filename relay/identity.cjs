@@ -5,7 +5,7 @@ const path = require('node:path');
 const HASH = /^[a-f0-9]{64}$/;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const SCOPES = Object.freeze({
-  'tasks/get': 'coord:read', 'scheduler/agent_status': 'coord:read',
+  'tasks/get': 'coord:read', 'tasks/list': 'coord:read', 'scheduler/agent_status': 'coord:read',
   'tasks/claim': 'coord:claim', 'scheduler/claim': 'coord:claim',
   'scheduler/trusted_claim': 'coord:claim',
   'scheduler/progress': 'coord:progress',
@@ -13,6 +13,7 @@ const SCOPES = Object.freeze({
   'tasks/extend': 'coord:extend', 'scheduler/extend': 'coord:extend', 'scheduler/extend_progress': 'coord:extend',
   'tasks/complete': 'coord:submit', 'scheduler/submit': 'coord:submit', 'scheduler/failure': 'coord:failure',
   'scheduler/trusted_complete': 'coord:submit', 'scheduler/trusted_release': 'coord:release',
+  'scheduler/trusted_fail': 'coord:failure',
   'scheduler/trusted_resume': 'coord:read', 'scheduler/trusted_status': 'coord:read',
 });
 const VALID_SCOPES = new Set(Object.values(SCOPES));
@@ -22,6 +23,16 @@ const MAX_FUTURE_ISSUE_SKEW_MS = 5_000;
 const hash = value => crypto.createHash('sha256').update(value).digest('hex');
 const record = value => value && typeof value === 'object' && !Array.isArray(value);
 const exact = (value, keys) => record(value) && Object.keys(value).every(k => keys.includes(k)) && keys.every(k => Object.hasOwn(value, k));
+const WORKER_ID_PATTERN = '^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$';
+function normalizeWorkerId(value) {
+  if (typeof value !== 'string' || !new RegExp(WORKER_ID_PATTERN).test(value)) return null;
+  if (/^[0-9a-f]{4}$/i.test(value)) return value.toUpperCase();
+  if (/^emote-[0-9a-f]{4}$/i.test(value)) return `emote-${value.slice(6).toUpperCase()}`;
+  return value;
+}
+function logicalAgentId(worker) {
+  return /^[0-9A-F]{4}$/.test(worker) ? `emote-${worker}` : worker;
+}
 
 function validatePolicy(config, key) {
   const logical = config?.version === 2 && config.mode === 'logical';
@@ -45,7 +56,7 @@ function validatePolicy(config, key) {
     if (logical) {
       const pair = `${b.client_sha256}:${b.batch_id}`;
       if (!Array.isArray(b.worker_ids) || b.worker_ids.length < 1 || b.worker_ids.length > 64
-          || !b.worker_ids.every(w => typeof w === 'string' && (w === '*' || /^[0-9A-F]{4}$/.test(w)))
+          || !b.worker_ids.every(w => typeof w === 'string' && (w === '*' || normalizeWorkerId(w) === w))
           || (b.worker_ids.includes('*') && b.worker_ids.length !== 1)
           || new Set(b.worker_ids).size !== b.worker_ids.length || pairs.has(pair)) throw new Error('logical_binding_invalid');
       pairs.add(pair);
@@ -80,12 +91,12 @@ function resolvePrincipal(policy, authInfo, now = Date.now(), declaration) {
       return null;
     }
     if (!exact(declaration, ['worker_id', 'batch_id']) || typeof declaration.worker_id !== 'string'
-        || !/^[0-9A-Fa-f]{4}$/.test(declaration.worker_id) || !UUID.test(declaration.batch_id)) throw new Error('logical_worker_invalid');
-    const worker = declaration.worker_id.toUpperCase();
+        || !normalizeWorkerId(declaration.worker_id) || !UUID.test(declaration.batch_id)) throw new Error('logical_worker_invalid');
+    const worker = normalizeWorkerId(declaration.worker_id);
     const b = policy.bindings.find(b => b.client_sha256 === client && b.batch_id === declaration.batch_id
       && (b.worker_ids.includes(worker) || b.worker_ids.includes('*')));
     if (!b || now < b.not_before || now >= b.expires_at) throw new Error('logical_worker_or_batch_denied');
-    return { binding_id: b.id, agent_id: `emote-${worker}`, worker_id: worker, batch_id: b.batch_id,
+    return { binding_id: b.id, agent_id: logicalAgentId(worker), worker_id: worker, batch_id: b.batch_id,
       scopes: [...b.scopes], issued_at: now, expires_at: Math.min(b.expires_at, authInfo.expiresAt, now + 60_000) };
   }
   if (declaration) throw new Error('logical_worker_disabled');
@@ -119,13 +130,14 @@ function verifyRequest(request, policy, now = Date.now()) {
   const expected = signature(request, p, policy.key);
   if (!crypto.timingSafeEqual(Buffer.from(expected, 'hex'), Buffer.from(proof, 'hex'))
       || !b || b.batch_id !== p.batch_id
-      || (logical ? !(b.worker_ids.includes(p.worker_id) || b.worker_ids.includes('*')) || p.agent_id !== `emote-${p.worker_id}` : b.agent_id !== p.agent_id)
+      || (logical ? !normalizeWorkerId(p.worker_id) || normalizeWorkerId(p.worker_id) !== p.worker_id || !(b.worker_ids.includes(p.worker_id) || b.worker_ids.includes('*')) || p.agent_id !== logicalAgentId(p.worker_id) : b.agent_id !== p.agent_id)
       || JSON.stringify(b.scopes) !== JSON.stringify(p.scopes)
       || !Number.isSafeInteger(p.issued_at) || !Number.isSafeInteger(p.expires_at)
       || p.issued_at > now + MAX_FUTURE_ISSUE_SKEW_MS || p.issued_at < b.not_before || p.expires_at > b.expires_at
       || p.expires_at - p.issued_at > 60_000 || p.expires_at <= now || p.expires_at <= p.issued_at) return { ok: false, code: 'identity_invalid_or_expired' };
   const scope = SCOPES[request.method];
   if (!scope || !b.scopes.includes(scope)) return { ok: false, code: 'identity_scope_denied' };
+  if (request.method === 'tasks/list' && request.params.batch_id !== p.batch_id) return { ok: false, code: 'identity_batch_mismatch' };
   const agent = request.params.agentId ?? request.params.agent_id;
   if (agent !== undefined && agent !== p.agent_id) return { ok: false, code: 'identity_agent_mismatch' };
   if (logical && request.params.worker_id !== undefined && request.params.worker_id !== p.worker_id) return { ok: false, code: 'identity_worker_mismatch' };
@@ -138,4 +150,4 @@ function protectedBatch(policy, batchId) {
   return Boolean(policy && policy.bindings.some(b => b.batch_id === batchId));
 }
 
-module.exports = { SCOPES, hash, loadPolicy, validatePolicy, resolvePrincipal, signRequest, verifyRequest, protectedBatch };
+module.exports = { SCOPES, WORKER_ID_PATTERN, normalizeWorkerId, hash, loadPolicy, validatePolicy, resolvePrincipal, signRequest, verifyRequest, protectedBatch };

@@ -178,6 +178,8 @@ pub struct HeartbeatArgs {
 
 #[derive(Debug, Deserialize, JsonSchema)]
 pub struct ListArgs {
+    #[serde(default)]
+    pub batch_id: Option<String>,
     /// Max number of tasks to return. Default 50.
     #[serde(default)]
     pub limit: Option<u64>,
@@ -204,6 +206,7 @@ pub struct TrustedClaimArgs {
     /// Batch to draw from. Trusted claims never spill into another batch.
     pub batch_id: String,
     /// Stable collaboration label, not an authenticated session identity.
+    #[schemars(regex(pattern = "^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$"))]
     pub worker_id: String,
     /// Optional claim duration in seconds, bounded by the daemon.
     #[serde(default)]
@@ -214,6 +217,7 @@ pub struct TrustedClaimArgs {
 pub struct TrustedAttemptArgs {
     pub task_id: String,
     pub batch_id: String,
+    #[schemars(regex(pattern = "^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$"))]
     pub worker_id: String,
     /// Monotonic generation returned by claim/resume; prevents stale context writes.
     pub attempt_no: u64,
@@ -223,6 +227,7 @@ pub struct TrustedAttemptArgs {
 pub struct TrustedProgressArgs {
     pub task_id: String,
     pub batch_id: String,
+    #[schemars(regex(pattern = "^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$"))]
     pub worker_id: String,
     pub attempt_no: u64,
     /// Durable checkpoint describing the latest completed work step.
@@ -236,6 +241,7 @@ pub struct TrustedProgressArgs {
 pub struct TrustedCompleteArgs {
     pub task_id: String,
     pub batch_id: String,
+    #[schemars(regex(pattern = "^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$"))]
     pub worker_id: String,
     pub attempt_no: u64,
     #[serde(default)]
@@ -249,6 +255,7 @@ pub struct TrustedCompleteArgs {
 pub struct TrustedReleaseArgs {
     pub task_id: String,
     pub batch_id: String,
+    #[schemars(regex(pattern = "^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$"))]
     pub worker_id: String,
     pub attempt_no: u64,
     #[serde(default)]
@@ -256,8 +263,19 @@ pub struct TrustedReleaseArgs {
 }
 
 #[derive(Debug, Deserialize, JsonSchema)]
+pub struct TrustedFailArgs {
+    pub task_id: String,
+    pub batch_id: String,
+    #[schemars(regex(pattern = "^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$"))]
+    pub worker_id: String,
+    pub attempt_no: u64,
+    pub error: String,
+}
+
+#[derive(Debug, Deserialize, JsonSchema)]
 pub struct TrustedResumeArgs {
     pub batch_id: String,
+    #[schemars(regex(pattern = "^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$"))]
     pub worker_id: String,
 }
 
@@ -322,6 +340,16 @@ impl Bridge {
             json!({"task_id":a.task_id,"batch_id":a.batch_id,"worker_id":a.worker_id,"attempt_no":a.attempt_no,"reason":a.reason}),
         )
         .await
+    }
+
+    #[tool(
+        description = "Report a business failure for this exact attempt. Consumes retry budget; identical retries reconcile safely. Use coord_release for interruption."
+    )]
+    async fn coord_fail(
+        &self,
+        Parameters(a): Parameters<TrustedFailArgs>,
+    ) -> Result<CallToolResult, McpError> {
+        self.call("scheduler/trusted_fail", json!({"task_id":a.task_id,"batch_id":a.batch_id,"worker_id":a.worker_id,"attempt_no":a.attempt_no,"error":a.error})).await
     }
 
     #[tool(
@@ -507,6 +535,7 @@ impl Bridge {
         self.call(
             "tasks/list",
             json!({
+                "batch_id": a.batch_id,
                 "limit": limit,
                 "kind": a.kind,
                 "priority": a.priority,

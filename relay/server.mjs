@@ -1,7 +1,7 @@
-import { createHmac, randomBytes } from 'node:crypto';
+import { createHash, createHmac, randomBytes } from 'node:crypto';
 import { createServer as createHttpServer } from 'node:http';
 import { createServer as createTcpServer, isIP } from 'node:net';
-import { mkdir, open, readFile } from 'node:fs/promises';
+import { mkdir, open, readFile, rename } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
@@ -19,7 +19,7 @@ import {
 import identity from './identity.cjs';
 
 const MAX_JOURNAL_ENTRIES = 100_000;
-const MAX_JOURNAL_LINES = 250_000;
+const RETIRED_FILTER_BYTES = 8 * 1024 * 1024;
 const TERMINAL_STATES = new Set(['completed', 'rpc_error', 'uncertain']);
 
 function log(event, fields = {}) {
@@ -151,6 +151,7 @@ export async function createSidecar(options = {}) {
     heartbeatTimeoutMs: options.heartbeatTimeoutMs ?? 35_000,
     maxPending: options.maxPending ?? MAX_PENDING,
     journalFile: options.journalFile ?? './coord-relay-state/requests.ndjson',
+    maxJournalEntries: options.maxJournalEntries ?? MAX_JOURNAL_ENTRIES,
     agentSecret: options.agentSecret,
     clientSecret: options.clientSecret,
     identityPolicy: options.identityPolicy ?? await identity.loadPolicy(options.identityPolicyFile),
@@ -166,6 +167,7 @@ export async function createSidecar(options = {}) {
   }
   if (!isIP(config.allowedPeerIp)) throw new Error('invalid allowed peer address');
   if (!Number.isInteger(config.maxPending) || config.maxPending < 1 || config.maxPending > MAX_PENDING) throw new Error('maxPending must be 1..4');
+  if (!Number.isInteger(config.maxJournalEntries) || config.maxJournalEntries < 16 || config.maxJournalEntries > MAX_JOURNAL_ENTRIES) throw new Error('maxJournalEntries must be 16..100000');
   if (!Number.isInteger(config.requestTimeoutMs) || config.requestTimeoutMs < 100 || config.requestTimeoutMs > 60_000) throw new Error('requestTimeoutMs must be 100..60000');
   if (!Number.isInteger(config.heartbeatTimeoutMs) || config.heartbeatTimeoutMs < 1_000 || config.heartbeatTimeoutMs > 120_000) throw new Error('heartbeatTimeoutMs must be 1000..120000');
 
@@ -187,6 +189,8 @@ class Sidecar {
     this.httpServer.headersTimeout = 5_000;
     this.httpServer.requestTimeout = 15_000;
     this.journalChain = Promise.resolve();
+    this.journalLines = 0;
+    this.retired = Buffer.alloc(RETIRED_FILTER_BYTES);
   }
 
   async initialize() {
@@ -194,22 +198,79 @@ class Sidecar {
     const handle = await open(this.config.journalFile, 'a+', 0o600);
     await handle.chmod(0o600);
     const content = await handle.readFile('utf8');
+    await handle.close();
     const lines = content.split('\n').filter(Boolean);
-    if (lines.length > MAX_JOURNAL_LINES) throw new Error('journal_capacity_exceeded');
+    let retiredAvailable = true;
+    try {
+      this.retired = await readFile(`${this.config.journalFile}.retired`);
+      if (this.retired.length !== RETIRED_FILTER_BYTES) throw new Error('journal_corrupt');
+    } catch (error) {
+      if (error.code !== 'ENOENT') throw error;
+      retiredAvailable = false;
+    }
     for (const line of lines) {
       let record;
       try { record = JSON.parse(line); } catch { throw new Error('journal_corrupt'); }
+      if (record.version === 1 && record.retired_filter === true) {
+        if (!retiredAvailable) throw new Error('journal_corrupt');
+        continue;
+      }
       if (typeof record.requestId !== 'string' || typeof record.requestHash !== 'string' || typeof record.state !== 'string') {
         throw new Error('journal_corrupt');
       }
+      this.records.delete(record.requestId);
       this.records.set(record.requestId, record);
     }
-    await handle.close();
+    this.journalLines = lines.length;
+    await this.compactJournal();
     for (const record of this.records.values()) {
       if (!TERMINAL_STATES.has(record.state)) {
         await this.appendRecord(record.requestId, record.requestHash, record.method, 'uncertain', 'process_restart');
       }
     }
+  }
+
+  retiredPositions(requestId) {
+    const digest = createHash('sha256').update(requestId).digest();
+    return Array.from({ length: 7 }, (_, index) => digest.readUInt32BE(index * 4) % (RETIRED_FILTER_BYTES * 8));
+  }
+
+  wasRetired(requestId) {
+    return this.retiredPositions(requestId).every(position => (this.retired[position >>> 3] & (1 << (position & 7))) !== 0);
+  }
+
+  async atomicJournalFile(file, content) {
+    const temporary = `${file}.next`;
+    const handle = await open(temporary, 'w', 0o600);
+    try {
+      await handle.chmod(0o600);
+      await handle.writeFile(content);
+      await handle.sync();
+    } finally {
+      await handle.close();
+    }
+    await rename(temporary, file);
+    if (process.platform !== 'win32') {
+      const directory = await open(dirname(file), 'r');
+      try { await directory.sync(); } finally { await directory.close(); }
+    }
+  }
+
+  async compactJournal() {
+    if (this.records.size <= this.config.maxJournalEntries && this.journalLines <= this.config.maxJournalEntries * 3) return;
+    const retained = new Map(this.records);
+    const target = Math.floor(this.config.maxJournalEntries * 0.75);
+    for (const [requestId, record] of retained) {
+      if (retained.size <= target) break;
+      if (this.pending.has(requestId) || !TERMINAL_STATES.has(record.state)) continue;
+      for (const position of this.retiredPositions(requestId)) this.retired[position >>> 3] |= 1 << (position & 7);
+      retained.delete(requestId);
+    }
+    await this.atomicJournalFile(`${this.config.journalFile}.retired`, this.retired);
+    const lines = [JSON.stringify({ version: 1, retired_filter: true }), ...[...retained.values()].map(record => JSON.stringify(record))];
+    await this.atomicJournalFile(this.config.journalFile, `${lines.join('\n')}\n`);
+    this.records = retained;
+    this.journalLines = lines.length;
   }
 
   async start() {
@@ -320,7 +381,6 @@ class Sidecar {
 
   async appendRecord(requestId, requestHash, method, state, code = undefined) {
     this.journalChain = this.journalChain.catch(() => {}).then(async () => {
-      if (!this.records.has(requestId) && this.records.size >= MAX_JOURNAL_ENTRIES) throw new Error('journal_capacity_exceeded');
       const record = { requestId, requestHash, method, state, at: new Date().toISOString() };
       if (code) record.code = code;
       const line = `${JSON.stringify(record)}\n`;
@@ -331,7 +391,10 @@ class Sidecar {
       } finally {
         await handle.close();
       }
+      this.records.delete(requestId);
       this.records.set(requestId, record);
+      this.journalLines++;
+      await this.compactJournal();
     });
     return this.journalChain;
   }
@@ -366,6 +429,7 @@ class Sidecar {
     if (previous) {
       return { state: 'uncertain', code: previous.requestHash === requestHash ? 'request_id_already_used' : 'request_id_conflict' };
     }
+    if (this.wasRetired(request.requestId)) return { state: 'uncertain', code: 'request_id_retired_reconcile' };
     const inFlight = this.pending.get(request.requestId);
     if (inFlight) {
       return { state: 'uncertain', code: inFlight.requestHash === requestHash ? 'request_id_in_flight' : 'request_id_conflict' };

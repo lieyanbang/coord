@@ -29,7 +29,7 @@ when watchers need an atomic acknowledgement; discover it with
 Generic workers use `submit_result {id, agent_id, lease_token, result}` or
 `report_failure {id, agent_id, lease_token, error}`. Read `get_task {id}` for
 one task and `get_progress {batch_id}` for a consistent batch snapshot. Trusted
-workers use the six `coord_*` tools in [Trusted scheduler API](#trusted-scheduler-api-phase-r).
+workers use the `coord_*` tools in [Trusted scheduler API](#trusted-scheduler-api-phase-r).
 An empty claim is not terminal: other tasks may be leased, submitted or in
 backoff. Only authoritative batch status establishes whether all work is done;
 failed/cancelled work is not a successful completion.
@@ -71,12 +71,12 @@ tokens; a worker label is not a credential or independent conversation identity.
   reclaim/claim. When stopping voluntarily, trusted workers use `coord_release`
   with a reason; token-only callers save a checkpoint and let the lease expire.
   Neither interruption path consumes the business failure budget.
-- A real execution failure uses token-fenced `report_failure` and bounded
-  retry/backoff. The six trusted tools have no business-failure shortcut:
-  trusted-only workers checkpoint the error and release with a reason for
-  manager review. This does not count a business failure; do not submit a
-  success result to hide the error. A configured validator can also reject a
-  submitted result.
+- A real execution failure uses token-fenced `report_failure` or trusted
+  `coord_fail {task_id,batch_id,worker_id,attempt_no,error}`, with the same bounded
+  retry/backoff and business failure count. Exact trusted failure retries return
+  the stored receipt; different error text conflicts. Use `coord_release` for
+  interruption, which does not consume this budget. Do not submit a success
+  result to hide the error. A configured validator can also reject a submission.
 - After an uncertain write, reconcile task/attempt state and receipts before
   retrying. An exact completion replay preserves the accepted result and ack;
   changed content conflicts. Preserve request IDs and content when reconciling
@@ -204,7 +204,11 @@ failure slot only when the business failure budget was exhausted.
 Enqueue is atomic, at most 1000 entries/request, keys 1..256 UTF-8 bytes. Reusing
 the same key and input returns its existing task; changed input conflicts and
 rolls back the entire request. Keys are unique within a batch. Batch progress
-is a transaction-consistent snapshot. A drained batch reports completed; adding
+is a transaction-consistent snapshot. A drained batch retains legacy
+`status:"completed"`; `outcome` distinguishes `active`, `succeeded`, `failed`
+and `cancelled`, while `all_succeeded`, `has_failures` and per-state counts
+describe actual success. The batch success Action still requires every task
+to be completed. Adding
 more work to an active, drained batch is permitted. Cancellation is sticky,
 blocks enqueue/claim/retry and invalidates active task fences. Terminal outcomes
 remain counted; repeated cancel/retry is state-idempotent. Missing batch is
@@ -230,6 +234,9 @@ slots consume the durable submitted queue. Each job has its own expiring fence;
 stale job tokens/submission IDs cannot update cancelled or newer work.
 
 PASS completes and writes an optional requested ack in the same transaction.
+Rejected results are cleared from current task state; historical attempts retain
+the submitted result and failure reason. Reads also hide rejected results left
+in non-submitted, non-completed rows by older versions.
 FAIL backs off execution or fails on exhausted execution attempts. ERROR retries
 validation with a separate bounded counter, then fails with validation_error;
 it does not consume execution attempts. Abandoned validation leases count as
@@ -291,23 +298,44 @@ new generation that uses the same worker label.
 | `scheduler/trusted_claim` | `batch_id`, `worker_id`, optional `lease_seconds` | Current live claim for that worker or one ready task from exactly this batch; empty queue returns `{state:"empty"}`. |
 | `scheduler/trusted_progress` | `task_id`, `batch_id`, `worker_id`, `attempt_no`, `checkpoint`, optional `lease_seconds` | Durable checkpoint, generated sequence, accepted time and lease deadline. Identical latest checkpoint is idempotent. |
 | `scheduler/trusted_complete` | `task_id`, `batch_id`, `worker_id`, `attempt_no`, `result`, optional `ack` | `submitted` or `completed`; an exact retry returns the current task state and stored submission ID without re-enqueueing completion actions; changed content conflicts. |
+| `scheduler/trusted_fail` | `task_id`, `batch_id`, `worker_id`, `attempt_no`, `error` | Existing failure count/backoff, `pending` or `failed`, and a persistent receipt. Exact retries replay without another failure; changed details conflict. |
 | `scheduler/trusted_release` | `task_id`, `batch_id`, `worker_id`, `attempt_no`, optional `reason` | Requeues only the exact live attempt with interruption backoff and no business failure. |
 | `scheduler/trusted_resume` | `batch_id`, `worker_id` | Read-only `active`, `released`, `expired`, `reassigned`, terminal state, or `none`, with latest durable checkpoint when available. |
 | `scheduler/trusted_status` | `batch_id` | Batch state totals plus distinct live `active_claims`, interruption alerts and total business `failure_count`. |
 
-These six methods are exposed as `coord_claim`, `coord_progress`,
-`coord_complete`, `coord_release`, `coord_resume`, and `coord_status` by both
+These methods are exposed as `coord_claim`, `coord_progress`,
+`coord_complete`, `coord_fail`, `coord_release`, `coord_resume`, and `coord_status` by both
 local `coord mcp` and the optional Coord MCP Relay. The local tools use the
 parameters above; the Relay also accepts `worker_id` on status and requires it
 in logical mode. Relay OAuth/Cloudflare Access authenticates the owner. The
 default trusted-owner path uses the private local Relay bearer and authenticated
 connector; a v2 logical identity policy additionally signs and restricts each
 call to a batch, worker label, operation scopes and expiry. Set
-`worker_ids: ["*"]` for any four-hex collaboration label within that exact
+`worker_ids: ["*"]` for any valid collaboration label within that exact
 owner/batch/scope/expiry binding, or keep an explicit worker list for a stricter
 profile. The default trusted owner path does not treat the worker label as a
 credential. Direct Core trusted RPCs are loopback-only; a remote MCP client must
 use the authenticated Relay/proxy.
+
+Worker labels match `^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$`: 1..64 ASCII characters,
+case-sensitive. Four-hex labels normalize to uppercase; historical
+`emote-XXXX` labels normalize their prefix and hex suffix. A generic label such
+as `writer-1` stays `writer-1`. Existing Emote profiles and historical namespaced
+attempts retain their four-hex recovery mapping. No identity rows are renamed.
+Mixed-case historical four-hex ownership is preserved. Conflicting historical
+aliases are rejected rather than merged or assigned a second live attempt.
+
+Remote `coord_tasks_list {batch_id,worker_id,limit?,state?,kind?,priority?}`
+intersects the requested batch with the authenticated owner's live policy
+binding and `coord:read` scope. Each call selects exactly one batch; owners with
+several bindings can list each permitted batch separately. Missing declarations,
+unbound batches or disallowed workers are rejected in logical mode. A caller
+cannot supply an agent identity or broaden this query to the global pool.
+Legacy clients explicitly allowed by policy retain their existing list boundary.
+Local `tasks_list` and raw `tasks/list` also accept an optional `batch_id` SQL
+filter. Remote lists always use `skip_reclaim:true`; they never reclaim tasks.
+Ordinary Core get/list responses and all trusted responses omit lease tokens;
+legacy claim responses retain their own execution token.
 
 `resume` never reclaims or transfers work. If the stored lease has expired but
 the background reclaimer has not run yet, it reports `expired` without changing

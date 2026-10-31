@@ -16,6 +16,7 @@ const PRIORITIES = new Set(['low', 'normal', 'high', 'urgent']);
 const TRUSTED_METHODS = new Set([
   'scheduler/trusted_claim', 'scheduler/trusted_progress', 'scheduler/trusted_complete',
   'scheduler/trusted_release', 'scheduler/trusted_resume', 'scheduler/trusted_status',
+  'scheduler/trusted_fail',
 ]);
 
 function isRecord(value) {
@@ -71,14 +72,15 @@ function validTrustedAck(value) {
 }
 
 function validWorkerId(value) {
-  return typeof value === 'string' && /^[0-9A-F]{4}$/.test(value);
+  return typeof value === 'string' && identity.normalizeWorkerId(value) === value;
 }
 
 function validParams(method, params, agentId = COORD_AGENT_ID) {
   switch (method) {
     case 'tasks/list':
-      return exactKeys(params, ['limit', 'kind', 'priority', 'state', 'skip_reclaim'], ['skip_reclaim'])
+      return exactKeys(params, ['limit', 'kind', 'priority', 'state', 'batch_id', 'skip_reclaim'], ['skip_reclaim'])
         && params.skip_reclaim === true
+        && (params.batch_id === undefined || validUuid(params.batch_id))
         && (params.limit === undefined || (Number.isInteger(params.limit) && params.limit >= 1 && params.limit <= 100))
         && (params.kind === undefined || (typeof params.kind === 'string' && params.kind.length <= 64))
         && (params.priority === undefined || PRIORITIES.has(params.priority))
@@ -157,6 +159,11 @@ function validParams(method, params, agentId = COORD_AGENT_ID) {
         && validUuid(params.task_id) && validUuid(params.batch_id) && validWorkerId(params.worker_id)
         && Number.isInteger(params.attempt_no) && params.attempt_no >= 1 && params.attempt_no <= 1_000_000_000
         && validTaskResult(params.result) && (params.ack === undefined || validTrustedAck(params.ack));
+    case 'scheduler/trusted_fail':
+      return exactKeys(params, ['task_id', 'batch_id', 'worker_id', 'attempt_no', 'error'], ['task_id', 'batch_id', 'worker_id', 'attempt_no', 'error'])
+        && validUuid(params.task_id) && validUuid(params.batch_id) && validWorkerId(params.worker_id)
+        && Number.isInteger(params.attempt_no) && params.attempt_no >= 1 && params.attempt_no <= 1_000_000_000
+        && typeof params.error === 'string' && params.error.trim().length > 0 && Buffer.byteLength(params.error) <= 4096;
     case 'scheduler/trusted_release':
       return exactKeys(params, ['task_id', 'batch_id', 'worker_id', 'attempt_no', 'reason'], ['task_id', 'batch_id', 'worker_id', 'attempt_no'])
         && validUuid(params.task_id) && validUuid(params.batch_id) && validWorkerId(params.worker_id)

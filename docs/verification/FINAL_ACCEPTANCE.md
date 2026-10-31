@@ -1,4 +1,59 @@
-# Final acceptance — Windows coord MVP
+# Coord acceptance
+
+## Generic Worker refactor — 2026-10-31
+
+Scope: the final root `PLAN.md` and `TASK.md` supplied in the original
+`D:\project\coord` checkout, implemented from `e6deb80` in the isolated
+`codex/generic-workers-20261031` branch. Those contracts and the original dirty
+worktree were preserved. Historical Emote work remains outside this refactor.
+
+The implementation provides generic string Worker IDs, scoped task discovery
+and trusted business failure through both MCP transports, signed Relay, RPC and
+the existing SQLite state machine. It also fixes public read credential
+exposure, selected-batch lease budgets, rejected current results and terminal
+batch outcome reporting. Existing profile-controlled Emote validation, successful
+completion Actions, announcement semantics and Broker isolation remain enabled.
+No additional scheduler, identity database or service was introduced.
+
+| Boundary | Current evidence | Result |
+| --- | --- | --- |
+| Windows Rust regression | 113 passed; 8 ordinary-suite ignores include the separately exercised capacity test and helper child processes; fmt and locked Clippy with warnings denied | PASS |
+| Current Windows Release | All four executables built from this implementation; no old binary substituted | PASS |
+| Relay / real Core / independent HTTP MCP SDK | 29 tests; generic `writer-1`/`writer-2`, same-worker recovery, progress, completion, fail, release, restart, old fences, multiple allowed batches, forged/missing declarations and read-only expiry checks | PASS |
+| MCP schema / OAuth / Access regression | 19 tests; old tools retained and new `coord_fail` published | PASS |
+| Host OAuth implementation | Retrieved only the deployed host's OAuth source module; isolated DCR, S256 PKCE, resource/scope binding, owner JWT/JWKS, CSRF, one-time code, refresh and expiry tests | PASS, isolated |
+| Historical compatibility | Newly built `e6deb80` executable created active four-hex and Emote claims; two SQLite online backup copies survived candidate upgrade and baseline rollback with identical task/attempt/checkpoint history; new failure records remained readable | PASS, synthetic copies |
+| Optional business consumers | Emote/recovery, Actions/Runner, Vault/TUI, announcements and cancellation/failure tests remain in the Rust regression; failed terminal batches never emit the batch success Action | PASS, automated |
+| Windows health monitor | Authentication, bounded recovery, Runner security errors and Broker failure isolation tested against isolated fixtures | PASS |
+| Business request/result helpers | Existing Python suite, 8 tests | PASS |
+| Capacity | Current Release, 100 / 1,000 / 10,000 tasks and six independent MCP processes; unique claims and receipts match, no SQLite busy errors; raw measurements in `generic-workers-capacity.json` | PASS |
+| Real deployment inspection | Arasaka Core/Broker/Runner and Linux reverse Relay READY; Core/Broker listeners remain loopback; existing Feathers/OpenResty/OAuth chain retained | READ ONLY, 2026-10-31 05:13 UTC |
+| Public OAuth | HTTPS discovery returned `coord` / `offline_access`, S256 metadata and expected unauthenticated 401 resource challenge | PASS, read only |
+| Actual ChatGPT Web | Logged-in Work UI lists the installed Coord plugin; deployed MCP source still has the four-hex schema and no trusted fail tool | Discovery only |
+| New actual Web read/write flow | Requires a publicly reachable isolated candidate endpoint and its approved tool snapshot; the existing URL serves the previous production version | EXTERNAL DEPENDENCY |
+| Production / formal Emote Batch | No deployment, task/Action write, binding/permission change or production migration performed | NOT RUN |
+| Hosted low-privilege Runner rehearsal | CI-only existing Windows workflow; authoritative result and matched artifact belong to the delivered commit's Fork checks | See commit checks |
+
+The Core schema remains backward compatible. Worker IDs use the bounded ASCII
+contract in `docs/API.md`; existing four-hex ownership is recovered without
+renaming persisted identities, and ambiguous historical aliases fail closed.
+Scoped lists require an authorized single batch and `coord:read`, filter before
+LIMIT in SQLite, and undergo an independent returned-scope check in the Agent.
+
+Relay journal compaction retains recent exact records and a bounded 8 MiB
+conservative retired-ID filter. Retired requests, including uncertain writes,
+are rejected for authoritative reconciliation rather than replayed. Collisions
+can conservatively reject new IDs. Preserve both journal files together; a
+compacted journal intentionally fails closed with older Relay binaries, so
+Relay rollback needs a compatible forward fix. Core rollback was exercised.
+
+Full local logs remain in the isolated checkout's `docs/verification/` and
+`target/`; GitHub Actions reruns the checked-in Windows regression, health
+monitor, low-privilege Runner, Relay/MCP and Python checks on the delivered
+commit. Simulated OAuth/SDK tests do not establish actual ChatGPT Web writes or
+production acceptance. No Release, tag or upstream write is part of delivery.
+
+## Historical Windows MVP acceptance — 2026-10-21
 
 Result: **PASS** for the scoped Windows MVP (2026-10-21). Stages 0/A/B/C/D/E
 passed their local gates and real Windows Actions runs. The final Stage E

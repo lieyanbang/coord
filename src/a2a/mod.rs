@@ -187,7 +187,7 @@ async fn dispatch(state: &AppState, method: &str, params: Value) -> Result<Value
         "tasks/get" => {
             let p: IdParams = serde_json::from_value(params).map_err(MethodError::bad_params)?;
             let task = state.store.get_task(p.id).map_err(MethodError::internal)?;
-            Ok(serde_json::to_value(&task).unwrap())
+            Ok(task.as_ref().map(trusted_task_value).unwrap_or(Value::Null))
         }
         "tasks/list" => tasks_list(state, params).await,
         "tasks/cancel" => {
@@ -287,6 +287,38 @@ async fn dispatch(state: &AppState, method: &str, params: Value) -> Result<Value
                 }
                 None => Err(MethodError::conflict(
                     "completion rejected: the task is no longer owned by this attempt",
+                )),
+            }
+        }
+        "scheduler/trusted_fail" => {
+            #[derive(Deserialize)]
+            #[serde(deny_unknown_fields)]
+            struct FailParams {
+                task_id: Uuid,
+                batch_id: Uuid,
+                worker_id: String,
+                attempt_no: u64,
+                error: String,
+            }
+            let arguments: FailParams =
+                serde_json::from_value(params).map_err(MethodError::bad_params)?;
+            match state
+                .store
+                .fail_trusted(
+                    arguments.task_id,
+                    arguments.batch_id,
+                    &arguments.worker_id,
+                    arguments.attempt_no,
+                    &arguments.error,
+                )
+                .map_err(MethodError::internal)?
+            {
+                Some(value) => {
+                    state.bus.notify();
+                    Ok(value)
+                }
+                None => Err(MethodError::conflict(
+                    "failure rejected: the task is no longer owned by this attempt",
                 )),
             }
         }
@@ -681,6 +713,11 @@ async fn tasks_list(state: &AppState, params: Value) -> Result<Value, MethodErro
         .unwrap_or(50)
         .clamp(1, 10_000) as usize;
     let filter = TaskFilter {
+        batch_id: params
+            .get("batch_id")
+            .filter(|value| !value.is_null())
+            .map(|value| serde_json::from_value(value.clone()).map_err(MethodError::bad_params))
+            .transpose()?,
         kind: params
             .get("kind")
             .and_then(|v| v.as_str())
@@ -721,7 +758,7 @@ async fn tasks_list(state: &AppState, params: Value) -> Result<Value, MethodErro
         .list_tasks_filtered(limit, &filter)
         .map_err(MethodError::internal)?;
     if wait_ms == 0 || !tasks.is_empty() {
-        return Ok(serde_json::to_value(&tasks).unwrap());
+        return Ok(Value::Array(tasks.iter().map(trusted_task_value).collect()));
     }
 
     // Empty initial result + caller wants to wait: subscribe to the
@@ -760,7 +797,7 @@ async fn tasks_list(state: &AppState, params: Value) -> Result<Value, MethodErro
                     .list_tasks_filtered(limit, &filter)
                     .map_err(MethodError::internal)?;
                 if !tasks.is_empty() {
-                    return Ok(serde_json::to_value(&tasks).unwrap());
+                    return Ok(Value::Array(tasks.iter().map(trusted_task_value).collect()));
                 }
             }
             Ok(Err(broadcast::error::RecvError::Closed)) => return Ok(json!([])),
@@ -804,6 +841,7 @@ async fn agent_card() -> Json<Value> {
             { "id": "scheduler/trusted_claim", "name": "Claim a batch task without exposing its lease token" },
             { "id": "scheduler/trusted_progress", "name": "Persist a fenced checkpoint" },
             { "id": "scheduler/trusted_complete", "name": "Complete a fenced attempt idempotently" },
+            { "id": "scheduler/trusted_fail", "name": "Report a fenced business failure without exposing credentials" },
             { "id": "scheduler/trusted_release", "name": "Release a live attempt without consuming failure budget" },
             { "id": "scheduler/trusted_resume", "name": "Resume or reconcile a worker attempt" },
             { "id": "scheduler/trusted_status", "name": "Read trusted batch status" }

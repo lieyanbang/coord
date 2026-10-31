@@ -15,6 +15,40 @@ import identityFixture from './identity-test-fixture.cjs';
 const agentSecret = '11'.repeat(32);
 const clientSecret = '22'.repeat(32);
 
+test('journal compaction bounds recent records and never replays retired or uncertain IDs after restart', async () => {
+  const folder = await mkdtemp(join(tmpdir(), 'coord-journal-compact-'));
+  const journalFile = join(folder, 'requests.ndjson');
+  const options = { agentHost: '127.0.0.1', allowedPeerIp: '127.0.0.1', agentPort: 0, clientPort: 0,
+    agentSecret, clientSecret, journalFile, maxJournalEntries: 16 };
+  try {
+    const sidecar = await createSidecar(options);
+    const retiredId = randomUUID();
+    const uncertainId = randomUUID();
+    await sidecar.appendRecord(retiredId, 'synthetic', 'tasks/claim', 'completed');
+    await sidecar.appendRecord(uncertainId, 'synthetic', 'tasks/complete', 'dispatched');
+    await sidecar.appendRecord(uncertainId, 'synthetic', 'tasks/complete', 'uncertain', 'relay_timeout');
+    for (let index = 0; index < 80; index++) {
+      await sidecar.appendRecord(randomUUID(), 'synthetic', 'tasks/list', 'completed');
+    }
+    assert.ok(sidecar.records.size <= 16);
+    assert.ok((await readFile(journalFile, 'utf8')).split('\n').filter(Boolean).length <= 48);
+    assert.equal((await readFile(`${journalFile}.retired`)).length, 8 * 1024 * 1024);
+    const inflightId = randomUUID();
+    await sidecar.appendRecord(inflightId, 'synthetic', 'tasks/complete', 'dispatched');
+    const restarted = await createSidecar(options);
+    assert.equal(restarted.records.get(inflightId).state, 'uncertain');
+    restarted.isAgentReady = () => true;
+    for (const requestId of [retiredId, uncertainId]) {
+      assert.deepEqual(await restarted.callAgent({ requestId, method: 'tasks/claim', params: {} }),
+        { state: 'uncertain', code: 'request_id_retired_reconcile' });
+    }
+    await rm(`${journalFile}.retired`);
+    await assert.rejects(createSidecar(options), /journal_corrupt/);
+  } finally {
+    await rm(folder, { recursive: true, force: true });
+  }
+});
+
 async function startCoord(handler) {
   const state = { count: 0 };
   const server = createHttpServer(async (request, response) => {

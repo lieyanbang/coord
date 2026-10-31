@@ -48,7 +48,7 @@ jobs:
       - name: relay protocol and lease-fencing tests
         env:
           COORD_TEST_BIN: target/release/coord.exe
-        run: node --test relay/relay.test.mjs relay/live-coord.test.mjs relay/logical-workers.test.mjs
+        run: node --test relay/relay.test.mjs relay/live-coord.test.mjs relay/logical-workers.test.mjs relay/generic-workers.test.mjs
       - name: Coord MCP OAuth and HTTP tests
         run: npm test --prefix relay/coord-mcp
       - name: Phase G request and result utility tests

@@ -34,7 +34,7 @@ test('logical worker input is explicit, canonical, batch-scoped and legacy-compa
   const call = mcp.validateToolInput('coord_claim_next', { worker_id: 'aBcD', batch_id: batch, request_id: randomUUID() });
   assert.deepEqual(call.logical, { worker_id: 'ABCD', batch_id: batch });
   assert.equal(call.params.agent_id, 'coord-relay-agent', 'principal must be assigned only after OAuth authorization');
-  for (const worker_id of ['', '000', '00000', 'GGGG', '../0', 0]) {
+  for (const worker_id of ['', '-writer', 'a'.repeat(65), 'hello world', '../0', 0]) {
     assert.throws(() => mcp.validateToolInput('coord_claim_next', { worker_id, batch_id: batch, request_id: randomUUID() }));
   }
   assert.throws(() => mcp.validateToolInput('coord_get_task', { worker_id: '0000', id: task }));
